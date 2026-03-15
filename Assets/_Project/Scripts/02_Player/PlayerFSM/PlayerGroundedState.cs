@@ -49,7 +49,7 @@ public class PlayerGroundedState : PlayerState
             return;
         }
 
-        HandleInputAndSubStates();
+        HandleSubStates();
         HandleMovement();
     }
 
@@ -58,96 +58,201 @@ public class PlayerGroundedState : PlayerState
         base.PhysicsUpdate();
     }
 
-    private void HandleInputAndSubStates()
+    private void HandleSubStates()
+    {
+        switch (currentPosture)
+        {
+            case PlayerGroundedPosture.Standing:
+                HandleStandingState();
+                break;
+            case PlayerGroundedPosture.Crouching:
+                HandleCrouchingState();
+                break;
+        }
+
+        UpdateLocomotionState();
+    }
+
+    private void HandleStandingState()
     {
         if (player.InputHandler.JumpTriggered)
         {
-            if (currentPosture == PlayerGroundedPosture.Standing)
-            {
-                player.currentVelocity.y = player.jumpForce;
-
-                player.InputHandler.ConsumeJump();
-                stateMachine.ChangeState(player.AirborneState);
-                return;
-            }
-            else if (currentPosture == PlayerGroundedPosture.Crouching) // 앉아있을 때 점프하려고 하면 그냥 일어나기
-            {
-                if (player.CanStandUp())
-                {
-                    currentPosture = PlayerGroundedPosture.Standing;
-                    player.targetHeight = player.standingHeight;
-                }
-                else
-                {
-                    Debug.Log("Can't stand up");
-                }
-            }
-            player.InputHandler.ConsumeJump();
+            ExecuteJump();
+            return;
         }
 
         if (player.InputHandler.CrouchTriggered)
         {
-            if (currentPosture == PlayerGroundedPosture.Standing)
-            {
-                currentPosture = PlayerGroundedPosture.Crouching;
-                player.targetHeight = player.crouchHeight;
-            }
-            else if(currentPosture == PlayerGroundedPosture.Crouching)
-            {
-                if (player.CanStandUp())
-                {
-                    currentPosture = PlayerGroundedPosture.Standing;
-                    player.targetHeight = player.standingHeight;
-                }
-                else
-                {
-                    Debug.Log("Can't stand up");
-                }
-            }
-
+            currentPosture = PlayerGroundedPosture.Crouching;
+            player.TargetHeight = player.CrouchHeight;
             player.InputHandler.ConsumeCrouch();
         }
+    }
 
+    private void HandleCrouchingState()
+    {
+        if (player.InputHandler.JumpTriggered || player.InputHandler.CrouchTriggered)
+        {
+            if (player.CanStandUp())
+            {
+                currentPosture = PlayerGroundedPosture.Standing;
+                player.TargetHeight = player.StandingHeight;
+            }
+            else
+            {
+                Debug.Log("Can't stand up");
+            }
+
+            player.InputHandler.ConsumeJump();
+            player.InputHandler.ConsumeCrouch();
+        }
+    }
+
+    private void ExecuteJump()
+    {
+        player.currentVelocity.y = player.jumpForce;
+        player.InputHandler.ConsumeJump();
+        stateMachine.ChangeState(player.AirborneState);
+    }
+
+    private void UpdateLocomotionState()
+    {
         Vector2 input = player.InputHandler.MoveInput;
 
         if (input.sqrMagnitude < 0.01f)
         {
             currentLocomotion = PlayerGroundedLocomotion.Idle;
+            return;
         }
-        else if (player.InputHandler.IsSprinting && currentPosture == PlayerGroundedPosture.Standing && input.y > 0)
-        {
-            currentLocomotion = PlayerGroundedLocomotion.Sprinting;
-        }
-        else
-        {
-            currentLocomotion = PlayerGroundedLocomotion.Walking;
-        }
+
+        bool isSprinting = currentPosture == PlayerGroundedPosture.Standing &&
+                         input.y > 0 &&
+                         player.InputHandler.IsSprinting;
+
+        currentLocomotion = isSprinting ? PlayerGroundedLocomotion.Sprinting : PlayerGroundedLocomotion.Walking;
     }
 
     private void HandleMovement()
     {
         Vector2 input = player.InputHandler.MoveInput;
-
         Vector3 moveDirection = (player.transform.right * input.x + player.transform.forward * input.y).normalized;
-        float targetSpeed = 0f;
 
-        if (currentPosture == PlayerGroundedPosture.Crouching)
-        {
-            targetSpeed = player.crouchSpeed;
-        }
-        else
-        {
-            targetSpeed = currentLocomotion == PlayerGroundedLocomotion.Sprinting
-                ? player.sprintSpeed
-                : player.walkSpeed;
-        }
-
-        if (currentLocomotion == PlayerGroundedLocomotion.Idle)
-        {
-            targetSpeed = 0f;
-        }
+        float targetSpeed = GetTargetSpeed();
 
         player.currentVelocity.x = moveDirection.x * targetSpeed;
         player.currentVelocity.z = moveDirection.z * targetSpeed;
     }
+
+    private float GetTargetSpeed()
+    {
+        if (currentLocomotion == PlayerGroundedLocomotion.Idle)
+        {
+            return 0f;
+        }
+
+        switch (currentPosture)
+        {
+            case PlayerGroundedPosture.Crouching:
+                return player.crouchSpeed;
+
+            case PlayerGroundedPosture.Standing:
+                return currentLocomotion == PlayerGroundedLocomotion.Sprinting ? player.sprintSpeed : player.walkSpeed;
+
+            default:
+                return 0f;
+        }
+    }
+
+    //private void HandleInputAndSubStates()
+    //{
+    //    if (player.InputHandler.JumpTriggered)
+    //    {
+    //        if (currentPosture == PlayerGroundedPosture.Standing)
+    //        {
+    //            player.currentVelocity.y = player.jumpForce;
+
+    //            player.InputHandler.ConsumeJump();
+    //            stateMachine.ChangeState(player.AirborneState);
+    //            return;
+    //        }
+    //        else if (currentPosture == PlayerGroundedPosture.Crouching) // 앉아있을 때 점프하려고 하면 그냥 일어나기
+    //        {
+    //            if (player.CanStandUp())
+    //            {
+    //                currentPosture = PlayerGroundedPosture.Standing;
+    //                player.TargetHeight = player.StandingHeight;
+    //            }
+    //            else
+    //            {
+    //                Debug.Log("Can't stand up");
+    //            }
+    //        }
+    //        player.InputHandler.ConsumeJump();
+    //    }
+
+    //    if (player.InputHandler.CrouchTriggered)
+    //    {
+    //        if (currentPosture == PlayerGroundedPosture.Standing)
+    //        {
+    //            currentPosture = PlayerGroundedPosture.Crouching;
+    //            player.TargetHeight = player.CrouchHeight;
+    //        }
+    //        else if(currentPosture == PlayerGroundedPosture.Crouching)
+    //        {
+    //            if (player.CanStandUp())
+    //            {
+    //                currentPosture = PlayerGroundedPosture.Standing;
+    //                player.TargetHeight = player.StandingHeight;
+    //            }
+    //            else
+    //            {
+    //                Debug.Log("Can't stand up");
+    //            }
+    //        }
+
+    //        player.InputHandler.ConsumeCrouch();
+    //    }
+
+    //    Vector2 input = player.InputHandler.MoveInput;
+
+    //    if (input.sqrMagnitude < 0.01f)
+    //    {
+    //        currentLocomotion = PlayerGroundedLocomotion.Idle;
+    //    }
+    //    else if (player.InputHandler.IsSprinting && currentPosture == PlayerGroundedPosture.Standing && input.y > 0)
+    //    {
+    //        currentLocomotion = PlayerGroundedLocomotion.Sprinting;
+    //    }
+    //    else
+    //    {
+    //        currentLocomotion = PlayerGroundedLocomotion.Walking;
+    //    }
+    //}
+
+    //private void HandleMovement()
+    //{
+    //    Vector2 input = player.InputHandler.MoveInput;
+
+    //    Vector3 moveDirection = (player.transform.right * input.x + player.transform.forward * input.y).normalized;
+    //    float targetSpeed = 0f;
+
+    //    if (currentPosture == PlayerGroundedPosture.Crouching)
+    //    {
+    //        targetSpeed = player.crouchSpeed;
+    //    }
+    //    else
+    //    {
+    //        targetSpeed = currentLocomotion == PlayerGroundedLocomotion.Sprinting
+    //            ? player.sprintSpeed
+    //            : player.walkSpeed;
+    //    }
+
+    //    if (currentLocomotion == PlayerGroundedLocomotion.Idle)
+    //    {
+    //        targetSpeed = 0f;
+    //    }
+
+    //    player.currentVelocity.x = moveDirection.x * targetSpeed;
+    //    player.currentVelocity.z = moveDirection.z * targetSpeed;
+    //}
 }

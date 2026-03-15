@@ -34,7 +34,7 @@ public class PlayerHeadbob : MonoBehaviour
 
     private void HandleHeadbob()
     {
-        Vector3 horizontalVelocity = new Vector3(player.currentVelocity.x, 0f, player.currentVelocity.z);
+        Vector3 horizontalVelocity = new Vector3(player.Controller.velocity.x, 0f, player.Controller.velocity.z);
         float currentSpeed = horizontalVelocity.magnitude;
 
         if (player.IsGrounded && currentSpeed > 0.1f)
