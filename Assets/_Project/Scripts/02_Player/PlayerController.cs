@@ -40,13 +40,13 @@ public class PlayerController : MonoBehaviour
     private float verticalRotation;
 
     [Header("Crouch Settings")]
-    [Range(0.1f, 1f)] public float crouchHeightRatio = 0.6f;
+    [Range(0.1f, 1f)] public float CrouchHeightRatio = 0.6f;
     public float crouchTransitionSpeed = 10f;
     public LayerMask obstacleLayer;
 
-    [HideInInspector] public float standingHeight;
-    [HideInInspector] public float crouchHeight;
-    [HideInInspector] public float targetHeight;
+    public float StandingHeight { get; private set; }
+    public float CrouchHeight { get; private set; }
+    public float TargetHeight { get; set; }
     private float defaultCameraY;
     private Vector3 defaultCenter;
 
@@ -60,7 +60,7 @@ public class PlayerController : MonoBehaviour
     {
         Controller = GetComponent<CharacterController>();
         InputHandler = GetComponent<PlayerInputHandler>();
-        //Animator = GetComponent<PlayerAnimator>();
+        //Animator = GetComponentInChildren<PlayerAnimator>();
         Condition = GetComponent<PlayerCondition>();
 
 
@@ -76,9 +76,9 @@ public class PlayerController : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        standingHeight = Controller.height;
-        crouchHeight = standingHeight * crouchHeightRatio;
-        targetHeight = standingHeight;
+        StandingHeight = Controller.height;
+        CrouchHeight = StandingHeight * CrouchHeightRatio;
+        TargetHeight = StandingHeight;
         defaultCenter = Controller.center;
 
         if (CameraTransform != null)
@@ -152,15 +152,15 @@ public class PlayerController : MonoBehaviour
 
     private void HandlePostureTransition()
     {
-        Controller.height = Mathf.Lerp(Controller.height, targetHeight, Time.deltaTime * crouchTransitionSpeed);
-        float centerOffsetY = (Controller.height - standingHeight) / 2f;
+        Controller.height = Mathf.Lerp(Controller.height, TargetHeight, Time.deltaTime * crouchTransitionSpeed);
+        float centerOffsetY = (Controller.height - StandingHeight) / 2f;
         Controller.center = defaultCenter + new Vector3(0, centerOffsetY, 0);
 
         if (CameraTransform != null)
         {
-            float heightRatio = Controller.height / standingHeight;
+            float headDropAmount = StandingHeight - Controller.height;
             Vector3 camPos = CameraTransform.localPosition;
-            camPos.y = defaultCameraY * heightRatio;
+            camPos.y = defaultCameraY - headDropAmount;
             CameraTransform.localPosition = camPos;
         }
     }
@@ -172,7 +172,7 @@ public class PlayerController : MonoBehaviour
     {
         float radius = Controller.radius;
         Vector3 point1 = transform.position + Vector3.up * radius;
-        Vector3 point2 = transform.position + Vector3.up * (standingHeight - radius);
+        Vector3 point2 = transform.position + Vector3.up * (StandingHeight - radius);
 
         return !Physics.CheckCapsule(point1, point2, radius, obstacleLayer);
     }
