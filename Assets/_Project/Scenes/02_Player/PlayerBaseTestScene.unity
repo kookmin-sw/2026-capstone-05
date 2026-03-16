@@ -151,8 +151,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd490cc1de076c947960a048a5a11f6f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCondition
-  maxHealth: 100
-  maxStamina: 100
+  health:
+    maxValue: 100
+    startValue: 100
+    increaseRate: 0
+    decreaseRate: 0
+    currentValue: 0
+  stamina:
+    maxValue: 100
+    startValue: 100
+    increaseRate: 20
+    decreaseRate: 0
+    currentValue: 0
+  satiety:
+    maxValue: 100
+    startValue: 100
+    increaseRate: 0
+    decreaseRate: 0.5
+    currentValue: 0
+  coldness:
+    maxValue: 100
+    startValue: 100
+    increaseRate: 0
+    decreaseRate: 0
+    currentValue: 0
 --- !u!114 &520534741
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -193,10 +215,6 @@ MonoBehaviour:
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 64
-  walkNoiseDb: 30
-  sprintNoiseDb: 60
-  crouchNoiseDb: 10
-  idleNoiseDb: 5
 --- !u!143 &520534743
 CharacterController:
   m_ObjectHideFlags: 0

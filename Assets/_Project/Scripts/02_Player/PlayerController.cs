@@ -50,17 +50,11 @@ public class PlayerController : MonoBehaviour
     private float defaultCameraY;
     private Vector3 defaultCenter;
 
-    [Header("Noise Settings (dB)")]
-    public float walkNoiseDb = 30f;
-    public float sprintNoiseDb = 60f;
-    public float crouchNoiseDb = 10f;
-    public float idleNoiseDb = 5f;
-
     private void Awake()
     {
         Controller = GetComponent<CharacterController>();
         InputHandler = GetComponent<PlayerInputHandler>();
-        //Animator = GetComponentInChildren<PlayerAnimator>();
+        //Animator = GetComponent<PlayerAnimator>();
         Condition = GetComponent<PlayerCondition>();
 
 
