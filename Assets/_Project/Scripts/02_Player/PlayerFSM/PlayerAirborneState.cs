@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class PlayerAirborneState : PlayerState
 {
-    private float airControlMultiplier = 0.3f;
-    private float airControlLerpSpeed = 2f;
+    private float airControlMultiplier = 1f;
+    private float airControlLerpSpeed = 10f;
 
     public PlayerAirborneState(PlayerController player, PlayerStateMachine stateMachine)
         : base(player, stateMachine)
