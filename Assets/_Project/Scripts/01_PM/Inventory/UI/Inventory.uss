@@ -1,0 +1,142 @@
+.container {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.75); /* 반투명 검은색 배경 (흐린 효과) */
+    align-items: center;
+    justify-content: center;
+    -unity-font-definition: url("project://database/Assets/_Project/ThirdParty/TextMesh%20Pro/Examples%20&%20Extras/Fonts/Anton.ttf?fileID=12800000&guid=997a43b767814dd0a7642ec9b78cba41&type=3#Anton");
+    color: rgb(220, 220, 220);
+    display: none; /* 처음에 숨겨둠: Tab키로 토글 */
+}
+
+.main-window {
+    width: 80%;
+    height: 80%;
+    min-width: 800px;
+    min-height: 600px;
+    /* 검은색 바탕 제거 또는 위쳐풍 어두운 상자 */
+    background-color: rgb(15, 15, 15);
+    border-color: rgb(40, 40, 40);
+    border-width: 2px;
+    border-radius: 4px;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.inventoryHeader {
+    font-size: 36px;
+    -unity-text-align: middle-center;
+    margin-bottom: 20px;
+    letter-spacing: 5px;
+    color: white;
+}
+
+.split-container {
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+.left-panel {
+    flex: 1;
+    border-right-width: 1px;
+    border-right-color: rgb(50, 50, 50);
+    padding-right: 20px;
+    margin-right: 20px;
+}
+
+.right-panel {
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+}
+
+.tabs-row {
+    flex-direction: row;
+    justify-content: flex-start;
+    margin-bottom: 15px;
+}
+
+.tab-button {
+    background-color: rgb(25, 25, 25);
+    color: rgb(150, 150, 150);
+    border-color: rgb(80, 140, 80);
+    border-width: 1px;
+    padding: 8px 20px;
+    margin-right: 10px;
+    border-radius: 3px;
+    font-size: 16px;
+}
+
+.tab-button:hover {
+    background-color: rgb(40, 40, 40);
+    color: white;
+}
+
+.slots-scroll-view {
+    flex-grow: 1;
+}
+
+.slotsContainer {
+    flex-wrap: wrap;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border-width: 1px;
+    border-color: rgb(40, 40, 40);
+}
+
+.slot {
+    width: 65px;
+    height: 65px;
+    margin: 2px;
+    background-color: rgb(10, 10, 10);
+    border-color: rgb(60, 60, 60);
+    border-width: 1px;
+}
+
+.slot:hover {
+    border-color: rgb(200, 200, 200);
+}
+
+.slotFrame {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* 기존 아틀라스 대신 깔끔한 테두리로 변경 */
+}
+
+.slotIcon {
+    padding: 5px;
+    flex-grow: 1;
+    background-image: none;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.stackCount {
+    position: absolute;
+    color: white;
+    bottom: 2px;
+    right: 4px;
+    font-size: 14px;
+    text-shadow: 1px 1px 0 rgba(0,0,0,1);
+}
+
+.ghostIcon {
+    visibility: hidden;
+    position: absolute;
+    width: 65px;
+    height: 65px;
+    background-image: none;
+}
+
+.placeholder-text {
+    font-size: 24px;
+    color: rgb(100, 100, 100);
+}
