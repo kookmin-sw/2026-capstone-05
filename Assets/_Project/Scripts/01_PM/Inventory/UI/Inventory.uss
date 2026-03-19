@@ -44,12 +44,12 @@ Label {
     width: 326px;
     height: 520px;
     background-image: url("project://database/Assets/_Project/Assets/01_PM/Art/UI_atlas.psd?fileID=-167341122&guid=1e09ebfc4f93e634f8e4fd0c884b88fd&type=3#UI_atlas_98");
-    -unity-slice-scale: 0.5;
+    -unity-slice-scale: 0.5px;
 }
 
 .slotsContainer {
     flex-grow: 1;
-    padding-top: 30px;
+    margin-top: 45px;
     flex-wrap: wrap;
     flex-direction: row;
     align-items: flex-start;
@@ -73,7 +73,7 @@ Label {
     height: 60px;
     border-width: 0;
     background-image: url("project://database/Assets/_Project/Assets/01_PM/Art/UI_atlas.psd?fileID=240118680&guid=1e09ebfc4f93e634f8e4fd0c884b88fd&type=3#UI_atlas_112");
-    -unity-slice-scale: 0.8;
+    -unity-slice-scale: 0.8px;
 }
 
 .slotIcon {

@@ -1,3 +1,32 @@
-<engine:UXML xmlns:engine="UnityEngine.UIElements" editor-extension-mode="False">
+<engine:UXML xmlns:engine="UnityEngine.UIElements" xmlns:Systems="Systems.Inventory" editor-extension-mode="False">
     <Style src="project://database/Assets/_Project/Scripts/01_PM/Inventory/UI/Inventory.uss?fileID=7433441132597879392&amp;guid=2b0324e19364e3b408d529ec654d3d37&amp;type=3#Inventory"/>
+    <engine:VisualElement name="container" class="container">
+        <engine:VisualElement name="inventory" class="inventory">
+            <engine:Label name="inventoryHeader" text="Inventory" class="inventoryHeader" style="-unity-text-align: middle-center; top: -2px; left: -20px; height: 43px; width: 337px;"/>
+            <engine:VisualElement name="inventoryFrame" class="inventoryFrame" style="top: 50px; left: -17px; height: 390px; width: 327px;"/>
+            <engine:VisualElement name="slotsContainer" class="slotsContainer" style="align-self: auto; align-content: flex-start; width: auto; height: 462px;">
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+                <Systems:Slot name="slot" class="slot"/>
+            </engine:VisualElement>
+        </engine:VisualElement>
+        <engine:VisualElement name="ghostIcon" class="ghostIcon"/>
+    </engine:VisualElement>
 </engine:UXML>

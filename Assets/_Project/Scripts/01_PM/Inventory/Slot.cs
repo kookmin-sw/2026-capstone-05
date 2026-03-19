@@ -3,7 +3,8 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Systems.Inventory {
-    public class Slot : VisualElement {
+    [UxmlElement]
+    public partial class Slot : VisualElement {
         public Image Icon;
         public Label StackLabel;
         public int Index => parent.IndexOf(this);
