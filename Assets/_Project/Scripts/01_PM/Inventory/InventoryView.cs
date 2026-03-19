@@ -17,9 +17,8 @@ namespace Systems.Inventory {
                 root.Clear();
                 root.styleSheets.Add(styleSheet);
                 container = root.CreateChild("container");
-                var inv = container.CreateChild("inventory").WithManipulator(new PanelDragManipulator());
-                inv.CreateChild("inventoryFrame");
-                inv.CreateChild("inventoryHeader").Add(new Label(panelName));
+                var inv = container.CreateChild("inventory-window");
+                inv.CreateChild("inventoryHeader").Add(new Label(panelName.ToUpper()));
                 var sContainer = inv.CreateChild("slotsContainer");
                 for (int i = 0; i < size; i++) {
                     var slot = sContainer.CreateChild<Slot>("slot");
@@ -29,15 +28,15 @@ namespace Systems.Inventory {
                 yield break;
             }
             
-            var inventory = container.Q<VisualElement>(className: "inventory");
-            inventory.AddManipulator(new PanelDragManipulator());
+            var inventory = container.Q<VisualElement>(name: "inventory-window");
+            // inventory.AddManipulator(new PanelDragManipulator()); // 전체화면 중앙 UI이므로 드래그는 임시 비활성화
             
-            var headerLabel = inventory.Q<Label>(className: "inventoryHeader");
+            var headerLabel = inventory.Q<Label>(name: "inventoryHeader");
             if (headerLabel != null) {
-                headerLabel.text = panelName;
+                headerLabel.text = panelName.ToUpper(); // INVENTORY 등 대문자로
             }
 
-            var slotsContainer = inventory.Q<VisualElement>(className: "slotsContainer");
+            var slotsContainer = inventory.Q<VisualElement>(name: "slotsContainer");
             var existingSlots = slotsContainer.Query<Slot>().ToList();
 
             if (existingSlots.Count == size) {
@@ -56,5 +55,14 @@ namespace Systems.Inventory {
             
             yield return null; 
         }
+
+        void Update() {
+            // Tab 키를 누르면 인벤토리 토글 (표시/숨김)
+            if (Input.GetKeyDown(KeyCode.Tab) && container != null) {
+                bool isHidden = container.style.display == DisplayStyle.None;
+                container.style.display = isHidden ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+        }
     }
 }
+
