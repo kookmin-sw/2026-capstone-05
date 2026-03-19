@@ -1,0 +1,100 @@
+.container {
+    flex-grow: 1;
+    width: auto;
+    height: auto;
+    max-width: none;
+    max-height: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    -unity-font-definition: url("project://database/Assets/_Project/ThirdParty/TextMesh%20Pro/Examples%20&%20Extras/Fonts/Anton.ttf?fileID=12800000&guid=997a43b767814dd0a7642ec9b78cba41&type=3#Anton");
+    text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.5);
+    color: rgb(255, 197, 0);
+    background-image: none;
+}
+
+.inventory {
+    background-image: none;
+    width: 300px;
+    padding: 10px;
+    max-height: 500px;
+    flex-grow: 1;
+}
+
+.inventoryHeader {
+    position: absolute;
+    top: -32px;
+    left: -27px;
+    width: 350px;
+    height: 70px;
+    justify-content: center;
+    align-items: center;
+    background-image: url("project://database/Assets/_Project/Assets/01_PM/Art/UI_atlas.psd?fileID=-167341122&guid=1e09ebfc4f93e634f8e4fd0c884b88fd&type=3#UI_atlas_98");
+    -unity-slice-scale: 0.5px;
+}
+
+Label {
+    font-size: 24px;
+}
+
+.inventoryFrame {
+    position: absolute;
+    top: -10px;
+    left: -17px;
+    width: 326px;
+    height: 520px;
+    background-image: url("project://database/Assets/_Project/Assets/01_PM/Art/UI_atlas.psd?fileID=-167341122&guid=1e09ebfc4f93e634f8e4fd0c884b88fd&type=3#UI_atlas_98");
+    -unity-slice-scale: 0.5;
+}
+
+.slotsContainer {
+    flex-grow: 1;
+    padding-top: 30px;
+    flex-wrap: wrap;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-shrink: 0;
+    background-image: none;
+}
+
+.slot {
+    width: 60px;
+    height: 60px;
+    margin: 4px;
+    background-image: url("project://database/Assets/_Project/Assets/01_PM/Art/UI_atlas.psd?fileID=867297042&guid=1e09ebfc4f93e634f8e4fd0c884b88fd&type=3#UI_atlas_109");
+}
+
+.slotFrame {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 60px;
+    height: 60px;
+    border-width: 0;
+    background-image: url("project://database/Assets/_Project/Assets/01_PM/Art/UI_atlas.psd?fileID=240118680&guid=1e09ebfc4f93e634f8e4fd0c884b88fd&type=3#UI_atlas_112");
+    -unity-slice-scale: 0.8;
+}
+
+.slotIcon {
+    padding: 4px;
+    flex-shrink: 0;
+    flex-grow: 1;
+    background-image: none;
+}
+
+.stackCount {
+    position: absolute;
+    color: white;
+    bottom: 0;
+    right: 0;
+    font-size: 18px;
+}
+
+.ghostIcon {
+    visibility: hidden;
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background-image: none;
+}
