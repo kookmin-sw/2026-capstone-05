@@ -1,68 +1,55 @@
 using UnityEngine;
 
-public class PlayerCondition : MonoBehaviour
+public class PlayerCondition : MonoBehaviour, IDamageable
 {
-    public float maxHealth = 100f;
-    public float CurrentHealth { get; private set; }
-
-    public float maxStamina = 100f;
-    public float CurrentStamina { get; private set; }
-
-    /// <summary>
-    /// 배고픔 수치 (Satiety Level): 0(굶주림) - 100(포만감)
-    /// </summary>
-    public float CurrentSatietyLevel { get; private set; } = 100f;
-    /// <summary>
-    /// 체온 수치 (Warmth Level): 0(얼음) - 100(따뜻함)
-    /// </summary>
-    public float CurrentWarmthLevel { get; private set; } = 100f;
+    [Header("Stats")]
+    public ConditionStat health;
+    public ConditionStat stamina;
+    public ConditionStat satiety;
+    public ConditionStat coldness;
 
 
     private void Start()
     {
-        CurrentHealth = maxHealth;
-        CurrentStamina = maxStamina;
+        health.Initialize();
+        stamina.Initialize();
+        satiety.Initialize();
+        coldness.Initialize();
     }
 
-
-    public bool IsAlive => CurrentHealth > 0;
-    public void TakeDamage(float amount)
+    private void Update()
     {
-        CurrentHealth = Mathf.Clamp(CurrentHealth - amount, 0, maxHealth);
-    }
-    public void Heal(float amount)
-    {
-        CurrentHealth = Mathf.Clamp(CurrentHealth + amount, 0, maxHealth);
+        health.UpdatePassive();
+        stamina.UpdatePassive();
+        satiety.UpdatePassive();
+        coldness.UpdatePassive();
     }
 
-    public bool CanConsumeStamina(float amount)
+    public bool IsAlive => health.currentValue > 0;
+
+    public void TakeDamage(float damageAmount)
     {
-        return CurrentStamina >= amount;
-    }
-    public void ConsumeStamina(float amount)
-    {
-        CurrentStamina = Mathf.Clamp(CurrentStamina - amount, 0, maxStamina);
-    }
-    public void RecoverStamina(float amount)
-    {
-        CurrentStamina = Mathf.Clamp(CurrentStamina + amount, 0, maxStamina);
+        if (IsAlive)
+        {
+            health.Subtract(damageAmount);
+            if (!IsAlive)
+            {
+                Debug.Log("Player has died.");
+            }
+        }
     }
 
-    public void DecreaseSatiety(float amount)
+    public bool UseStamina(float amount)
     {
-        CurrentSatietyLevel = Mathf.Clamp(CurrentSatietyLevel - amount, 0, 100);
-    }
-    public void IncreaseSatiety(float amount)
-    {
-        CurrentSatietyLevel = Mathf.Clamp(CurrentSatietyLevel + amount, 0, 100);
+        if (stamina.currentValue >= amount)
+        {
+            stamina.Subtract(amount);
+            return true;
+        }
+        return false;
     }
 
-    public void DecreaseWarmth(float amount)
-    {
-        CurrentWarmthLevel = Mathf.Clamp(CurrentWarmthLevel - amount, 0, 100);
-    }
-    public void IncreaseWarmth(float amount)
-    {
-        CurrentWarmthLevel = Mathf.Clamp(CurrentWarmthLevel + amount, 0, 100);
-    }
+    public void Heal(float amount) => health.Add(amount);
+    public void WarmUp(float amount) => coldness.Subtract(amount);
+
 }
