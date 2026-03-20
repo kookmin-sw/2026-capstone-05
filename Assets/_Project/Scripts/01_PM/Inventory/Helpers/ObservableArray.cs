@@ -5,7 +5,7 @@ using System.Linq;
 namespace Systems.Inventory {
     public interface IObservableArray<T>{
         int Count { get; }
-        T this[int index] { get; }
+        T this[int index] { get; set; }
         void Clear();
         event Action<T[]> AnyValueChanged;
         bool TryAdd(T item);
@@ -19,7 +19,14 @@ namespace Systems.Inventory {
 
         public event Action<T[]> AnyValueChanged = delegate { };
         public int Count => items.Count(i => i != null);
-        public T this[int index] => items[index];
+        public int Length => items.Length;
+        public T this[int index] {
+            get => items[index];
+            set {
+                items[index] = value;
+                Invoke();
+            }
+        }
 
         public ObservableArray(int size = 20, IList<T> initialList = null) {
             items = new T[size];
@@ -29,7 +36,11 @@ namespace Systems.Inventory {
             }
         }
         
-        void Invoke() => AnyValueChanged.Invoke(items);
+        public void SetSilent(int index, T value) {
+            items[index] = value;
+        }
+
+        public void Invoke() => AnyValueChanged.Invoke(items);
         
         public void Swap(int index1, int index2) {
             (items[index1], items[index2]) = (items[index2], items[index1]);
