@@ -7,6 +7,10 @@ namespace Systems.Inventory {
         public string Name;
 
         public int maxStack = 1;
+        
+        [Header("Grid Size")]
+        public int Width = 1;
+        public int Height = 1;
             
         public SerializableGuid Id = SerializableGuid.NewGuid();
 
