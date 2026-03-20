@@ -7,75 +7,122 @@ namespace Systems.Inventory {
     public class InventoryController {
         readonly InventoryView view;
         readonly InventoryModel model;
-        readonly int capacity;
+        readonly int width;
+        readonly int height;
+        int Capacity => width * height;
 
-        InventoryController(InventoryView view, InventoryModel model, int capacity) {
+        InventoryController(InventoryView view, InventoryModel model, int width, int height) {
             Debug.Assert(view != null, "View is null");
             Debug.Assert(model != null, "Model is null");
-            Debug.Assert(capacity > 0, "Capacity is less than 1");
+            Debug.Assert(width > 0 && height > 0, "Dimensions are less than 1");
             this.view = view;
             this.model = model;
-            this.capacity = capacity;
-            
+            this.width = width;
+            this.height = height;
+
             view.StartCoroutine(Initialize());
         }
         
         IEnumerator Initialize() {
-            // yield return view.InitializeView(capacity);
-            yield return null;
+            yield return view.Initialize(Capacity, width);
 
             view.OnDrop += HandleDrop;
             model.OnModelChanged += HandleModelChanged;
-            
+
             RefreshView();
         }
 
-        void HandleDrop(Slot originalSlot, Slot closestSlot) {
-            // Debug.Log("Original slot: " + originalSlot.Index);
-            // Debug.Log("Closest slot: " + closestSlot.Index);
-            
+        readonly Dictionary<Item, ItemView> itemViews = new Dictionary<Item, ItemView>();
+
+        void HandleDrop(ItemView originalItemView, Slot closestSlot) {
+            Item sourceItem = null;
+            foreach (var kvp in itemViews) {
+                if (kvp.Value == originalItemView) {
+                    sourceItem = kvp.Key;
+                    break;
+                }
+            }
+
+            if (sourceItem == null) return;
+
+            int sourceIndex = -1;
+            for (int i = 0; i < Capacity; i++) {
+                if (model.Get(i) == sourceItem) {
+                    sourceIndex = i;
+                    break;
+                }
+            }
+
+            if (sourceIndex == -1) return;
+
+            var targetItem = model.Get(closestSlot.Index);
+
             // Moving to Empty Slot
-            if (closestSlot.ItemId.Equals(SerializableGuid.Empty)) {
-                model.Swap(originalSlot.Index, closestSlot.Index);
+            if (targetItem == null) {
+                // Ensure model properly removes/re-places considering items size
+                model.Swap(sourceIndex, closestSlot.Index);
                 return;
             }
-        
-            // TODO world drops
-            // TODO Cross Inventory drops
-            // TODO Hotbar drops
 
-            // Moving to Non-Empty Slot
-            var sourceItemId = model.Items[originalSlot.Index].details.Id;
-            var targetItemId = model.Items[closestSlot.Index].details.Id;
-            
-            if (sourceItemId.Equals(targetItemId) && model.Items[closestSlot.Index].details.maxStack > 1) { 
-                // TODO improve this handling max stack, consider options
-                model.Combine(originalSlot.Index, closestSlot.Index);
+            if (sourceItem.details.Id.Equals(targetItem.details.Id) && targetItem.details.maxStack > 1) {
+                model.Combine(sourceIndex, closestSlot.Index);
             } else {
-                model.Swap(originalSlot.Index, closestSlot.Index);
+                model.Swap(sourceIndex, closestSlot.Index);
             }
         }
 
         void HandleModelChanged(IList<Item> items) => RefreshView();
-        
+
         void RefreshView() {
-            for (int i = 0; i < capacity; i++) {
+            var currentItemsInModel = new HashSet<Item>();
+
+            for (int i = 0; i < Capacity; i++) {
                 var item = model.Get(i);
-                if (item == null) {
-                    view.Slots[i].Set(SerializableGuid.Empty, null);
-                } else {
-                    view.Slots[i].Set(item.Id, item.details.Icon, item.quantity);
+                if (item != null) {
+                    currentItemsInModel.Add(item);
+                }
+            }
+
+            var toRemove = new List<Item>();
+            foreach (var kvp in itemViews) {
+                if (!currentItemsInModel.Contains(kvp.Key)) {
+                    view.RemoveItem(kvp.Value);
+                    toRemove.Add(kvp.Key);
+                }
+            }
+            foreach (var r in toRemove) {
+                itemViews.Remove(r);
+            }
+
+            var processedItems = new HashSet<Item>();
+            for (int i = 0; i < Capacity; i++) {
+                var item = model.Get(i);
+                if (item == null) continue;
+
+                if (!processedItems.Contains(item)) {
+                    processedItems.Add(item);
+
+                    if (!itemViews.TryGetValue(item, out var itemView)) {
+                        itemView = new ItemView(item.Id, item.details.Icon, item.details.Width, item.details.Height, item.quantity);
+                        itemViews[item] = itemView;
+                        view.BindItem(itemView, i);
+                    } else {
+                        itemView.SetQuantity(item.quantity);
+                        view.UpdateItemPosition(itemView, i);
+                        itemView.style.visibility = UnityEngine.UIElements.Visibility.Visible;
+                    }
                 }
             }
         }
 
         #region Builder
-        
+
         public class Builder {
             InventoryView view;
             IEnumerable<ItemDetails> itemDetails;
-            int capacity = 20;
-            
+            int width = 10;
+            int height = 5;
+
             public Builder(InventoryView view) {
                 this.view = view;
             }
@@ -85,20 +132,21 @@ namespace Systems.Inventory {
                 return this;
             }
 
-            public Builder WithCapacity(int capacity) {
-                this.capacity = capacity;
+            public Builder WithDimensions(int width, int height) {
+                this.width = width;
+                this.height = height;
                 return this;
             }
 
             public InventoryController Build() {
-                InventoryModel model = itemDetails != null 
-                    ? new InventoryModel(itemDetails, capacity) 
-                    : new InventoryModel(Array.Empty<ItemDetails>(), capacity);
+                InventoryModel model = itemDetails != null
+                    ? new InventoryModel(itemDetails, width, height)
+                    : new InventoryModel(Array.Empty<ItemDetails>(), width, height);
 
-                return new InventoryController(view, model, capacity);
+                return new InventoryController(view, model, width, height);
             }
         }
-        
+
         #endregion Builder
     }
 }
