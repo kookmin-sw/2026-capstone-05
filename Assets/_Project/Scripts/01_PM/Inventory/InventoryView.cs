@@ -97,6 +97,21 @@ namespace Systems.Inventory {
             if (Input.GetKeyDown(KeyCode.Tab) && container != null) {
                 bool isHidden = container.style.display == DisplayStyle.None;
                 container.style.display = isHidden ? DisplayStyle.Flex : DisplayStyle.None;
+
+                // 인벤토리가 열려있을 때(isHidden == true가 방금 열린 것)
+                if (isHidden) {
+                    UnityEngine.Cursor.lockState = CursorLockMode.None;
+                    UnityEngine.Cursor.visible = true;
+                } else {
+                    UnityEngine.Cursor.lockState = CursorLockMode.Locked;
+                    UnityEngine.Cursor.visible = false;
+                }
+
+                // 플레이어 조작 활성/비활성화 (열렸을 때 조작 끄기)
+                PlayerInputHandler playerInput = UnityEngine.Object.FindAnyObjectByType<PlayerInputHandler>();
+                if (playerInput != null) {
+                    playerInput.SetInputActive(!isHidden);
+                }
             }
         }
     }
