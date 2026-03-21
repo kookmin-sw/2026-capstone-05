@@ -39,6 +39,8 @@ public class PlayerGroundedState : PlayerState
     public override void Exit()
     {
         base.Exit();
+
+        player.Animator.SetGrounded(false);
     }
 
     public override void LogicUpdate()

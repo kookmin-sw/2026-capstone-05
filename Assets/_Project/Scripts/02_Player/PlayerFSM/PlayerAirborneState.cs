@@ -24,6 +24,8 @@ public class PlayerAirborneState : PlayerState
     public override void Exit()
     {
         base.Exit();
+
+        player.Animator.SetGrounded(true);
     }
 
     public override void LogicUpdate()
