@@ -3,14 +3,14 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
-    // FSM ¹× »óÅÂ ÀÎ½ºÅÏ½º (FSM & State Instances)
+    // FSM ë° ìƒíƒœ ì¸ìŠ¤í„´ìŠ¤ (FSM & State Instances)
     public PlayerStateMachine StateMachine { get; private set; }
 
     public PlayerGroundedState GroundedState { get; private set; }
     public PlayerAirborneState AirborneState { get; private set; }
     public PlayerInteractionState InteractionState { get; private set; }
 
-    // ÁÖ¿ä ÄÄÆ÷³ÍÆ® (Core Components)
+    // ì£¼ìš” ì»´í¬ë„ŒíŠ¸ (Core Components)
     [Header("Components")]
     [SerializeField] private Transform cameraTransform;
 
@@ -20,7 +20,7 @@ public class PlayerController : MonoBehaviour
     public PlayerCondition Condition { get; private set; }
     public Transform CameraTransform => cameraTransform;
 
-    // ½ºÅÈ ¹× ¼³Á¤ (Stats & Settings)
+    // ìŠ¤íƒ¯ ë° ì„¤ì • (Stats & Settings)
     [Header("Movement Stats")]
     public float walkSpeed = 3f;
     public float sprintSpeed = 6f;
@@ -163,7 +163,7 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// ¸Ó¸® À§¿¡ Àå¾Ö¹°ÀÌ ¾ø¾î¼­ ÀÏ¾î¼³ ¼ö ÀÖ´ÂÁö È®ÀÎ
+    /// ë¨¸ë¦¬ ìœ„ì— ì¥ì• ë¬¼ì´ ì—†ì–´ì„œ ì¼ì–´ì„¤ ìˆ˜ ìˆëŠ”ì§€ í™•ì¸
     /// </summary>
     public bool CanStandUp()
     {
