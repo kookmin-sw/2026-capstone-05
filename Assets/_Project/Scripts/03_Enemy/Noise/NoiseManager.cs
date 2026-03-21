@@ -75,19 +75,39 @@ public class NoiseManager : MonoBehaviour
         }
     }
 
-    //  데시벨 조회 메서드
     public float GetDecibel(NoiseData.NoiseType type)
     {
         return noiseDict.TryGetValue(type, out float db) ? db : 0f;
     }
 
-    /// 외부에서 소음 발생을 요청할 때 호출
+    // 외부에서 소음 발생 요청 시 호출
     public void GenerateNoise(Vector3 position, NoiseData.NoiseType noiseType)
     {
         float decibel = GetDecibel(noiseType) * Random.Range(1f - variationRange, 1f + variationRange);
         float calculatedRadius = decibel * radiusMultiplier;
 
+        if (calculatedRadius <= 0f)
+        {
+            Debug.LogWarning($"[NoiseManager] '{noiseType}' 소음 반경이 0입니다. NoiseData가 할당되었는지, 해당 타입의 데시벨 값이 입력되었는지 확인하세요.");
+            return;
+        }
+
         activeNoises.Add(new ActiveNoise(position, decibel, calculatedRadius, displayTime, noiseType));
+        NotifyEnemies(position, calculatedRadius);
+    }
+
+    // 소음 발생 위치와 범위를 감지 가능한 적들에게 알림
+    private void NotifyEnemies(Vector3 position, float radius)
+    {
+        Collider[] hitColliders = Physics.OverlapSphere(position, radius);
+        foreach (var hit in hitColliders)
+        {
+            INoiseListener listener = hit.GetComponentInParent<INoiseListener>();
+            if (listener != null)
+            {
+                listener.ListenNoise(position);
+            }
+        }
     }
 
     // 에디터 씬 뷰에서 소음 범위를 시각화
