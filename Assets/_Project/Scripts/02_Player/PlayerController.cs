@@ -16,7 +16,7 @@ public class PlayerController : MonoBehaviour
 
     public CharacterController Controller { get; private set; }
     public PlayerInputHandler InputHandler { get; private set; }
-    //public PlayerAnimator Animator { get; private set; }
+    public PlayerAnimator Animator { get; private set; }
     public PlayerCondition Condition { get; private set; }
     public Transform CameraTransform => cameraTransform;
 
@@ -41,20 +41,21 @@ public class PlayerController : MonoBehaviour
 
     [Header("Crouch Settings")]
     [Range(0.1f, 1f)] public float CrouchHeightRatio = 0.6f;
+    public float crouchForwardOffset = 0.4f;
     public float crouchTransitionSpeed = 10f;
     public LayerMask obstacleLayer;
 
     public float StandingHeight { get; private set; }
     public float CrouchHeight { get; private set; }
     public float TargetHeight { get; set; }
-    private float defaultCameraY;
+    private Vector3 defaultCameraPosition;
     private Vector3 defaultCenter;
 
     private void Awake()
     {
         Controller = GetComponent<CharacterController>();
         InputHandler = GetComponent<PlayerInputHandler>();
-        //Animator = GetComponent<PlayerAnimator>();
+        Animator = GetComponent<PlayerAnimator>();
         Condition = GetComponent<PlayerCondition>();
 
 
@@ -77,7 +78,7 @@ public class PlayerController : MonoBehaviour
 
         if (CameraTransform != null)
         {
-            defaultCameraY = CameraTransform.localPosition.y;
+            defaultCameraPosition = CameraTransform.localPosition;
         }
 
         StateMachine.Initialize(GroundedState);
@@ -154,7 +155,9 @@ public class PlayerController : MonoBehaviour
         {
             float headDropAmount = StandingHeight - Controller.height;
             Vector3 camPos = CameraTransform.localPosition;
-            camPos.y = defaultCameraY - headDropAmount;
+            camPos.y = defaultCameraPosition.y - headDropAmount;
+            camPos.z = defaultCameraPosition.z + (crouchForwardOffset * (1 - (Controller.height - CrouchHeight) / (StandingHeight - CrouchHeight)));
+
             CameraTransform.localPosition = camPos;
         }
     }
