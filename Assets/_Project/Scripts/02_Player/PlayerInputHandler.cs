@@ -11,7 +11,7 @@ public class PlayerInputHandler : MonoBehaviour
 
     [Header("Action States (Hold)")]
     public bool IsSprinting { get; private set; }
-    public bool IsAiming { get; private set; } // ÇÊ¿äÇÏ´Ù¸é Ãß°¡
+    public bool IsAiming { get; private set; } // í•„ìš”í•˜ë‹¤ë©´ ì¶”ê°€
 
     [Header("Action Triggers (One-shot)")]
     public bool JumpTriggered { get; private set; }
@@ -51,13 +51,13 @@ public class PlayerInputHandler : MonoBehaviour
         inputActions.Disable();
     }
 
-    // One-shot Æ®¸®°Å´Â ¼Òºñ ¸Ş¼­µå¸¦ ÅëÇØ »óÅÂ ÃÊ±âÈ­
+    // One-shot íŠ¸ë¦¬ê±°ëŠ” ì†Œë¹„ ë©”ì„œë“œë¥¼ í†µí•´ ìƒíƒœ ì´ˆê¸°í™”
     public void ConsumeJump() => JumpTriggered = false;
     public void ConsumeCrouch() => CrouchTriggered = false;
     public void ConsumeInteract() => InteractTriggered = false;
 
     /// <summary>
-    /// ÇÃ·¹ÀÌ¾îÀÇ Á¶ÀÛ Â÷´Ü/º¹±¸
+    /// í”Œë ˆì´ì–´ì˜ ì¡°ì‘ ì°¨ë‹¨/ë³µêµ¬
     /// </summary>
     public void SetInputActive(bool isActive)
     {
