@@ -10,24 +10,59 @@ public class PlayerNoiseEmitter : MonoBehaviour
     public float walkStride = 1.6f;
     public float sprintStride = 2.2f;
 
+    [Header("Anti-Jitter")]
+    public float minAirTimeForLanding = 0.2f;
+    public float minFallSpeedForLanding = 2.0f;
+
     private float accumulatedDistance = 0f;
+
+    private bool wasGrounded = true;
+    private float lastFallSpeed = 0f;
+    private float currentAirTime = 0f;
 
     private void Update()
     {
-        if (player == null || !player.IsGrounded)
+        if (player == null) return;
+
+        bool isGrounded = player.StateMachine.CurrentState == player.GroundedState;
+
+        if (!isGrounded)
         {
+            currentAirTime += Time.deltaTime;
+            lastFallSpeed = player.Controller.velocity.y;
             accumulatedDistance = 0f;
-            return;
         }
 
+        if (!wasGrounded && isGrounded)
+        {
+            float absFallSpeed = Mathf.Abs(lastFallSpeed);
+
+            if (currentAirTime >= minAirTimeForLanding || absFallSpeed >= minFallSpeedForLanding)
+            {
+                GenerateLandingNoise(absFallSpeed, currentAirTime);
+            }
+
+            currentAirTime = 0f;
+        }
+
+        if (isGrounded)
+        {
+            CalculateMovementNoise();
+        }
+
+        wasGrounded = isGrounded;
+    }
+
+    private void CalculateMovementNoise()
+    {
         Vector3 horizontalVelocity = new Vector3(player.Controller.velocity.x, 0f, player.Controller.velocity.z);
         float currentSpeed = horizontalVelocity.magnitude;
 
         if (currentSpeed > 0.1f)
         {
             accumulatedDistance += currentSpeed * Time.deltaTime;
-
             float currentStride = GetCurrentStride();
+
             if (accumulatedDistance >= currentStride)
             {
                 GenerateFootstepNoise();
@@ -38,6 +73,12 @@ public class PlayerNoiseEmitter : MonoBehaviour
         {
             accumulatedDistance = 0f;
         }
+    }
+
+    private void GenerateLandingNoise(float impactSpeed, float airTime)
+    {
+        // TODO: Adjust noise type based on impact speed and air time for more realism
+        NoiseManager.Instance.GenerateNoise(transform.position, NoiseData.NoiseType.Fall);
     }
 
     private float GetCurrentStride()
@@ -77,5 +118,10 @@ public class PlayerNoiseEmitter : MonoBehaviour
         }
 
         NoiseManager.Instance.GenerateNoise(transform.position, currentNoise);
+    }
+
+    public void GenerateJumpNoise()
+    {
+        NoiseManager.Instance.GenerateNoise(transform.position, NoiseData.NoiseType.Jump);
     }
 }
