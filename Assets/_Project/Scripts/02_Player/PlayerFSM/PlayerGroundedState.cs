@@ -140,6 +140,7 @@ public class PlayerGroundedState : PlayerState
     private void ExecuteJump()
     {
         player.currentVelocity.y = player.jumpForce;
+        player.NoiseEmitter.GenerateJumpNoise();
         player.InputHandler.ConsumeJump();
         stateMachine.ChangeState(player.AirborneState);
     }
