@@ -3,13 +3,8 @@ using UnityEngine.AI;
 
 public class EnemyPatrolState : EnemyState
 {
-    private readonly Vector3 patrolOrigin;
-
     public EnemyPatrolState(EnemyAI enemy, EnemyStateMachine stateMachine)
-        : base(enemy, stateMachine)
-    {
-        patrolOrigin = enemy.transform.position;
-    }
+        : base(enemy, stateMachine) { }
 
     public override void Enter()
     {
@@ -21,10 +16,14 @@ public class EnemyPatrolState : EnemyState
 
     public override void LogicUpdate()
     {
-        // 소음 감지 시 AlertState 진입
-        if (enemy.HasNoiseDetected)
+        if (enemy.NoiseSuspicionLevel >= 100f)
         {
-            enemy.ConsumeNoiseDetection();
+            stateMachine.ChangeState(enemy.ChaseState);
+            return;
+        }
+
+        if (enemy.NoiseSuspicionLevel >= 50f)
+        {
             stateMachine.ChangeState(enemy.AlertState);
             return;
         }
@@ -44,7 +43,7 @@ public class EnemyPatrolState : EnemyState
         for (int i = 0; i < maxAttempts; i++)
         {
             Vector2 randomCircle = Random.insideUnitCircle * enemy.Data.patrolRadius;
-            Vector3 candidate = patrolOrigin + new Vector3(randomCircle.x, 0f, randomCircle.y);
+            Vector3 candidate = enemy.PatrolOrigin + new Vector3(randomCircle.x, 0f, randomCircle.y);
 
             if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, navMeshSampleRadius, NavMesh.AllAreas))
             {
@@ -53,8 +52,8 @@ public class EnemyPatrolState : EnemyState
             }
         }
 
-        // 모든 시도 실패 시 원점으로 복귀
-        if (NavMesh.SamplePosition(patrolOrigin, out NavMeshHit fallback, navMeshSampleRadius, NavMesh.AllAreas))
+        // 모든 시도 실패 시 PatrolOrigin으로 복귀
+        if (NavMesh.SamplePosition(enemy.PatrolOrigin, out NavMeshHit fallback, navMeshSampleRadius, NavMesh.AllAreas))
         {
             enemy.Agent.SetDestination(fallback.position);
         }
