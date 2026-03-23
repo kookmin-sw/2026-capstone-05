@@ -15,15 +15,15 @@ MonoBehaviour:
   enemyName: Enemy
   maxHealth: 100
   walkSpeed: 2
-  chaseSpeed: 4
+  chaseSpeed: 5
+  searchSpeed: 4
+  rotationSpeed: 30
   patrolRadius: 15
-  searchSpeed: 3
   searchRadius: 6
-  searchDuration: 5
-  detectionRange: 10
-  noiseSuspicionPerEvent: 100
-  noiseSuspicionDecayRate: 15
-  noiseSuspicionDecayDelay: 3
-  attackRange: 2
+  detectionRadius: 10
+  suspicionGainAmount: 100
+  suspicionReduceRate: 15
+  suspicionReduceDelay: 2
   attackDamage: 10
   attackCooldown: 1
+  attackRadius: 2
