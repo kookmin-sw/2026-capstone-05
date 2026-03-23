@@ -39,15 +39,17 @@ public class PlayerAnimator : MonoBehaviour
         }
     }
 
-    public void UpdateMovement(float speed) // Normalized speed (0 to 1)
+    public void UpdateMovement(Vector2 moveInput) // Normalized move (0 to 1)
     {
         if (animator1P != null)
         {
-            animator1P.SetFloat(hashSpeed, speed, speedDampTime, Time.deltaTime);
+            animator1P.SetFloat("MoveX", moveInput.x, speedDampTime, Time.deltaTime);
+            animator1P.SetFloat("MoveY", moveInput.y, speedDampTime, Time.deltaTime);
         }
         if (animator3P != null)
         {
-            animator3P.SetFloat(hashSpeed, speed, speedDampTime, Time.deltaTime);
+            animator3P.SetFloat("MoveX", moveInput.x, speedDampTime, Time.deltaTime);
+            animator3P.SetFloat("MoveY", moveInput.y, speedDampTime, Time.deltaTime);
         }
     }
 

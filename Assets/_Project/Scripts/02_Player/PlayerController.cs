@@ -18,6 +18,7 @@ public class PlayerController : MonoBehaviour
     public PlayerInputHandler InputHandler { get; private set; }
     public PlayerAnimator Animator { get; private set; }
     public PlayerCondition Condition { get; private set; }
+    public PlayerNoiseEmitter NoiseEmitter { get; private set; }
     public Transform CameraTransform => cameraTransform;
 
     // 스탯 및 설정 (Stats & Settings)
@@ -57,6 +58,7 @@ public class PlayerController : MonoBehaviour
         InputHandler = GetComponent<PlayerInputHandler>();
         Animator = GetComponent<PlayerAnimator>();
         Condition = GetComponent<PlayerCondition>();
+        NoiseEmitter = GetComponent<PlayerNoiseEmitter>();
 
 
         StateMachine = new PlayerStateMachine();
