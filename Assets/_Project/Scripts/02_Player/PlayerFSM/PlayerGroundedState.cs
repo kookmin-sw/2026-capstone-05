@@ -17,6 +17,9 @@ public class PlayerGroundedState : PlayerState
     private PlayerGroundedPosture currentPosture;
     private PlayerGroundedLocomotion currentLocomotion;
 
+    public PlayerGroundedPosture CurrentPosture => currentPosture;
+    public PlayerGroundedLocomotion CurrentLocomotion => currentLocomotion;
+
     public PlayerGroundedState(PlayerController player, PlayerStateMachine stateMachine)
         : base(player, stateMachine)
     {
@@ -194,11 +197,11 @@ public class PlayerGroundedState : PlayerState
     {
         if (currentLocomotion == PlayerGroundedLocomotion.Idle)
         {
-            player.Animator.UpdateMovement(0f);
+            player.Animator.UpdateMovement(Vector2.zero);
         }
         else
         {
-            player.Animator.UpdateMovement(player.InputHandler.MoveInput.magnitude);
+            player.Animator.UpdateMovement(player.InputHandler.MoveInput);
         }
     }
 }

@@ -654,8 +654,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   cameraTransform: {fileID: 219158335034487518}
-  walkSpeed: 3
-  sprintSpeed: 6
+  walkSpeed: 2.5
+  sprintSpeed: 5
   crouchSpeed: 1.5
   jumpForce: 5
   gravityScale: 2
@@ -747,6 +747,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0196d0eb35ae449489d8871b43051ab4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NoiseEmitter
+  player: {fileID: 1915611918036273558}
+  crouchStride: 1.2
+  walkStride: 1.6
+  sprintStride: 2.2
 --- !u!1 &3599445336930800097
 GameObject:
   m_ObjectHideFlags: 0
@@ -1268,9 +1272,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 8c4b3b0cd5c30cf4f95c880107ee5bfa, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6471521419438393136}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 8c4b3b0cd5c30cf4f95c880107ee5bfa, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 4668302964836400732}
   m_SourcePrefab: {fileID: 100100000, guid: 8c4b3b0cd5c30cf4f95c880107ee5bfa, type: 3}
 --- !u!4 &2601778275025469839 stripped
 Transform:
@@ -1308,20 +1309,6 @@ MonoBehaviour:
   - m_Rig: {fileID: 6208418588958114776}
     m_Active: 1
   m_Effectors: []
---- !u!114 &4668302964836400732
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4068325285774302426}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b8be83354b185c549966bc60e6435faa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AnimationNoiseRouter
-  isLogicMaster: 0
-  noiseEmitter: {fileID: 5116940794873436915}
 --- !u!4 &7301137714230088931 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -3321919801592875672, guid: 8c4b3b0cd5c30cf4f95c880107ee5bfa, type: 3}
@@ -1427,9 +1414,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9df7e21cf96e21840858c1ce18bb1296, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8728289072728321667}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9df7e21cf96e21840858c1ce18bb1296, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 5401859458830614230}
   m_SourcePrefab: {fileID: 100100000, guid: 9df7e21cf96e21840858c1ce18bb1296, type: 3}
 --- !u!95 &1051424942239900264 stripped
 Animator:
@@ -1457,20 +1441,6 @@ MonoBehaviour:
   - m_Rig: {fileID: 915010856341782616}
     m_Active: 1
   m_Effectors: []
---- !u!114 &5401859458830614230
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5997832708594361000}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b8be83354b185c549966bc60e6435faa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AnimationNoiseRouter
-  isLogicMaster: 1
-  noiseEmitter: {fileID: 5116940794873436915}
 --- !u!4 &6374640482249357330 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9df7e21cf96e21840858c1ce18bb1296, type: 3}
