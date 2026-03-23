@@ -2,25 +2,27 @@ using UnityEngine;
 
 public class EnemyChaseState : EnemyState
 {
+    private Vector3 lastNoisePosition;
+
     public EnemyChaseState(EnemyAI enemy, EnemyStateMachine stateMachine)
         : base(enemy, stateMachine) { }
 
     public override void Enter()
     {
         enemy.Agent.speed = enemy.Data.chaseSpeed;
-        enemy.Agent.SetDestination(enemy.DetectedNoisePosition);
+        lastNoisePosition = enemy.DetectedNoisePosition;
+        enemy.Agent.SetDestination(lastNoisePosition);
     }
 
     public override void Exit() { }
 
     public override void LogicUpdate()
     {
-        // 소음 감지 시 해당 위치로 이동
-        if (enemy.HasNoiseDetected)
+        // 새 소음 위치 감지 시 목적지 업데이트 (의심 수치는 감소하지 않음)
+        if (enemy.DetectedNoisePosition != lastNoisePosition)
         {
-            enemy.ConsumeNoiseDetection();
-            enemy.Agent.SetDestination(enemy.DetectedNoisePosition);
-            return;
+            lastNoisePosition = enemy.DetectedNoisePosition;
+            enemy.Agent.SetDestination(lastNoisePosition);
         }
 
         // 목적지 도착 시 SearchState 진입

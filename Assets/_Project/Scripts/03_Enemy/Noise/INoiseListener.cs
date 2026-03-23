@@ -2,5 +2,6 @@ using UnityEngine;
 
 public interface INoiseListener
 {
-    void ListenNoise(Vector3 noisePosition);
+    float NoiseDetectionRadius { get; }
+    void OnNoiseDetected(Vector3 noisePosition, float noiseRadius);
 }

@@ -2,8 +2,6 @@ using UnityEngine;
 
 public class EnemyIdleState : EnemyState
 {
-    private float idleMinTime = 2f;
-    private float idleMaxTime = 4f;
     private float idleDuration;
     private float elapsedTime;
 
@@ -15,7 +13,7 @@ public class EnemyIdleState : EnemyState
         enemy.Agent.isStopped = true;
         enemy.Agent.updateRotation = false;
 
-        idleDuration = Random.Range(idleMinTime, idleMaxTime);
+        idleDuration = Random.Range(enemy.Data.idleMinTime, enemy.Data.idleMaxTime);
         elapsedTime = 0f;
     }
 
@@ -27,10 +25,16 @@ public class EnemyIdleState : EnemyState
 
     public override void LogicUpdate()
     {
-        // 소음 감지 시 AlertState 진입
-        if (enemy.HasNoiseDetected)
+        // 의심 수치 100 이상: ChaseState 진입
+        if (enemy.NoiseSuspicionLevel >= 100f)
         {
-            enemy.ConsumeNoiseDetection();
+            stateMachine.ChangeState(enemy.ChaseState);
+            return;
+        }
+
+        // 의심 수치 50 이상: AlertState 진입
+        if (enemy.NoiseSuspicionLevel >= 50f)
+        {
             stateMachine.ChangeState(enemy.AlertState);
             return;
         }

@@ -10,6 +10,8 @@ public class NoiseManager : MonoBehaviour
     [Header("Noise Calculation")]
     [SerializeField] private float radiusMultiplier = 0.2f;
     [SerializeField] private float variationRange = 0.05f;
+    [Tooltip("시나리오에서 가장 큰 적 감지 반경. 소음 탐색 OverlapSphere 반경 확장에 사용.")]
+    [SerializeField] private float maxListenerDetectionRadius = 20f;
     
     [Header("Debug Settings")]
     [SerializeField] private bool showGizmos = true;
@@ -22,7 +24,7 @@ public class NoiseManager : MonoBehaviour
     private struct ActiveNoise
     {
         public Vector3 position;
-        public float deceibel;
+        public float decibel;
         public float radius;
         public float expireTime;
         public NoiseData.NoiseType noiseType;
@@ -30,7 +32,7 @@ public class NoiseManager : MonoBehaviour
         public ActiveNoise(Vector3 pos, float decibel, float rad, float duration, NoiseData.NoiseType type)
         {
             position = pos;
-            deceibel = decibel;
+            this.decibel = decibel;
             radius = rad;
             expireTime = Time.time + duration;
             noiseType = type;
@@ -96,16 +98,26 @@ public class NoiseManager : MonoBehaviour
         NotifyEnemies(position, calculatedRadius);
     }
 
-    // 소음 발생 위치와 범위를 감지 가능한 적들에게 알림
+    // 소음 원과 리스너 감지 원이 겹치는 경우 알림
     private void NotifyEnemies(Vector3 position, float radius)
     {
-        Collider[] hitColliders = Physics.OverlapSphere(position, radius);
+        // 중복 알림 방지용 해시 셋
+        HashSet<INoiseListener> notified = new HashSet<INoiseListener>();
+
+        // 소음 반경 + 최대 감지 반경으로 넓게 탐색
+        Collider[] hitColliders = Physics.OverlapSphere(position, radius + maxListenerDetectionRadius);
         foreach (var hit in hitColliders)
         {
             INoiseListener listener = hit.GetComponentInParent<INoiseListener>();
-            if (listener != null)
+            if (listener == null || !notified.Add(listener)) continue;
+
+            // MonoBehaviour로 캐스트하여 리스너의 실제 위치를 정확하게 가져옴
+            if (listener is not MonoBehaviour listenerMb) continue;
+
+            float distance = Vector3.Distance(listenerMb.transform.position, position);
+            if (distance < radius + listener.NoiseDetectionRadius)
             {
-                listener.ListenNoise(position);
+                listener.OnNoiseDetected(position, radius);
             }
         }
     }

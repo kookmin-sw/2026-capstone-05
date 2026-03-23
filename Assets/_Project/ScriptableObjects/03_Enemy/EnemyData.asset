@@ -16,7 +16,14 @@ MonoBehaviour:
   maxHealth: 100
   walkSpeed: 2
   chaseSpeed: 4
+  patrolRadius: 15
+  searchSpeed: 3
+  searchRadius: 6
+  searchDuration: 5
   detectionRange: 10
-  attackRange: 1.5
+  noiseSuspicionPerEvent: 100
+  noiseSuspicionDecayRate: 15
+  noiseSuspicionDecayDelay: 3
+  attackRange: 2
   attackDamage: 10
   attackCooldown: 1

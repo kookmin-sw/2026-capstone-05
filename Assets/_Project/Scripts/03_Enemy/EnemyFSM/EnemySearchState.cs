@@ -3,7 +3,6 @@ using UnityEngine.AI;
 
 public class EnemySearchState : EnemyState
 {
-    private float elapsedTime;
     private Vector3 searchCenter;
 
     public EnemySearchState(EnemyAI enemy, EnemyStateMachine stateMachine)
@@ -11,8 +10,8 @@ public class EnemySearchState : EnemyState
 
     public override void Enter()
     {
-        elapsedTime = 0f;
         searchCenter = enemy.transform.position;
+        enemy.SetPatrolOrigin(searchCenter);
         enemy.Agent.speed = enemy.Data.searchSpeed;
         SetRandomDestination();
     }
@@ -22,36 +21,34 @@ public class EnemySearchState : EnemyState
     public override void LogicUpdate()
     {
         // 공격 범위 내 플레이어 존재 시 AttackState 진입
-        if (IsPlayerInRange())
+        if (IsPlayerInAttackRange())
         {
             stateMachine.ChangeState(enemy.AttackState);
             return;
         }
 
-        // 소음 감지 시 ChaseState 진입
-        if (enemy.HasNoiseDetected)
+        // 수치 100 이상: 소음 재감지 → ChaseState
+        if (enemy.NoiseSuspicionLevel >= 100f)
         {
-            enemy.ConsumeNoiseDetection();
             stateMachine.ChangeState(enemy.ChaseState);
             return;
         }
 
-        // 수색 제한 시간 초과 시 IdleState 진입
-        elapsedTime += Time.deltaTime;
-        if (elapsedTime >= enemy.Data.searchDuration)
+        // 수치 0: 의심 해소 → IdleState
+        if (enemy.NoiseSuspicionLevel <= 0f)
         {
             stateMachine.ChangeState(enemy.IdleState);
             return;
         }
 
-        // 목적지 도착 시 다음 랜덤 위치로 이동
+        // 목적지 도착 시 다음 랜덤 위치로 수색
         if (!enemy.Agent.pathPending && enemy.Agent.remainingDistance <= enemy.Agent.stoppingDistance)
         {
             SetRandomDestination();
         }
     }
 
-    private bool IsPlayerInRange()
+    private bool IsPlayerInAttackRange()
     {
         Collider[] hits = Physics.OverlapSphere(enemy.transform.position, enemy.Data.attackRange);
         foreach (var hit in hits)

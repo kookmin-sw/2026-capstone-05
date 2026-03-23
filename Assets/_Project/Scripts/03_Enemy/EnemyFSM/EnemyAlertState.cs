@@ -2,16 +2,12 @@ using UnityEngine;
 
 public class EnemyAlertState : EnemyState
 {
-    private float fallbackDuration = 1.5f;
-    private float alertTimer;
-
     public EnemyAlertState(EnemyAI enemy, EnemyStateMachine stateMachine)
         : base(enemy, stateMachine) { }
 
     public override void Enter()
     {
         enemy.Agent.isStopped = true;
-        alertTimer = fallbackDuration;
     }
 
     public override void Exit()
@@ -21,13 +17,20 @@ public class EnemyAlertState : EnemyState
 
     public override void LogicUpdate()
     {
-        LookAtNoisePosition();
-
-        alertTimer -= Time.deltaTime;
-        if (alertTimer <= 0f)
+        if (enemy.NoiseSuspicionLevel >= 100f)
         {
             stateMachine.ChangeState(enemy.ChaseState);
+            return;
         }
+
+        if (enemy.NoiseSuspicionLevel < 50f)
+        {
+            stateMachine.ChangeState(enemy.IdleState);
+            return;
+        }
+
+        // 소음 방향 응시
+        LookAtNoisePosition();
     }
 
     private void LookAtNoisePosition()
