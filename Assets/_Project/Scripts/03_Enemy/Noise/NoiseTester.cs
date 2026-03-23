@@ -3,19 +3,19 @@ using UnityEngine;
 public class NoiseTester : MonoBehaviour
 {
     [Header("Noise Settings")]
-    [SerializeField] private NoiseData.NoiseType noiseType = NoiseData.NoiseType.Jump;
+    [SerializeField] private NoiseData.NoiseType noiseType = NoiseData.NoiseType.Sprint;
 
-    [SerializeField] private KeyCode triggerKey = KeyCode.Space;
+    [SerializeField] private KeyCode triggerKey = KeyCode.Tab;
 
     private void Update()
     {
         if (Input.GetKeyDown(triggerKey))
         {
-            GenerateNoise();
+            GenerateTestNoise();
         }
     }
 
-    private void GenerateNoise()
+    private void GenerateTestNoise()
     {
         if (NoiseManager.Instance == null)
         {
@@ -23,6 +23,5 @@ public class NoiseTester : MonoBehaviour
         }
 
         NoiseManager.Instance.GenerateNoise(transform.position, noiseType);
-        Debug.Log($"[NoiseTester] 소음 발생: {noiseType} @ {transform.position}");
     }
 }

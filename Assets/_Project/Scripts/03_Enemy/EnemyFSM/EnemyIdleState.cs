@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class EnemyIdleState : EnemyState
 {
+    private float idleStartTime = 2f;
+    private float idleEndTime = 4f;
     private float idleDuration;
     private float elapsedTime;
 
@@ -13,7 +15,7 @@ public class EnemyIdleState : EnemyState
         enemy.Agent.isStopped = true;
         enemy.Agent.updateRotation = false;
 
-        idleDuration = Random.Range(enemy.Data.idleMinTime, enemy.Data.idleMaxTime);
+        idleDuration = Random.Range(idleStartTime, idleEndTime);
         elapsedTime = 0f;
     }
 
@@ -25,21 +27,18 @@ public class EnemyIdleState : EnemyState
 
     public override void LogicUpdate()
     {
-        // 의심 수치 100 이상: ChaseState 진입
-        if (enemy.NoiseSuspicionLevel >= 100f)
+        if (enemy.SuspicionLevel >= 100f)
         {
             stateMachine.ChangeState(enemy.ChaseState);
             return;
         }
 
-        // 의심 수치 50 이상: AlertState 진입
-        if (enemy.NoiseSuspicionLevel >= 50f)
+        if (enemy.SuspicionLevel >= 50f)
         {
             stateMachine.ChangeState(enemy.AlertState);
             return;
         }
 
-        // 대기 시간 종료 시 PatrolState 진입
         elapsedTime += Time.deltaTime;
         if (elapsedTime >= idleDuration)
         {

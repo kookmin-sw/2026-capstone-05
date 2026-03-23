@@ -18,14 +18,13 @@ public class EnemyChaseState : EnemyState
 
     public override void LogicUpdate()
     {
-        // 새 소음 위치 감지 시 목적지 업데이트 (의심 수치는 감소하지 않음)
         if (enemy.DetectedNoisePosition != lastNoisePosition)
         {
             lastNoisePosition = enemy.DetectedNoisePosition;
             enemy.Agent.SetDestination(lastNoisePosition);
+            enemy.LookAtDetectedNoisePosition();
         }
 
-        // 목적지 도착 시 SearchState 진입
         if (!enemy.Agent.pathPending && enemy.Agent.remainingDistance <= enemy.Agent.stoppingDistance)
         {
             stateMachine.ChangeState(enemy.SearchState);

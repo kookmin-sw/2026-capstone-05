@@ -8,43 +8,29 @@ public class EnemyAlertState : EnemyState
     public override void Enter()
     {
         enemy.Agent.isStopped = true;
+        enemy.Agent.updateRotation = false;
     }
 
     public override void Exit()
     {
         enemy.Agent.isStopped = false;
+        enemy.Agent.updateRotation = true;
     }
 
     public override void LogicUpdate()
     {
-        if (enemy.NoiseSuspicionLevel >= 100f)
+        if (enemy.SuspicionLevel >= 100f)
         {
             stateMachine.ChangeState(enemy.ChaseState);
             return;
         }
 
-        if (enemy.NoiseSuspicionLevel < 50f)
+        if (enemy.SuspicionLevel < 50f)
         {
-            stateMachine.ChangeState(enemy.IdleState);
+            stateMachine.ChangeState(enemy.PatrolState);
             return;
         }
 
-        // 소음 방향 응시
-        LookAtNoisePosition();
-    }
-
-    private void LookAtNoisePosition()
-    {
-        Vector3 direction = (enemy.DetectedNoisePosition - enemy.transform.position).normalized;
-        direction.y = 0f;
-
-        if (direction == Vector3.zero) return;
-
-        Quaternion targetRotation = Quaternion.LookRotation(direction);
-        enemy.transform.rotation = Quaternion.Slerp(
-            enemy.transform.rotation,
-            targetRotation,
-            Time.deltaTime * 10f
-        );
+        enemy.LookAtDetectedNoisePosition();
     }
 }

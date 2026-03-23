@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -24,14 +25,23 @@ public class EnemyAI : MonoBehaviour, INoiseListener
     public EnemyHitState HitState { get; private set; }
     public EnemyDeadState DeadState { get; private set; }
 
+    // Patrol
+    public Vector3 PatrolCenter { get; private set; }
+    
     // Noise Suspicion
     public Vector3 DetectedNoisePosition { get; private set; }
-    public float NoiseSuspicionLevel { get; private set; }
-    public float NoiseDetectionRadius => data != null ? data.detectionRange : 0f;
-    private float lastNoiseReceivedTime = float.NegativeInfinity;
-
-    // Patrol
-    public Vector3 PatrolOrigin { get; private set; }
+    public float SuspicionLevel { get; private set; }
+    public float DetectionRadius
+    {
+        get
+        {
+            if (data != null)
+                return data.detectionRadius;
+            else
+                return 0f;
+        }
+    }
+    private Coroutine reduceCoroutine;
 
     private void Awake()
     {
@@ -39,7 +49,7 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         Agent = GetComponent<NavMeshAgent>();
         Health = GetComponent<EnemyHealth>();
 
-        PatrolOrigin = transform.position;
+        PatrolCenter = transform.position;
 
         StateMachine = new EnemyStateMachine();
         IdleState = new EnemyIdleState(this, StateMachine);
@@ -60,7 +70,6 @@ public class EnemyAI : MonoBehaviour, INoiseListener
     private void Update()
     {
         StateMachine.CurrentState.LogicUpdate();
-        TickSuspicionDecay();
     }
 
     private void FixedUpdate()
@@ -68,64 +77,61 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         StateMachine.CurrentState.PhysicsUpdate();
     }
 
-    // Chase 중에는 감소 없음, 그 외 마지막 소음 감지 후 decay delay 경과 시 감소
-    private void TickSuspicionDecay()
+    public void SetPatrolCenter(Vector3 newCenter)
     {
-        if (StateMachine.CurrentState == ChaseState) return;
-        if (Time.time - lastNoiseReceivedTime < data.noiseSuspicionDecayDelay) return;
-        NoiseSuspicionLevel = Mathf.Max(0f, NoiseSuspicionLevel - data.noiseSuspicionDecayRate * Time.deltaTime);
+        PatrolCenter = newCenter;
     }
 
-    public void SetPatrolOrigin(Vector3 newOrigin)
+    public void LookAtDetectedNoisePosition()
     {
-        PatrolOrigin = newOrigin;
+        Vector3 direction = DetectedNoisePosition - transform.position;
+        direction.y = 0f;
+
+        if (direction == Vector3.zero) return;
+
+        Quaternion targetRotation = Quaternion.LookRotation(direction);
+        transform.rotation = Quaternion.Slerp(
+            transform.rotation,
+            targetRotation,
+            Time.deltaTime * data.rotationSpeed
+        );
     }
 
     public void OnNoiseDetected(Vector3 noisePosition, float noiseRadius)
     {
         DetectedNoisePosition = noisePosition;
-        lastNoiseReceivedTime = Time.time;
 
         float distance = Vector3.Distance(transform.position, noisePosition);
-        float ratio = Mathf.Clamp01(1f - distance / (noiseRadius + data.detectionRange));
-        float gain = data.noiseSuspicionPerEvent * ratio;
+        float ratio = Mathf.Clamp01(1f - distance / (noiseRadius + data.detectionRadius));
+        float gain = data.suspicionGainAmount * ratio;
+        SuspicionLevel = Mathf.Clamp(SuspicionLevel + gain, 0f, 100f);
 
-        NoiseSuspicionLevel = Mathf.Clamp(NoiseSuspicionLevel + gain, 0f, 100f);
+        if (reduceCoroutine != null)
+            StopCoroutine(reduceCoroutine);
+        reduceCoroutine = StartCoroutine(ReduceSuspicionRoutine());
+    }
+
+    private IEnumerator ReduceSuspicionRoutine()
+    {
+        yield return new WaitForSeconds(data.suspicionReduceDelay);
+
+        while (SuspicionLevel > 0f)
+        {
+            if (StateMachine.CurrentState != ChaseState)
+                SuspicionLevel = Mathf.Max(0f, SuspicionLevel - data.suspicionReduceRate * Time.deltaTime);
+            yield return null;
+        }
+
+        reduceCoroutine = null;
     }
 
 #if UNITY_EDITOR
     private void OnDrawGizmos()
     {
-        float t = NoiseSuspicionLevel / 100f;
-
-        // 의심 수치 색상: 초록(안전) → 노랑(경계) → 빨강(추적)
-        Color fillColor = t < 0.5f
-            ? Color.Lerp(new Color(0.2f, 0.9f, 0.2f), new Color(1f, 0.9f, 0.1f), t * 2f)
-            : Color.Lerp(new Color(1f, 0.9f, 0.1f), new Color(1f, 0.2f, 0.1f), (t - 0.5f) * 2f);
-
-        Vector3 center = transform.position + Vector3.up * 0.05f;
-        const float radius = 0.55f;
-
-        // 배경 디스크 (회색)
-        UnityEditor.Handles.color = new Color(0.15f, 0.15f, 0.15f, 0.5f);
-        UnityEditor.Handles.DrawSolidDisc(center, Vector3.up, radius);
-
-        // 의심 수치 채움 부채꼴
-        if (NoiseSuspicionLevel > 0f)
-        {
-            UnityEditor.Handles.color = new Color(fillColor.r, fillColor.g, fillColor.b, 0.85f);
-            UnityEditor.Handles.DrawSolidArc(center, Vector3.up, Vector3.forward, 360f * t, radius);
-        }
-
-        // 외곽선
-        UnityEditor.Handles.color = new Color(1f, 1f, 1f, 0.6f);
-        UnityEditor.Handles.DrawWireDisc(center, Vector3.up, radius);
-
-        // 수치 레이블
-        string stateLabel = NoiseSuspicionLevel >= 100f ? "추적" : NoiseSuspicionLevel >= 50f ? "경계" : "안전";
-        UnityEditor.Handles.Label(
-            transform.position + Vector3.up * 2.2f,
-            $"의심 {NoiseSuspicionLevel:F0} / 100  [{stateLabel}]"
+        // 의심 수치 표시
+        float t = SuspicionLevel / 100f;
+        UnityEditor.Handles.Label(transform.position + Vector3.up * 2.2f, 
+            $"SuspicionLevel {SuspicionLevel:F0} / 100"
         );
     }
 
@@ -135,21 +141,21 @@ public class EnemyAI : MonoBehaviour, INoiseListener
 
         // 순찰 범위 (파란색)
         UnityEditor.Handles.color = new Color(0.2f, 0.5f, 1f, 0.15f);
-        UnityEditor.Handles.DrawSolidDisc(PatrolOrigin, Vector3.up, data.patrolRadius);
+        UnityEditor.Handles.DrawSolidDisc(PatrolCenter, Vector3.up, data.patrolRadius);
         UnityEditor.Handles.color = new Color(0.2f, 0.5f, 1f, 1f);
-        UnityEditor.Handles.DrawWireDisc(PatrolOrigin, Vector3.up, data.patrolRadius);
+        UnityEditor.Handles.DrawWireDisc(PatrolCenter, Vector3.up, data.patrolRadius);
 
         // 소음 감지 범위 (노란색)
         UnityEditor.Handles.color = new Color(1f, 0.9f, 0.1f, 0.1f);
-        UnityEditor.Handles.DrawSolidDisc(transform.position, Vector3.up, data.detectionRange);
+        UnityEditor.Handles.DrawSolidDisc(transform.position, Vector3.up, data.detectionRadius);
         UnityEditor.Handles.color = new Color(1f, 0.9f, 0.1f, 1f);
-        UnityEditor.Handles.DrawWireDisc(transform.position, Vector3.up, data.detectionRange);
+        UnityEditor.Handles.DrawWireDisc(transform.position, Vector3.up, data.detectionRadius);
 
         // 공격 범위 (빨간색)
         UnityEditor.Handles.color = new Color(1f, 0.2f, 0.2f, 0.2f);
-        UnityEditor.Handles.DrawSolidDisc(transform.position, Vector3.up, data.attackRange);
+        UnityEditor.Handles.DrawSolidDisc(transform.position, Vector3.up, data.attackRadius);
         UnityEditor.Handles.color = new Color(1f, 0.2f, 0.2f, 1f);
-        UnityEditor.Handles.DrawWireDisc(transform.position, Vector3.up, data.attackRange);
+        UnityEditor.Handles.DrawWireDisc(transform.position, Vector3.up, data.attackRadius);
     }
 #endif
 }
