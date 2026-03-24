@@ -3,8 +3,10 @@ using System.Collections.Generic;
 
 public class NoiseManager : MonoBehaviour
 {
+    // Singleton
     public static NoiseManager Instance;
-    
+
+    // Serialized Fields
     [SerializeField] private NoiseData noiseData;
     
     [Header("Noise Calculation")]
@@ -16,30 +18,10 @@ public class NoiseManager : MonoBehaviour
     [SerializeField] private bool showGizmos = true;
     [SerializeField] private float displayTime = 1f;
     
-    // 데이터 조회 최적화용 사전
+    // Private Fields
     private Dictionary<NoiseData.NoiseType, float> noiseDict = new Dictionary<NoiseData.NoiseType, float>();
-
-    // 활성 소음 관리용 구조체
-    private struct ActiveNoise
-    {
-        public Vector3 position;
-        public float decibel;
-        public float radius;
-        public float expireTime;
-        public NoiseData.NoiseType noiseType;
-
-        public ActiveNoise(Vector3 pos, float decibel, float rad, float duration, NoiseData.NoiseType type)
-        {
-            position = pos;
-            this.decibel = decibel;
-            radius = rad;
-            expireTime = Time.time + duration;
-            noiseType = type;
-        }
-    }
-    
     private List<ActiveNoise> activeNoises = new List<ActiveNoise>();
-    
+
     private void Awake()
     {
         if (Instance == null) 
@@ -66,7 +48,6 @@ public class NoiseManager : MonoBehaviour
     
     private void Update()
     {
-        // 시간이 다 된 소음 정보들을 리스트에서 제거
         for (int i = activeNoises.Count - 1; i >= 0; i--)
         {
             if (Time.time >= activeNoises[i].expireTime)
@@ -94,7 +75,6 @@ public class NoiseManager : MonoBehaviour
 
     private void NotifyEnemies(Vector3 position, float radius)
     {
-        // 중복 알림 방지용 해시 셋
         HashSet<INoiseListener> notified = new HashSet<INoiseListener>();
 
         Collider[] hitColliders = Physics.OverlapSphere(position, radius + maxListenerDetectionRadius);
@@ -113,7 +93,6 @@ public class NoiseManager : MonoBehaviour
         }
     }
 
-    // 소음 범위 시각화
     private void OnDrawGizmos()
     {
         if (!showGizmos || activeNoises == null) return;
@@ -125,6 +104,25 @@ public class NoiseManager : MonoBehaviour
 
             Gizmos.DrawSphere(noise.position, 0.2f);
             Gizmos.DrawWireSphere(noise.position, noise.radius);
+        }
+    }
+
+    // Nested Types
+    private struct ActiveNoise
+    {
+        public Vector3 position;
+        public float decibel;
+        public float radius;
+        public float expireTime;
+        public NoiseData.NoiseType noiseType;
+
+        public ActiveNoise(Vector3 pos, float decibel, float rad, float duration, NoiseData.NoiseType type)
+        {
+            position = pos;
+            this.decibel = decibel;
+            radius = rad;
+            expireTime = Time.time + duration;
+            noiseType = type;
         }
     }
 }
