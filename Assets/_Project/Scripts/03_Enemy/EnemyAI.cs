@@ -4,18 +4,20 @@ using UnityEngine.AI;
 
 public class EnemyAI : MonoBehaviour, INoiseListener
 {
-    // Fields
+    // Serialized Fields
     [SerializeField] private EnemyData data;
 
-    // Properties
-    public EnemyData Data => data;
+    // Private Fields
+    private Coroutine reduceCoroutine;
 
+    // Properties: Core
+    public EnemyData Data => data;
     public EnemyStateMachine StateMachine { get; private set; }
     public Animator Animator { get; private set; }
     public NavMeshAgent Agent { get; private set; }
     public EnemyHealth Health { get; private set; }
 
-    // States
+    // Properties: States
     public EnemyIdleState IdleState { get; private set; }
     public EnemyPatrolState PatrolState { get; private set; }
     public EnemyAlertState AlertState { get; private set; }
@@ -25,23 +27,11 @@ public class EnemyAI : MonoBehaviour, INoiseListener
     public EnemyHitState HitState { get; private set; }
     public EnemyDeadState DeadState { get; private set; }
 
-    // Patrol
+    // Properties: Gameplay
     public Vector3 PatrolCenter { get; private set; }
-    
-    // Noise Suspicion
     public Vector3 DetectedNoisePosition { get; private set; }
     public float SuspicionLevel { get; private set; }
-    public float DetectionRadius
-    {
-        get
-        {
-            if (data != null)
-                return data.detectionRadius;
-            else
-                return 0f;
-        }
-    }
-    private Coroutine reduceCoroutine;
+    public float DetectionRadius => data != null ? data.detectionRadius : 0f;
 
     private void Awake()
     {
@@ -97,6 +87,7 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         );
     }
 
+    // INoiseListener
     public void OnNoiseDetected(Vector3 noisePosition, float noiseRadius)
     {
         DetectedNoisePosition = noisePosition;
@@ -125,12 +116,9 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         reduceCoroutine = null;
     }
 
-#if UNITY_EDITOR
     private void OnDrawGizmos()
     {
-        // 의심 수치 표시
-        float t = SuspicionLevel / 100f;
-        UnityEditor.Handles.Label(transform.position + Vector3.up * 2.2f, 
+        UnityEditor.Handles.Label(transform.position + Vector3.up * 2.2f,
             $"SuspicionLevel {SuspicionLevel:F0} / 100"
         );
     }
@@ -157,5 +145,4 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         UnityEditor.Handles.color = new Color(1f, 0.2f, 0.2f, 1f);
         UnityEditor.Handles.DrawWireDisc(transform.position, Vector3.up, data.attackRadius);
     }
-#endif
 }

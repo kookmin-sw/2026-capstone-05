@@ -2,9 +2,7 @@ using UnityEngine;
 
 public class EnemyIdleState : EnemyState
 {
-    private float idleStartTime = 2f;
-    private float idleEndTime = 4f;
-    private float idleDuration;
+    private float idleTimer;
     private float elapsedTime;
 
     public EnemyIdleState(EnemyAI enemy, EnemyStateMachine stateMachine)
@@ -15,7 +13,7 @@ public class EnemyIdleState : EnemyState
         enemy.Agent.isStopped = true;
         enemy.Agent.updateRotation = false;
 
-        idleDuration = Random.Range(idleStartTime, idleEndTime);
+        idleTimer = Random.Range(enemy.Data.idleStartTime, enemy.Data.idleEndTime);
         elapsedTime = 0f;
     }
 
@@ -40,7 +38,7 @@ public class EnemyIdleState : EnemyState
         }
 
         elapsedTime += Time.deltaTime;
-        if (elapsedTime >= idleDuration)
+        if (elapsedTime >= idleTimer)
         {
             stateMachine.ChangeState(enemy.PatrolState);
         }

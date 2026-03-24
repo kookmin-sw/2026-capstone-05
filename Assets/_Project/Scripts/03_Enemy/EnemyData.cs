@@ -15,11 +15,17 @@ public class EnemyData : ScriptableObject
     public float searchSpeed = 4f;
     public float rotationSpeed = 30f;
 
+    [Header("Idle Settings")]
+    public float idleStartTime = 2f;
+    public float idleEndTime = 4f;
+
     [Header("Patrol Settings")]
     public float patrolRadius = 15f;
 
     [Header("Search Settings")]
     public float searchRadius = 6f;
+    public float waitStartTime = 0f;
+    public float waitEndTime = 2f;
 
     [Header("Detection Settings")]
     public float detectionRadius = 10f;

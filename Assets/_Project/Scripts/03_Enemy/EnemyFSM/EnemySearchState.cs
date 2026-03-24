@@ -4,29 +4,38 @@ using UnityEngine.AI;
 public class EnemySearchState : EnemyState
 {
     private Vector3 searchCenter;
+    private float previousSuspicionLevel;
+    private float waitTimer;
+    private bool isWaiting;
 
     public EnemySearchState(EnemyAI enemy, EnemyStateMachine stateMachine)
         : base(enemy, stateMachine) { }
 
     public override void Enter()
     {
+        previousSuspicionLevel = enemy.SuspicionLevel;
+        isWaiting = false;
+        waitTimer = 0f;
         searchCenter = enemy.transform.position;
         enemy.SetPatrolCenter(searchCenter);
         enemy.Agent.speed = enemy.Data.searchSpeed;
         SetRandomDestination();
     }
 
-    public override void Exit() { }
+    public override void Exit()
+    {
+        enemy.Agent.isStopped = false;
+    }
 
     public override void LogicUpdate()
     {
-        if (IsPlayerInAttackRange())
+        if (IsPlayerInAttackRadius())
         {
             stateMachine.ChangeState(enemy.AttackState);
             return;
         }
 
-        if (enemy.SuspicionLevel >= 100f)
+        if (enemy.SuspicionLevel > previousSuspicionLevel)
         {
             stateMachine.ChangeState(enemy.ChaseState);
             return;
@@ -38,13 +47,29 @@ public class EnemySearchState : EnemyState
             return;
         }
 
+        previousSuspicionLevel = enemy.SuspicionLevel;
+
+        if (isWaiting)
+        {
+            waitTimer -= Time.deltaTime;
+            if (waitTimer <= 0f)
+            {
+                isWaiting = false;
+                enemy.Agent.isStopped = false;
+                SetRandomDestination();
+            }
+            return;
+        }
+
         if (!enemy.Agent.pathPending && enemy.Agent.remainingDistance <= enemy.Agent.stoppingDistance)
         {
-            SetRandomDestination();
+            isWaiting = true;
+            waitTimer = Random.Range(enemy.Data.waitStartTime, enemy.Data.waitEndTime);
+            enemy.Agent.isStopped = true;
         }
     }
 
-    private bool IsPlayerInAttackRange()
+    private bool IsPlayerInAttackRadius()
     {
         Collider[] hits = Physics.OverlapSphere(enemy.transform.position, enemy.Data.attackRadius);
         foreach (var hit in hits)
