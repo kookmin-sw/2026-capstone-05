@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class PlayerCondition : MonoBehaviour, IDamageable
@@ -7,6 +8,8 @@ public class PlayerCondition : MonoBehaviour, IDamageable
     public ConditionStat stamina;
     public ConditionStat satiety;
     public ConditionStat coldness;
+
+    public event Action<float> OnTakeDamageEvent;
 
 
     private void Start()
@@ -32,6 +35,9 @@ public class PlayerCondition : MonoBehaviour, IDamageable
         if (IsAlive)
         {
             health.Subtract(damageAmount);
+
+            OnTakeDamageEvent?.Invoke(damageAmount);
+
             if (!IsAlive)
             {
                 Debug.Log("Player has died.");

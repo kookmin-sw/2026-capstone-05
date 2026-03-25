@@ -86,6 +86,22 @@ public class PlayerController : MonoBehaviour
         StateMachine.Initialize(GroundedState);
     }
 
+    private void OnEnable()
+    {
+        if (Condition != null && Animator != null)
+        {
+            Condition.OnTakeDamageEvent += Animator.SetHitTrigger;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (Condition != null && Animator != null)
+        {
+            Condition.OnTakeDamageEvent -= Animator.SetHitTrigger;
+        }
+    }
+
     private void Update()
     {
         CheckEnvironmentFlags();
