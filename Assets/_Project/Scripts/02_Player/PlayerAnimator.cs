@@ -18,6 +18,7 @@ public class PlayerAnimator : MonoBehaviour
     private readonly int hashSpeed = Animator.StringToHash("Speed");
     private readonly int hashIsCrouching = Animator.StringToHash("IsCrouching");
     private readonly int hashIsSprinting = Animator.StringToHash("IsSprinting");
+    private readonly int hashOnHit = Animator.StringToHash("OnHit");
 
     private void Update()
     {
@@ -74,6 +75,18 @@ public class PlayerAnimator : MonoBehaviour
         if (animator3P != null)
         {
             animator3P.SetBool(hashIsSprinting, isSprinting);
+        }
+    }
+
+    public void SetHitTrigger(float damageAmount)
+    {
+        if (animator1P != null)
+        {
+            animator1P.SetTrigger(hashOnHit);
+        }
+        if (animator3P != null)
+        {
+            animator3P.SetTrigger(hashOnHit);
         }
     }
 }
