@@ -19,6 +19,7 @@ public class PlayerController : MonoBehaviour
     public PlayerAnimator Animator { get; private set; }
     public PlayerCondition Condition { get; private set; }
     public PlayerNoiseEmitter NoiseEmitter { get; private set; }
+    public PlayerEquipment Equipment { get; private set; }
     public Transform CameraTransform => cameraTransform;
 
     // 스탯 및 설정 (Stats & Settings)
@@ -33,6 +34,7 @@ public class PlayerController : MonoBehaviour
     public Vector3 currentVelocity = Vector3.zero;
     public bool useGravity = true;
     public bool IsGrounded { get; private set; }
+    public bool canAction = true;
 
     [Header("Look Settings")]
     public float mouseSensitivity = 1.5f;
@@ -59,6 +61,7 @@ public class PlayerController : MonoBehaviour
         Animator = GetComponent<PlayerAnimator>();
         Condition = GetComponent<PlayerCondition>();
         NoiseEmitter = GetComponent<PlayerNoiseEmitter>();
+        Equipment = GetComponent<PlayerEquipment>();
 
 
         StateMachine = new PlayerStateMachine();
@@ -92,6 +95,11 @@ public class PlayerController : MonoBehaviour
         {
             Condition.OnTakeDamageEvent += Animator.SetHitTrigger;
         }
+
+        if (Equipment != null && Animator != null)
+        {
+            Equipment.OnAttackEvent += Animator.SetAttackTrigger;
+        }
     }
 
     private void OnDisable()
@@ -99,6 +107,11 @@ public class PlayerController : MonoBehaviour
         if (Condition != null && Animator != null)
         {
             Condition.OnTakeDamageEvent -= Animator.SetHitTrigger;
+        }
+
+        if (Equipment != null && Animator != null)
+        {
+            Equipment.OnAttackEvent -= Animator.SetAttackTrigger;
         }
     }
 
@@ -109,6 +122,11 @@ public class PlayerController : MonoBehaviour
         if (canLook)
         {
             HandleLook();
+        }
+
+        if (canAction)
+        {
+            HandleAction();
         }
 
         StateMachine.CurrentState.LogicUpdate();
@@ -161,6 +179,21 @@ public class PlayerController : MonoBehaviour
         verticalRotation = Mathf.Clamp(verticalRotation, -upDownRange, upDownRange);
 
         CameraTransform.localRotation = Quaternion.Euler(verticalRotation, 0f, 0f);
+    }
+
+    private void HandleAction()
+    {
+        if (InputHandler == null || Equipment == null)
+        {
+            return;
+        }
+
+        if (InputHandler.ActionTriggered)
+        {
+            Equipment.UseCurrentItem();
+
+            InputHandler.ConsumeAction();
+        }
     }
 
     private void HandlePostureTransition()

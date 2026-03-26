@@ -15,10 +15,10 @@ public class PlayerAnimator : MonoBehaviour
     [Range(0f, 1f)] public float ikWeight1P = 0f;
 
     private readonly int hashIsGrounded = Animator.StringToHash("IsGrounded");
-    private readonly int hashSpeed = Animator.StringToHash("Speed");
     private readonly int hashIsCrouching = Animator.StringToHash("IsCrouching");
     private readonly int hashIsSprinting = Animator.StringToHash("IsSprinting");
     private readonly int hashOnHit = Animator.StringToHash("OnHit");
+    private readonly int hashOnAttack = Animator.StringToHash("OnAttack");
 
     private void Update()
     {
@@ -87,6 +87,18 @@ public class PlayerAnimator : MonoBehaviour
         if (animator3P != null)
         {
             animator3P.SetTrigger(hashOnHit);
+        }
+    }
+
+    public void SetAttackTrigger()
+    {
+        if (animator1P != null)
+        {
+            animator1P.SetTrigger(hashOnAttack);
+        }
+        if (animator3P != null)
+        {
+            animator3P.SetTrigger(hashOnAttack);
         }
     }
 }

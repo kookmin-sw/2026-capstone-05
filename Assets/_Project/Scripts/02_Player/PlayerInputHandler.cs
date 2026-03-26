@@ -17,6 +17,7 @@ public class PlayerInputHandler : MonoBehaviour
     public bool JumpTriggered { get; private set; }
     public bool CrouchTriggered { get; private set; }
     public bool InteractTriggered { get; private set; }
+    public bool ActionTriggered { get; private set; }
 
     private void Awake()
     {
@@ -26,6 +27,7 @@ public class PlayerInputHandler : MonoBehaviour
         inputActions.Player.Jump.started += ctx => JumpTriggered = true;
         inputActions.Player.Crouch.started += ctx => CrouchTriggered = true;
         inputActions.Player.Interact.started += ctx => InteractTriggered = true;
+        inputActions.Player.Action.started += ctx => ActionTriggered = true;
 
         // Holds
         inputActions.Player.Sprint.started += ctx => IsSprinting = true;
@@ -55,6 +57,7 @@ public class PlayerInputHandler : MonoBehaviour
     public void ConsumeJump() => JumpTriggered = false;
     public void ConsumeCrouch() => CrouchTriggered = false;
     public void ConsumeInteract() => InteractTriggered = false;
+    public void ConsumeAction() => ActionTriggered = false;
 
     /// <summary>
     /// 플레이어의 조작 차단/복구
@@ -81,5 +84,6 @@ public class PlayerInputHandler : MonoBehaviour
         JumpTriggered = false;
         CrouchTriggered = false;
         InteractTriggered = false;
+        ActionTriggered = false;
     }
 }
