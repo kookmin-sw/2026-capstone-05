@@ -17,6 +17,9 @@ public class PlayerGroundedState : PlayerState
     private PlayerGroundedPosture currentPosture;
     private PlayerGroundedLocomotion currentLocomotion;
 
+    public PlayerGroundedPosture CurrentPosture => currentPosture;
+    public PlayerGroundedLocomotion CurrentLocomotion => currentLocomotion;
+
     public PlayerGroundedState(PlayerController player, PlayerStateMachine stateMachine)
         : base(player, stateMachine)
     {
@@ -32,11 +35,15 @@ public class PlayerGroundedState : PlayerState
 
         currentPosture = PlayerGroundedPosture.Standing;
         currentLocomotion = PlayerGroundedLocomotion.Idle;
+
+        player.Animator.SetGrounded(true);
     }
 
     public override void Exit()
     {
         base.Exit();
+
+        player.Animator.SetGrounded(false);
     }
 
     public override void LogicUpdate()
@@ -51,6 +58,7 @@ public class PlayerGroundedState : PlayerState
 
         HandleSubStates();
         HandleMovement();
+        HandleAnimation();
     }
 
     public override void PhysicsUpdate()
@@ -83,8 +91,7 @@ public class PlayerGroundedState : PlayerState
 
         if (player.InputHandler.CrouchTriggered)
         {
-            currentPosture = PlayerGroundedPosture.Crouching;
-            player.TargetHeight = player.CrouchHeight;
+            ChangePosture(PlayerGroundedPosture.Crouching);
             player.InputHandler.ConsumeCrouch();
         }
     }
@@ -95,8 +102,7 @@ public class PlayerGroundedState : PlayerState
         {
             if (player.CanStandUp())
             {
-                currentPosture = PlayerGroundedPosture.Standing;
-                player.TargetHeight = player.StandingHeight;
+                ChangePosture(PlayerGroundedPosture.Standing);
             }
             else
             {
@@ -108,9 +114,33 @@ public class PlayerGroundedState : PlayerState
         }
     }
 
+    private void ChangePosture(PlayerGroundedPosture newPosture)
+    {
+        if (currentPosture == newPosture)
+        {
+            return;
+        }
+
+        currentPosture = newPosture;
+        player.TargetHeight = newPosture == PlayerGroundedPosture.Standing ? player.StandingHeight : player.CrouchHeight;
+        player.Animator.SetCrouching(newPosture == PlayerGroundedPosture.Crouching);
+    }
+
+    private void ChangeLocomotion(PlayerGroundedLocomotion newLocomotion)
+    {
+        if (currentLocomotion == newLocomotion)
+        {
+            return;
+        }
+
+        currentLocomotion = newLocomotion;
+        player.Animator.SetSprinting(currentLocomotion == PlayerGroundedLocomotion.Sprinting);
+    }
+
     private void ExecuteJump()
     {
         player.currentVelocity.y = player.jumpForce;
+        player.NoiseEmitter.GenerateJumpNoise();
         player.InputHandler.ConsumeJump();
         stateMachine.ChangeState(player.AirborneState);
     }
@@ -121,7 +151,7 @@ public class PlayerGroundedState : PlayerState
 
         if (input.sqrMagnitude < 0.01f)
         {
-            currentLocomotion = PlayerGroundedLocomotion.Idle;
+            ChangeLocomotion(PlayerGroundedLocomotion.Idle);
             return;
         }
 
@@ -129,7 +159,7 @@ public class PlayerGroundedState : PlayerState
                          input.y > 0 &&
                          player.InputHandler.IsSprinting;
 
-        currentLocomotion = isSprinting ? PlayerGroundedLocomotion.Sprinting : PlayerGroundedLocomotion.Walking;
+        ChangeLocomotion(isSprinting ? PlayerGroundedLocomotion.Sprinting : PlayerGroundedLocomotion.Walking);
     }
 
     private void HandleMovement()
@@ -150,16 +180,29 @@ public class PlayerGroundedState : PlayerState
             return 0f;
         }
 
+        float inputMagnitude = player.InputHandler.MoveInput.magnitude;
         switch (currentPosture)
         {
             case PlayerGroundedPosture.Crouching:
-                return player.crouchSpeed;
+                return player.crouchSpeed * inputMagnitude;
 
             case PlayerGroundedPosture.Standing:
-                return currentLocomotion == PlayerGroundedLocomotion.Sprinting ? player.sprintSpeed : player.walkSpeed;
+                return currentLocomotion == PlayerGroundedLocomotion.Sprinting ? player.sprintSpeed : player.walkSpeed * inputMagnitude;
 
             default:
                 return 0f;
+        }
+    }
+
+    private void HandleAnimation()
+    {
+        if (currentLocomotion == PlayerGroundedLocomotion.Idle)
+        {
+            player.Animator.UpdateMovement(Vector2.zero);
+        }
+        else
+        {
+            player.Animator.UpdateMovement(player.InputHandler.MoveInput);
         }
     }
 }

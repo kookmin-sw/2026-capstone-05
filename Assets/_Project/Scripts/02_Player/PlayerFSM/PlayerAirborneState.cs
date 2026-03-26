@@ -14,13 +14,18 @@ public class PlayerAirborneState : PlayerState
     public override void Enter()
     {
         base.Enter();
+
         player.useGravity = true;
         player.canLook = true;
+
+        player.Animator.SetGrounded(false);
     }
 
     public override void Exit()
     {
         base.Exit();
+
+        player.Animator.SetGrounded(true);
     }
 
     public override void LogicUpdate()
