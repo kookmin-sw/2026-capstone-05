@@ -7,6 +7,8 @@ namespace Systems.Inventory {
     public class InventoryView : StorageView {
         [SerializeField] string panelName = "Inventory";
 
+        public static bool IsAnyInventoryOpen { get; private set; }
+
         public override IEnumerator InitializeView(int size = 20) {
             Slots = new Slot[size];
             root = document.rootVisualElement;
@@ -88,8 +90,14 @@ namespace Systems.Inventory {
             
             // 인벤토리 창 게임 시작 시 안 보이도록 숨기기
             container.style.display = DisplayStyle.None;
+            IsAnyInventoryOpen = false;
             
             yield return null; 
+        }
+
+
+        void OnDisable() {
+            IsAnyInventoryOpen = false;
         }
 
         void Update() {
@@ -97,6 +105,8 @@ namespace Systems.Inventory {
             if (Input.GetKeyDown(KeyCode.Tab) && container != null) {
                 bool isHidden = container.style.display == DisplayStyle.None;
                 container.style.display = isHidden ? DisplayStyle.Flex : DisplayStyle.None;
+
+                IsAnyInventoryOpen = isHidden;
 
                 // 인벤토리가 열려있을 때(isHidden == true가 방금 열린 것)
                 if (isHidden) {

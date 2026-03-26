@@ -6,12 +6,12 @@ public class ConditionStat
 {
     public float maxValue = 100f;
     public float startValue = 100f;
-    public float increaseRate = 0f; // ÃÊ´ç »ó½Â·®
-    public float decreaseRate = 0f; // ÃÊ´ç °¨¼Ò·®
+    public float increaseRate = 0f; // ì´ˆë‹¹ ìƒìŠ¹ëŸ‰
+    public float decreaseRate = 0f; // ì´ˆë‹¹ ê°ì†ŒëŸ‰
 
     [HideInInspector] public float currentValue;
 
-    public event Action<float, float> OnValueChanged; // °ªÀÌ º¯°æµÉ ¶§ ¹ß»ıÇÏ´Â ÀÌº¥Æ® <ÇöÀç °ª, ÃÖ´ë °ª>
+    public event Action<float, float> OnValueChanged; // ê°’ì´ ë³€ê²½ë  ë•Œ ë°œìƒí•˜ëŠ” ì´ë²¤íŠ¸ <í˜„ì¬ ê°’, ìµœëŒ€ ê°’>
 
     public void Initialize()
     {
@@ -32,8 +32,8 @@ public class ConditionStat
     }
 
     /// <summary>
-    /// ÃÊ´ç È¸º¹·® ¹× °¨¼Ò·®À» Àû¿ëÇÏ¿© ÇöÀç °ªÀ» °»½ÅÇÏ´Â ¸Ş¼­µå
-    /// * ÀÌ ¸Ş¼­µå´Â ¸Å ÇÁ·¹ÀÓ¸¶´Ù È£ÃâµÇ¾î¾ß ÇÕ´Ï´Ù. (e.g. Update())
+    /// ì´ˆë‹¹ íšŒë³µëŸ‰ ë° ê°ì†ŒëŸ‰ì„ ì ìš©í•˜ì—¬ í˜„ì¬ ê°’ì„ ê°±ì‹ í•˜ëŠ” ë©”ì„œë“œ
+    /// * ì´ ë©”ì„œë“œëŠ” ë§¤ í”„ë ˆì„ë§ˆë‹¤ í˜¸ì¶œë˜ì–´ì•¼ í•©ë‹ˆë‹¤. (e.g. Update())
     /// </summary>
     public void UpdatePassive()
     {
