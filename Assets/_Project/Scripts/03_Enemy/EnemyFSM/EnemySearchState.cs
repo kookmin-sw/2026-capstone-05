@@ -3,8 +3,11 @@ using UnityEngine.AI;
 
 public class EnemySearchState : EnemyState
 {
+    private enum Phase { Approaching, Searching }
+
+    private Phase phase;
+    private Vector3 midpoint;
     private Vector3 searchCenter;
-    private float previousSuspicionLevel;
     private float waitTimer;
     private bool isWaiting;
 
@@ -13,13 +16,15 @@ public class EnemySearchState : EnemyState
 
     public override void Enter()
     {
-        previousSuspicionLevel = enemy.SuspicionLevel;
-        isWaiting = false;
-        waitTimer = 0f;
-        searchCenter = enemy.transform.position;
+        midpoint = Vector3.Lerp(enemy.transform.position, enemy.DetectedNoisePosition, 0.5f);
+        searchCenter = midpoint;
         enemy.SetPatrolCenter(searchCenter);
         enemy.Agent.speed = enemy.Data.searchSpeed;
-        SetRandomDestination();
+        enemy.Agent.isStopped = false;
+        phase = Phase.Approaching;
+        isWaiting = false;
+        waitTimer = 0f;
+        SetApproachDestination();
     }
 
     public override void Exit()
@@ -29,26 +34,41 @@ public class EnemySearchState : EnemyState
 
     public override void LogicUpdate()
     {
-        if (IsPlayerInAttackRadius())
+        if (CanAttack())
         {
             stateMachine.ChangeState(enemy.AttackState);
             return;
         }
 
-        if (enemy.SuspicionLevel > previousSuspicionLevel)
+        if (enemy.SuspicionLevel >= enemy.Data.chaseThreshold)
         {
             stateMachine.ChangeState(enemy.ChaseState);
             return;
         }
 
-        if (enemy.SuspicionLevel <= 0f)
+        if (enemy.SuspicionLevel < enemy.Data.alertThreshold)
         {
             stateMachine.ChangeState(enemy.PatrolState);
             return;
         }
 
-        previousSuspicionLevel = enemy.SuspicionLevel;
+        if (phase == Phase.Approaching)
+            UpdateApproachPhase();
+        else
+            UpdateSearchPhase();
+    }
 
+    private void UpdateApproachPhase()
+    {
+        if (!enemy.Agent.pathPending && enemy.Agent.remainingDistance <= enemy.Agent.stoppingDistance)
+        {
+            phase = Phase.Searching;
+            SetRandomDestination();
+        }
+    }
+
+    private void UpdateSearchPhase()
+    {
         if (isWaiting)
         {
             waitTimer -= Time.deltaTime;
@@ -69,7 +89,7 @@ public class EnemySearchState : EnemyState
         }
     }
 
-    private bool IsPlayerInAttackRadius()
+    private bool CanAttack()
     {
         Collider[] hits = Physics.OverlapSphere(enemy.transform.position, enemy.Data.attackRadius);
         foreach (var hit in hits)
@@ -78,6 +98,21 @@ public class EnemySearchState : EnemyState
                 return true;
         }
         return false;
+    }
+
+    private void SetApproachDestination()
+    {
+        const float navMeshSampleRadius = 2f;
+
+        if (NavMesh.SamplePosition(midpoint, out NavMeshHit hit, navMeshSampleRadius, NavMesh.AllAreas))
+        {
+            enemy.Agent.SetDestination(hit.position);
+        }
+        else
+        {
+            phase = Phase.Searching;
+            SetRandomDestination();
+        }
     }
 
     private void SetRandomDestination()
@@ -96,7 +131,7 @@ public class EnemySearchState : EnemyState
                 return;
             }
         }
-        
+
         if (NavMesh.SamplePosition(searchCenter, out NavMeshHit fallback, navMeshSampleRadius, NavMesh.AllAreas))
         {
             enemy.Agent.SetDestination(fallback.position);
