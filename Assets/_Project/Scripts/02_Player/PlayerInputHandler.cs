@@ -11,12 +11,13 @@ public class PlayerInputHandler : MonoBehaviour
 
     [Header("Action States (Hold)")]
     public bool IsSprinting { get; private set; }
-    public bool IsAiming { get; private set; } // ÇÊ¿äÇÏ´Ù¸é Ãß°¡
+    public bool IsAiming { get; private set; } // í•„ìš”í•˜ë‹¤ë©´ ì¶”ê°€
 
     [Header("Action Triggers (One-shot)")]
     public bool JumpTriggered { get; private set; }
     public bool CrouchTriggered { get; private set; }
     public bool InteractTriggered { get; private set; }
+    public bool ActionTriggered { get; private set; }
 
     private void Awake()
     {
@@ -26,6 +27,7 @@ public class PlayerInputHandler : MonoBehaviour
         inputActions.Player.Jump.started += ctx => JumpTriggered = true;
         inputActions.Player.Crouch.started += ctx => CrouchTriggered = true;
         inputActions.Player.Interact.started += ctx => InteractTriggered = true;
+        inputActions.Player.Action.started += ctx => ActionTriggered = true;
 
         // Holds
         inputActions.Player.Sprint.started += ctx => IsSprinting = true;
@@ -51,13 +53,14 @@ public class PlayerInputHandler : MonoBehaviour
         inputActions.Disable();
     }
 
-    // One-shot Æ®¸®°Å´Â ¼Òºñ ¸Ş¼­µå¸¦ ÅëÇØ »óÅÂ ÃÊ±âÈ­
+    // One-shot íŠ¸ë¦¬ê±°ëŠ” ì†Œë¹„ ë©”ì„œë“œë¥¼ í†µí•´ ìƒíƒœ ì´ˆê¸°í™”
     public void ConsumeJump() => JumpTriggered = false;
     public void ConsumeCrouch() => CrouchTriggered = false;
     public void ConsumeInteract() => InteractTriggered = false;
+    public void ConsumeAction() => ActionTriggered = false;
 
     /// <summary>
-    /// ÇÃ·¹ÀÌ¾îÀÇ Á¶ÀÛ Â÷´Ü/º¹±¸
+    /// í”Œë ˆì´ì–´ì˜ ì¡°ì‘ ì°¨ë‹¨/ë³µêµ¬
     /// </summary>
     public void SetInputActive(bool isActive)
     {
@@ -81,5 +84,6 @@ public class PlayerInputHandler : MonoBehaviour
         JumpTriggered = false;
         CrouchTriggered = false;
         InteractTriggered = false;
+        ActionTriggered = false;
     }
 }
