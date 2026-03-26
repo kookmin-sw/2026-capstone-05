@@ -1,29 +1,28 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class FirstPersonCamera : MonoBehaviour
 {
     public Transform Target;
-    public float MouseSensitivity = 0.002f;
+    public float CameraHeightOffset = 1.6f;
 
-    private float verticalRotation;
-    private float horizontalRotation;
+    [Header("Legacy (kept for scene/prefab compatibility)")]
+    public float MouseSensitivity = 2f;
 
-    void LateUpdate()
+    private float _pitch;
+
+    public void SetPitch(float pitch)
+    {
+        _pitch = pitch;
+    }
+
+    private void LateUpdate()
     {
         if (Target == null) return;
 
-        transform.position = Target.position;
+        if (transform.parent != Target)
+            transform.SetParent(Target, false);
 
-        Vector2 delta = Vector2.zero;
-        if (Mouse.current != null)
-            delta = Mouse.current.delta.ReadValue();
-
-        horizontalRotation += delta.x * MouseSensitivity * Time.deltaTime * 60f;
-        verticalRotation -= delta.y * MouseSensitivity * Time.deltaTime * 60f;
-
-        verticalRotation = Mathf.Clamp(verticalRotation, -70f, 70f);
-
-        transform.rotation = Quaternion.Euler(verticalRotation, horizontalRotation, 0);
+        transform.localPosition = new Vector3(0f, CameraHeightOffset, 0f);
+        transform.localRotation = Quaternion.Euler(_pitch, 0f, 0f);
     }
 }
