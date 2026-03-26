@@ -3,24 +3,26 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
-    // FSM π◊ ªÛ≈¬ ¿ŒΩ∫≈œΩ∫ (FSM & State Instances)
+    // FSM Î∞è ÏÉÅÌÉú Ïù∏Ïä§ÌÑ¥Ïä§ (FSM & State Instances)
     public PlayerStateMachine StateMachine { get; private set; }
 
     public PlayerGroundedState GroundedState { get; private set; }
     public PlayerAirborneState AirborneState { get; private set; }
     public PlayerInteractionState InteractionState { get; private set; }
 
-    // ¡÷ø‰ ƒƒ∆˜≥Õ∆Æ (Core Components)
+    // Ï£ºÏöî Ïª¥Ìè¨ÎÑåÌä∏ (Core Components)
     [Header("Components")]
     [SerializeField] private Transform cameraTransform;
 
     public CharacterController Controller { get; private set; }
     public PlayerInputHandler InputHandler { get; private set; }
-    //public PlayerAnimator Animator { get; private set; }
+    public PlayerAnimator Animator { get; private set; }
     public PlayerCondition Condition { get; private set; }
+    public PlayerNoiseEmitter NoiseEmitter { get; private set; }
+    public PlayerEquipment Equipment { get; private set; }
     public Transform CameraTransform => cameraTransform;
 
-    // Ω∫≈» π◊ º≥¡§ (Stats & Settings)
+    // Ïä§ÌÉØ Î∞è ÏÑ§Ï†ï (Stats & Settings)
     [Header("Movement Stats")]
     public float walkSpeed = 3f;
     public float sprintSpeed = 6f;
@@ -32,6 +34,7 @@ public class PlayerController : MonoBehaviour
     public Vector3 currentVelocity = Vector3.zero;
     public bool useGravity = true;
     public bool IsGrounded { get; private set; }
+    public bool canAction = true;
 
     [Header("Look Settings")]
     public float mouseSensitivity = 1.5f;
@@ -41,21 +44,24 @@ public class PlayerController : MonoBehaviour
 
     [Header("Crouch Settings")]
     [Range(0.1f, 1f)] public float CrouchHeightRatio = 0.6f;
+    public float crouchForwardOffset = 0.4f;
     public float crouchTransitionSpeed = 10f;
     public LayerMask obstacleLayer;
 
     public float StandingHeight { get; private set; }
     public float CrouchHeight { get; private set; }
     public float TargetHeight { get; set; }
-    private float defaultCameraY;
+    private Vector3 defaultCameraPosition;
     private Vector3 defaultCenter;
 
     private void Awake()
     {
         Controller = GetComponent<CharacterController>();
         InputHandler = GetComponent<PlayerInputHandler>();
-        //Animator = GetComponent<PlayerAnimator>();
+        Animator = GetComponent<PlayerAnimator>();
         Condition = GetComponent<PlayerCondition>();
+        NoiseEmitter = GetComponent<PlayerNoiseEmitter>();
+        Equipment = GetComponent<PlayerEquipment>();
 
 
         StateMachine = new PlayerStateMachine();
@@ -77,10 +83,36 @@ public class PlayerController : MonoBehaviour
 
         if (CameraTransform != null)
         {
-            defaultCameraY = CameraTransform.localPosition.y;
+            defaultCameraPosition = CameraTransform.localPosition;
         }
 
         StateMachine.Initialize(GroundedState);
+    }
+
+    private void OnEnable()
+    {
+        if (Condition != null && Animator != null)
+        {
+            Condition.OnTakeDamageEvent += Animator.SetHitTrigger;
+        }
+
+        if (Equipment != null && Animator != null)
+        {
+            Equipment.OnAttackEvent += Animator.SetAttackTrigger;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (Condition != null && Animator != null)
+        {
+            Condition.OnTakeDamageEvent -= Animator.SetHitTrigger;
+        }
+
+        if (Equipment != null && Animator != null)
+        {
+            Equipment.OnAttackEvent -= Animator.SetAttackTrigger;
+        }
     }
 
     private void Update()
@@ -90,6 +122,11 @@ public class PlayerController : MonoBehaviour
         if (canLook)
         {
             HandleLook();
+        }
+
+        if (canAction)
+        {
+            HandleAction();
         }
 
         StateMachine.CurrentState.LogicUpdate();
@@ -144,6 +181,21 @@ public class PlayerController : MonoBehaviour
         CameraTransform.localRotation = Quaternion.Euler(verticalRotation, 0f, 0f);
     }
 
+    private void HandleAction()
+    {
+        if (InputHandler == null || Equipment == null)
+        {
+            return;
+        }
+
+        if (InputHandler.ActionTriggered)
+        {
+            Equipment.UseCurrentItem();
+
+            InputHandler.ConsumeAction();
+        }
+    }
+
     private void HandlePostureTransition()
     {
         Controller.height = Mathf.Lerp(Controller.height, TargetHeight, Time.deltaTime * crouchTransitionSpeed);
@@ -154,13 +206,15 @@ public class PlayerController : MonoBehaviour
         {
             float headDropAmount = StandingHeight - Controller.height;
             Vector3 camPos = CameraTransform.localPosition;
-            camPos.y = defaultCameraY - headDropAmount;
+            camPos.y = defaultCameraPosition.y - headDropAmount;
+            camPos.z = defaultCameraPosition.z + (crouchForwardOffset * (1 - (Controller.height - CrouchHeight) / (StandingHeight - CrouchHeight)));
+
             CameraTransform.localPosition = camPos;
         }
     }
 
     /// <summary>
-    /// ∏”∏Æ ¿ßø° ¿Âæ÷π∞¿Ã æ¯æÓº≠ ¿œæÓº≥ ºˆ ¿÷¥¬¡ˆ »Æ¿Œ
+    /// Î®∏Î¶¨ ÏúÑÏóê Ïû•Ïï†Î¨ºÏù¥ ÏóÜÏñ¥ÏÑú ÏùºÏñ¥ÏÑ§ Ïàò ÏûàÎäîÏßÄ ÌôïÏù∏
     /// </summary>
     public bool CanStandUp()
     {
