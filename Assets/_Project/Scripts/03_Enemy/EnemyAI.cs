@@ -9,6 +9,7 @@ public class EnemyAI : MonoBehaviour, INoiseListener
 
     // Private Fields
     private Coroutine reduceCoroutine;
+    private float rotationVelocity;
 
     // Properties: Core
     public EnemyData Data => data;
@@ -92,19 +93,28 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         reduceCoroutine = StartCoroutine(SuspicionReduceCoroutine());
     }
 
+    public bool IsPlayerInAttackRadius()
+    {
+        Collider[] hits = Physics.OverlapSphere(transform.position, data.attackRadius);
+        foreach (var hit in hits)
+        {
+            if (hit.CompareTag("Player"))
+                return true;
+        }
+        return false;
+    }
+
     public void LookAtDetectedNoisePosition()
     {
-        Vector3 direction = DetectedNoisePosition - transform.position;
-        direction.y = 0f;
+        Vector3 targetDirection = DetectedNoisePosition - transform.position;
+        targetDirection.y = 0f;
 
-        if (direction == Vector3.zero) return;
+        if (targetDirection == Vector3.zero) return;
 
-        Quaternion targetRotation = Quaternion.LookRotation(direction);
-        transform.rotation = Quaternion.Slerp(
-            transform.rotation,
-            targetRotation,
-            Time.deltaTime * data.rotationSpeed
-        );
+        float targetY = Quaternion.LookRotation(targetDirection).eulerAngles.y;
+        float smoothTime = Mathf.Max(0.05f, 1.5f / data.rotationSpeed);
+        float newY = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetY, ref rotationVelocity, smoothTime);
+        transform.rotation = Quaternion.Euler(0f, newY, 0f);
     }
 
     private IEnumerator SuspicionReduceCoroutine()

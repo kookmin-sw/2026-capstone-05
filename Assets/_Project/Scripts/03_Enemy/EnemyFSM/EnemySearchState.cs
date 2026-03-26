@@ -3,11 +3,11 @@ using UnityEngine.AI;
 
 public class EnemySearchState : EnemyState
 {
-    private enum Phase { Approaching, Searching }
+    private enum EnemySearchPhase { Approaching, Searching }
 
-    private Phase phase;
-    private Vector3 midpoint;
+    private EnemySearchPhase phase;
     private Vector3 searchCenter;
+    private Vector3 lastNoisePosition;
     private float waitTimer;
     private bool isWaiting;
 
@@ -16,14 +16,13 @@ public class EnemySearchState : EnemyState
 
     public override void Enter()
     {
-        midpoint = Vector3.Lerp(enemy.transform.position, enemy.DetectedNoisePosition, 0.5f);
-        searchCenter = midpoint;
+        searchCenter = enemy.DetectedNoisePosition;
+        lastNoisePosition = searchCenter;
         enemy.SetPatrolCenter(searchCenter);
         enemy.Agent.speed = enemy.Data.searchSpeed;
         enemy.Agent.isStopped = false;
-        phase = Phase.Approaching;
+        phase = EnemySearchPhase.Approaching;
         isWaiting = false;
-        waitTimer = 0f;
         SetApproachDestination();
     }
 
@@ -34,13 +33,13 @@ public class EnemySearchState : EnemyState
 
     public override void LogicUpdate()
     {
-        if (CanAttack())
+        if (enemy.IsPlayerInAttackRadius())
         {
             stateMachine.ChangeState(enemy.AttackState);
             return;
         }
 
-        if (enemy.SuspicionLevel >= enemy.Data.chaseThreshold)
+        if (enemy.DetectedNoisePosition != lastNoisePosition)
         {
             stateMachine.ChangeState(enemy.ChaseState);
             return;
@@ -52,7 +51,7 @@ public class EnemySearchState : EnemyState
             return;
         }
 
-        if (phase == Phase.Approaching)
+        if (phase == EnemySearchPhase.Approaching)
             UpdateApproachPhase();
         else
             UpdateSearchPhase();
@@ -62,8 +61,8 @@ public class EnemySearchState : EnemyState
     {
         if (!enemy.Agent.pathPending && enemy.Agent.remainingDistance <= enemy.Agent.stoppingDistance)
         {
-            phase = Phase.Searching;
-            SetRandomDestination();
+            phase = EnemySearchPhase.Searching;
+            SetSearchDestination();
         }
     }
 
@@ -76,7 +75,7 @@ public class EnemySearchState : EnemyState
             {
                 isWaiting = false;
                 enemy.Agent.isStopped = false;
-                SetRandomDestination();
+                SetSearchDestination();
             }
             return;
         }
@@ -89,50 +88,46 @@ public class EnemySearchState : EnemyState
         }
     }
 
-    private bool CanAttack()
-    {
-        Collider[] hits = Physics.OverlapSphere(enemy.transform.position, enemy.Data.attackRadius);
-        foreach (var hit in hits)
-        {
-            if (hit.CompareTag("Player"))
-                return true;
-        }
-        return false;
-    }
-
     private void SetApproachDestination()
     {
-        const float navMeshSampleRadius = 2f;
+        Vector3 targetDirection = searchCenter - enemy.transform.position;
+        targetDirection.y = 0f;
 
-        if (NavMesh.SamplePosition(midpoint, out NavMeshHit hit, navMeshSampleRadius, NavMesh.AllAreas))
+        float approachOffset = Random.Range(1.5f, 3f);
+        float approachDist = Mathf.Max(0f, targetDirection.magnitude - approachOffset);
+        
+        Vector3 approachPos = enemy.transform.position + targetDirection.normalized * approachDist;
+
+        const float navMeshSampleRange = 2f;
+        if (NavMesh.SamplePosition(approachPos, out NavMeshHit hit, navMeshSampleRange, NavMesh.AllAreas))
         {
             enemy.Agent.SetDestination(hit.position);
         }
         else
         {
-            phase = Phase.Searching;
-            SetRandomDestination();
+            phase = EnemySearchPhase.Searching;
+            SetSearchDestination();
         }
     }
 
-    private void SetRandomDestination()
+    private void SetSearchDestination()
     {
-        const int maxAttempts = 5;
-        const float navMeshSampleRadius = 2f;
+        const int maxSamplingAttempts = 5;
+        const float navMeshSampleRange = 2f;
 
-        for (int i = 0; i < maxAttempts; i++)
+        for (int i = 0; i < maxSamplingAttempts; i++)
         {
             Vector2 randomCircle = Random.insideUnitCircle * enemy.Data.searchRadius;
-            Vector3 candidate = searchCenter + new Vector3(randomCircle.x, 0f, randomCircle.y);
+            Vector3 targetSearchPos = searchCenter + new Vector3(randomCircle.x, 0f, randomCircle.y);
 
-            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, navMeshSampleRadius, NavMesh.AllAreas))
+            if (NavMesh.SamplePosition(targetSearchPos, out NavMeshHit hit, navMeshSampleRange, NavMesh.AllAreas))
             {
                 enemy.Agent.SetDestination(hit.position);
                 return;
             }
         }
 
-        if (NavMesh.SamplePosition(searchCenter, out NavMeshHit fallback, navMeshSampleRadius, NavMesh.AllAreas))
+        if (NavMesh.SamplePosition(searchCenter, out NavMeshHit fallback, navMeshSampleRange, NavMesh.AllAreas))
         {
             enemy.Agent.SetDestination(fallback.position);
         }

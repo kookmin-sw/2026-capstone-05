@@ -31,7 +31,7 @@ public class EnemyAlertState : EnemyState
             return;
         }
 
-        if (enemy.SuspicionLevel <= enemy.Data.alertThreshold)
+        if (enemy.SuspicionLevel < enemy.Data.alertThreshold)
         {
             stateMachine.ChangeState(enemy.PatrolState);
             return;
