@@ -32,7 +32,7 @@ public class EnemyData : ScriptableObject
 
     [Header("Suspicion Thresholds")]
     public float alertThreshold = 20f;
-    public float searchThreshold = 80f;
+    public float searchThreshold = 70f;
     public float chaseThreshold = 100f;
 
     [Header("Suspicion Settings")]

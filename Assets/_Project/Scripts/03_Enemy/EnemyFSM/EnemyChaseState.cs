@@ -18,11 +18,16 @@ public class EnemyChaseState : EnemyState
 
     public override void LogicUpdate()
     {
+        if (enemy.IsPlayerInAttackRadius())
+        {
+            stateMachine.ChangeState(enemy.AttackState);
+            return;
+        }
+
         if (enemy.DetectedNoisePosition != lastNoisePosition)
         {
             lastNoisePosition = enemy.DetectedNoisePosition;
             enemy.Agent.SetDestination(lastNoisePosition);
-            enemy.LookAtDetectedNoisePosition();
         }
 
         if (!enemy.Agent.pathPending && enemy.Agent.remainingDistance <= enemy.Agent.stoppingDistance)
