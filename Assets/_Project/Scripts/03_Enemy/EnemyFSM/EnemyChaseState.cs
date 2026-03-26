@@ -27,6 +27,7 @@ public class EnemyChaseState : EnemyState
 
         if (!enemy.Agent.pathPending && enemy.Agent.remainingDistance <= enemy.Agent.stoppingDistance)
         {
+            enemy.SetSuspicionLevel(enemy.Data.suspicionOnChaseArrival);
             stateMachine.ChangeState(enemy.SearchState);
         }
     }

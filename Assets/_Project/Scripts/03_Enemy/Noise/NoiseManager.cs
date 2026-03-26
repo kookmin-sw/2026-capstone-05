@@ -22,6 +22,25 @@ public class NoiseManager : MonoBehaviour
     private Dictionary<NoiseData.NoiseType, float> noiseDict = new Dictionary<NoiseData.NoiseType, float>();
     private List<ActiveNoise> activeNoises = new List<ActiveNoise>();
 
+    // Nested Types
+    private struct ActiveNoise
+    {
+        public Vector3 position;
+        public float decibel;
+        public float radius;
+        public float expireTime;
+        public NoiseData.NoiseType noiseType;
+
+        public ActiveNoise(Vector3 pos, float decibel, float rad, float duration, NoiseData.NoiseType type)
+        {
+            position = pos;
+            this.decibel = decibel;
+            radius = rad;
+            expireTime = Time.time + duration;
+            noiseType = type;
+        }
+    }
+
     private void Awake()
     {
         if (Instance == null) 
@@ -104,25 +123,6 @@ public class NoiseManager : MonoBehaviour
 
             Gizmos.DrawSphere(noise.position, 0.2f);
             Gizmos.DrawWireSphere(noise.position, noise.radius);
-        }
-    }
-
-    // Nested Types
-    private struct ActiveNoise
-    {
-        public Vector3 position;
-        public float decibel;
-        public float radius;
-        public float expireTime;
-        public NoiseData.NoiseType noiseType;
-
-        public ActiveNoise(Vector3 pos, float decibel, float rad, float duration, NoiseData.NoiseType type)
-        {
-            position = pos;
-            this.decibel = decibel;
-            radius = rad;
-            expireTime = Time.time + duration;
-            noiseType = type;
         }
     }
 }

@@ -72,6 +72,26 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         PatrolCenter = newCenter;
     }
 
+    public void SetSuspicionLevel(float value)
+    {
+        SuspicionLevel = Mathf.Clamp(value, 0f, 100f);
+    }
+
+    public void OnNoiseDetected(Vector3 noisePosition, float noiseRadius)
+    {
+        float distance = Mathf.Max(0.01f, Vector3.Distance(transform.position, noisePosition));
+        if (distance > noiseRadius + data.detectionRadius) return;
+
+        DetectedNoisePosition = noisePosition;
+
+        float gain = data.suspicionGainAmount * (noiseRadius / distance) * data.suspicionSensitivity;
+        SuspicionLevel = Mathf.Clamp(SuspicionLevel + gain, 0f, 100f);
+
+        if (reduceCoroutine != null)
+            StopCoroutine(reduceCoroutine);
+        reduceCoroutine = StartCoroutine(SuspicionReduceCoroutine());
+    }
+
     public void LookAtDetectedNoisePosition()
     {
         Vector3 direction = DetectedNoisePosition - transform.position;
@@ -87,22 +107,7 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         );
     }
 
-    // INoiseListener
-    public void OnNoiseDetected(Vector3 noisePosition, float noiseRadius)
-    {
-        DetectedNoisePosition = noisePosition;
-
-        float distance = Vector3.Distance(transform.position, noisePosition);
-        float ratio = Mathf.Clamp01(1f - distance / (noiseRadius + data.detectionRadius));
-        float gain = data.suspicionGainAmount * ratio;
-        SuspicionLevel = Mathf.Clamp(SuspicionLevel + gain, 0f, 100f);
-
-        if (reduceCoroutine != null)
-            StopCoroutine(reduceCoroutine);
-        reduceCoroutine = StartCoroutine(ReduceSuspicionRoutine());
-    }
-
-    private IEnumerator ReduceSuspicionRoutine()
+    private IEnumerator SuspicionReduceCoroutine()
     {
         yield return new WaitForSeconds(data.suspicionReduceDelay);
 
@@ -119,29 +124,19 @@ public class EnemyAI : MonoBehaviour, INoiseListener
     private void OnDrawGizmos()
     {
         UnityEditor.Handles.Label(transform.position + Vector3.up * 2.2f,
-            $"SuspicionLevel {SuspicionLevel:F0} / 100"
-        );
+            $"Suspicion: {SuspicionLevel:F0}%");
     }
 
     private void OnDrawGizmosSelected()
     {
         if (data == null) return;
 
-        // 순찰 범위 (파란색)
-        UnityEditor.Handles.color = new Color(0.2f, 0.5f, 1f, 0.15f);
-        UnityEditor.Handles.DrawSolidDisc(PatrolCenter, Vector3.up, data.patrolRadius);
         UnityEditor.Handles.color = new Color(0.2f, 0.5f, 1f, 1f);
         UnityEditor.Handles.DrawWireDisc(PatrolCenter, Vector3.up, data.patrolRadius);
 
-        // 소음 감지 범위 (노란색)
-        UnityEditor.Handles.color = new Color(1f, 0.9f, 0.1f, 0.1f);
-        UnityEditor.Handles.DrawSolidDisc(transform.position, Vector3.up, data.detectionRadius);
         UnityEditor.Handles.color = new Color(1f, 0.9f, 0.1f, 1f);
         UnityEditor.Handles.DrawWireDisc(transform.position, Vector3.up, data.detectionRadius);
 
-        // 공격 범위 (빨간색)
-        UnityEditor.Handles.color = new Color(1f, 0.2f, 0.2f, 0.2f);
-        UnityEditor.Handles.DrawSolidDisc(transform.position, Vector3.up, data.attackRadius);
         UnityEditor.Handles.color = new Color(1f, 0.2f, 0.2f, 1f);
         UnityEditor.Handles.DrawWireDisc(transform.position, Vector3.up, data.attackRadius);
     }

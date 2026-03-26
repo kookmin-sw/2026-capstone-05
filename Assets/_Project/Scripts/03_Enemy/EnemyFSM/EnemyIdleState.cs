@@ -25,13 +25,19 @@ public class EnemyIdleState : EnemyState
 
     public override void LogicUpdate()
     {
-        if (enemy.SuspicionLevel >= 100f)
+        if (enemy.SuspicionLevel >= enemy.Data.chaseThreshold)
         {
             stateMachine.ChangeState(enemy.ChaseState);
             return;
         }
 
-        if (enemy.SuspicionLevel >= 50f)
+        if (enemy.SuspicionLevel >= enemy.Data.searchThreshold)
+        {
+            stateMachine.ChangeState(enemy.SearchState);
+            return;
+        }
+
+        if (enemy.SuspicionLevel > enemy.Data.alertThreshold)
         {
             stateMachine.ChangeState(enemy.AlertState);
             return;
