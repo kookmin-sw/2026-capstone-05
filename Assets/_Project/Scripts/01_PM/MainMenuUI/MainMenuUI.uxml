@@ -1,0 +1,15 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/_Project/Scripts/01_PM/MainMenuUI/MainMenuUI.uss?fileID=7433441132597879392&amp;guid=052f93e4e390ded4197a663503f203a8&amp;type=3#MainMenuUI"/>
+    <ui:VisualElement class="main-container">
+        <!-- 상단 여백 বা 로고 위치 -->
+        <ui:VisualElement class="logo-space" />
+        
+        <!-- 하단 메뉴 버튼 컨테이너 -->
+        <ui:VisualElement class="menu-container">
+            <ui:Button name="btn-single" text="싱글플레이" class="menu-button" />
+            <ui:Button name="btn-multi" text="멀티플레이" class="menu-button" />
+            <ui:Button name="btn-settings" text="환경설정" class="menu-button" />
+            <ui:Button name="btn-quit" text="종료하기" class="menu-button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
