@@ -1,0 +1,48 @@
+:root {
+}
+
+.main-container {
+    flex-grow: 1;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: 10%;
+}
+
+.logo-space {
+    flex-grow: 1;
+}
+
+.menu-container {
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-button {
+    width: 200px;
+    height: 40px;
+    margin-bottom: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: rgb(255, 255, 255);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-left-color: rgb(200, 200, 200);
+    border-right-color: rgb(200, 200, 200);
+    border-top-color: rgb(200, 200, 200);
+    border-bottom-color: rgb(200, 200, 200);
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    font-size: 16px;
+    -unity-font-style: bold;
+}
+
+.menu-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.menu-button:active {
+    background-color: rgba(255, 255, 255, 0.4);
+}
