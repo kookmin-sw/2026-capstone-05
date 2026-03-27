@@ -1,0 +1,19 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/_Project/Scripts/01_PM/StatUI/StatUI.uss?fileID=7433441132597879392&amp;guid=38ca984fabbdc0b41b123f5bcd120441&amp;type=3#StatUI"/>
+    <ui:VisualElement class="main-container" style="top: 3px; left: 0;">
+        <ui:VisualElement class="bottom-center-panel">
+            <ui:VisualElement class="quickslot" style="position: absolute; left: 0; top: 0;">
+                <ui:Label text="1" class="quickslot-number"/>
+            </ui:VisualElement>
+            <ui:VisualElement class="quickslot" style="position: absolute; left: 70px; top: 0;">
+                <ui:Label text="2" class="quickslot-number"/>
+            </ui:VisualElement>
+            <ui:VisualElement class="quickslot" style="position: absolute; left: 140px; top: 0;">
+                <ui:Label text="3" class="quickslot-number"/>
+            </ui:VisualElement>
+            <ui:VisualElement class="quickslot" style="position: absolute; left: 210px; top: 0;">
+                <ui:Label text="4" class="quickslot-number"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
