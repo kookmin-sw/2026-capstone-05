@@ -3,26 +3,30 @@ using System.Collections.Generic;
 
 public class NoiseManager : MonoBehaviour
 {
+    // Singleton
     public static NoiseManager Instance;
-    
+
+    // Serialized Fields
     [SerializeField] private NoiseData noiseData;
     
     [Header("Noise Calculation")]
     [SerializeField] private float radiusMultiplier = 0.2f;
     [SerializeField] private float variationRange = 0.05f;
+    [SerializeField] private float maxListenerDetectionRadius = 20f;
     
     [Header("Debug Settings")]
     [SerializeField] private bool showGizmos = true;
-    [SerializeField] private float displayTime = 2f;
+    [SerializeField] private float displayTime = 1f;
     
-    // 데이터 조회 최적화용 사전
+    // Private Fields
     private Dictionary<NoiseData.NoiseType, float> noiseDict = new Dictionary<NoiseData.NoiseType, float>();
+    private List<ActiveNoise> activeNoises = new List<ActiveNoise>();
 
-    // 활성 소음 관리용 구조체
+    // Nested Types
     private struct ActiveNoise
     {
         public Vector3 position;
-        public float deceibel;
+        public float decibel;
         public float radius;
         public float expireTime;
         public NoiseData.NoiseType noiseType;
@@ -30,15 +34,13 @@ public class NoiseManager : MonoBehaviour
         public ActiveNoise(Vector3 pos, float decibel, float rad, float duration, NoiseData.NoiseType type)
         {
             position = pos;
-            deceibel = decibel;
+            this.decibel = decibel;
             radius = rad;
             expireTime = Time.time + duration;
             noiseType = type;
         }
     }
-    
-    private List<ActiveNoise> activeNoises = new List<ActiveNoise>();
-    
+
     private void Awake()
     {
         if (Instance == null) 
@@ -65,7 +67,6 @@ public class NoiseManager : MonoBehaviour
     
     private void Update()
     {
-        // 시간이 다 된 소음 정보들을 리스트에서 제거
         for (int i = activeNoises.Count - 1; i >= 0; i--)
         {
             if (Time.time >= activeNoises[i].expireTime)
@@ -75,22 +76,42 @@ public class NoiseManager : MonoBehaviour
         }
     }
 
-    //  데시벨 조회 메서드
     public float GetDecibel(NoiseData.NoiseType type)
     {
         return noiseDict.TryGetValue(type, out float db) ? db : 0f;
     }
 
-    /// 외부에서 소음 발생을 요청할 때 호출
     public void GenerateNoise(Vector3 position, NoiseData.NoiseType noiseType)
     {
         float decibel = GetDecibel(noiseType) * Random.Range(1f - variationRange, 1f + variationRange);
         float calculatedRadius = decibel * radiusMultiplier;
 
+        if (calculatedRadius <= 0f) return;
+
         activeNoises.Add(new ActiveNoise(position, decibel, calculatedRadius, displayTime, noiseType));
+        NotifyEnemies(position, calculatedRadius);
     }
 
-    // 에디터 씬 뷰에서 소음 범위를 시각화
+    private void NotifyEnemies(Vector3 position, float radius)
+    {
+        HashSet<INoiseListener> notified = new HashSet<INoiseListener>();
+
+        Collider[] hitColliders = Physics.OverlapSphere(position, radius + maxListenerDetectionRadius);
+        foreach (var hit in hitColliders)
+        {
+            INoiseListener listener = hit.GetComponentInParent<INoiseListener>();
+            if (listener == null || !notified.Add(listener)) continue;
+
+            if (listener is not MonoBehaviour listenerMb) continue;
+
+            float distance = Vector3.Distance(listenerMb.transform.position, position);
+            if (distance < radius + listener.DetectionRadius)
+            {
+                listener.OnNoiseDetected(position, radius);
+            }
+        }
+    }
+
     private void OnDrawGizmos()
     {
         if (!showGizmos || activeNoises == null) return;
