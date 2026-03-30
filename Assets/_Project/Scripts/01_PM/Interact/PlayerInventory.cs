@@ -1,18 +1,23 @@
 using UnityEngine;
+using Systems.Inventory;
 
 /// <summary>
-/// 플레이어의 인벤토리를 관리하는 클래스
+/// 메인 인벤토리(Grid)와 상호작용(Key 등)을 연결해주는 브릿지 인벤토리 클래스
 /// </summary>
 public class PlayerInventory : MonoBehaviour
 {
-    [Header("Inventory Settings")]
-    [SerializeField] private int keyCount = 0;
+    [Header("Item Link Settings")]
+    [Tooltip("열쇠로 사용할 아이템 데이터를 연결해주세요.")]
+    [SerializeField] private ItemDetails keyItemAsset; 
 
     [Header("UI Settings")]
-    [SerializeField] private GameObject keyUIObject; // 열쇠 UI 오브젝트
+    [SerializeField] private GameObject keyUIObject; // 기존 UI 하위호환용 (선택)
+
+    private Systems.Inventory.Inventory mainInventory;
 
     private void Start()
     {
+        mainInventory = FindFirstObjectByType<Systems.Inventory.Inventory>();
         UpdateKeyUI();
     }
     
@@ -22,9 +27,16 @@ public class PlayerInventory : MonoBehaviour
     /// <param name="amount">추가할 열쇠 개수</param>
     public void AddKeys(int amount)
     {
-        keyCount += amount;
-        Debug.Log($"🔑 {amount}개의 열쇠를 획득했습니다! 현재 열쇠: {keyCount}개");
-        UpdateKeyUI();
+        if (mainInventory != null && keyItemAsset != null)
+        {
+            mainInventory.AddItem(keyItemAsset, amount);
+            Debug.Log($"🔑 {amount}개의 열쇠({keyItemAsset.Name})를 획득했습니다!");
+            UpdateKeyUI();
+        }
+        else
+        {
+            Debug.LogWarning("메인 인벤토리 또는 Key Item Asset이 연결되지 않았습니다.");
+        }
     }
     
     /// <summary>
@@ -33,7 +45,11 @@ public class PlayerInventory : MonoBehaviour
     /// <returns>열쇠를 가지고 있으면 true</returns>
     public bool HasKey()
     {
-        return keyCount > 0;
+        if (mainInventory != null && keyItemAsset != null)
+        {
+            return mainInventory.HasItem(keyItemAsset, 1);
+        }
+        return false;
     }
     
     /// <summary>
@@ -42,14 +58,16 @@ public class PlayerInventory : MonoBehaviour
     /// <returns>열쇠를 성공적으로 사용했으면 true</returns>
     public bool UseKey()
     {
-        if (keyCount > 0)
+        if (mainInventory != null && keyItemAsset != null)
         {
-            keyCount--;
-            Debug.Log($"🔓 열쇠를 사용했습니다! 남은 열쇠: {keyCount}개");
-            UpdateKeyUI();
-            return true;
+            if (mainInventory.ConsumeItem(keyItemAsset, 1))
+            {
+                Debug.Log($"🔓 열쇠를 사용했습니다!");
+                UpdateKeyUI();
+                return true;
+            }
         }
-        Debug.Log("❌ 사용할 수 있는 열쇠가 없습니다!");
+        Debug.Log("❌ 사용할 수 있는 열쇠가 없거나 시스템에 연결되지 않았습니다!");
         return false;
     }
 
@@ -57,16 +75,7 @@ public class PlayerInventory : MonoBehaviour
     {
         if (keyUIObject != null)
         {
-            keyUIObject.SetActive(keyCount > 0);
+            keyUIObject.SetActive(HasKey());
         }
-    }
-    
-    /// <summary>
-    /// 현재 가지고 있는 열쇠 개수를 반환
-    /// </summary>
-    /// <returns>열쇠 개수</returns>
-    public int GetKeyCount()
-    {
-        return keyCount;
     }
 }
