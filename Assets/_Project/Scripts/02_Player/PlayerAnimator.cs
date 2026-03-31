@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 
@@ -18,7 +19,16 @@ public class PlayerAnimator : MonoBehaviour
     private readonly int hashIsCrouching = Animator.StringToHash("IsCrouching");
     private readonly int hashIsSprinting = Animator.StringToHash("IsSprinting");
     private readonly int hashOnHit = Animator.StringToHash("OnHit");
-    private readonly int hashOnAttack = Animator.StringToHash("OnAttack");
+
+    private Dictionary<ItemUseAnimationType, int> itemUseAnimTriggers = new Dictionary<ItemUseAnimationType, int>
+    {
+        { ItemUseAnimationType.MeleeAttack, Animator.StringToHash("UseMelee") },
+        { ItemUseAnimationType.FirearmShoot, Animator.StringToHash("UseFirearm") },
+        { ItemUseAnimationType.Eat, Animator.StringToHash("Eat") },
+        { ItemUseAnimationType.Drink, Animator.StringToHash("Drink") },
+        { ItemUseAnimationType.Throw, Animator.StringToHash("Throw") },
+        { ItemUseAnimationType.ToolUse, Animator.StringToHash("UseTool") }
+    };
 
     private void Update()
     {
@@ -90,15 +100,22 @@ public class PlayerAnimator : MonoBehaviour
         }
     }
 
-    public void SetAttackTrigger()
+    /// <summary>
+    /// 아이템 데이터에 등록된 이름표(String)를 받아 해당 애니메이션 트리거를 작동시킵니다.
+    /// </summary>
+    public void PlayUseItemAnimation(ItemUseAnimationType animType)
     {
+        if (animType == ItemUseAnimationType.None) return;
+
+        int animHash = itemUseAnimTriggers[animType];
+
         if (animator1P != null)
         {
-            animator1P.SetTrigger(hashOnAttack);
+            animator1P.SetTrigger(animHash);
         }
         if (animator3P != null)
         {
-            animator3P.SetTrigger(hashOnAttack);
+            animator3P.SetTrigger(animHash);
         }
     }
 }
