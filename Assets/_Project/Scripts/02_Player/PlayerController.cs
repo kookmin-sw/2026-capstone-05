@@ -95,11 +95,6 @@ public class PlayerController : MonoBehaviour
         {
             Condition.OnTakeDamageEvent += Animator.SetHitTrigger;
         }
-
-        if (Equipment != null && Animator != null)
-        {
-            Equipment.OnAttackEvent += Animator.SetAttackTrigger;
-        }
     }
 
     private void OnDisable()
@@ -107,11 +102,6 @@ public class PlayerController : MonoBehaviour
         if (Condition != null && Animator != null)
         {
             Condition.OnTakeDamageEvent -= Animator.SetHitTrigger;
-        }
-
-        if (Equipment != null && Animator != null)
-        {
-            Equipment.OnAttackEvent -= Animator.SetAttackTrigger;
         }
     }
 
