@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/// <summary>
+/// 실제 게임 내에서 아이템 하나하나를 나타내는 클래스
+/// </summary>
 [System.Serializable]
 public class ItemInstance
 {

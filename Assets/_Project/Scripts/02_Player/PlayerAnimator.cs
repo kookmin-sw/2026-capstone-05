@@ -4,6 +4,9 @@ using UnityEngine.Animations.Rigging;
 
 public class PlayerAnimator : MonoBehaviour
 {
+    [Header("References")]
+    [SerializeField] private PlayerController player;
+
     [Header("Animators")]
     [SerializeField] private Animator animator1P;
     [SerializeField] private Animator animator3P;
@@ -124,6 +127,25 @@ public class PlayerAnimator : MonoBehaviour
         {
             animator3P.SetInteger(hashActionID, actionID);
             animator3P.SetTrigger(hashOnAction);
+        }
+    }
+
+
+    public void OnUnarmedAttackEvent(bool is1PModel)
+    {
+        if (player.IsLocalPlayer && !is1PModel)
+        {
+            return;
+        }
+
+        player.Equipment.HandleAnimationEvent();
+    }
+
+    public void OnMeleeAttackEvent(bool is1PModel)
+    {
+        if (player.IsLocalPlayer && !is1PModel)
+        {
+            return;
         }
     }
 }
