@@ -12,7 +12,8 @@ public class PlayerConditionUI : MonoBehaviour
     public Image coldnessFill;
 
     [Header("Stamina Slider")]
-    public Image staminaFill; 
+    public Image staminaFillLeft; 
+    public Image staminaFillRight; 
 
     [Header("Percentage Texts")]
     public TextMeshProUGUI healthText;
@@ -27,9 +28,13 @@ public class PlayerConditionUI : MonoBehaviour
         UpdateCircle(coldnessFill, coldnessText, player.coldness.currentValue);
 
         // 스테미나 업데이트 (중앙에서 양옆으로 줄어드는 방식)
-        if (staminaFill != null)
+        if (staminaFillLeft != null)
         {
-            staminaFill.fillAmount = player.stamina.currentValue / 100f;
+            staminaFillLeft.fillAmount = player.stamina.currentValue / 100f;
+        }
+        if (staminaFillRight != null)
+        {
+            staminaFillRight.fillAmount = player.stamina.currentValue / 100f;
         }
     }
 
