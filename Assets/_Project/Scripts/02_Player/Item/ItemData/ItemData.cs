@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/// <summary>
+/// 아이템 종류 당 하나씩 존재하는 데이터 클래스의 추상 클래스 (무기, 도구, 소비 아이템 등)
+/// </summary>
 public abstract class ItemData : ScriptableObject
 {
     public abstract ItemType Type { get; }

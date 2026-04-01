@@ -8,12 +8,22 @@ public class PlayerEquipment : MonoBehaviour
 
     public EquippedItemBehaviour CurrentItem { get; private set; }
 
+    private Transform cameraTransform;
+
     [Header("Unarmed Settings")]
     public float unarmedDamage = 5f;
-    public float unarmedRange = 1f;
     public float unarmedAttackCooldown = 0.8f;
+    public float unarmedRange = 1f;
+    public float unarmedHitRadius = 0.3f;
+
+    public LayerMask hitLayerMask = ~0;
 
     private float lastUnarmedAttackTime = 0f;
+
+    private void Start()
+    {
+        cameraTransform = player.CameraTransform;
+    }
 
     /// <summary>
     /// 인벤토리(퀵슬롯)에서 아이템을 선택했을 때 호출됩니다.
@@ -76,7 +86,45 @@ public class PlayerEquipment : MonoBehaviour
 
     private void PerformUnarmedHitCheck()
     {
-        // 여기에 맨손 전용 Raycast나 BoxCast 로직 작성
-        // 예: Physics.SphereCast(player.CameraRoot.position, 0.5f, player.CameraRoot.forward, out hit, unarmedRange)
+        Transform originTransform = cameraTransform != null ? cameraTransform : Camera.main.transform;
+
+        Ray ray = new Ray(originTransform.position, originTransform.forward);
+        if (Physics.SphereCast(ray, unarmedHitRadius, out RaycastHit hit, unarmedRange, hitLayerMask))
+        {
+            if (hit.collider.TryGetComponent(out IDamageable target))
+            {
+                // 대미지 넣었을 때
+                target.TakeDamage(unarmedDamage);
+
+                // TODO: 타격음 발생
+                // NoiseManager.Instance.GenerateNoise(hit.point, NoiseData.NoiseType.PunchHit);
+            }
+            else
+            {
+                // 뭔가 맞긴 했는데 대미지를 줄 수 없는 물체였을 때
+                // TODO: 타격음 발생
+            }
+        }
+        else
+        {
+            // TODO: 헛스윙 소리?
+        }
     }
+
+    //private void OnDrawGizmosSelected()
+    //{
+    //    Transform originTransform = cameraTransform != null ? cameraTransform : Camera.main?.transform;
+    //    if (originTransform == null)
+    //    {
+    //        return;
+    //    }
+
+    //    Gizmos.color = Color.red;
+    //    Vector3 startPos = originTransform.position;
+    //    Vector3 endPos = startPos + originTransform.forward * unarmedRange;
+
+    //    Gizmos.DrawWireSphere(startPos, unarmedHitRadius);
+    //    Gizmos.DrawWireSphere(endPos, unarmedHitRadius);
+    //    Gizmos.DrawLine(startPos, endPos);
+    //}
 }

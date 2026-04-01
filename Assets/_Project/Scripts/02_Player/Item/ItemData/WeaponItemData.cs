@@ -8,7 +8,7 @@ public abstract class WeaponItemData : ItemData
     public float damage;
     public float attackRange;
     public float attackRate;
-    public float attackNoiseDB;
+    public float attackHitRadius;
 }
 
 // 근접 무기 (도끼, 칼 등)
