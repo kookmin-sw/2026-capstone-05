@@ -26,4 +26,9 @@ public abstract class EquippedItemBehaviour : MonoBehaviour
     /// 우클릭(Secondary Use) 시 호출되는 메서드. (예: 조준, 특수 능력 등)
     /// </summary>
     public virtual void SecondaryUse() { }
+
+    /// <summary>
+    /// 애니메이션의 특정 프레임(타격 순간 등)에서 호출됩니다.
+    /// </summary>
+    public virtual void OnAnimationEventTriggered() { }
 }

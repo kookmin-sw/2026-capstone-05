@@ -19,15 +19,18 @@ public class PlayerAnimator : MonoBehaviour
     private readonly int hashIsCrouching = Animator.StringToHash("IsCrouching");
     private readonly int hashIsSprinting = Animator.StringToHash("IsSprinting");
     private readonly int hashOnHit = Animator.StringToHash("OnHit");
+    private readonly int hashOnAction = Animator.StringToHash("OnAction");
+    private readonly int hashActionID = Animator.StringToHash("ActionID");
 
     private Dictionary<ItemUseAnimationType, int> itemUseAnimTriggers = new Dictionary<ItemUseAnimationType, int>
     {
-        { ItemUseAnimationType.MeleeAttack, Animator.StringToHash("UseMelee") },
-        { ItemUseAnimationType.FirearmShoot, Animator.StringToHash("UseFirearm") },
-        { ItemUseAnimationType.Eat, Animator.StringToHash("Eat") },
-        { ItemUseAnimationType.Drink, Animator.StringToHash("Drink") },
-        { ItemUseAnimationType.Throw, Animator.StringToHash("Throw") },
-        { ItemUseAnimationType.ToolUse, Animator.StringToHash("UseTool") }
+        { ItemUseAnimationType.None, 0 }, // Unarmed Attack
+        { ItemUseAnimationType.MeleeAttack, 1 }, // Use Melee
+        { ItemUseAnimationType.FirearmShoot, 2 }, // Use Firearm
+        { ItemUseAnimationType.Eat, 3 }, // Eat
+        { ItemUseAnimationType.Drink, 4 }, // Drink
+        { ItemUseAnimationType.Throw, 5 }, // Throw
+        { ItemUseAnimationType.ToolUse, 6 } // Use Tool
     };
 
     private void Update()
@@ -105,17 +108,22 @@ public class PlayerAnimator : MonoBehaviour
     /// </summary>
     public void PlayUseItemAnimation(ItemUseAnimationType animType)
     {
-        if (animType == ItemUseAnimationType.None) return;
+        if (!itemUseAnimTriggers.ContainsKey(animType))
+        {
+            return;
+        }
 
-        int animHash = itemUseAnimTriggers[animType];
+        int actionID = itemUseAnimTriggers[animType];
 
         if (animator1P != null)
         {
-            animator1P.SetTrigger(animHash);
+            animator1P.SetInteger(hashActionID, actionID);
+            animator1P.SetTrigger(hashOnAction);
         }
         if (animator3P != null)
         {
-            animator3P.SetTrigger(animHash);
+            animator3P.SetInteger(hashActionID, actionID);
+            animator3P.SetTrigger(hashOnAction);
         }
     }
 }

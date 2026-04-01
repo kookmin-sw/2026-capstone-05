@@ -1,3 +1,5 @@
+using UnityEngine;
+
 [System.Serializable]
 public class ItemInstance
 {
@@ -5,9 +7,13 @@ public class ItemInstance
 
     public ItemRotation currentRotation = ItemRotation.Deg0;
 
-    public ItemInstance(ItemData data)
+    public int currentStackCount = 1;
+
+    public ItemInstance(ItemData data, int amount = 1)
     {
         Data = data;
+
+        currentStackCount = Mathf.Clamp(amount, 1, data.maxStackSize);
     }
 
     public void Rotate(bool isClockwise)
