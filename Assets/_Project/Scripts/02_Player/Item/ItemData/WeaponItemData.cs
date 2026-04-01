@@ -13,10 +13,11 @@ public abstract class WeaponItemData : ItemData
 
 // 근접 무기 (도끼, 칼 등)
 [CreateAssetMenu(fileName = "New Melee Weapon", menuName = "Item Data/Weapon/Melee")]
-public class MeleeWeaponData : WeaponItemData
+public class MeleeWeaponItemData : WeaponItemData
 {
     [Header("Melee Specifics")]
     public float staminaConsumePerSwing;
+    public float attackCooldown;
 
     [Header("Noise Settings")]
     public NoiseData.NoiseType swingNoiseType;
