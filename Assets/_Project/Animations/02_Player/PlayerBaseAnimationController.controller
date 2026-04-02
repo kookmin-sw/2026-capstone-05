@@ -336,6 +336,20 @@ AnimatorStateTransition:
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 0
+--- !u!114 &-966008097098507164
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58bccb9e9118861429e2dbd5c6cafbcf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IKWeightOverride
+  targetLeftHandWeight: 0
+  targetRightHandWeight: 0
 --- !u!1102 &-457873942808554783
 AnimatorState:
   serializedVersion: 6
@@ -1106,11 +1120,12 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Melee Attack
-  m_Speed: 1
+  m_Speed: 1.2
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: -3146474349627506750}
-  m_StateMachineBehaviours: []
+  m_StateMachineBehaviours:
+  - {fileID: -966008097098507164}
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -1119,7 +1134,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -203655887218126122, guid: 7a90206748c324949afe67f45a242b94, type: 3}
+  m_Motion: {fileID: -203655887218126122, guid: 0dee4390413848b4a86eb9c8895021d4, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 

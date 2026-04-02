@@ -16,8 +16,6 @@ public class MeleeWeaponBehaviour : EquippedItemBehaviour
         }
 
         base.Use();
-
-        NoiseManager.Instance.GenerateNoise(transform.position, data.swingNoiseType);
     }
 
     public override void OnAnimationEventTriggered()
@@ -39,6 +37,10 @@ public class MeleeWeaponBehaviour : EquippedItemBehaviour
             {
                 target.TakeDamage(data.damage);
             }
+
+            NoiseManager.Instance.GenerateNoise(transform.position, data.hitNoiseType);
         }
+
+        NoiseManager.Instance.GenerateNoise(transform.position, data.swingNoiseType);
     }
 }
