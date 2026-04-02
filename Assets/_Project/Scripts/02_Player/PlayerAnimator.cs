@@ -131,7 +131,7 @@ public class PlayerAnimator : MonoBehaviour
     }
 
 
-    public void OnUnarmedAttackEvent(bool is1PModel)
+    public void OnActionExecuteEvent(bool is1PModel)
     {
         if (player.IsLocalPlayer && !is1PModel)
         {
@@ -139,13 +139,5 @@ public class PlayerAnimator : MonoBehaviour
         }
 
         player.Equipment.HandleAnimationEvent();
-    }
-
-    public void OnMeleeAttackEvent(bool is1PModel)
-    {
-        if (player.IsLocalPlayer && !is1PModel)
-        {
-            return;
-        }
     }
 }

@@ -2,8 +2,6 @@ using UnityEngine;
 
 public class MeleeWeaponBehaviour : EquippedItemBehaviour
 {
-    private float lastAttackTime = 0f;
-
     public override void Use()
     {
         MeleeWeaponItemData data = itemInstance.Data as MeleeWeaponItemData;
@@ -11,18 +9,11 @@ public class MeleeWeaponBehaviour : EquippedItemBehaviour
         {
             return;
         }
-        if (Time.time - lastAttackTime < data.attackCooldown)
-        {
-            Debug.Log("Attack is on cooldown.");
-            return;
-        }
         if (!player.Condition.UseStamina(data.staminaConsumePerSwing))
         {
             Debug.Log("Not enough stamina to attack.");
             return;
         }
-
-        lastAttackTime = Time.time;
 
         base.Use();
 
@@ -36,6 +27,8 @@ public class MeleeWeaponBehaviour : EquippedItemBehaviour
         {
             return;
         }
+
+        base.OnAnimationEventTriggered();
 
         Transform originTransform = player.CameraTransform != null ? player.CameraTransform : Camera.main.transform;
         Ray ray = new Ray(originTransform.position, originTransform.forward);

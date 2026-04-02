@@ -6,9 +6,8 @@ public abstract class WeaponItemData : ItemData
 
     [Header("Base Weapon Stats")]
     public float damage;
-    public float attackRange;
-    public float attackRate;
-    public float attackHitRadius;
+    public float attackRange; // 근접 무기는 공격 범위, 총기류는 사거리로 사용
+    public float attackHitRadius; // 공격이 명중하는 범위 (근접 무기는 타격 범위, 총기류는 탄착 범위)
 }
 
 // 근접 무기 (도끼, 칼 등)
@@ -17,7 +16,6 @@ public class MeleeWeaponItemData : WeaponItemData
 {
     [Header("Melee Specifics")]
     public float staminaConsumePerSwing;
-    public float attackCooldown;
 
     [Header("Noise Settings")]
     public NoiseData.NoiseType swingNoiseType;
@@ -28,9 +26,10 @@ public class MeleeWeaponItemData : WeaponItemData
 public class FirearmItemData : WeaponItemData
 {
     [Header("Firearm Specifics")]
+    public float attackRate; // 발사 속도 (RPM)
     public ItemData requiredAmmoType;
-    public int maxMagazineSize;
-    public float reloadTime;
+    public int maxMagazineSize; // 탄창 최대 크기
+    public float reloadTime; // 재장전 시간 (초)
 
     [Header("Noise Settings")]
     public NoiseData.NoiseType shootNoiseType;

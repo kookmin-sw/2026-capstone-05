@@ -11,6 +11,17 @@ public class ConsumableBehaviour : EquippedItemBehaviour
         }
 
         base.Use();
+    }
+
+    public override void OnAnimationEventTriggered()
+    {
+        ConsumableItemData data = itemInstance.Data as ConsumableItemData;
+        if (data == null)
+        {
+            return;
+        }
+
+        base.OnAnimationEventTriggered();
 
         itemInstance.currentStackCount--;
 

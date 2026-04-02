@@ -8,6 +8,8 @@ public abstract class EquippedItemBehaviour : MonoBehaviour
     protected PlayerController player;
     protected ItemInstance itemInstance;
 
+    protected float lastUseTime = -999f;
+
     public virtual void Initialize(PlayerController owner, ItemInstance instance)
     {
         player = owner;
@@ -19,11 +21,18 @@ public abstract class EquippedItemBehaviour : MonoBehaviour
     /// </summary>
     public virtual void Use()
     {
+        if (Time.time - lastUseTime < itemInstance.Data.actionCooldown)
+        {
+            return;
+        }
+
+        lastUseTime = Time.time;
+
         player.Animator.PlayUseItemAnimation(itemInstance.Data.useAnimationType);
     }
 
     /// <summary>
-    /// 우클릭(Secondary Use) 시 호출되는 메서드. (예: 조준, 특수 능력 등)
+    /// 우클릭(Secondary Use) 시 호출되는 메서드. (예: 조준, 특수 능력 등) (현재 구현 X)
     /// </summary>
     public virtual void SecondaryUse() { }
 
