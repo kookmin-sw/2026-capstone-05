@@ -16,19 +16,11 @@ public class PlayerAnimationEventRelay : MonoBehaviour
         }
     }
 
-    public void OnUnarmedAttack()
+    public void OnActionExecute()
     {
         if (animator != null)
         {
-            animator.OnUnarmedAttackEvent(is1PModel);
-        }
-    }
-
-    public void OnMeleeAttack()
-    {
-        if (animator != null)
-        {
-            animator.OnMeleeAttackEvent(is1PModel);
+            animator.OnActionExecuteEvent(is1PModel);
         }
     }
 }

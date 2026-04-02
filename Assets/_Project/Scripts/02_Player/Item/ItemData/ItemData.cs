@@ -24,8 +24,9 @@ public abstract class ItemData : ScriptableObject
     public GameObject pickupPrefab; // 바닥에 떨어졌을 때 보여질 프리팹
     public GameObject equipPrefab; // 장착 시 보여질 프리팹 (무기, 도구 등)
 
-    [Header("Animation Settings")]
+    [Header("Animation & Action Settings")]
     public ItemUseAnimationType useAnimationType = ItemUseAnimationType.None;
+    public float actionCooldown = 1f; // 아이템 사용 후 행동이 재사용 가능해질 때까지의 시간 (초)
 
     [Header("Economic Value")]
     public bool isTradable = true;
