@@ -3,13 +3,14 @@ using UnityEngine;
 public class EnemyChaseState : EnemyState
 {
     private Vector3 lastNoisePosition;
-
+    
     public EnemyChaseState(EnemyAI enemy, EnemyStateMachine stateMachine)
         : base(enemy, stateMachine) { }
 
     public override void Enter()
     {
         enemy.Agent.speed = enemy.Data.chaseSpeed;
+
         lastNoisePosition = enemy.DetectedNoisePosition;
         enemy.Agent.SetDestination(lastNoisePosition);
     }
@@ -18,6 +19,9 @@ public class EnemyChaseState : EnemyState
 
     public override void LogicUpdate()
     {
+        enemy.Animator.SetFloat("Speed", enemy.Agent.velocity.magnitude / enemy.Data.chaseSpeed, 0.2f, Time.deltaTime);
+        enemy.Animator.SetFloat("Angle", 0f, 0.2f, Time.deltaTime);
+
         if (enemy.IsPlayerInAttackRadius())
         {
             stateMachine.ChangeState(enemy.AttackState);
@@ -33,6 +37,11 @@ public class EnemyChaseState : EnemyState
         if (!enemy.Agent.pathPending && enemy.Agent.remainingDistance <= enemy.Agent.stoppingDistance)
         {
             enemy.SetSuspicionLevel(enemy.Data.suspicionOnChaseArrival);
+            stateMachine.ChangeState(enemy.SearchState);
+        }
+
+        if (enemy.SuspicionLevel < enemy.Data.chaseExitThreshold)
+        {
             stateMachine.ChangeState(enemy.SearchState);
         }
     }
