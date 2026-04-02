@@ -21,8 +21,8 @@ public abstract class ItemData : ScriptableObject
     //public float weight;
 
     [Header("World Interaction")]
-    public GameObject pickupPrefab; // 바닥에 떨어졌을 때 보여질 프리팹
-    public GameObject equipPrefab; // 장착 시 보여질 프리팹 (무기, 도구 등)
+    public GameObject pickupPrefab; // 바닥에 떨어졌을 때 보여질 프리팹 (ItemPickup)
+    public GameObject equipPrefab; // 장착 시 보여질 프리팹 (무기, 도구 등) (EquippedItemBehaviour)
 
     [Header("Animation & Action Settings")]
     public ItemUseAnimationType useAnimationType = ItemUseAnimationType.None;
