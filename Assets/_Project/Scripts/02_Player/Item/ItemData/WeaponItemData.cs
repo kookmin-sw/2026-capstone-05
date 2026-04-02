@@ -19,6 +19,7 @@ public class MeleeWeaponItemData : WeaponItemData
 
     [Header("Noise Settings")]
     public NoiseData.NoiseType swingNoiseType;
+    public NoiseData.NoiseType hitNoiseType;
 }
 
 // 총기류 (원체스터 등)

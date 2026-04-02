@@ -5,15 +5,41 @@ using UnityEngine;
 /// </summary>
 public abstract class EquippedItemBehaviour : MonoBehaviour
 {
+    private Renderer[] renderers;
+
     protected PlayerController player;
     protected ItemInstance itemInstance;
 
     protected float lastUseTime = -999f;
 
-    public virtual void Initialize(PlayerController owner, ItemInstance instance)
+    public bool Is1PModel { get; private set; }
+
+    public virtual void Initialize(PlayerController owner, ItemInstance instance, bool is1P)
     {
         player = owner;
         itemInstance = instance;
+        Is1PModel = is1P;
+
+        if (renderers == null || renderers.Length == 0)
+        {
+            renderers = GetComponentsInChildren<Renderer>(true);
+        }
+
+        if (player.IsLocalPlayer)
+        {
+            if (Is1PModel)
+            {
+                SetRenderersShadowCastingMode(UnityEngine.Rendering.ShadowCastingMode.Off);
+            }
+            else
+            {
+                SetRenderersShadowCastingMode(UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly);
+            }
+        }
+        else if (!Is1PModel)
+        {
+            SetRenderersShadowCastingMode(UnityEngine.Rendering.ShadowCastingMode.On);
+        }
     }
 
     /// <summary>
@@ -40,4 +66,16 @@ public abstract class EquippedItemBehaviour : MonoBehaviour
     /// 애니메이션의 특정 프레임(타격 순간 등)에서 호출됩니다.
     /// </summary>
     public virtual void OnAnimationEventTriggered() { }
+
+
+    private void SetRenderersShadowCastingMode(UnityEngine.Rendering.ShadowCastingMode mode)
+    {
+        foreach (Renderer rend in renderers)
+        {
+            if (rend != null)
+            {
+                rend.shadowCastingMode = mode;
+            }
+        }
+    }
 }

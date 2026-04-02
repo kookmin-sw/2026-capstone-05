@@ -14,6 +14,12 @@ public class ItemInstance
 
     public ItemInstance(ItemData data, int amount = 1)
     {
+        if (data == null)
+        {
+            Debug.LogError("ItemData cannot be null when creating an ItemInstance.");
+            return;
+        }
+
         Data = data;
 
         currentStackCount = Mathf.Clamp(amount, 1, data.maxStackSize);
