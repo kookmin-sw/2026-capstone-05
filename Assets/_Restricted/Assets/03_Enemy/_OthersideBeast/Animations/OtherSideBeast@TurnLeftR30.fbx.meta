@@ -1,18 +1,11 @@
 fileFormatVersion: 2
-guid: 34dab674dbbd7a54a96b0c19f020dfdd
-AssetOrigin:
-  serializedVersion: 1
-  productId: 211704
-  packageName: Otherside beast
-  packageVersion: 1.0
-  assetPath: Assets/_OthersideBeast/Animations/OtherSideBeast@Death1.fbx
-  uploadId: 475964
+guid: e482381d7186a044a8f9e1eb68b9c06f
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable:
   - first:
       74: -623603649343465320
-    second: Death1
+    second: TurnLeft30
   externalObjects: {}
   materials:
     materialImportMode: 2
@@ -41,18 +34,18 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Death1
+      name: TurnLeft30
       takeName: Scene
       internalID: -623603649343465320
       firstFrame: 1
-      lastFrame: 45
+      lastFrame: 34
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
       cycleOffset: 0
       loop: 0
       hasAdditiveReferencePose: 0
-      loopTime: 0
+      loopTime: 1
       loopBlend: 0
       loopBlendOrientation: 0
       loopBlendPositionY: 0
@@ -65,8 +58,8 @@ ModelImporter:
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
       events:
-      - time: 0.9015838
-        functionName: DeadEnd
+      - time: 0.085074626
+        functionName: TurnREnd
         data: 
         objectReferenceParameter: {instanceID: 0}
         floatParameter: 0
