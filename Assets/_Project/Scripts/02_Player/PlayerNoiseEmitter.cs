@@ -77,7 +77,7 @@ public class PlayerNoiseEmitter : MonoBehaviour
 
     private void GenerateLandingNoise(float impactSpeed, float airTime)
     {
-        // TODO: Adjust noise type based on impact speed and air time for more realism
+        // TODO: Adjust noise type based on impact speed and air time
         NoiseManager.Instance.GenerateNoise(transform.position, NoiseData.NoiseType.Fall);
     }
 
