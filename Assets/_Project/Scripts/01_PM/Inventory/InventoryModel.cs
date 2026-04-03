@@ -163,6 +163,82 @@ namespace Systems.Inventory {
             return total;
         }
 
+        public bool HasItem(ItemDetails details, int amount = 1) {
+            int count = 0;
+            var processedItems = new HashSet<Item>();
+            for (int i = 0; i < Items.Length; i++) {
+                var item = Items[i];
+                if (item != null && item.details == details && !processedItems.Contains(item)) {
+                    processedItems.Add(item);
+                    count += item.quantity;
+                    if (count >= amount) return true;
+                }
+            }
+            return false;
+        }
+
+        public bool TryConsumeItem(ItemDetails details, int amount = 1) {
+            if (!HasItem(details, amount)) return false;
+
+            int remaining = amount;
+            var processedItems = new HashSet<Item>();
+            var itemsToConsume = new List<Item>();
+            
+            for (int i = 0; i < Items.Length; i++) {
+                var item = Items[i];
+                if (item != null && item.details == details && !processedItems.Contains(item)) {
+                    processedItems.Add(item);
+                    itemsToConsume.Add(item);
+                }
+            }
+
+            foreach (var item in itemsToConsume) {
+                if (item.quantity > remaining) {
+                    item.quantity -= remaining;
+                    remaining = 0;
+                    Items.Invoke();
+                    break;
+                } else {
+                    remaining -= item.quantity;
+                    TryRemove(item);
+                    if (remaining <= 0) break;
+                }
+            }
+            return true;
+        }
+
+        public bool AddItemQuantity(ItemDetails details, int amount = 1) {
+            var processedItems = new HashSet<Item>();
+            for (int i = 0; i < Items.Length; i++) {
+                var item = Items[i];
+                if (item != null && item.details == details && !processedItems.Contains(item)) {
+                    processedItems.Add(item);
+                    if (item.quantity < details.maxStack) {
+                        int spaceLeft = details.maxStack - item.quantity;
+                        if (spaceLeft >= amount) {
+                            item.quantity += amount;
+                            Items.Invoke();
+                            return true;
+                        } else {
+                            item.quantity += spaceLeft;
+                            amount -= spaceLeft;
+                            Items.Invoke();
+                        }
+                    }
+                }
+            }
+
+            while (amount > 0) {
+                int addAmount = Math.Min(amount, details.maxStack);
+                var newItem = details.Create(addAmount);
+                if (!TryAdd(newItem)) {
+                    return false;
+                }
+                amount -= addAmount;
+            }
+            return true;
+        }
+
         private bool IsOutOfBounds(int x, int y) {
             return x < 0 || y < 0 || x >= Width || y >= Height;
         }
