@@ -3,13 +3,14 @@ using UnityEngine.AI;
 
 public class EnemySearchState : EnemyState
 {
-    private enum EnemySearchPhase { Approaching, Searching }
+    private enum SearchPhase { Approaching, Searching }
 
-    private EnemySearchPhase phase;
+    private SearchPhase phase;
     private Vector3 searchCenter;
     private Vector3 lastNoisePosition;
     private float waitTimer;
     private bool isWaiting;
+    private bool isLeftTurn;
 
     public EnemySearchState(EnemyAI enemy, EnemyStateMachine stateMachine)
         : base(enemy, stateMachine) { }
@@ -19,20 +20,29 @@ public class EnemySearchState : EnemyState
         searchCenter = enemy.DetectedNoisePosition;
         lastNoisePosition = searchCenter;
         enemy.SetPatrolCenter(searchCenter);
+
         enemy.Agent.speed = enemy.Data.searchSpeed;
         enemy.Agent.isStopped = false;
-        phase = EnemySearchPhase.Approaching;
+        enemy.Agent.updateRotation = true;
+
+        phase = SearchPhase.Approaching;
         isWaiting = false;
+
         SetApproachDestination();
     }
 
     public override void Exit()
     {
+        StopWaitTurn();
         enemy.Agent.isStopped = false;
+        enemy.Agent.updateRotation = true;
     }
 
     public override void LogicUpdate()
     {
+        enemy.Animator.SetFloat("Speed", enemy.Agent.velocity.magnitude / enemy.Data.searchSpeed, 0.2f, Time.deltaTime);
+        enemy.Animator.SetFloat("Angle", 0f, 0.2f, Time.deltaTime);
+
         if (enemy.IsPlayerInAttackRadius())
         {
             stateMachine.ChangeState(enemy.AttackState);
@@ -45,13 +55,13 @@ public class EnemySearchState : EnemyState
             return;
         }
 
-        if (enemy.SuspicionLevel < enemy.Data.alertThreshold)
+        if (enemy.SuspicionLevel < enemy.Data.searchExitThreshold)
         {
             stateMachine.ChangeState(enemy.PatrolState);
             return;
         }
 
-        if (phase == EnemySearchPhase.Approaching)
+        if (phase == SearchPhase.Approaching)
             UpdateApproachPhase();
         else
             UpdateSearchPhase();
@@ -61,7 +71,7 @@ public class EnemySearchState : EnemyState
     {
         if (!enemy.Agent.pathPending && enemy.Agent.remainingDistance <= enemy.Agent.stoppingDistance)
         {
-            phase = EnemySearchPhase.Searching;
+            phase = SearchPhase.Searching;
             SetSearchDestination();
         }
     }
@@ -74,7 +84,9 @@ public class EnemySearchState : EnemyState
             if (waitTimer <= 0f)
             {
                 isWaiting = false;
+                StopWaitTurn();
                 enemy.Agent.isStopped = false;
+                enemy.Agent.updateRotation = true;
                 SetSearchDestination();
             }
             return;
@@ -85,7 +97,41 @@ public class EnemySearchState : EnemyState
             isWaiting = true;
             waitTimer = Random.Range(enemy.Data.waitStartTime, enemy.Data.waitEndTime);
             enemy.Agent.isStopped = true;
+            enemy.Agent.updateRotation = false;
+            StartWaitTurn();
         }
+    }
+
+    private void StartWaitTurn()
+    {
+        enemy.AnimationEventHandler.OnTurnEnd += HandleTurnEnd;
+        enemy.AnimationEventHandler.OnTurnREnd += HandleTurnREnd;
+        enemy.Animator.SetBool("IsAlert", true);
+        isLeftTurn = Random.value > 0.5f;
+        enemy.Animator.SetTrigger(isLeftTurn ? "TurnLeft" : "TurnRight");
+    }
+
+    private void StopWaitTurn()
+    {
+        enemy.AnimationEventHandler.OnTurnEnd -= HandleTurnEnd;
+        enemy.AnimationEventHandler.OnTurnREnd -= HandleTurnREnd;
+        enemy.Animator.ResetTrigger("TurnLeft");
+        enemy.Animator.ResetTrigger("TurnRight");
+        enemy.Animator.ResetTrigger("TurnLeftR");
+        enemy.Animator.ResetTrigger("TurnRightR");
+        enemy.Animator.SetBool("IsAlert", false);
+    }
+
+    private void HandleTurnEnd()
+    {
+        if (!isWaiting) return;
+        enemy.Animator.SetTrigger(isLeftTurn ? "TurnLeftR" : "TurnRightR");
+    }
+
+    private void HandleTurnREnd()
+    {
+        if (!isWaiting) return;
+        enemy.Animator.SetTrigger(isLeftTurn ? "TurnLeft" : "TurnRight");
     }
 
     private void SetApproachDestination()
@@ -95,7 +141,6 @@ public class EnemySearchState : EnemyState
 
         float approachOffset = Random.Range(1.5f, 3f);
         float approachDist = Mathf.Max(0f, targetDirection.magnitude - approachOffset);
-        
         Vector3 approachPos = enemy.transform.position + targetDirection.normalized * approachDist;
 
         const float navMeshSampleRange = 2f;
@@ -105,22 +150,22 @@ public class EnemySearchState : EnemyState
         }
         else
         {
-            phase = EnemySearchPhase.Searching;
+            phase = SearchPhase.Searching;
             SetSearchDestination();
         }
     }
 
     private void SetSearchDestination()
     {
-        const int maxSamplingAttempts = 5;
+        const int maxAttempts = 5;
         const float navMeshSampleRange = 2f;
 
-        for (int i = 0; i < maxSamplingAttempts; i++)
+        for (int i = 0; i < maxAttempts; i++)
         {
             Vector2 randomCircle = Random.insideUnitCircle * enemy.Data.searchRadius;
-            Vector3 targetSearchPos = searchCenter + new Vector3(randomCircle.x, 0f, randomCircle.y);
+            Vector3 targetPos = searchCenter + new Vector3(randomCircle.x, 0f, randomCircle.y);
 
-            if (NavMesh.SamplePosition(targetSearchPos, out NavMeshHit hit, navMeshSampleRange, NavMesh.AllAreas))
+            if (NavMesh.SamplePosition(targetPos, out NavMeshHit hit, navMeshSampleRange, NavMesh.AllAreas))
             {
                 enemy.Agent.SetDestination(hit.position);
                 return;

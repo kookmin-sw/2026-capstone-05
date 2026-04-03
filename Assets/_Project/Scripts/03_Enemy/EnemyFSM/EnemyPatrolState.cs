@@ -13,6 +13,7 @@ public class EnemyPatrolState : EnemyState
     public override void Enter()
     {
         enemy.Agent.speed = enemy.Data.walkSpeed;
+        
         stuckTimer = 0f;
         lastCheckedPosition = enemy.transform.position;
         SetPatrolDestination();
@@ -22,6 +23,9 @@ public class EnemyPatrolState : EnemyState
 
     public override void LogicUpdate()
     {
+        enemy.Animator.SetFloat("Speed", enemy.Agent.velocity.magnitude / enemy.Data.chaseSpeed, 0.2f, Time.deltaTime);
+        enemy.Animator.SetFloat("Angle", 0f, 0.2f, Time.deltaTime);
+
         if (enemy.SuspicionLevel >= enemy.Data.chaseThreshold)
         {
             stateMachine.ChangeState(enemy.ChaseState);
@@ -34,7 +38,7 @@ public class EnemyPatrolState : EnemyState
             return;
         }
 
-        if (enemy.SuspicionLevel > enemy.Data.alertThreshold)
+        if (enemy.SuspicionLevel >= enemy.Data.alertThreshold)
         {
             stateMachine.ChangeState(enemy.AlertState);
             return;
@@ -63,35 +67,34 @@ public class EnemyPatrolState : EnemyState
         return moved < 0.2f;
     }
 
-private void SetPatrolDestination()
-{
-    float sectorAngle = 60f * sectorIndex; 
-    
-    float randomAngle = sectorAngle + Random.Range(-25f, 25f);
-    float randomDistance = enemy.Data.patrolRadius * Random.Range(0.8f, 1.0f);
-
-    float angleInRad = randomAngle * Mathf.Deg2Rad;
-    Vector3 targetOffset = new Vector3(
-        Mathf.Sin(angleInRad) * randomDistance, 
-        0f, 
-        Mathf.Cos(angleInRad) * randomDistance
-    );
-
-    Vector3 targetWorldPos = enemy.PatrolCenter + targetOffset;
-
-    sectorIndex = (sectorIndex + 1) % 6;
-
-    const float navMeshSampleRange = 2f;
-    if (NavMesh.SamplePosition(targetWorldPos, out NavMeshHit hit, navMeshSampleRange, NavMesh.AllAreas))
+    private void SetPatrolDestination()
     {
-        enemy.Agent.SetDestination(hit.position);
-    }
-    else
-    {
-        if (NavMesh.SamplePosition(enemy.PatrolCenter, out NavMeshHit fallback, navMeshSampleRange, NavMesh.AllAreas))
+        float sectorAngle = 60f * sectorIndex; 
+        float randomAngle = sectorAngle + Random.Range(-25f, 25f);
+        float randomDistance = enemy.Data.patrolRadius * Random.Range(0.8f, 1.0f);
+
+        float angleInRad = randomAngle * Mathf.Deg2Rad;
+        Vector3 targetOffset = new Vector3(
+            Mathf.Sin(angleInRad) * randomDistance, 
+            0f, 
+            Mathf.Cos(angleInRad) * randomDistance
+        );
+
+        Vector3 targetWorldPos = enemy.PatrolCenter + targetOffset;
+
+        sectorIndex = (sectorIndex + 1) % 6;
+
+        const float navMeshSampleRange = 2f;
+        if (NavMesh.SamplePosition(targetWorldPos, out NavMeshHit hit, navMeshSampleRange, NavMesh.AllAreas))
         {
-            enemy.Agent.SetDestination(fallback.position);
+            enemy.Agent.SetDestination(hit.position);
+        }
+        else
+        {
+            if (NavMesh.SamplePosition(enemy.PatrolCenter, out NavMeshHit fallback, navMeshSampleRange, NavMesh.AllAreas))
+            {
+                enemy.Agent.SetDestination(fallback.position);
+            }
         }
     }
-}
 }
