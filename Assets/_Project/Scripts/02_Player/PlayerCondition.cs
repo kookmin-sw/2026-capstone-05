@@ -55,7 +55,4 @@ public class PlayerCondition : MonoBehaviour, IDamageable
         return false;
     }
 
-    public void Heal(float amount) => health.Add(amount);
-    public void WarmUp(float amount) => coldness.Subtract(amount);
-
 }

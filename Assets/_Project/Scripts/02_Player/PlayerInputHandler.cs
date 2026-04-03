@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerInputHandler : MonoBehaviour
+public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
 {
     private PlayerInputActions inputActions;
 
@@ -85,5 +85,18 @@ public class PlayerInputHandler : MonoBehaviour
         CrouchTriggered = false;
         InteractTriggered = false;
         ActionTriggered = false;
+    }
+
+
+    public void ConfigureForNetwork(bool isLocalPlayer)
+    {
+        if (isLocalPlayer)
+        {
+            SetInputActive(true);
+        }
+        else
+        {
+            SetInputActive(false);
+        }
     }
 }
