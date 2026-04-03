@@ -1,8 +1,10 @@
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
 {
+    public ItemData testWeapon;
+
     // FSM 및 상태 인스턴스 (FSM & State Instances)
     public PlayerStateMachine StateMachine { get; private set; }
 
@@ -23,6 +25,9 @@ public class PlayerController : MonoBehaviour
     public Transform CameraTransform => cameraTransform;
 
     // 스탯 및 설정 (Stats & Settings)
+    [Header("Network Settings")]
+    public bool IsLocalPlayer { get; private set; }
+
     [Header("Movement Stats")]
     public float walkSpeed = 3f;
     public float sprintSpeed = 6f;
@@ -87,6 +92,8 @@ public class PlayerController : MonoBehaviour
         }
 
         StateMachine.Initialize(GroundedState);
+
+        Equipment.EquipItem(new ItemInstance(testWeapon));
     }
 
     private void OnEnable()
@@ -95,11 +102,6 @@ public class PlayerController : MonoBehaviour
         {
             Condition.OnTakeDamageEvent += Animator.SetHitTrigger;
         }
-
-        if (Equipment != null && Animator != null)
-        {
-            Equipment.OnAttackEvent += Animator.SetAttackTrigger;
-        }
     }
 
     private void OnDisable()
@@ -107,11 +109,6 @@ public class PlayerController : MonoBehaviour
         if (Condition != null && Animator != null)
         {
             Condition.OnTakeDamageEvent -= Animator.SetHitTrigger;
-        }
-
-        if (Equipment != null && Animator != null)
-        {
-            Equipment.OnAttackEvent -= Animator.SetAttackTrigger;
         }
     }
 
@@ -223,5 +220,10 @@ public class PlayerController : MonoBehaviour
         Vector3 point2 = transform.position + Vector3.up * (StandingHeight - radius);
 
         return !Physics.CheckCapsule(point1, point2, radius, obstacleLayer);
+    }
+
+    public void ConfigureForNetwork(bool isLocalPlayer)
+    {
+        IsLocalPlayer = isLocalPlayer;
     }
 }
