@@ -10,7 +10,7 @@ public class EnemyAlertState : EnemyState
     public override void Enter()
     {
         enemy.Agent.isStopped = true;
-        enemy.Agent.updateRotation = false;
+        // enemy.Agent.updateRotation = false;
         enemy.Animator.SetBool("IsAlert", true);
         enemy.AnimationEventHandler.OnTurnEnd += HandleTurnEnd;
         enemy.AnimationEventHandler.OnTurnREnd += HandleTurnREnd;
@@ -32,7 +32,7 @@ public class EnemyAlertState : EnemyState
         enemy.Animator.CrossFade("Locomotion", 0.2f);
 
         enemy.Agent.isStopped = false;
-        enemy.Agent.updateRotation = true;
+        // enemy.Agent.updateRotation = true;
     }
 
     public override void LogicUpdate()
@@ -40,7 +40,7 @@ public class EnemyAlertState : EnemyState
         enemy.Animator.SetFloat("Speed", 0f, 0.1f, Time.deltaTime);
 
         if (enemy.DetectedNoisePosition != Vector3.zero)
-            enemy.LookAtDetectedNoisePosition();
+            // enemy.LookAtDetectedNoisePosition();
 
         if (enemy.IsPlayerInAttackRadius())
         {
