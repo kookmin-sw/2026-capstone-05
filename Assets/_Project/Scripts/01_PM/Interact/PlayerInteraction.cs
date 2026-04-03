@@ -6,6 +6,9 @@ using UnityEngine.InputSystem;
 /// </summary>
 public class PlayerInteraction : MonoBehaviour
 {
+    [Header("References")]
+    [SerializeField] private PlayerController player;
+
     [Header("Interaction Settings")]
     [SerializeField] private float interactionRange = 3f;
     [SerializeField] private LayerMask interactableLayers = -1;
@@ -60,7 +63,7 @@ public class PlayerInteraction : MonoBehaviour
             
             foreach (IInteractable interactable in interactables)
             {
-                if (interactable != null && interactable.CanInteract())
+                if (interactable != null && interactable.CanInteract(player))
                 {
                     float distance = Vector3.Distance(transform.position, col.transform.position);
                     if (distance < nearestDistance)
@@ -74,7 +77,7 @@ public class PlayerInteraction : MonoBehaviour
         
         if (nearestInteractable != null)
         {
-            nearestInteractable.Interact();
+            nearestInteractable.OnInteract(player);
         }
     }
     

@@ -69,7 +69,7 @@ public class LockedDoor : MonoBehaviour, IInteractable
         }
     }
     
-    public bool CanInteract()
+    public bool CanInteract(PlayerController player)
     {
         // 직접 상호작용이 꺼져있으면 false 반환 (BoatInteraction 등이 대신 처리)
         if (!canInteractDirectly) return false;
@@ -77,9 +77,9 @@ public class LockedDoor : MonoBehaviour, IInteractable
         return !isOpened && !isOpening;
     }
     
-    public void Interact()
+    public void OnInteract(PlayerController player)
     {
-        if (!CanInteract()) 
+        if (!CanInteract(player)) 
         {
             return;
         }
