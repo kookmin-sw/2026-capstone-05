@@ -17,5 +17,17 @@ namespace Systems.Inventory {
                 .WithDimensions(gridWidth, gridHeight)
                 .Build();
         }
+
+        public bool AddItem(ItemDetails itemDetails, int quantity = 1) {
+            return controller?.Model?.AddItemQuantity(itemDetails, quantity) ?? false;
+        }
+
+        public bool HasItem(ItemDetails itemDetails, int amount = 1) {
+            return controller?.Model?.HasItem(itemDetails, amount) ?? false;
+        }
+
+        public bool ConsumeItem(ItemDetails itemDetails, int amount = 1) {
+            return controller?.Model?.TryConsumeItem(itemDetails, amount) ?? false;
+        }
     }
 }

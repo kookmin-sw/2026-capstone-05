@@ -15,30 +15,35 @@ public class PlayerIKManager : MonoBehaviour
 
     private float baseLeftWeight = 0f;
     private float baseRightWeight = 1f;
-    private bool isActionOverride = false;
+
+    private int actionOverrideCount = 0;
+
     private float actionLeftWeight = 0f;
     private float actionRightWeight = 0f;
 
-    //public void OnItemChanged(ItemData newItem)
-    //{
-    //    if (newItem != null)
-    //    {
-    //        IKSetting mySetting = (viewType == ViewType.FirstPerson) ? newItem.ik1P : newItem.ik3P;
-
-    //        baseLeftWeight = mySetting.leftHandWeight;
-    //        baseRightWeight = mySetting.rightHandWeight;
-    //    }
-    //}
-
     public void SetActionIKOverride(bool isOverride, float left, float right)
     {
-        isActionOverride = isOverride;
-        actionLeftWeight = left;
-        actionRightWeight = right;
+        if (isOverride)
+        {
+            actionOverrideCount++;
+            actionLeftWeight = left;
+            actionRightWeight = right;
+        }
+        else
+        {
+            actionOverrideCount--;
+        }
+
+        if (actionOverrideCount < 0)
+        {
+            actionOverrideCount = 0;
+        }
     }
 
     private void Update()
     {
+        bool isActionOverride = actionOverrideCount > 0;
+
         float targetLeft = isActionOverride ? actionLeftWeight : baseLeftWeight;
         float targetRight = isActionOverride ? actionRightWeight : baseRightWeight;
 
@@ -46,7 +51,6 @@ public class PlayerIKManager : MonoBehaviour
         {
             leftHandIK.weight = Mathf.Lerp(leftHandIK.weight, targetLeft, Time.deltaTime * lerpSpeed);
         }
-
         if (rightHandIK != null)
         {
             rightHandIK.weight = Mathf.Lerp(rightHandIK.weight, targetRight, Time.deltaTime * lerpSpeed);
