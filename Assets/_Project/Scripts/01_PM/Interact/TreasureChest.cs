@@ -184,14 +184,14 @@ public class TreasureChest : MonoBehaviour, IInteractable
         return count;
     }
     
-    public bool CanInteract()
+    public bool CanInteract(PlayerController player)
     {
         return isUnlocked && !isOpened;
     }
     
-    public void Interact()
+    public void OnInteract(PlayerController player)
     {
-        if (!CanInteract()) 
+        if (!CanInteract(player)) 
         {
             return;
         }

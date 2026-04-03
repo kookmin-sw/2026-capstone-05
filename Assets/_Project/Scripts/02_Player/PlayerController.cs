@@ -93,7 +93,7 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
 
         StateMachine.Initialize(GroundedState);
 
-        Equipment.EquipItem(new ItemInstance(testWeapon));
+        //Equipment.EquipItem(new ItemInstance(testWeapon));
     }
 
     private void OnEnable()
