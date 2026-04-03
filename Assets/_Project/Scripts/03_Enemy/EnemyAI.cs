@@ -17,6 +17,8 @@ public class EnemyAI : MonoBehaviour, INoiseListener
     public Animator Animator { get; private set; }
     public NavMeshAgent Agent { get; private set; }
     public EnemyHealth Health { get; private set; }
+    public EnemyAnimationEventHandler AnimationEventHandler { get; private set; }
+    public EnemyAttackCollider[] AttackColliders { get; private set; }
 
     // Properties: States
     public EnemyIdleState IdleState { get; private set; }
@@ -39,6 +41,8 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         Animator = GetComponent<Animator>();
         Agent = GetComponent<NavMeshAgent>();
         Health = GetComponent<EnemyHealth>();
+        AnimationEventHandler = GetComponentInChildren<EnemyAnimationEventHandler>();
+        AttackColliders = GetComponentsInChildren<EnemyAttackCollider>();
 
         PatrolCenter = transform.position;
 
