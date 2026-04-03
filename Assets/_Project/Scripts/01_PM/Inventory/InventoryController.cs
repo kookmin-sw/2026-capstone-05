@@ -7,6 +7,9 @@ namespace Systems.Inventory {
     public class InventoryController {
         readonly InventoryView view;
         readonly InventoryModel model;
+        
+        public InventoryModel Model => model;
+
         readonly int width;
         readonly int height;
         int Capacity => width * height;
