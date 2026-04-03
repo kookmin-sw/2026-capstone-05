@@ -23,6 +23,9 @@ public class EnemyIdleState : EnemyState
 
     public override void LogicUpdate()
     {
+        enemy.Animator.SetFloat("Speed", 0f, 0.2f, Time.deltaTime);
+        enemy.Animator.SetFloat("Angle", 0f, 0.2f, Time.deltaTime);
+
         if (enemy.SuspicionLevel >= enemy.Data.chaseThreshold)
         {
             stateMachine.ChangeState(enemy.ChaseState);
@@ -35,7 +38,7 @@ public class EnemyIdleState : EnemyState
             return;
         }
 
-        if (enemy.SuspicionLevel > enemy.Data.alertThreshold)
+        if (enemy.SuspicionLevel >= enemy.Data.alertThreshold)
         {
             stateMachine.ChangeState(enemy.AlertState);
             return;
