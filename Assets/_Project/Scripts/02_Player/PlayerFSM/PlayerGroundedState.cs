@@ -59,6 +59,7 @@ public class PlayerGroundedState : PlayerState
         HandleSubStates();
         HandleMovement();
         HandleAnimation();
+        HandleStamina();
     }
 
     public override void PhysicsUpdate()
@@ -83,7 +84,7 @@ public class PlayerGroundedState : PlayerState
 
     private void HandleStandingState()
     {
-        if (player.InputHandler.JumpTriggered)
+        if (player.InputHandler.JumpTriggered && player.Condition.UseStamina(player.jumpStaminaCost))
         {
             ExecuteJump();
             return;
@@ -155,11 +156,21 @@ public class PlayerGroundedState : PlayerState
             return;
         }
 
-        bool isSprinting = currentPosture == PlayerGroundedPosture.Standing &&
-                         input.y > 0 &&
-                         player.InputHandler.IsSprinting;
+        bool wantsToSprint = currentPosture == PlayerGroundedPosture.Standing &&
+                             input.y > 0 &&
+                             player.InputHandler.IsSprinting;
+        bool canSprint = false;
 
-        ChangeLocomotion(isSprinting ? PlayerGroundedLocomotion.Sprinting : PlayerGroundedLocomotion.Walking);
+        if (currentLocomotion == PlayerGroundedLocomotion.Sprinting)
+        {
+            canSprint = wantsToSprint && player.Condition.stamina.currentValue > 0f;
+        }
+        else
+        {
+            canSprint = wantsToSprint && player.Condition.stamina.currentValue >= player.minStaminaToSprint;
+        }
+
+        ChangeLocomotion(canSprint ? PlayerGroundedLocomotion.Sprinting : PlayerGroundedLocomotion.Walking);
     }
 
     private void HandleMovement()
@@ -203,6 +214,41 @@ public class PlayerGroundedState : PlayerState
         else
         {
             player.Animator.UpdateMovement(player.InputHandler.MoveInput);
+        }
+    }
+
+    private void HandleStamina()
+    {
+        if (currentLocomotion == PlayerGroundedLocomotion.Sprinting)
+        {   // 달리는 중
+            player.Condition.DrainStamina(player.sprintStaminaCost * Time.deltaTime);
+
+            if (player.Condition.stamina.currentValue <= 0f)
+            {
+                ChangeLocomotion(PlayerGroundedLocomotion.Walking);
+            }
+        }
+        else
+        {
+            float targetRegenRate = 0f;
+
+            if (currentLocomotion == PlayerGroundedLocomotion.Idle)
+            {   // 가만히 있는 중
+                targetRegenRate = player.idleRegenRate;
+            }
+            else
+            {
+                if (currentPosture == PlayerGroundedPosture.Standing)
+                {   // 걷는 중
+                    targetRegenRate = player.walkRegenRate;
+                }
+                else
+                {   // 웅크리고 걷는 중
+                    targetRegenRate = player.crouchWalkRegenRate;
+                }
+            }
+
+            player.Condition.stamina.increaseRate = targetRegenRate;
         }
     }
 }

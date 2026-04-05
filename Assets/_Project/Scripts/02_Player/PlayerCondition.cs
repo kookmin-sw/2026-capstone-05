@@ -12,6 +12,9 @@ public class PlayerCondition : MonoBehaviour, IDamageable
 
     private List<ActiveEffect> activeEffects = new List<ActiveEffect>();
 
+    [Header("Stamina System")]
+    private float staminaRegenTimer = 0f;
+
     public event Action<float> OnTakeDamageEvent;
 
 
@@ -26,9 +29,18 @@ public class PlayerCondition : MonoBehaviour, IDamageable
     private void Update()
     {
         health.UpdatePassive();
-        stamina.UpdatePassive();
+        //stamina.UpdatePassive();
         satiety.UpdatePassive();
         coldness.UpdatePassive();
+
+        if (staminaRegenTimer > 0f)
+        {
+            staminaRegenTimer -= Time.deltaTime;
+        }
+        else
+        {
+            stamina.UpdatePassive();
+        }
 
         for (int i = activeEffects.Count - 1; i >= 0; i--)
         {
@@ -58,14 +70,38 @@ public class PlayerCondition : MonoBehaviour, IDamageable
         }
     }
 
+    /// <summary>
+    /// 점프, 공격 등 단발성으로 스태미나를 깎을 때 사용
+    /// </summary>
     public bool UseStamina(float amount)
     {
         if (stamina.currentValue >= amount)
         {
             stamina.Subtract(amount);
+
+            var controller = GetComponent<PlayerController>();
+            if (controller != null)
+            {
+                staminaRegenTimer = controller.staminaRegenDelay;
+            }
+
             return true;
         }
         return false;
+    }
+
+    /// <summary>
+    /// 달리기 등 매 프레임 지속적으로 스태미나를 깎을 때 사용
+    /// </summary>
+    public void DrainStamina(float amount)
+    {
+        stamina.Subtract(amount);
+
+        var controller = GetComponent<PlayerController>();
+        if (controller != null)
+        {
+            staminaRegenTimer = controller.staminaRegenDelay;
+        }
     }
 
     /// <summary>

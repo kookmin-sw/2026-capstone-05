@@ -12,6 +12,8 @@ public class PlayerInteractionState : PlayerState
     {
         base.Enter();
         player.useGravity = true;
+
+        player.Condition.stamina.increaseRate = player.idleRegenRate;
     }
 
     public override void Exit()
