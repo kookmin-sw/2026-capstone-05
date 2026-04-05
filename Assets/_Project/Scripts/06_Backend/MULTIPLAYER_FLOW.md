@@ -1,19 +1,17 @@
-# 06_Backend 멀티플레이 진입 흐름
+# 06_Backend 멀티플레이 흐름 요약
 
-## 씬 역할
-- `Start`: 방 코드 입력 후 Host/Client 시작 선택 화면
-- `Main1`(게임씬): 실제 네트워크 플레이 씬
+## 씬 흐름
+- `Main_menu`(시작): 로그인 → 시작하기 → 호스트/참가 선택
+- `TestMain`(게임씬): 네트워크 플레이 실제 진행
 
-## RoomLauncher 동작
-1. 부팅 시 `RoomLauncher`를 런타임에서 자동 생성(`DontDestroyOnLoad`).
-2. `Start` 씬에서만 방 코드 기반 멀티플레이 UI를 표시한다.
-3. `Start`에서는 방 코드를 입력하고
-   - `호스트로 시작`
-   - `클라이언트로 참가`
-   두 경로 중 하나를 선택한다.
-4. Host/Client 시작 시 `Main1` 씬을 네트워크 게임 씬으로 로드한다.
-5. 플레이어 입장 시 `playerPrefab`을 `Runner.Spawn`으로 생성하여 입력 권한 플레이어가 직접 컨트롤한다.
+## 동작 순서
+1. `RoomLauncher`가 런타임에 생성되고 메뉴 씬(`Main_menu`)을 기준으로 동작한다.
+2. 메뉴에서 호스트를 선택하면 4자리 숫자 코드로 세션을 생성한다.
+3. 메뉴에서 참가를 선택하면 입력한 4자리 숫자 코드의 세션으로 접속한다.
+4. 세션 시작 시 `TestMain` 씬을 네트워크 게임 씬으로 로드한다.
+5. 서버(호스트)는 `06_Backend/Player.prefab`(BackendPlayerNetworkAdapter 포함)을 플레이어별로 스폰한다.
+6. 스폰된 플레이어는 `02_Player` 스크립트를 adapter를 통해 로컬/원격 상태에 맞게 활성화한다.
 
-## 필수 설정
-- `NetworkProjectConfig.PrefabTable`에 플레이어 프리팹(기본 탐색 이름: `PlayerCharacter`, `Player`)이 등록되어 있어야 한다.
-- `Start`, `Main1`이 Build Settings에 포함되어 있어야 한다.
+## 체크 포인트
+- `Main_menu`, `TestMain`이 Build Settings에 포함되어 있어야 한다.
+- NetworkProjectConfig PrefabTable에 `06_Backend/Player.prefab`이 등록되어 있어야 한다.
