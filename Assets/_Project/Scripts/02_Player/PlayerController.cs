@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
 {
-    public ItemData testWeapon;
+    public ItemData testItem;
 
     // FSM 및 상태 인스턴스 (FSM & State Instances)
     public PlayerStateMachine StateMachine { get; private set; }
@@ -93,7 +93,7 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
 
         StateMachine.Initialize(GroundedState);
 
-        //Equipment.EquipItem(new ItemInstance(testWeapon));
+        Equipment.EquipItem(new ItemInstance(testItem));
     }
 
     private void OnEnable()

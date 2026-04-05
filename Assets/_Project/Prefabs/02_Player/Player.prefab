@@ -411,7 +411,6 @@ MonoBehaviour:
   cameraTransform: {fileID: 219158335034487518}
   inputHandler: {fileID: 1374220835064663929}
   viewmodelTransform: {fileID: 6374640482249357330}
-  offsetSmoothSpeed: 10
   swayMultiplier: 2
   maxSwayAmount: 5
   swaySmoothSpeed: 8
@@ -498,7 +497,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3133082d33946b64fbb320281347e250, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  testWeapon: {fileID: 0}
+  testItem: {fileID: 0}
   cameraTransform: {fileID: 219158335034487518}
   walkSpeed: 2.5
   sprintSpeed: 5
@@ -561,7 +560,7 @@ MonoBehaviour:
     currentValue: 0
   coldness:
     maxValue: 100
-    startValue: 100
+    startValue: 0
     increaseRate: 0
     decreaseRate: 0
     currentValue: 0
@@ -616,7 +615,6 @@ MonoBehaviour:
   player: {fileID: 1915611918036273558}
   handSocket1P: {fileID: 170426603530453525}
   handSocket3P: {fileID: 7682995436253285626}
-  viewmodelController: {fileID: 3000804690413901849}
   unarmedDamage: 5
   unarmedAttackCooldown: 0.8
   unarmedRange: 0.8

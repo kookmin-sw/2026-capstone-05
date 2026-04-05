@@ -25,10 +25,10 @@ public class ConsumableBehaviour : EquippedItemBehaviour
 
         itemInstance.currentStackCount--;
 
-        player.Condition.health.Add(data.healthRestore);
-        player.Condition.stamina.Add(data.staminaRestore);
-        player.Condition.satiety.Add(data.satietyRestore);
-        player.Condition.coldness.Subtract(data.coldnessReduce);
+        foreach (var effect in data.effects)
+        {
+            player.Condition.ApplyEffect(effect);
+        }
 
         NoiseManager.Instance.GenerateNoise(player.transform.position, data.consumeNoiseType);
         Debug.Log($"Consumed {itemInstance.Data.itemName}, remaining stack count: {itemInstance.currentStackCount}");
