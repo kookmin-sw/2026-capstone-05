@@ -411,7 +411,6 @@ MonoBehaviour:
   cameraTransform: {fileID: 219158335034487518}
   inputHandler: {fileID: 1374220835064663929}
   viewmodelTransform: {fileID: 6374640482249357330}
-  offsetSmoothSpeed: 10
   swayMultiplier: 2
   maxSwayAmount: 5
   swaySmoothSpeed: 8
@@ -435,7 +434,9 @@ GameObject:
   - component: {fileID: 1689880926387619475}
   - component: {fileID: 62612821691926181}
   - component: {fileID: 948664621378346064}
+  - component: {fileID: 334455667788990011}
   - component: {fileID: 7920691128559841607}
+  - component: {fileID: 2219282759422666602}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -616,7 +617,6 @@ MonoBehaviour:
   player: {fileID: 1915611918036273558}
   handSocket1P: {fileID: 170426603530453525}
   handSocket3P: {fileID: 7682995436253285626}
-  viewmodelController: {fileID: 3000804690413901849}
   unarmedDamage: 5
   unarmedAttackCooldown: 0.8
   unarmedRange: 0.8
@@ -650,12 +650,26 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3438671979807047463}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 640e5ac7794e2ee4a9f1f491914e843a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerNetworkSetup
-  isLocalPlayerTest: 1
+  isLocalPlayerTest: 0
+--- !u!114 &334455667788990011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3438671979807047463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ed643bc0a2b45a9b213f0df2429b1ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BackendPlayerNetworkAdapter
+  enableDirectClientSyncTest: 0
+  directSyncSendIntervalTicks: 1
 --- !u!114 &7920691128559841607
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -672,6 +686,25 @@ MonoBehaviour:
   renderers3P:
   - {fileID: 2820516366555143989}
   - {fileID: 7240134736400741800}
+--- !u!114 &2219282759422666602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3438671979807047463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 1515175722
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 334455667788990011}
+  ForceRemoteRenderTimeframe: 0
 --- !u!1 &3599445336930800097
 GameObject:
   m_ObjectHideFlags: 0
