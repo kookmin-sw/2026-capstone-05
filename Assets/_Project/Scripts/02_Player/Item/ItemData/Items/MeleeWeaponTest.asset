@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: MeleeWeaponTest
+  m_EditorClassIdentifier: Assembly-CSharp::MeleeWeaponItemData
+  itemID: asdf
+  itemName: 
+  description: 
+  itemIcon: {fileID: 0}
+  gridShape:
+    basePositions:
+    - {x: 0, y: 0}
+  maxStackSize: 0
+  pickupPrefab: {fileID: 0}
+  equipPrefab: {fileID: 3635813164685317337, guid: 85ad192b442476e40b745bf5ee9e9f5b, type: 3}
+  useAnimationType: 1
+  actionCooldown: 1
+  isTradable: 1
+  price: 0
+  damage: 0
+  attackRange: 0
+  attackHitRadius: 0
+  staminaConsumePerSwing: 0
+  swingNoiseType: 6
+  hitNoiseType: 7
