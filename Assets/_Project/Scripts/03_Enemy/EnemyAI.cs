@@ -1,9 +1,6 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 public class EnemyAI : MonoBehaviour, INoiseListener
 {
@@ -140,25 +137,21 @@ public class EnemyAI : MonoBehaviour, INoiseListener
 
     private void OnDrawGizmos()
     {
-#if UNITY_EDITOR
-        Handles.Label(transform.position + Vector3.up * 2.2f,
+        UnityEditor.Handles.Label(transform.position + Vector3.up * 2.2f,
             $"Suspicion: {SuspicionLevel:F0}%");
-#endif
     }
 
     private void OnDrawGizmosSelected()
     {
         if (data == null) return;
 
-#if UNITY_EDITOR
-        Handles.color = new Color(0.2f, 0.5f, 1f, 1f);
-        Handles.DrawWireDisc(PatrolCenter, Vector3.up, data.patrolRadius);
+        UnityEditor.Handles.color = new Color(0.2f, 0.5f, 1f, 1f);
+        UnityEditor.Handles.DrawWireDisc(PatrolCenter, Vector3.up, data.patrolRadius);
 
-        Handles.color = new Color(1f, 0.9f, 0.1f, 1f);
-        Handles.DrawWireDisc(transform.position, Vector3.up, data.detectionRadius);
+        UnityEditor.Handles.color = new Color(1f, 0.9f, 0.1f, 1f);
+        UnityEditor.Handles.DrawWireDisc(transform.position, Vector3.up, data.detectionRadius);
 
-        Handles.color = new Color(1f, 0.2f, 0.2f, 1f);
-        Handles.DrawWireDisc(transform.position, Vector3.up, data.attackRadius);
-#endif
+        UnityEditor.Handles.color = new Color(1f, 0.2f, 0.2f, 1f);
+        UnityEditor.Handles.DrawWireDisc(transform.position, Vector3.up, data.attackRadius);
     }
 }
