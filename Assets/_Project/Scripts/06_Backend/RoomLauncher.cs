@@ -12,6 +12,7 @@ using UnityEngine.UI;
 
 public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 {
+    private const string LogInput = "[Input]";
     private enum MenuStep
     {
         Login,
@@ -35,7 +36,7 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     private NetworkRunner _runner;
     private NetworkSceneManagerDefault _sceneManager;
-    private NetworkObject _playerPrefab;
+    private PlayerSpawner _playerSpawner;
     private bool _callbacksRegistered;
     private bool _isConnecting;
 
@@ -282,6 +283,7 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
                 await _runner.Shutdown();
 
             _spawnedPlayers.Clear();
+            _playerSpawner = new PlayerSpawner(_spawnedPlayers, maxPlayers);
 
             int sceneBuildIndex = ResolveGameSceneBuildIndex();
             if (sceneBuildIndex < 0)
@@ -336,7 +338,8 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
                 _runner = gameObject.AddComponent<NetworkRunner>();
         }
 
-        _runner.ProvideInput = false;
+        _runner.ProvideInput = true;
+        Debug.Log($"{LogInput} Runner ready. ProvideInput=true, LocalPlayer={_runner.LocalPlayer}");
 
         if (!_callbacksRegistered)
         {
@@ -408,14 +411,6 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         return value.ToString();
     }
 
-    private Vector3 GetSpawnPosition(PlayerRef player)
-    {
-        int index = Mathf.Abs(player.RawEncoded % Mathf.Max(1, maxPlayers));
-        float angle = (360f / Mathf.Max(1, maxPlayers)) * index;
-        Vector3 offset = Quaternion.Euler(0f, angle, 0f) * (Vector3.forward * 2.5f);
-        return new Vector3(0f, 1f, 0f) + offset;
-    }
-
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Bootstrap()
     {
@@ -446,72 +441,20 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         if (!runner.IsServer)
             return;
 
-        EnsurePlayerPrefabAssigned();
-        if (_playerPrefab == null)
+        if (_playerSpawner == null)
+            _playerSpawner = new PlayerSpawner(_spawnedPlayers, maxPlayers);
+
+        bool spawned = _playerSpawner.TrySpawn(runner, player);
+        if (!spawned)
         {
-            _status = "06_Backend/Player.prefab(NetworkObject) 를 PrefabTable에서 찾지 못했습니다.";
+            _status = "Player prefab 스폰 실패. PrefabTable 설정을 확인하세요.";
             return;
-        }
-
-        if (_spawnedPlayers.ContainsKey(player))
-            return;
-
-        NetworkObject playerObject = runner.Spawn(_playerPrefab, GetSpawnPosition(player), Quaternion.identity, player);
-        _spawnedPlayers[player] = playerObject;
-    }
-
-    private void EnsurePlayerPrefabAssigned()
-    {
-        if (_playerPrefab != null)
-            return;
-
-        if (NetworkProjectConfig.Global?.PrefabTable == null)
-            return;
-
-        foreach ((NetworkPrefabId _, INetworkPrefabSource source) in NetworkProjectConfig.Global.PrefabTable.GetEntries())
-        {
-            NetworkObject candidate = TryResolvePrefab(source);
-            if (candidate == null)
-                continue;
-
-            if (candidate.GetComponent<BackendPlayerNetworkAdapter>() == null)
-                continue;
-
-            _playerPrefab = candidate;
-            return;
-        }
-    }
-
-    private static NetworkObject TryResolvePrefab(INetworkPrefabSource source)
-    {
-        switch (source)
-        {
-            case NetworkPrefabSourceStatic staticSource:
-                return staticSource.Object;
-            case NetworkPrefabSourceStaticLazy lazySource:
-                return lazySource.Object.asset;
-            case NetworkPrefabSourceResource resourceSource:
-                try
-                {
-                    resourceSource.Acquire(true);
-                    return resourceSource.WaitForResult();
-                }
-                finally
-                {
-                    try { resourceSource.Release(); } catch { }
-                }
-            default:
-                return null;
         }
     }
 
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
-        if (_spawnedPlayers.TryGetValue(player, out NetworkObject playerObject) && playerObject != null)
-        {
-            runner.Despawn(playerObject);
-            _spawnedPlayers.Remove(player);
-        }
+        _playerSpawner?.Despawn(runner, player);
     }
 
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
@@ -522,7 +465,18 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnSceneLoadDone(NetworkRunner runner) { }
     public void OnSceneLoadStart(NetworkRunner runner) { }
-    public void OnInput(NetworkRunner runner, NetworkInput input) { }
+    public void OnInput(NetworkRunner runner, NetworkInput input)
+    {
+        if (!BackendLocalInputRegistry.TryCollect(runner, out BackendNetworkInputData data))
+            return;
+
+        input.Set(data);
+
+        if (data.Move.sqrMagnitude > 0.0001f || data.Look.sqrMagnitude > 0.0001f || data.JumpPressed)
+        {
+            Debug.Log($"{LogInput} Input sent to server. LocalPlayer={runner.LocalPlayer}, Move={data.Move}, Look={data.Look}, Jump={data.JumpPressed}, Sprint={data.SprintPressed}");
+        }
+    }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
     public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
     public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
