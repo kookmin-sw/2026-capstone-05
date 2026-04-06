@@ -411,7 +411,6 @@ MonoBehaviour:
   cameraTransform: {fileID: 219158335034487518}
   inputHandler: {fileID: 1374220835064663929}
   viewmodelTransform: {fileID: 6374640482249357330}
-  offsetSmoothSpeed: 10
   swayMultiplier: 2
   maxSwayAmount: 5
   swaySmoothSpeed: 8
@@ -517,6 +516,14 @@ MonoBehaviour:
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 64
+  sprintStaminaCost: 15
+  minStaminaToSprint: 10
+  jumpStaminaCost: 10
+  staminaRegenDelay: 1.5
+  idleRegenRate: 20
+  crouchWalkRegenRate: 15
+  walkRegenRate: 5
+  airborneRegenRate: 0
 --- !u!114 &1374220835064663929
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -601,6 +608,7 @@ MonoBehaviour:
   sprintStride: 1.8
   minAirTimeForLanding: 0.2
   minFallSpeedForLanding: 2
+  distanceDecayRate: 0.5
 --- !u!114 &1689880926387619475
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -616,7 +624,6 @@ MonoBehaviour:
   player: {fileID: 1915611918036273558}
   handSocket1P: {fileID: 170426603530453525}
   handSocket3P: {fileID: 7682995436253285626}
-  viewmodelController: {fileID: 3000804690413901849}
   unarmedDamage: 5
   unarmedAttackCooldown: 0.8
   unarmedRange: 0.8
@@ -1945,7 +1952,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: 9df7e21cf96e21840858c1ce18bb1296, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 44fc654c7405caf4ab7f22495f9075b3, type: 2}
+      objectReference: {fileID: 22100000, guid: 409a31ce4699c524080012f6ac938c4f, type: 2}
     - target: {fileID: 5866666021909216657, guid: 9df7e21cf96e21840858c1ce18bb1296, type: 3}
       propertyPath: m_CullingMode
       value: 0
