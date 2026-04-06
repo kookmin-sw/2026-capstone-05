@@ -433,11 +433,10 @@ GameObject:
   - component: {fileID: 5116940794873436915}
   - component: {fileID: 1689880926387619475}
   - component: {fileID: 62612821691926181}
-  - component: {fileID: 948664621378346064}
   - component: {fileID: 334455667788990011}
   - component: {fileID: 7920691128559841607}
   - component: {fileID: 2219282759422666602}
-  - component: {fileID: 2562793894210971312}
+  - component: {fileID: -3462220349019650102}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -636,7 +635,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e3ab9fb8125cd2e4381cf811755c8324, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LocalPlayerCameraHandler
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCameraHandler
   walkFrequency: 2
   walkAmplitude: 0.1
   sprintFrequency: 3
@@ -644,19 +643,6 @@ MonoBehaviour:
   crouchFrequency: 1.3
   crouchAmplitude: 0.05
   transitionSpeed: 5
---- !u!114 &948664621378346064
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3438671979807047463}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 640e5ac7794e2ee4a9f1f491914e843a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerNetworkSetup
-  isLocalPlayerTest: 0
 --- !u!114 &334455667788990011
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -669,6 +655,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ed643bc0a2b45a9b213f0df2429b1ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackendPlayerNetworkAdapter
+  enableDirectClientSyncTest: 1
+  directSyncSendIntervalTicks: 1
 --- !u!114 &7920691128559841607
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -703,9 +691,8 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 334455667788990011}
-  - {fileID: 2562793894210971312}
   ForceRemoteRenderTimeframe: 0
---- !u!114 &2562793894210971312
+--- !u!114 &-3462220349019650102
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -714,14 +701,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 3438671979807047463}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Script: {fileID: 11500000, guid: 640e5ac7794e2ee4a9f1f491914e843a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkTransform
-  _stateAuthorityChangeErrorCorrectionDelta: 0
-  SyncScale: 0
-  SyncParent: 0
-  _autoAOIOverride: 1
-  DisableSharedModeInterpolation: 0
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerNetworkSetup
+  isLocalPlayerTest: 0
 --- !u!1 &3599445336930800097
 GameObject:
   m_ObjectHideFlags: 0
