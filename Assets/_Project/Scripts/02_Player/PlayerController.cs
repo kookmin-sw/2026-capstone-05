@@ -27,8 +27,6 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
     // 스탯 및 설정 (Stats & Settings)
     [Header("Network Settings")]
     public bool IsLocalPlayer { get; private set; }
-    public bool AllowMovementSimulation { get; private set; } = true;
-    public bool AllowLookSimulation { get; private set; } = true;
 
     [Header("Movement Stats")]
     public float walkSpeed = 3f;
@@ -129,28 +127,26 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
     {
         CheckEnvironmentFlags();
 
-        if (canLook && AllowLookSimulation)
+        if (canLook)
         {
             HandleLook();
         }
 
-        if (canAction && AllowMovementSimulation)
+        if (canAction)
         {
             HandleAction();
         }
 
         StateMachine.CurrentState.LogicUpdate();
 
-        if (useGravity && AllowMovementSimulation)
+        if (useGravity)
         {
             ApplyGravity();
         }
 
-        if (AllowMovementSimulation)
-            Controller.Move(currentVelocity * Time.deltaTime);
+        Controller.Move(currentVelocity * Time.deltaTime);
 
-        if (AllowMovementSimulation)
-            HandlePostureTransition();
+        HandlePostureTransition();
     }
 
     private void FixedUpdate()
@@ -185,8 +181,7 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
 
         Vector2 lookInput = InputHandler.LookInput * mouseSensitivity;
 
-        if (AllowMovementSimulation)
-            transform.Rotate(0f, lookInput.x, 0f);
+        transform.Rotate(0f, lookInput.x, 0f);
 
         verticalRotation -= lookInput.y;
         verticalRotation = Mathf.Clamp(verticalRotation, -upDownRange, upDownRange);
@@ -241,11 +236,5 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
     public void ConfigureForNetwork(bool isLocalPlayer)
     {
         IsLocalPlayer = isLocalPlayer;
-    }
-
-    public void ConfigureAuthority(bool allowMovementSimulation, bool allowLookSimulation)
-    {
-        AllowMovementSimulation = allowMovementSimulation;
-        AllowLookSimulation = allowLookSimulation;
     }
 }
