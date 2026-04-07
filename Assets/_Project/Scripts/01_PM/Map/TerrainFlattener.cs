@@ -26,8 +26,8 @@ public class TerrainFlattener : MonoBehaviour
     [Tooltip("터레인 1장당 생성할 평지 개수")]
     public int numFlatZones = 6;
 
-    [Tooltip("평지 한 변 크기 (월드 유닛) — RAW 픽셀로는 절반 값이 사용됨 (100 → 50px)")]
-    public int flatZoneSize = 100;
+    [Tooltip("평지 한 변 크기 (RAW 픽셀) — 1픽셀 = 2 월드유닛, 50px = 100 월드유닛 (큐브 한 변과 일치)")]
+    public int flatZoneSize = 50;
 
     [Tooltip("평지 경계 블렌딩 반경 (픽셀)")]
     public int blendRadius = 25;
@@ -42,20 +42,122 @@ public class TerrainFlattener : MonoBehaviour
     [Range(0f, 1f), Tooltip("이 높이 이상(산꼭대기)은 후보 제외")]
     public float maxHeightThreshold = 0.85f;
 
-    [Range(0f, 1f), Tooltip("이 높이 이하(바다/절벽 바닥)는 후보 제외")]
-    public float minHeightThreshold = 0.05f;
+    const float SeaLevelWorldHeight = 14f;
 
-    [Header("Randomness")]
-    [Range(0f, 1f), Tooltip("0 = 항상 가장 평탄한 곳, 1 = 완전 랜덤")]
-    public float randomness = 0.5f;
+    [Header("Noise Variation")]
+    [Tooltip("낮을수록 완만하고 큰 굴곡 — 2~6 권장")]
+    public float noiseFrequency = 3f;
+
+    [Range(0f, 0.15f), Tooltip("높이맵 변화량 (0.05 = 전체 높이의 5%)")]
+    public float noiseAmplitude = 0.05f;
 
     [Header("Cube Material")]
     [Tooltip("Assets/_Project/Assets/01_PM/Material/FlatZone.mat 연결")]
     public Material flatZoneMaterial;
 
+    [Header("Generate From Scratch")]
+    [Tooltip("기본 지형 노이즈 스케일 (작을수록 완만한 큰 굴곡)")]
+    public float genBaseScale     = 0.015f;
+    [Tooltip("세부 질감 노이즈 스케일")]
+    public float genDetailScale   = 0.05f;
+    [Range(0f, 1f), Tooltip("세부 질감 강도")]
+    public float genDetailStrength = 0.2f;
+    [Tooltip("산맥 바이옴 맵 스케일")]
+    public float genBiomeScale    = 0.008f;
+    [Tooltip("산맥 가파름 (높을수록 뾰족)")]
+    public float genMountainExp   = 3f;
+    [Tooltip("산맥 높이 증폭")]
+    public float genMountainHeight = 1.5f;
+    [Tooltip("체크 시 오른쪽 아래 4분면을 평야로 강제 고정")]
+    public bool genFlatMaskEnabled = true;
+
     // ──────────────────────────────────────────────────────────────
     //  Public API
     // ──────────────────────────────────────────────────────────────
+
+    public void GenerateTerrainFromScratch()
+    {
+        if (copyTerrains == null || copyTerrains.Length == 0)
+        { Debug.LogError("[TerrainFlattener] Copy Terrain이 연결되지 않았습니다."); return; }
+
+        ClearChildren();
+
+        Random.InitState((int)System.DateTime.Now.Ticks);
+        float ox1 = Random.value * 9999f, oy1 = Random.value * 9999f;  // base
+        float ox2 = Random.value * 9999f, oy2 = Random.value * 9999f;  // detail
+        float ox3 = Random.value * 9999f, oy3 = Random.value * 9999f;  // biome
+
+        int S = copyTerrains[0] != null ? copyTerrains[0].heightmapResolution : 513;
+        int H = S * 2 - 1, W = S * 2 - 1;
+
+        var full = TerrainGenerator.GenerateFromScratch(
+            H, W, S,
+            genBaseScale, genDetailScale, genDetailStrength,
+            genBiomeScale, genMountainExp, genMountainHeight,
+            genFlatMaskEnabled,
+            ox1, oy1, ox2, oy2, ox3, oy3);
+
+        full = TerrainGenerator.GaussianBlur(full, H, W, 2);
+
+        TerrainGenerator.DetectAndApplyWaterZones(full, new TerrainAnalysisData
+        {
+            numWaterZones = 4,
+            waterZoneSize = 200,
+            tileRes       = S,
+        });
+
+        for (int y = 0; y < H; y++)
+        for (int x = 0; x < W; x++)
+            full[y, x] = Mathf.Clamp01(full[y, x]);
+
+        TerrainGenerator.SplitTiles(full, S,
+            out var t0, out var t1, out var t2, out var t3);
+        float[][,] tiles = { t0, t1, t2, t3 };
+
+        int count = Mathf.Min(copyTerrains.Length, 4);
+        for (int i = 0; i < count; i++)
+        {
+            if (copyTerrains[i] == null) continue;
+#if UNITY_EDITOR
+            UnityEditor.Undo.RegisterCompleteObjectUndo(copyTerrains[i], "Generate Terrain From Scratch");
+#endif
+            copyTerrains[i].SetHeights(0, 0, tiles[i]);
+        }
+
+        Debug.Log("[TerrainFlattener] 신규 지형 생성 완료");
+    }
+
+    public void CopyOriginTerrainRaw()
+    {
+        if (originTerrains == null || copyTerrains == null)
+        {
+            Debug.LogError("[TerrainFlattener] Origin / Copy Terrain 배열이 비어 있습니다.");
+            return;
+        }
+
+        ClearChildren();
+
+        int count = Mathf.Min(originTerrains.Length, copyTerrains.Length);
+        for (int i = 0; i < count; i++)
+        {
+            if (originTerrains[i] == null || copyTerrains[i] == null)
+            {
+                Debug.LogWarning($"[TerrainFlattener] 인덱스 {i} 슬롯이 비어 있어 건너뜁니다.");
+                continue;
+            }
+
+            int res          = originTerrains[i].heightmapResolution;
+            float[,] heights = originTerrains[i].GetHeights(0, 0, res, res);
+
+#if UNITY_EDITOR
+            UnityEditor.Undo.RegisterCompleteObjectUndo(copyTerrains[i], $"Copy Origin Raw Terrain {i + 1}");
+#endif
+            copyTerrains[i].SetHeights(0, 0, heights);
+            Debug.Log($"[TerrainFlattener] Copy Terrain {i + 1} — 순수 원본 복제 완료");
+        }
+
+        Debug.Log($"[TerrainFlattener] 순수 원본 복제 전체 {count}장 완료.");
+    }
 
     public void FlattenTerrain()
     {
@@ -66,6 +168,10 @@ public class TerrainFlattener : MonoBehaviour
         }
 
         ClearChildren();
+
+        // 노이즈 오프셋을 한 번만 생성 — 모든 타일이 공유해야 경계가 이어짐
+        Random.InitState((int)System.DateTime.Now.Ticks);
+        Vector2 noiseOffset = new(Random.value * 9999f, Random.value * 9999f);
 
         int count = Mathf.Min(originTerrains.Length, copyTerrains.Length);
 
@@ -80,7 +186,7 @@ public class TerrainFlattener : MonoBehaviour
             Terrain terrainObj = (copyTerrainObjects != null && i < copyTerrainObjects.Length)
                                  ? copyTerrainObjects[i] : null;
 
-            ProcessTerrain(i + 1, originTerrains[i], copyTerrains[i], terrainObj);
+            ProcessTerrain(i + 1, originTerrains[i], copyTerrains[i], terrainObj, noiseOffset);
         }
 
         Debug.Log($"[TerrainFlattener] 전체 {count}장 처리 완료.");
@@ -90,21 +196,32 @@ public class TerrainFlattener : MonoBehaviour
     //  Per-Terrain Processing
     // ──────────────────────────────────────────────────────────────
 
-    void ProcessTerrain(int index, TerrainData origin, TerrainData copy, Terrain terrainObj)
+    void ProcessTerrain(int index, TerrainData origin, TerrainData copy, Terrain terrainObj, Vector2 noiseOffset)
     {
         int res = origin.heightmapResolution;
 
         // Origin에서만 읽음 — Origin 자체는 절대 수정하지 않음
         float[,] heights = origin.GetHeights(0, 0, res, res);
 
-        List<(int cx, int cy)> zones = FindFlatZones(heights, res);
+        // 공유된 오프셋 + 월드 좌표 기반 노이즈 → 타일 경계 연속성 보장
+        Vector3 worldPos  = terrainObj != null ? terrainObj.transform.position : Vector3.zero;
+        Vector3 worldSize = origin.size;
+        ApplyPerlinNoise(heights, res, worldPos, worldSize, noiseOffset);
 
+        List<(int cx, int cy)> zones = FindFlatZones(heights, res, origin.size.y);
+
+        // ── target을 먼저 모두 계산 (높이맵 수정 전 원본 기준)
         var zoneTargets = new List<(int cx, int cy, float target)>();
         foreach (var (cx, cy) in zones)
-        {
-            float target = ApplyFlatZone(heights, res, cx, cy);
-            zoneTargets.Add((cx, cy, target));
-        }
+            zoneTargets.Add((cx, cy, ComputeZoneTarget(heights, res, cx, cy)));
+
+        // ── Pass 1: 블렌드 영역 적용 (인접 zone 간 간섭 가능)
+        foreach (var (cx, cy, target) in zoneTargets)
+            ApplyBlendZone(heights, res, cx, cy, target);
+
+        // ── Pass 2: 내부 영역 재덮어쓰기 → 블렌드 간섭 제거, 항상 완벽한 평지 보장
+        foreach (var (cx, cy, target) in zoneTargets)
+            ApplyInnerZone(heights, res, cx, cy, target);
 
 #if UNITY_EDITOR
         UnityEditor.Undo.RegisterCompleteObjectUndo(copy, $"Flatten Copy Terrain {index}");
@@ -166,50 +283,28 @@ public class TerrainFlattener : MonoBehaviour
     //  Zone Detection
     // ──────────────────────────────────────────────────────────────
 
-    List<(int cx, int cy)> FindFlatZones(float[,] h, int res)
+    List<(int cx, int cy)> FindFlatZones(float[,] h, int res, float terrainSizeY)
     {
-        int pixelSize = flatZoneSize / 2;   // 월드 유닛 → RAW 픽셀 변환
+        float minNorm = SeaLevelWorldHeight / terrainSizeY;  // 월드 높이 → 정규화
 
-        float[,] slope    = CalcSlope(h, res);
-        float[,] avgSlope = BoxFilter(slope, res, pixelSize);
+        float[,] slope     = CalcSlope(h, res);
+        float[,] avgSlope  = BoxFilter(slope, res, flatZoneSize);
+        // 중심 픽셀 하나가 아닌 zone 전체 평균 높이로 판단 → target이 해수면 아래로 내려가는 것 방지
+        float[,] avgHeight = BoxFilter(h, res, flatZoneSize);
 
         float[,] score = new float[res, res];
         for (int y = 0; y < res; y++)
         for (int x = 0; x < res; x++)
         {
-            float ht      = h[y, x];
             bool excluded = y < edgeMargin || y >= res - edgeMargin
                          || x < edgeMargin || x >= res - edgeMargin
-                         || ht > maxHeightThreshold
-                         || ht < minHeightThreshold;
+                         || avgHeight[y, x] > maxHeightThreshold
+                         || avgHeight[y, x] < minNorm;
             score[y, x] = excluded ? float.MaxValue : avgSlope[y, x];
         }
 
-        // 랜덤 노이즈 추가 — score 범위에 비례하게 섞어서 평탄한 구역 선호는 유지
-        if (randomness > 0f)
-        {
-            Random.InitState((int)System.DateTime.Now.Ticks);
-            float minS = float.MaxValue, maxS = 0f;
-            for (int y = 0; y < res; y++)
-            for (int x = 0; x < res; x++)
-            {
-                if (score[y, x] < float.MaxValue)
-                {
-                    if (score[y, x] < minS) minS = score[y, x];
-                    if (score[y, x] > maxS) maxS = score[y, x];
-                }
-            }
-            float range = maxS - minS;
-            if (range > 0f)
-                for (int y = 0; y < res; y++)
-                for (int x = 0; x < res; x++)
-                    if (score[y, x] < float.MaxValue)
-                        score[y, x] += Random.value * randomness * range;
-        }
-
         var zones     = new List<(int, int)>();
-        int halfDist  = minZoneDist / 2;
-        int minDistSq = halfDist * halfDist;
+        int minDistSq = minZoneDist * minZoneDist;
 
         while (zones.Count < numFlatZones)
         {
@@ -246,35 +341,55 @@ public class TerrainFlattener : MonoBehaviour
     }
 
     // ──────────────────────────────────────────────────────────────
+    //  Noise Variation
+    // ──────────────────────────────────────────────────────────────
+
+    void ApplyPerlinNoise(float[,] h, int res, Vector3 worldPos, Vector3 worldSize, Vector2 noiseOffset)
+    {
+        // 픽셀 → 월드 좌표 → Perlin 좌표
+        // 타일 크기(worldSize.x)로 나눠 정규화하므로 인접 타일과 연속성 보장
+        for (int y = 0; y < res; y++)
+        for (int x = 0; x < res; x++)
+        {
+            float wx    = worldPos.x + x / (float)(res - 1) * worldSize.x;
+            float wz    = worldPos.z + y / (float)(res - 1) * worldSize.z;
+            float nx    = wx / worldSize.x * noiseFrequency + noiseOffset.x;
+            float nz    = wz / worldSize.z * noiseFrequency + noiseOffset.y;
+            float noise = Mathf.PerlinNoise(nx, nz) - 0.5f;
+            h[y, x] = Mathf.Clamp01(h[y, x] + noise * noiseAmplitude);
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────
     //  Flattening
     // ──────────────────────────────────────────────────────────────
 
-    float ApplyFlatZone(float[,] h, int res, int cx, int cy)
+    // 내부 zone 평균 높이 계산 (높이맵 수정 전 호출)
+    float ComputeZoneTarget(float[,] h, int res, int cx, int cy)
     {
-        int pixelSize = flatZoneSize / 2;   // 월드 유닛 → RAW 픽셀
-        int half      = pixelSize / 2;
-        int br        = blendRadius;
-
-        int ry0 = Mathf.Max(0, cy - half), ry1 = Mathf.Min(res, cy + half);
-        int rx0 = Mathf.Max(0, cx - half), rx1 = Mathf.Min(res, cx + half);
+        int half = flatZoneSize / 2;
+        int ry0 = Mathf.Max(0, cy - half), ry1 = Mathf.Min(res, cy + half + 1);
+        int rx0 = Mathf.Max(0, cx - half), rx1 = Mathf.Min(res, cx + half + 1);
         float sum = 0f; int cnt = 0;
         for (int y = ry0; y < ry1; y++)
         for (int x = rx0; x < rx1; x++)
         { sum += h[y, x]; cnt++; }
-        float target = sum / cnt;
+        return sum / cnt;
+    }
 
-        int wy0 = Mathf.Max(0, cy - half - br), wy1 = Mathf.Min(res, cy + half + br);
-        int wx0 = Mathf.Max(0, cx - half - br), wx1 = Mathf.Min(res, cx + half + br);
+    // Pass 1: 블렌드 경계 적용 (인접 zone이 서로 영향을 줄 수 있음)
+    void ApplyBlendZone(float[,] h, int res, int cx, int cy, float target)
+    {
+        int half = flatZoneSize / 2;
+        int br   = blendRadius;
+        int wy0 = Mathf.Max(0, cy - half - br), wy1 = Mathf.Min(res, cy + half + br + 1);
+        int wx0 = Mathf.Max(0, cx - half - br), wx1 = Mathf.Min(res, cx + half + br + 1);
 
         for (int y = wy0; y < wy1; y++)
         for (int x = wx0; x < wx1; x++)
         {
-            bool inner = Mathf.Abs(x - cx) <= half && Mathf.Abs(y - cy) <= half;
-            if (inner)
-            {
-                h[y, x] = target;
-                continue;
-            }
+            if (Mathf.Abs(x - cx) <= half && Mathf.Abs(y - cy) <= half) continue; // 내부는 Pass 2에서
+
             float odx   = Mathf.Max(Mathf.Abs(x - cx) - half, 0f);
             float ody   = Mathf.Max(Mathf.Abs(y - cy) - half, 0f);
             float od    = Mathf.Max(odx, ody);
@@ -282,8 +397,17 @@ public class TerrainFlattener : MonoBehaviour
             float blend = t * t * (3f - 2f * t);   // smoothstep
             h[y, x] = blend * h[y, x] + (1f - blend) * target;
         }
+    }
 
-        return target;
+    // Pass 2: 내부 영역을 target으로 강제 덮어쓰기 → 항상 완벽한 평지 보장
+    void ApplyInnerZone(float[,] h, int res, int cx, int cy, float target)
+    {
+        int half = flatZoneSize / 2;
+        int ry0 = Mathf.Max(0, cy - half), ry1 = Mathf.Min(res, cy + half + 1);
+        int rx0 = Mathf.Max(0, cx - half), rx1 = Mathf.Min(res, cx + half + 1);
+        for (int y = ry0; y < ry1; y++)
+        for (int x = rx0; x < rx1; x++)
+            h[y, x] = target;
     }
 
     // ──────────────────────────────────────────────────────────────
