@@ -436,6 +436,7 @@ GameObject:
   - component: {fileID: 948664621378346064}
   - component: {fileID: 7920691128559841607}
   - component: {fileID: 6804007478212921028}
+  - component: {fileID: 238594519516289107}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -696,8 +697,21 @@ MonoBehaviour:
   ObjectInterest: 1
   Flags: 262145
   NestedObjects: []
-  NetworkedBehaviours: []
+  NetworkedBehaviours:
+  - {fileID: 238594519516289107}
   ForceRemoteRenderTimeframe: 0
+--- !u!114 &238594519516289107
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3438671979807047463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f5e6451a1af4e9ab0ed88c1f9d95f22, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BackendPlayerNetworkSync
 --- !u!1 &3599445336930800097
 GameObject:
   m_ObjectHideFlags: 0

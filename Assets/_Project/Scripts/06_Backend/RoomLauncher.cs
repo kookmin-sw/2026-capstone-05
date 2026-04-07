@@ -551,6 +551,8 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
             }
         }
 
+        _runner.ProvideInput = true;
+
         if (!_callbacksRegistered)
         {
             _runner.AddCallbacks(this);
@@ -582,7 +584,10 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     private void EnsurePlayerPrefabAssigned()
     {
         if (playerPrefab != null)
+        {
+            EnsureBackendNetworkSyncOnPrefab(playerPrefab);
             return;
+        }
 
         if (NetworkProjectConfig.Global?.PrefabTable == null)
         {
@@ -607,6 +612,7 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
                 continue;
 
             playerPrefab = candidate;
+            EnsureBackendNetworkSyncOnPrefab(playerPrefab);
             Debug.Log($"{LogPrefix} 02_Player Player.prefab 후보 자동 연결 성공. prefab={candidate.name}");
             break;
         }
@@ -617,6 +623,19 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         }
     }
 
+
+
+    private static void EnsureBackendNetworkSyncOnPrefab(NetworkObject prefab)
+    {
+        if (prefab == null)
+            return;
+
+        if (prefab.GetComponent<BackendPlayerNetworkSync>() != null)
+            return;
+
+        prefab.gameObject.AddComponent<BackendPlayerNetworkSync>();
+        Debug.Log($"{LogPrefix} BackendPlayerNetworkSync를 Player 프리팹에 런타임 추가했습니다.");
+    }
     private static NetworkObject TryResolveResourcePrefab(NetworkPrefabSourceResource resourceSource)
     {
         try
@@ -822,7 +841,34 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         Debug.LogWarning($"{LogPrefix} 네트워크 세션 종료. reason={shutdownReason}");
     }
 
-    public void OnInput(NetworkRunner runner, NetworkInput input) { }
+    public void OnInput(NetworkRunner runner, NetworkInput input)
+    {
+        if (runner == null)
+            return;
+
+        BackendPlayerNetworkInput payload = default;
+
+        if (runner.TryGetPlayerObject(runner.LocalPlayer, out NetworkObject localObject) && localObject != null)
+        {
+            PlayerInputHandler inputHandler = localObject.GetComponent<PlayerInputHandler>();
+            if (inputHandler != null)
+            {
+                payload.Move = inputHandler.MoveInput;
+                payload.Look = inputHandler.LookInput;
+
+                NetworkButtons buttons = default;
+                buttons.Set(BackendPlayerNetworkInput.SprintButton, inputHandler.IsSprinting);
+                buttons.Set(BackendPlayerNetworkInput.JumpButton, inputHandler.JumpTriggered);
+                // Crouch는 trigger가 아닌 hold 상태를 전송해야 패킷 손실 시에도 상태가 꼬이지 않습니다.
+                buttons.Set(BackendPlayerNetworkInput.CrouchButton, inputHandler.IsCrouchPressed);
+                buttons.Set(BackendPlayerNetworkInput.InteractButton, inputHandler.InteractTriggered);
+                buttons.Set(BackendPlayerNetworkInput.ActionButton, inputHandler.ActionTriggered);
+                payload.Buttons = buttons;
+            }
+        }
+
+        input.Set(payload);
+    }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
     public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token)
     {
