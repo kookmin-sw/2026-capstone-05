@@ -105,8 +105,6 @@ public class EnemySearchState : EnemyState
     private void StartWaitTurn()
     {
         enemy.AnimationEventHandler.OnTurnEnd += HandleTurnEnd;
-        enemy.AnimationEventHandler.OnTurnREnd += HandleTurnREnd;
-        enemy.Animator.SetBool("IsAlert", true);
         isLeftTurn = Random.value > 0.5f;
         enemy.Animator.SetTrigger(isLeftTurn ? "TurnLeft" : "TurnRight");
     }
@@ -114,24 +112,14 @@ public class EnemySearchState : EnemyState
     private void StopWaitTurn()
     {
         enemy.AnimationEventHandler.OnTurnEnd -= HandleTurnEnd;
-        enemy.AnimationEventHandler.OnTurnREnd -= HandleTurnREnd;
         enemy.Animator.ResetTrigger("TurnLeft");
         enemy.Animator.ResetTrigger("TurnRight");
-        enemy.Animator.ResetTrigger("TurnLeftR");
-        enemy.Animator.ResetTrigger("TurnRightR");
-        enemy.Animator.SetBool("IsAlert", false);
     }
 
     private void HandleTurnEnd()
     {
-        if (!isWaiting) return;
-        enemy.Animator.SetTrigger(isLeftTurn ? "TurnLeftR" : "TurnRightR");
-    }
-
-    private void HandleTurnREnd()
-    {
-        if (!isWaiting) return;
-        enemy.Animator.SetTrigger(isLeftTurn ? "TurnLeft" : "TurnRight");
+        enemy.AnimationEventHandler.OnTurnEnd -= HandleTurnEnd;
+        enemy.Animator.CrossFade("Locomotion", 0.2f);
     }
 
     private void SetApproachDestination()
