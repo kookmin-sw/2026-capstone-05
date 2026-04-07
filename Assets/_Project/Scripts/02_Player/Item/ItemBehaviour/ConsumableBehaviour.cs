@@ -11,6 +11,11 @@ public class ConsumableBehaviour : EquippedItemBehaviour
         }
 
         base.Use();
+
+        if (impulseSource != null)
+        {
+            impulseSource.GenerateImpulse();
+        }
     }
 
     public override void OnAnimationEventTriggered()
