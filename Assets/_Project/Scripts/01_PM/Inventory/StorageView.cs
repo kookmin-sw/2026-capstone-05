@@ -32,8 +32,8 @@ namespace Systems.Inventory {
             yield return StartCoroutine(InitializeView(size));
             
             if (ghostIcon != null) {
-                ghostIcon.RegisterCallback<PointerMoveEvent>(OnPointerMove);
-                ghostIcon.RegisterCallback<PointerUpEvent>(OnPointerUp);
+                root.RegisterCallback<PointerMoveEvent>(OnPointerMove);
+                root.RegisterCallback<PointerUpEvent>(OnPointerUp);
             }
         }
 
