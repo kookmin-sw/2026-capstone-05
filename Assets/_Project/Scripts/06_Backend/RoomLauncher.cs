@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Fusion;
+using Fusion.Photon.Realtime;
 using Fusion.Sockets;
 using TMPro;
 using UnityEngine;
@@ -22,8 +23,12 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     [Header("Network")]
     [SerializeField] private int maxPlayers = 8;
-    [SerializeField] private string roomSessionPrefix = "backend-room-";
+    [SerializeField] private string roomSessionPrefix = string.Empty;
     [SerializeField] private NetworkObject playerPrefab;
+
+    [Header("Room Code Overlay")]
+    [SerializeField] private bool showRoomCodeOverlay = true;
+    [SerializeField] private Vector2 roomCodeOverlayOffset = new(16f, -16f);
 
     private static RoomLauncher _instance;
 
@@ -34,14 +39,19 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     private readonly Dictionary<PlayerRef, NetworkObject> _spawnedPlayers = new();
     private readonly Dictionary<NetworkId, bool> _configuredLocalStates = new();
+    private readonly HashSet<NetworkId> _pendingAuthorityChecks = new();
 
     private Button _loginButton;
     private Button _startButton;
     private Button _hostButton;
     private Button _joinButton;
+    private Button _enterButton;
     private TMP_InputField _roomCodeInput;
+    private InputField _roomCodeInputLegacy;
 
     private string _latestRoomCode = string.Empty;
+    private Canvas _roomCodeCanvas;
+    private TextMeshProUGUI _roomCodeText;
 
     private void Awake()
     {
@@ -102,6 +112,8 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        EnsureRoomCodeOverlay(scene);
+
         if (TryBindMenuUi(scene.name))
         {
             UnlockCursorForMenu();
@@ -119,10 +131,12 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         _loginButton = FindButtonByCandidates("Login Button", "Login", "로그인");
         _startButton = FindButtonByCandidates("Start Button", "Start", "시작");
         _hostButton = FindButtonByCandidates("Host Button", "Host", "호스트", "방 만들기", "생성");
-        _joinButton = FindButtonByCandidates("Entry Button", "Entry", "Join", "참가", "입장");
+        _joinButton = FindButtonByCandidates("Join Button", "Join", "참가");
+        _enterButton = FindButtonByCandidates("Entry Button", "Entry", "Enter", "입장하기", "입장");
         _roomCodeInput = FindRoomCodeInputField();
+        _roomCodeInputLegacy = FindRoomCodeInputFieldLegacy();
 
-        bool hasAnyMenuControl = _loginButton != null || _startButton != null || _hostButton != null || _joinButton != null || _roomCodeInput != null;
+        bool hasAnyMenuControl = _loginButton != null || _startButton != null || _hostButton != null || _joinButton != null || _enterButton != null || _roomCodeInput != null || _roomCodeInputLegacy != null;
         if (!hasAnyMenuControl)
             return false;
 
@@ -165,12 +179,28 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         }
         else
         {
-            Debug.LogWarning($"{LogPrefix} Entry Button(참가 버튼)을 찾지 못했습니다.");
+            Debug.LogWarning($"{LogPrefix} Join Button(참가 버튼)을 찾지 못했습니다.");
         }
 
-        if (_roomCodeInput == null)
+        if (_enterButton != null)
         {
-            Debug.LogWarning($"{LogPrefix} 방 코드 입력 InputField를 찾지 못했습니다. 참가 기능이 동작하지 않을 수 있습니다.");
+            _enterButton.onClick.RemoveListener(OnEnterButtonClicked);
+            _enterButton.onClick.AddListener(OnEnterButtonClicked);
+        }
+        else
+        {
+            Debug.LogWarning($"{LogPrefix} Entry Button(입장하기 버튼)을 찾지 못했습니다.");
+        }
+
+        if (_roomCodeInput == null && _roomCodeInputLegacy == null)
+        {
+            Debug.LogWarning($"{LogPrefix} 방 코드 입력 InputField(TMP/Legacy)를 찾지 못했습니다. 참가 기능이 동작하지 않을 수 있습니다.");
+        }
+        else
+        {
+            string tmpName = _roomCodeInput != null ? _roomCodeInput.name : "null";
+            string legacyName = _roomCodeInputLegacy != null ? _roomCodeInputLegacy.name : "null";
+            Debug.Log($"{LogPrefix} 방 코드 입력 바인딩 결과. TMP={tmpName}, Legacy={legacyName}");
         }
 
         return true;
@@ -211,28 +241,62 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     private static TMP_InputField FindRoomCodeInputField()
     {
+        TMP_InputField directMatch = GameObject.Find("Room Number InputField")?.GetComponent<TMP_InputField>();
+        if (directMatch != null)
+            return directMatch;
+
         TMP_InputField[] inputFields = FindObjectsOfType<TMP_InputField>(true);
         foreach (TMP_InputField input in inputFields)
         {
-            if (input.placeholder is TMP_Text placeholderText)
-            {
-                if (placeholderText.text.IndexOf("방 번호", StringComparison.Ordinal) >= 0 ||
-                    placeholderText.text.IndexOf("방 코드를", StringComparison.Ordinal) >= 0 ||
-                    placeholderText.text.IndexOf("방 코드", StringComparison.Ordinal) >= 0)
-                {
-                    return input;
-                }
-            }
-
-            if (input.name.IndexOf("Room", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                input.name.IndexOf("Code", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                input.name.IndexOf("PW", StringComparison.OrdinalIgnoreCase) >= 0)
-            {
+            if (ContainsAny(input.name, new[] { "Room Number InputField", "Room Number", "RoomNumberInputField" }))
                 return input;
-            }
+
+            if (input.placeholder is TMP_Text placeholderText &&
+                ContainsAny(placeholderText.text, new[] { "방 번호", "방 코드를", "방 코드" }))
+                return input;
         }
 
         return null;
+    }
+
+    private static InputField FindRoomCodeInputFieldLegacy()
+    {
+        InputField directMatch = GameObject.Find("Room Number InputField")?.GetComponent<InputField>();
+        if (directMatch != null)
+            return directMatch;
+
+        InputField[] inputFields = FindObjectsOfType<InputField>(true);
+        foreach (InputField input in inputFields)
+        {
+            if (ContainsAny(input.name, new[] { "Room Number InputField", "Room Number", "RoomNumberInputField" }))
+                return input;
+
+            if (input.placeholder is Text placeholderText &&
+                ContainsAny(placeholderText.text, new[] { "방 번호", "방 코드를", "방 코드" }))
+                return input;
+        }
+
+        return null;
+    }
+
+    private void SetRoomCodeInputText(string roomCode)
+    {
+        if (_roomCodeInput != null)
+            _roomCodeInput.text = roomCode;
+
+        if (_roomCodeInputLegacy != null)
+            _roomCodeInputLegacy.text = roomCode;
+    }
+
+    private string GetRoomCodeInputText()
+    {
+        if (_roomCodeInput != null)
+            return _roomCodeInput.text;
+
+        if (_roomCodeInputLegacy != null)
+            return _roomCodeInputLegacy.text;
+
+        return string.Empty;
     }
 
     private void OnLoginButtonClicked()
@@ -249,53 +313,73 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     {
         Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 호스트 버튼 클릭.");
 
-        string roomCode = GenerateThreeDigitRoomCode();
+        int roomCode = GenerateHostRoomCode();
+        string normalizedCode = roomCode.ToString();
         string sessionName = ResolveSessionName(roomCode);
 
-        _latestRoomCode = roomCode;
-        if (_roomCodeInput != null)
-            _roomCodeInput.text = roomCode;
+        _latestRoomCode = normalizedCode;
+        SetRoomCodeInputText(normalizedCode);
+        RefreshRoomCodeOverlay();
 
-        Debug.Log($"{LogPrefix} 호스트 방 생성. 생성된 3자리 방 코드={roomCode}");
-        Debug.Log($"{LogPrefix} 코드 -> 룸 이름 매핑. code={roomCode}, session={sessionName}");
+        Debug.Log($"{LogPrefix} 호스트 방 생성. 생성된 방 코드(1~1000)={normalizedCode}");
+        Debug.Log($"{LogPrefix} 코드 -> 룸 이름 매핑. code={normalizedCode}, session={sessionName}");
 
-        _ = StartGameAsync(roomCode, sessionName, GameMode.Host);
+        _ = StartGameAsync(normalizedCode, sessionName, GameMode.Host);
     }
 
     private void OnJoinButtonClicked()
     {
         Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 참가 버튼 클릭.");
+    }
 
-        string inputCode = _roomCodeInput != null ? _roomCodeInput.text.Trim() : string.Empty;
-        Debug.Log($"{LogPrefix} 참가자가 입력한 코드={inputCode}");
-
-        if (!IsValidRoomCode(inputCode))
+    private void OnEnterButtonClicked()
+    {
+        Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 입장하기 버튼 클릭.");
+        string rawInputCode = GetRoomCodeInputText().Trim();
+        if (!TryParseRoomCode(rawInputCode, out int roomCode))
         {
-            Debug.LogWarning($"{LogPrefix} 참가 코드 유효성 실패. 반드시 3자리 숫자여야 합니다.");
+            Debug.LogWarning($"{LogPrefix} 참가 코드 유효성 실패. 1~1000 범위 숫자만 허용됩니다. raw={rawInputCode}");
             return;
         }
 
-        string sessionName = ResolveSessionName(inputCode);
-        Debug.Log($"{LogPrefix} 코드 -> 룸 이름 매핑. code={inputCode}, session={sessionName}");
-        Debug.Log($"{LogPrefix} 코드 기반 방 접속 시도. code={inputCode}, session={sessionName}");
+        string normalizedCode = roomCode.ToString();
+        Debug.Log($"{LogPrefix} 참가자가 입력한 코드(raw)={rawInputCode}, parsed={roomCode}, normalized={normalizedCode}");
 
-        _ = StartGameAsync(inputCode, sessionName, GameMode.Client);
+        string sessionName = ResolveSessionName(roomCode);
+        Debug.Log($"{LogPrefix} 코드 -> 룸 이름 매핑. code={normalizedCode}, session={sessionName}");
+        Debug.Log($"{LogPrefix} 코드 기반 방 접속 시도. code={normalizedCode}, session={sessionName}");
+
+        _ = StartGameAsync(normalizedCode, sessionName, GameMode.Client);
     }
 
-    private static string GenerateThreeDigitRoomCode()
+    private static int GenerateHostRoomCode()
     {
-        int value = UnityEngine.Random.Range(100, 1000);
-        return value.ToString("000");
+        return UnityEngine.Random.Range(1, 1001);
+    }
+
+    private static bool TryParseRoomCode(string input, out int roomCode)
+    {
+        roomCode = 0;
+
+        if (string.IsNullOrWhiteSpace(input))
+            return false;
+
+        if (!int.TryParse(input, out int value))
+            return false;
+
+        if (value < 1 || value > 1000)
+            return false;
+
+        roomCode = value;
+        return true;
     }
 
     private static bool IsValidRoomCode(string code)
     {
-        return !string.IsNullOrWhiteSpace(code) &&
-               code.Length == 3 &&
-               int.TryParse(code, out _);
+        return TryParseRoomCode(code, out _);
     }
 
-    private string ResolveSessionName(string roomCode)
+    private string ResolveSessionName(int roomCode)
     {
         return $"{roomSessionPrefix}{roomCode}";
     }
@@ -344,6 +428,11 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
             else
             {
                 Debug.LogError($"{LogPrefix} 방 입장 실패. mode={mode}, code={roomCode}, session={sessionName}, reason={result.ShutdownReason}");
+
+                if (mode == GameMode.Client && result.ShutdownReason == ShutdownReason.GameNotFound)
+                {
+                    Debug.LogWarning($"{LogPrefix} GameNotFound 진단: {BuildClientJoinDiagnostic(sessionName)}");
+                }
             }
         }
         catch (Exception ex)
@@ -353,7 +442,93 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         finally
         {
             _isConnecting = false;
+            RefreshRoomCodeOverlay();
         }
+    }
+
+    private bool IsGameScene(string sceneName)
+    {
+        if (!string.IsNullOrWhiteSpace(gameSceneNameFallback) &&
+            string.Equals(sceneName, gameSceneNameFallback, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        string gameSceneNameFromPath = Path.GetFileNameWithoutExtension(gameScenePath);
+        return !string.IsNullOrWhiteSpace(gameSceneNameFromPath) &&
+               string.Equals(sceneName, gameSceneNameFromPath, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void EnsureRoomCodeOverlay(Scene scene)
+    {
+        if (!showRoomCodeOverlay || !IsGameScene(scene.name))
+            return;
+
+        if (_roomCodeCanvas == null)
+        {
+            GameObject canvasGo = new("RoomCodeOverlayCanvas");
+            canvasGo.transform.SetParent(transform, false);
+            DontDestroyOnLoad(canvasGo);
+            _roomCodeCanvas = canvasGo.AddComponent<Canvas>();
+            _roomCodeCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvasGo.AddComponent<CanvasScaler>();
+            canvasGo.AddComponent<GraphicRaycaster>();
+        }
+
+        if (_roomCodeText == null)
+        {
+            GameObject textGo = new("RoomCodeText");
+            textGo.transform.SetParent(_roomCodeCanvas.transform, false);
+            _roomCodeText = textGo.AddComponent<TextMeshProUGUI>();
+            _roomCodeText.fontSize = 28f;
+            _roomCodeText.alignment = TextAlignmentOptions.TopLeft;
+            _roomCodeText.color = Color.white;
+            _roomCodeText.raycastTarget = false;
+
+            RectTransform rect = _roomCodeText.rectTransform;
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.anchoredPosition = roomCodeOverlayOffset;
+            rect.sizeDelta = new Vector2(560f, 80f);
+        }
+
+        RefreshRoomCodeOverlay();
+    }
+
+    private void RefreshRoomCodeOverlay()
+    {
+        if (_roomCodeText == null)
+            return;
+
+        bool isGameScene = IsGameScene(SceneManager.GetActiveScene().name);
+        bool isHost = _runner != null && _runner.IsRunning && _runner.IsServer;
+        bool canShow = isGameScene && isHost && IsValidRoomCode(_latestRoomCode);
+        _roomCodeText.gameObject.SetActive(canShow);
+        if (!canShow)
+            return;
+
+        _roomCodeText.text = $"ROOM CODE : {_latestRoomCode}";
+    }
+
+    private static string BuildClientJoinDiagnostic(string sessionName)
+    {
+        string appId = "unknown";
+        string appVersion = "default";
+        string fixedRegion = "best-region(auto)";
+
+        if (PhotonAppSettings.TryGetGlobal(out PhotonAppSettings global) && global != null)
+        {
+            appId = string.IsNullOrWhiteSpace(global.AppSettings.AppIdFusion) ? "missing" : global.AppSettings.AppIdFusion;
+            if (!string.IsNullOrWhiteSpace(global.AppSettings.AppVersion))
+                appVersion = global.AppSettings.AppVersion;
+
+            if (!string.IsNullOrWhiteSpace(global.AppSettings.FixedRegion))
+                fixedRegion = global.AppSettings.FixedRegion;
+        }
+
+        return $"session='{sessionName}', appId='{appId}', appVersion='{appVersion}', fixedRegion='{fixedRegion}'. " +
+               "호스트/클라이언트의 AppId, AppVersion, Region(특히 FixedRegion), SessionName이 완전히 동일한지 확인하세요.";
     }
 
     private void EnsureRunnerReady()
@@ -483,7 +658,14 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         if (setup == null)
             return;
 
-        bool isLocal = playerObject.HasInputAuthority;
+        if (playerObject.InputAuthority == PlayerRef.None)
+        {
+            ScheduleAuthorityReadyReconfigure(playerObject, reason);
+            Debug.LogWarning($"{LogPrefix} 로컬/리모트 판별 지연: InputAuthority 미확정. netId={playerObject.Id}, reason={reason}");
+            return;
+        }
+
+        bool isLocal = _runner != null && playerObject.InputAuthority == _runner.LocalPlayer;
         Debug.Log($"{LogPrefix} 로컬/리모트 판별 완료. netId={playerObject.Id}, isLocal={isLocal}, inputAuth={playerObject.InputAuthority}, localPlayer={_runner.LocalPlayer}, reason={reason}");
 
         if (_configuredLocalStates.TryGetValue(playerObject.Id, out bool configuredState) && configuredState == isLocal)
@@ -498,6 +680,44 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
         adapter.ApplyNetworkSetup(isLocal, reason);
         _configuredLocalStates[playerObject.Id] = isLocal;
+    }
+
+    private void ScheduleAuthorityReadyReconfigure(NetworkObject playerObject, string reason)
+    {
+        if (playerObject == null)
+            return;
+
+        if (_pendingAuthorityChecks.Contains(playerObject.Id))
+            return;
+
+        _pendingAuthorityChecks.Add(playerObject.Id);
+        StartCoroutine(ConfigureWhenAuthorityReady(playerObject, reason));
+    }
+
+    private IEnumerator ConfigureWhenAuthorityReady(NetworkObject playerObject, string reason)
+    {
+        float timeout = 3f;
+        float elapsed = 0f;
+        NetworkId targetId = playerObject != null ? playerObject.Id : default;
+
+        while (elapsed < timeout)
+        {
+            if (playerObject == null)
+                break;
+
+            if (playerObject.InputAuthority != PlayerRef.None)
+            {
+                ConfigurePlayerObjectIfNeeded(playerObject, $"{reason}-AuthorityReady");
+                _pendingAuthorityChecks.Remove(targetId);
+                yield break;
+            }
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        _pendingAuthorityChecks.Remove(targetId);
+        Debug.LogWarning($"{LogPrefix} InputAuthority 확정 대기 타임아웃. netId={targetId}, reason={reason}");
     }
 
     private IEnumerator ConfigureWhenSpawned(PlayerRef player, string reason)
@@ -555,6 +775,7 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
             Vector3 spawnPos = GetSpawnPosition(player);
             Debug.Log($"{LogPrefix} 플레이어 스폰 요청. player={player}, pos={spawnPos}");
             NetworkObject spawned = runner.Spawn(playerPrefab, spawnPos, Quaternion.identity, player);
+            runner.SetPlayerObject(player, spawned);
             _spawnedPlayers[player] = spawned;
             Debug.Log($"{LogPrefix} 플레이어 네트워크 오브젝트 생성 완료. player={player}, netId={spawned.Id}, prefab={playerPrefab.name}");
             ConfigurePlayerObjectIfNeeded(spawned, "OnPlayerJoined-SpawnImmediate");
@@ -565,6 +786,11 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
+        if (runner.IsServer)
+        {
+            runner.SetPlayerObject(player, null);
+        }
+
         if (_spawnedPlayers.TryGetValue(player, out NetworkObject spawned) && spawned != null)
         {
             runner.Despawn(spawned);
@@ -592,12 +818,20 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     {
         _spawnedPlayers.Clear();
         _configuredLocalStates.Clear();
+        _pendingAuthorityChecks.Clear();
         Debug.LogWarning($"{LogPrefix} 네트워크 세션 종료. reason={shutdownReason}");
     }
 
     public void OnInput(NetworkRunner runner, NetworkInput input) { }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
-    public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
+    public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token)
+    {
+        string tokenInfo = token == null ? "null" : $"{token.Length} bytes";
+        Debug.Log($"{LogPrefix} 클라이언트 방 입장 시도 감지. remoteAddress={request.RemoteAddress}, token={tokenInfo}, isServer={runner.IsServer}, mode={runner.Mode}");
+
+        request.Accept();
+        Debug.Log($"{LogPrefix} 클라이언트 접속 요청 승인 완료. remoteAddress={request.RemoteAddress}");
+    }
     public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
     public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
     public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }

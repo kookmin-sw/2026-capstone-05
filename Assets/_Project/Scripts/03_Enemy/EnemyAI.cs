@@ -135,6 +135,7 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         reduceCoroutine = null;
     }
 
+#if UNITY_EDITOR
     private void OnDrawGizmos()
     {
         UnityEditor.Handles.Label(transform.position + Vector3.up * 2.2f,
@@ -154,4 +155,5 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         UnityEditor.Handles.color = new Color(1f, 0.2f, 0.2f, 1f);
         UnityEditor.Handles.DrawWireDisc(transform.position, Vector3.up, data.attackRadius);
     }
+#endif
 }

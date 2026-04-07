@@ -2,19 +2,17 @@ using System.Reflection;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Rendering;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 public class PlayerAdapter : MonoBehaviour
 {
     private const string LogPrefix = "[06_Backend][PlayerAdapter]";
-    private const string PlayerCameraPrefabPath = "Assets/_Project/Prefabs/02_Player/PlayerCamera.prefab";
+    private const string PlayerCameraObjectName = "PlayerCamera";
 
     private bool _isInitialized;
     private bool _lastLocalState;
 
     private PlayerNetworkSetup _networkSetup;
+    [SerializeField] private GameObject playerCameraPrefab;
 
     public void ApplyNetworkSetup(bool isLocalPlayer, string reason)
     {
@@ -137,6 +135,11 @@ public class PlayerAdapter : MonoBehaviour
 
     private void VerifyCameraBinding(bool isLocalPlayer)
     {
+        if (isLocalPlayer)
+        {
+            EnsureRenderCameraReady();
+        }
+
         CinemachineCamera virtualCamera = isLocalPlayer
             ? EnsureLocalCinemachineCamera()
             : FindAnyObjectByType<CinemachineCamera>();
@@ -175,14 +178,12 @@ public class PlayerAdapter : MonoBehaviour
 
     private CinemachineCamera EnsureLocalCinemachineCamera()
     {
-        CinemachineCamera existingCamera = FindAnyObjectByType<CinemachineCamera>();
+        CinemachineCamera existingCamera = FindPlayerCameraInstance();
         if (existingCamera != null)
         {
             return existingCamera;
         }
 
-#if UNITY_EDITOR
-        GameObject playerCameraPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerCameraPrefabPath);
         if (playerCameraPrefab != null)
         {
             GameObject instantiated = Instantiate(playerCameraPrefab);
@@ -191,22 +192,64 @@ public class PlayerAdapter : MonoBehaviour
             CinemachineCamera prefabCamera = instantiated.GetComponent<CinemachineCamera>();
             if (prefabCamera != null)
             {
-                Debug.Log($"{LogPrefix} PlayerCamera.prefab 인스턴스 생성 성공. path={PlayerCameraPrefabPath}");
+                Debug.Log($"{LogPrefix} PlayerCamera.prefab 인스턴스 생성 성공. source=SerializedField");
                 return prefabCamera;
             }
 
-            Debug.LogWarning($"{LogPrefix} PlayerCamera.prefab에는 CinemachineCamera 컴포넌트가 없습니다. path={PlayerCameraPrefabPath}");
+            Debug.LogWarning($"{LogPrefix} PlayerCamera.prefab에는 CinemachineCamera 컴포넌트가 없습니다. source=SerializedField");
             Destroy(instantiated);
         }
         else
         {
-            Debug.LogWarning($"{LogPrefix} PlayerCamera.prefab 로드 실패. path={PlayerCameraPrefabPath}");
+            Debug.LogWarning($"{LogPrefix} PlayerCamera.prefab 참조가 비어 있습니다. PlayerAdapter.playerCameraPrefab에 프리팹을 할당해 주세요.");
         }
-#else
-        Debug.LogWarning($"{LogPrefix} 런타임 빌드에서는 에디터 전용 PlayerCamera.prefab 자동 로드가 비활성화됩니다. 씬에 PlayerCamera를 배치하세요.");
-#endif
+        Debug.LogWarning($"{LogPrefix} 씬에 PlayerCamera 인스턴스를 미리 배치하거나 PlayerAdapter.playerCameraPrefab을 설정해 주세요.");
 
-        return null;
+        return FindPlayerCameraInstance();
+    }
+
+    private static CinemachineCamera FindPlayerCameraInstance()
+    {
+        CinemachineCamera[] allCameras = FindObjectsByType<CinemachineCamera>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (CinemachineCamera candidate in allCameras)
+        {
+            if (candidate == null)
+                continue;
+
+            if (string.Equals(candidate.gameObject.name, PlayerCameraObjectName, System.StringComparison.Ordinal))
+                return candidate;
+        }
+
+        return FindAnyObjectByType<CinemachineCamera>();
+    }
+
+    private void EnsureRenderCameraReady()
+    {
+        Camera renderCamera = Camera.main != null ? Camera.main : FindAnyObjectByType<Camera>();
+        if (renderCamera == null)
+        {
+            GameObject cameraGo = new("Main Camera");
+            cameraGo.tag = "MainCamera";
+            renderCamera = cameraGo.AddComponent<Camera>();
+            Debug.LogWarning($"{LogPrefix} 씬에 렌더 카메라가 없어 런타임 Main Camera를 생성했습니다.");
+        }
+
+        if (!renderCamera.enabled)
+        {
+            renderCamera.enabled = true;
+        }
+
+        CinemachineBrain brain = renderCamera.GetComponent<CinemachineBrain>();
+        if (brain == null)
+        {
+            brain = renderCamera.gameObject.AddComponent<CinemachineBrain>();
+            Debug.Log($"{LogPrefix} 렌더 카메라에 CinemachineBrain을 추가했습니다. camera={renderCamera.name}");
+        }
+
+        if (renderCamera.GetComponent<AudioListener>() == null && FindAnyObjectByType<AudioListener>() == null)
+        {
+            renderCamera.gameObject.AddComponent<AudioListener>();
+        }
     }
 
     private Transform TryGetCameraTarget()
