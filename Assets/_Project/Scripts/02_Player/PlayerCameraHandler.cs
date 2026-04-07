@@ -29,6 +29,12 @@ public class PlayerCameraHandler : MonoBehaviour, IPlayerNetworkConfigurable
         player = GetComponent<PlayerController>();
     }
 
+    private void Start()
+    {
+        // 테스트코드
+        //TestLocalCameraSetup();
+    }
+
     public void SetupLocalCamera(CinemachineCamera sceneCam)
     {
         cinemachineCam = sceneCam;
@@ -84,17 +90,23 @@ public class PlayerCameraHandler : MonoBehaviour, IPlayerNetworkConfigurable
 
     public void ConfigureForNetwork(bool isLocalPlayer)
     {
-        if (isLocalPlayer)
+        if (!isLocalPlayer)
         {
-            CinemachineCamera sceneCam = FindAnyObjectByType<CinemachineCamera>();
-            if (sceneCam != null)
-            {
-                SetupLocalCamera(sceneCam);
-            }
+            enabled = false;
+        }
+    }
+
+    private void TestLocalCameraSetup()
+    {
+        // 임시로 씬에서 첫 번째 CinemachineCamera를 찾아 설정
+        CinemachineCamera sceneCam = FindAnyObjectByType<CinemachineCamera>();
+        if (sceneCam != null)
+        {
+            SetupLocalCamera(sceneCam);
         }
         else
         {
-            enabled = false;
+            Debug.LogWarning("씬에 CinemachineCamera가 없습니다.");
         }
     }
 }

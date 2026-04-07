@@ -15,16 +15,25 @@ public class PlayerNetworkSetup : MonoBehaviour
 
     private void Start()
     {
-        InitializeNetworkState();
+        // 테스트 코드
+        //InitializeNetworkState(true);
     }
 
-    private void InitializeNetworkState()
+    public void InitializeNetworkState(bool isLocalPlayer)
     {
+        isLocalPlayerTest = isLocalPlayer;
+
         IPlayerNetworkConfigurable[] configurables = GetComponentsInChildren<IPlayerNetworkConfigurable>(true);
 
         foreach (var config in configurables)
         {
             config.ConfigureForNetwork(isLocalPlayerTest);
         }
+    }
+
+    [ContextMenu("Test Local Player Setup")]
+    private void TestLocalPlayerSetup()
+    {
+        InitializeNetworkState(true);
     }
 }
