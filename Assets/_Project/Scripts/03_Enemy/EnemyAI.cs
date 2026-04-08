@@ -37,7 +37,6 @@ public class EnemyAI : MonoBehaviour, INoiseListener
     public Vector3 PatrolCenter { get; private set; }
     public Vector3 DetectedNoisePosition { get; private set; }
     public float SuspicionLevel { get; private set; }
-    public float DetectionRadius => data != null ? data.detectionRadius : 0f;
 
     private void Awake()
     {
@@ -85,14 +84,11 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         SuspicionLevel = Mathf.Clamp(value, 0f, 100f);
     }
 
-    public void OnNoiseDetected(Vector3 noisePosition, float noiseRadius)
+    public void OnNoiseDetected(Vector3 noisePosition, float noiseIntensity)
     {
-        float distance = Mathf.Max(0.01f, Vector3.Distance(transform.position, noisePosition));
-        if (distance > noiseRadius + data.detectionRadius) return;
-
         DetectedNoisePosition = noisePosition;
 
-        float gain = data.suspicionGainAmount * (noiseRadius / distance) * data.suspicionSensitivity;
+        float gain = noiseIntensity * data.suspicionGainAmount * data.suspicionSensitivity;
         SuspicionLevel = Mathf.Clamp(SuspicionLevel + gain, 0f, 100f);
 
         if (reduceCoroutine != null)
@@ -153,9 +149,6 @@ public class EnemyAI : MonoBehaviour, INoiseListener
 #if UNITY_EDITOR
         Handles.color = new Color(0.2f, 0.5f, 1f, 1f);
         Handles.DrawWireDisc(PatrolCenter, Vector3.up, data.patrolRadius);
-
-        Handles.color = new Color(1f, 0.9f, 0.1f, 1f);
-        Handles.DrawWireDisc(transform.position, Vector3.up, data.detectionRadius);
 
         Handles.color = new Color(1f, 0.2f, 0.2f, 1f);
         Handles.DrawWireDisc(transform.position, Vector3.up, data.attackRadius);

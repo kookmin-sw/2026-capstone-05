@@ -32,9 +32,6 @@ public class EnemyData : ScriptableObject
     public float waitStartTime = 0.5f;
     public float waitEndTime = 1.5f;
 
-    [Header("Detection Settings")]
-    public float detectionRadius = 10f;
-
     [Header("Suspicion Thresholds")]
     public float alertThreshold = 20f;
     public float lookThreshold = 40f;
