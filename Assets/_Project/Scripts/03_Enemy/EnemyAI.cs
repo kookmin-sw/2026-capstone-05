@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 #if UNITY_EDITOR
@@ -11,8 +10,9 @@ public class EnemyAI : MonoBehaviour, INoiseListener
     [SerializeField] private EnemyData data;
 
     // Private Fields
-    private Coroutine reduceCoroutine;
+    private float lastNoiseTime;
     private float rotationVelocity;
+    private readonly Collider[] attackCheckBuffer = new Collider[16];
 
     // Properties: Core
     public EnemyData Data => data;
@@ -36,7 +36,8 @@ public class EnemyAI : MonoBehaviour, INoiseListener
     // Properties: Gameplay
     public Vector3 PatrolCenter { get; private set; }
     public Vector3 DetectedNoisePosition { get; private set; }
-    public float SuspicionLevel { get; private set; }
+    public float Suspicion { get; private set; }
+    public bool HasDetectedNoise { get; private set; }
 
     private void Awake()
     {
@@ -67,6 +68,7 @@ public class EnemyAI : MonoBehaviour, INoiseListener
     private void Update()
     {
         StateMachine.CurrentState.LogicUpdate();
+        UpdateSuspicion();
     }
 
     private void FixedUpdate()
@@ -79,38 +81,17 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         PatrolCenter = newCenter;
     }
 
-    public void SetSuspicionLevel(float value)
-    {
-        SuspicionLevel = Mathf.Clamp(value, 0f, 100f);
-    }
-
     public void OnNoiseDetected(Vector3 noisePosition, float noiseIntensity)
     {
         DetectedNoisePosition = noisePosition;
+        HasDetectedNoise = true;
+        lastNoiseTime = Time.time;
 
         float gain = noiseIntensity * data.suspicionGainAmount * data.suspicionSensitivity;
-        SuspicionLevel = Mathf.Clamp(SuspicionLevel + gain, 0f, 100f);
-
-        if (reduceCoroutine != null)
-            StopCoroutine(reduceCoroutine);
-        reduceCoroutine = StartCoroutine(SuspicionReduceCoroutine());
+        Suspicion = Mathf.Clamp(Suspicion + gain, 0f, 100f);
     }
 
-    public bool IsPlayerInAttackRadius()
-    {
-        Collider[] hits = Physics.OverlapSphere(transform.position, data.attackRadius);
-        foreach (var hit in hits)
-        {
-            if (!hit.CompareTag("Player")) continue;
-            Vector3 dir = hit.transform.position - transform.position;
-            dir.y = 0f;
-            if (Vector3.Angle(transform.forward, dir) <= data.attackAngle * 0.5f)
-                return true;
-        }
-        return false;
-    }
-
-    public void LookAtDetectedNoisePosition()
+    public void LookDetectedNoisePosition()
     {
         Vector3 targetDirection = DetectedNoisePosition - transform.position;
         targetDirection.y = 0f;
@@ -123,25 +104,49 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         transform.rotation = Quaternion.Euler(0f, newY, 0f);
     }
 
-    private IEnumerator SuspicionReduceCoroutine()
+    public bool IsPlayerInAttackRadius()
     {
-        yield return new WaitForSeconds(data.suspicionReduceDelay);
+        if (!HasDetectedNoise) return false;
 
-        while (SuspicionLevel > 0f)
+        int count = Physics.OverlapSphereNonAlloc(transform.position, data.attackRadius, attackCheckBuffer);
+        for (int i = 0; i < count; i++)
         {
-            if (StateMachine.CurrentState != ChaseState)
-                SuspicionLevel = Mathf.Max(0f, SuspicionLevel - data.suspicionReduceRate * Time.deltaTime);
-            yield return null;
+            if (!attackCheckBuffer[i].CompareTag("Player")) continue;
+            Vector3 dir = attackCheckBuffer[i].transform.position - transform.position;
+            dir.y = 0f;
+            if (Vector3.Angle(transform.forward, dir) <= data.attackAngle * 0.5f)
+                return true;
         }
+        return false;
+    }
 
-        reduceCoroutine = null;
+    private void UpdateSuspicion()
+    {
+        if (StateMachine.CurrentState == ChaseState
+            || StateMachine.CurrentState == AttackState
+            || StateMachine.CurrentState == DeadState)
+            return;
+
+        if (Time.time < lastNoiseTime + data.suspicionReduceDelay)
+            return;
+
+        if (Suspicion > 0f)
+        {
+            Suspicion = Mathf.Max(0f, Suspicion - data.suspicionReduceRate * Time.deltaTime);
+            if (Suspicion <= 0f)
+            {
+                Suspicion = 0f;
+                HasDetectedNoise = false;
+                DetectedNoisePosition = Vector3.zero;
+            }
+        }
     }
 
     private void OnDrawGizmos()
     {
 #if UNITY_EDITOR
         Handles.Label(transform.position + Vector3.up * 2.2f,
-            $"Suspicion: {SuspicionLevel:F0}%");
+            $"Suspicion: {Suspicion:F0}%");
 #endif
     }
 

@@ -3,6 +3,8 @@ using UnityEngine;
 public class EnemyAttackState : EnemyState
 {
     private EnemyAnimationEventHandler animationEventHandler;
+    private bool isCoolingDown;
+    private float cooldownTimer;
 
 
     public EnemyAttackState(EnemyAI enemy, EnemyStateMachine stateMachine)
@@ -13,20 +15,23 @@ public class EnemyAttackState : EnemyState
         animationEventHandler = enemy.AnimationEventHandler;
         animationEventHandler.OnAttackStart += HandleAttackStart;
         animationEventHandler.OnAttackEnd += HandleAttackEnd;
-        animationEventHandler.OnFinalAttackEnd += HandleFinalAttackEnd;
+        animationEventHandler.OnAttackFinish += HandleAttackFinish;
 
-        enemy.SetSuspicionLevel(100f);
         enemy.Agent.isStopped = true;
         enemy.Agent.updateRotation = false;
 
-        enemy.Animator.SetTrigger("Attack");
+        if (!isCoolingDown)
+        {
+            enemy.Animator.SetInteger("WaitIndex", Random.Range(0, 2));
+            enemy.Animator.SetTrigger("Attack");
+        }
     }
 
     public override void Exit()
     {
         animationEventHandler.OnAttackStart -= HandleAttackStart;
         animationEventHandler.OnAttackEnd -= HandleAttackEnd;
-        animationEventHandler.OnFinalAttackEnd -= HandleFinalAttackEnd;
+        animationEventHandler.OnAttackFinish -= HandleAttackFinish;
 
         foreach (var col in enemy.AttackColliders)
             col.DisableAttackCollider();
@@ -42,7 +47,23 @@ public class EnemyAttackState : EnemyState
         enemy.Animator.SetFloat("Speed", 0f, 0.2f, Time.deltaTime);
         enemy.Animator.SetFloat("Angle", 0f, 0.2f, Time.deltaTime);
 
-        enemy.LookAtDetectedNoisePosition();
+        enemy.LookDetectedNoisePosition();
+
+        if (isCoolingDown)
+        {
+            cooldownTimer -= Time.deltaTime;
+            if (cooldownTimer <= 0f)
+            {
+                isCoolingDown = false;
+                if (enemy.IsPlayerInAttackRadius())
+                {
+                    enemy.Animator.SetInteger("WaitIndex", Random.Range(0, 2));
+                    enemy.Animator.SetTrigger("Attack");
+                }
+                else
+                    stateMachine.ChangeState(enemy.SearchState);
+            }
+        }
     }
 
     private void HandleAttackStart(int index)
@@ -57,14 +78,11 @@ public class EnemyAttackState : EnemyState
             if (col.ColliderIndex == index) col.DisableAttackCollider();
     }
 
-    private void HandleFinalAttackEnd()
+    private void HandleAttackFinish()
     {
-        if (enemy.IsPlayerInAttackRadius())
-        {
-            enemy.Animator.SetTrigger("Attack");
-            return;
-        }
-
-        stateMachine.ChangeState(enemy.SearchState);
+        isCoolingDown = true;
+        cooldownTimer = enemy.Data.attackCooldown;
+        string attackIdleState = Random.value > 0.5f ? "Wait1" : "Wait2";
+        enemy.Animator.CrossFade(attackIdleState, 0.2f);
     }
 }

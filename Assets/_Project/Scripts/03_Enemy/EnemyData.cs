@@ -36,16 +36,15 @@ public class EnemyData : ScriptableObject
     public float alertThreshold = 20f;
     public float lookThreshold = 40f;
     public float searchThreshold = 70f;
-    public float searchExitThreshold = 40f;
+    public float searchExitThreshold = 30f;
     public float chaseThreshold = 100f;
     public float chaseExitThreshold = 80f;
 
     [Header("Suspicion Settings")]
-    public float suspicionSensitivity = 0.4f;
+    public float suspicionSensitivity = 0.5f;
     public float suspicionGainAmount = 100f;
     public float suspicionReduceRate = 15f;
     public float suspicionReduceDelay = 2f;
-    public float suspicionOnChaseArrival = 99f;
 
     [Header("Combat Settings")]
     public float attackDamage = 10f;

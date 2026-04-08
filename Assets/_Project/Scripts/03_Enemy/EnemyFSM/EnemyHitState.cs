@@ -16,6 +16,7 @@ public class EnemyHitState : EnemyState
         enemy.Agent.isStopped = true;
         enemy.Agent.updateRotation = false;
 
+        enemy.Animator.SetInteger("HitIndex", Random.Range(0, 2));
         enemy.Animator.SetTrigger("Hit");
     }
 
@@ -35,15 +36,21 @@ public class EnemyHitState : EnemyState
 
     private void HandleHitEnd()
     {
-        if (enemy.SuspicionLevel >= enemy.Data.chaseThreshold)
+        if (enemy.Suspicion >= enemy.Data.chaseThreshold)
         {
             stateMachine.ChangeState(enemy.ChaseState);
             return;
         }
 
-        if (enemy.SuspicionLevel >= enemy.Data.searchThreshold)
+        if (enemy.Suspicion >= enemy.Data.searchThreshold)
         {
             stateMachine.ChangeState(enemy.SearchState);
+            return;
+        }
+
+        if (enemy.Suspicion >= enemy.Data.alertThreshold)
+        {
+            stateMachine.ChangeState(enemy.AlertState);
             return;
         }
 

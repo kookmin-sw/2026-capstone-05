@@ -23,22 +23,22 @@ public class EnemyPatrolState : EnemyState
 
     public override void LogicUpdate()
     {
-        enemy.Animator.SetFloat("Speed", enemy.Agent.velocity.magnitude / enemy.Data.chaseSpeed, 0.2f, Time.deltaTime);
+        enemy.Animator.SetFloat("Speed", enemy.Agent.velocity.magnitude / enemy.Data.walkSpeed, 0.2f, Time.deltaTime);
         enemy.Animator.SetFloat("Angle", 0f, 0.2f, Time.deltaTime);
 
-        if (enemy.SuspicionLevel >= enemy.Data.chaseThreshold)
+        if (enemy.Suspicion >= enemy.Data.chaseThreshold)
         {
             stateMachine.ChangeState(enemy.ChaseState);
             return;
         }
 
-        if (enemy.SuspicionLevel >= enemy.Data.searchThreshold)
+        if (enemy.Suspicion >= enemy.Data.searchThreshold)
         {
             stateMachine.ChangeState(enemy.SearchState);
             return;
         }
 
-        if (enemy.SuspicionLevel >= enemy.Data.alertThreshold)
+        if (enemy.Suspicion >= enemy.Data.alertThreshold)
         {
             stateMachine.ChangeState(enemy.AlertState);
             return;

@@ -3,24 +3,22 @@ using UnityEngine;
 public class EnemyHealth : MonoBehaviour, IDamageable
 {
     private EnemyAI enemy;
-    private EnemyData enemyData;
     private float currentHealth;
 
     private void Awake()
     {
         enemy = GetComponent<EnemyAI>();
-        if (enemy != null)
-            enemyData = enemy.Data;
     }
 
     private void Start()
     {
-        if (enemyData != null)
-            currentHealth = enemyData.maxHealth;
+        currentHealth = enemy.Data.maxHealth;
     }
 
     public void TakeDamage(float damageAmount)
     {
+        if (currentHealth <= 0f) return;
+
         float damage = Mathf.Min(damageAmount, currentHealth);
         currentHealth -= damage;
 
@@ -36,10 +34,5 @@ public class EnemyHealth : MonoBehaviour, IDamageable
         {
             enemy.StateMachine.ChangeState(enemy.HitState);
         }
-    }
-
-    public void OnTriggerEnter(Collider other)
-    {
-        
     }
 }
