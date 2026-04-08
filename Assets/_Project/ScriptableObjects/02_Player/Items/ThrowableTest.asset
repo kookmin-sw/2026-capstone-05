@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68f53a0177d852a41ac6af94783bb771, type: 3}
+  m_Name: ThrowableTest
+  m_EditorClassIdentifier: Assembly-CSharp::ThrowableItemData
+  itemID: ThrowableTest
+  itemName: 
+  description: 
+  itemIcon: {fileID: 0}
+  gridShape:
+    basePositions:
+    - {x: 0, y: 0}
+  maxStackSize: 1
+  pickupPrefab: {fileID: 0}
+  equipPrefab: {fileID: 5922207221318796634, guid: e4f2f5bb30113dc4e8951d96e1cd37f1, type: 3}
+  useAnimationType: 5
+  actionCooldown: 1
+  isTradable: 1
+  price: 0
+  thrownPrefab: {fileID: 8171259858095692032, guid: 83801165bb9c6f74c9c21e55fab1fc69, type: 3}
+  throwForce: 5
+  explodesOnImpact: 0
+  impactDamage: 0
+  throwNoiseType: 0
+  impactNoiseType: 0

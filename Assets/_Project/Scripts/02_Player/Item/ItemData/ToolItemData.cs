@@ -1,7 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "New Tool", menuName = "Item Data/Tool")]
-public class ToolItemData : ItemData
+public abstract class ToolItemData : ItemData
 {
     public override ItemType Type => ItemType.Tool;
 
