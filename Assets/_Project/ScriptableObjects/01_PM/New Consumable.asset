@@ -10,27 +10,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4f62b195572a69b4d8a2bdf1b2a371b0, type: 3}
-  m_Name: ConsumableTest
+  m_Name: New Consumable
   m_EditorClassIdentifier: Assembly-CSharp::ConsumableItemData
-  itemID: ConsumableTest
-  itemName: asdf
+  itemID: 
+  itemName: 
   description: 
   itemIcon: {fileID: 0}
   gridShape:
     basePositions:
     - {x: 0, y: 0}
-  maxStackSize: 1
+  maxStackSize: 0
   pickupPrefab: {fileID: 0}
-  equipPrefab: {fileID: 4242816733669870341, guid: 566b7827f96d56c428034bd892f5c460, type: 3}
-  useAnimationType: 4
+  equipPrefab: {fileID: 0}
+  useAnimationType: 0
   actionCooldown: 1
   isTradable: 1
   price: 0
-  effects:
-  - targetStat: 0
-    totalAmount: 10
-    duration: 0
-  - targetStat: 2
-    totalAmount: 100
-    duration: 5
-  consumeNoiseType: 16
+  healthRestore: 0
+  staminaRestore: 0
+  satietyRestore: 0
+  coldnessReduce: 0
+  consumeNoiseType: 0
