@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 namespace Systems.Inventory {
@@ -42,6 +43,10 @@ namespace Systems.Inventory {
                 itemsContainer.style.bottom = 0;
 
                 ghostIcon = container.CreateChild("ghostIcon");
+                ghostIcon.AddToClassList("ghostIcon");
+                ghostIcon.style.position = Position.Absolute;
+                ghostIcon.style.visibility = Visibility.Hidden;
+                ghostIcon.pickingMode = PickingMode.Ignore;  // 마우스 이벤트 방지
                 yield break;
             }
             
@@ -87,6 +92,13 @@ namespace Systems.Inventory {
             itemsContainer.style.left = 0;
             
             ghostIcon = container.Q<VisualElement>(className: "ghostIcon");
+            if (ghostIcon == null) {
+                ghostIcon = container.CreateChild("ghostIcon");
+                ghostIcon.AddToClassList("ghostIcon");
+                ghostIcon.style.position = Position.Absolute;
+                ghostIcon.style.visibility = Visibility.Hidden;
+                ghostIcon.pickingMode = PickingMode.Ignore;
+            }
             
             // 인벤토리 창 게임 시작 시 안 보이도록 숨기기
             container.style.display = DisplayStyle.None;
@@ -102,7 +114,7 @@ namespace Systems.Inventory {
 
         void Update() {
             // Tab 키를 누르면 인벤토리 토글 (표시/숨김)
-            if (Input.GetKeyDown(KeyCode.Tab) && container != null) {
+            if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame && container != null) {
                 bool isHidden = container.style.display == DisplayStyle.None;
                 container.style.display = isHidden ? DisplayStyle.Flex : DisplayStyle.None;
 
