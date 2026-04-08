@@ -610,9 +610,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NoiseManager
   noiseData: {fileID: 11400000, guid: 3e9b0d76a34521c40a096e027743e653, type: 2}
-  radiusMultiplier: 0.2
+  radiusMultiplier: 0.5
   variationRange: 0.05
-  maxListenerDetectionRadius: 20
   showGizmos: 1
   displayTime: 2
 --- !u!4 &642361040
@@ -1209,6 +1208,25 @@ Terrain:
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
   m_TreeMotionVectorModeOverride: 3
+--- !u!1 &1441629200 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9221480007008803560, guid: cbf0981834bf2494d9405644b9a39e71, type: 3}
+  m_PrefabInstance: {fileID: 1605589376}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1441629204
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1441629200}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b1dd1120adcb2a40baee685b96eb9dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyAttackCollider
+  colliderIndex: 0
+  isBodyCollider: 1
 --- !u!1 &1480931878
 GameObject:
   m_ObjectHideFlags: 0
@@ -1470,7 +1488,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 9221480007008803560, guid: cbf0981834bf2494d9405644b9a39e71, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1441629204}
   m_SourcePrefab: {fileID: 100100000, guid: cbf0981834bf2494d9405644b9a39e71, type: 3}
 --- !u!1 &1718017185
 GameObject:

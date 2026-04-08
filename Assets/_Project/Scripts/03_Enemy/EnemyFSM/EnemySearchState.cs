@@ -11,6 +11,8 @@ public class EnemySearchState : EnemyState
     private float waitTimer;
     private bool isWaiting;
     private bool isLeftTurn;
+    private bool isTurnPlaying;
+    private bool moveAfterTurn;
 
     public EnemySearchState(EnemyAI enemy, EnemyStateMachine stateMachine)
         : base(enemy, stateMachine) { }
@@ -34,6 +36,7 @@ public class EnemySearchState : EnemyState
     public override void Exit()
     {
         StopWaitTurn();
+        enemy.Animator.CrossFade("Locomotion", 0.2f);
         enemy.Agent.isStopped = false;
         enemy.Agent.updateRotation = true;
     }
@@ -57,7 +60,7 @@ public class EnemySearchState : EnemyState
 
         if (enemy.SuspicionLevel < enemy.Data.searchExitThreshold)
         {
-            stateMachine.ChangeState(enemy.PatrolState);
+            stateMachine.ChangeState(enemy.AlertState);
             return;
         }
 
@@ -81,13 +84,19 @@ public class EnemySearchState : EnemyState
         if (isWaiting)
         {
             waitTimer -= Time.deltaTime;
-            if (waitTimer <= 0f)
+            if (waitTimer <= 0f && !moveAfterTurn)
             {
-                isWaiting = false;
-                StopWaitTurn();
-                enemy.Agent.isStopped = false;
-                enemy.Agent.updateRotation = true;
-                SetSearchDestination();
+                if (isTurnPlaying)
+                {
+                    moveAfterTurn = true;
+                }
+                else
+                {
+                    isWaiting = false;
+                    enemy.Agent.isStopped = false;
+                    enemy.Agent.updateRotation = true;
+                    SetSearchDestination();
+                }
             }
             return;
         }
@@ -105,8 +114,8 @@ public class EnemySearchState : EnemyState
     private void StartWaitTurn()
     {
         enemy.AnimationEventHandler.OnTurnEnd += HandleTurnEnd;
-        enemy.AnimationEventHandler.OnTurnREnd += HandleTurnREnd;
-        enemy.Animator.SetBool("IsAlert", true);
+        isTurnPlaying = true;
+        moveAfterTurn = false;
         isLeftTurn = Random.value > 0.5f;
         enemy.Animator.SetTrigger(isLeftTurn ? "TurnLeft" : "TurnRight");
     }
@@ -114,24 +123,26 @@ public class EnemySearchState : EnemyState
     private void StopWaitTurn()
     {
         enemy.AnimationEventHandler.OnTurnEnd -= HandleTurnEnd;
-        enemy.AnimationEventHandler.OnTurnREnd -= HandleTurnREnd;
         enemy.Animator.ResetTrigger("TurnLeft");
         enemy.Animator.ResetTrigger("TurnRight");
-        enemy.Animator.ResetTrigger("TurnLeftR");
-        enemy.Animator.ResetTrigger("TurnRightR");
-        enemy.Animator.SetBool("IsAlert", false);
+        isTurnPlaying = false;
+        moveAfterTurn = false;
     }
 
     private void HandleTurnEnd()
     {
-        if (!isWaiting) return;
-        enemy.Animator.SetTrigger(isLeftTurn ? "TurnLeftR" : "TurnRightR");
-    }
+        enemy.AnimationEventHandler.OnTurnEnd -= HandleTurnEnd;
+        isTurnPlaying = false;
+        enemy.Animator.CrossFade("Locomotion", 0.2f);
 
-    private void HandleTurnREnd()
-    {
-        if (!isWaiting) return;
-        enemy.Animator.SetTrigger(isLeftTurn ? "TurnLeft" : "TurnRight");
+        if (moveAfterTurn)
+        {
+            moveAfterTurn = false;
+            isWaiting = false;
+            enemy.Agent.isStopped = false;
+            enemy.Agent.updateRotation = true;
+            SetSearchDestination();
+        }
     }
 
     private void SetApproachDestination()
