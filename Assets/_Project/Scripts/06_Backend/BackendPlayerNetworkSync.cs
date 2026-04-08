@@ -4,14 +4,6 @@ using UnityEngine;
 [RequireComponent(typeof(NetworkObject))]
 public class BackendPlayerNetworkSync : NetworkBehaviour
 {
-    private const float ProxyCorrectionSpeed = 14f;
-    private const float InputAuthorityCorrectionSpeed = 8f;
-    private const float InputAuthoritySnapDistance = 2.5f;
-    private const float InputAuthoritySnapAngle = 40f;
-    private const float InputAuthorityHardSnapDistance = 6f;
-    private const float InputAuthorityHardSnapAngle = 100f;
-    private const float PositionDeadZone = 0.03f;
-    private const float RotationDeadZoneAngle = 1.5f;
 
     private PlayerController _playerController;
     private PlayerInputHandler _inputHandler;
@@ -92,44 +84,12 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         if (HasStateAuthority)
             return;
 
-        float deltaTime = Mathf.Max(Time.deltaTime, 0.0001f);
-        float positionDistance = Vector3.Distance(transform.position, NetworkPosition);
-        float rotationAngle = Quaternion.Angle(transform.rotation, NetworkRotation);
-        bool isInputAuthority = Object != null && Object.HasInputAuthority;
-
-        // 입력 권한 오브젝트는 보정 불일치를 줄이되, 강한 스냅으로 인한 "원래 방향으로 끊겨 돌아가는" 체감을 최소화합니다.
-        if (isInputAuthority && (positionDistance >= InputAuthorityHardSnapDistance || rotationAngle >= InputAuthorityHardSnapAngle))
-        {
-            transform.SetPositionAndRotation(NetworkPosition, NetworkRotation);
-        }
-        else
-        {
-            float correctionSpeed = isInputAuthority ? InputAuthorityCorrectionSpeed : ProxyCorrectionSpeed;
-
-            if (isInputAuthority && positionDistance < InputAuthoritySnapDistance && rotationAngle < InputAuthoritySnapAngle)
-            {
-                correctionSpeed *= 0.7f;
-            }
-
-            float correctionFactor = 1f - Mathf.Exp(-correctionSpeed * deltaTime);
-
-            if (positionDistance > PositionDeadZone)
-            {
-                transform.position = Vector3.Lerp(transform.position, NetworkPosition, correctionFactor);
-            }
-
-            if (rotationAngle > RotationDeadZoneAngle)
-            {
-                transform.rotation = Quaternion.Slerp(transform.rotation, NetworkRotation, correctionFactor);
-            }
-        }
+        // 서버가 받은 값을 그대로 전파해 적용합니다.
+        transform.SetPositionAndRotation(NetworkPosition, NetworkRotation);
 
         if (_cameraTransform != null)
         {
-            float cameraCorrectionSpeed = isInputAuthority ? InputAuthorityCorrectionSpeed : ProxyCorrectionSpeed;
-            float cameraLerpFactor = 1f - Mathf.Exp(-cameraCorrectionSpeed * deltaTime);
-            Quaternion targetLocal = Quaternion.Euler(CameraPitch, 0f, 0f);
-            _cameraTransform.localRotation = Quaternion.Slerp(_cameraTransform.localRotation, targetLocal, cameraLerpFactor);
+            _cameraTransform.localRotation = Quaternion.Euler(CameraPitch, 0f, 0f);
         }
 
         ApplyProxyAnimationState();
