@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1551265998099499694}
   - component: {fileID: 5112858273351805168}
   - component: {fileID: 2199880948310916309}
+  - component: {fileID: 7087402475123024447}
   m_Layer: 5
   m_Name: Button
   m_TagString: Untagged
@@ -121,6 +122,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &7087402475123024447
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2505655406274556632}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f80a099b2e6f52f44ba981e184d6f8f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TitleButtonUI
 --- !u!1 &5333094036000673757
 GameObject:
   m_ObjectHideFlags: 0
