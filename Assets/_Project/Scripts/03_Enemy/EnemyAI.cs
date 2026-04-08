@@ -101,7 +101,10 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         Collider[] hits = Physics.OverlapSphere(transform.position, data.attackRadius);
         foreach (var hit in hits)
         {
-            if (hit.CompareTag("Player"))
+            if (!hit.CompareTag("Player")) continue;
+            Vector3 dir = hit.transform.position - transform.position;
+            dir.y = 0f;
+            if (Vector3.Angle(transform.forward, dir) <= data.attackAngle * 0.5f)
                 return true;
         }
         return false;
@@ -151,7 +154,12 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         Handles.DrawWireDisc(PatrolCenter, Vector3.up, data.patrolRadius);
 
         Handles.color = new Color(1f, 0.2f, 0.2f, 1f);
-        Handles.DrawWireDisc(transform.position, Vector3.up, data.attackRadius);
+        float halfAngle = data.attackAngle * 0.5f;
+        Vector3 leftDir = Quaternion.Euler(0f, -halfAngle, 0f) * transform.forward;
+        Vector3 rightDir = Quaternion.Euler(0f, halfAngle, 0f) * transform.forward;
+        Handles.DrawLine(transform.position, transform.position + leftDir * data.attackRadius);
+        Handles.DrawLine(transform.position, transform.position + rightDir * data.attackRadius);
+        Handles.DrawWireArc(transform.position, Vector3.up, leftDir, data.attackAngle, data.attackRadius);
 #endif
     }
 }

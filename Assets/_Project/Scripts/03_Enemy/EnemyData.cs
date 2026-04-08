@@ -51,5 +51,6 @@ public class EnemyData : ScriptableObject
     public float attackDamage = 10f;
     public float attackCooldown = 1f;
     public float attackRadius = 2f;
+    public float attackAngle = 60f;
 }
 

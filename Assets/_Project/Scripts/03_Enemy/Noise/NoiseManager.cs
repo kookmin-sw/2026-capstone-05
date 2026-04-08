@@ -10,7 +10,7 @@ public class NoiseManager : MonoBehaviour
     [SerializeField] private NoiseData noiseData;
     
     [Header("Noise Calculation")]
-    [SerializeField] private float radiusMultiplier = 4f;
+    [SerializeField] private float radiusMultiplier = 0.5f;
     [SerializeField] private float variationRange = 0.05f;
     
     [Header("Debug Settings")]

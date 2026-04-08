@@ -36,6 +36,7 @@ public class EnemySearchState : EnemyState
     public override void Exit()
     {
         StopWaitTurn();
+        enemy.Animator.CrossFade("Locomotion", 0.2f);
         enemy.Agent.isStopped = false;
         enemy.Agent.updateRotation = true;
     }
@@ -59,7 +60,7 @@ public class EnemySearchState : EnemyState
 
         if (enemy.SuspicionLevel < enemy.Data.searchExitThreshold)
         {
-            stateMachine.ChangeState(enemy.PatrolState);
+            stateMachine.ChangeState(enemy.AlertState);
             return;
         }
 
