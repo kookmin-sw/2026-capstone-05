@@ -14,8 +14,8 @@ public class EnemyAlertState : EnemyState
     {
         enemy.Animator.SetBool("IsAlert", true);
 
-        bool shouldTurn = enemy.SuspicionLevel >= enemy.Data.lookThreshold
-            && enemy.DetectedNoisePosition != Vector3.zero
+        bool shouldTurn = enemy.Suspicion >= enemy.Data.lookThreshold
+            && enemy.HasDetectedNoise
             && GetDirectionAngle() >= enemy.Data.alignAngleThreshold;
 
         if (shouldTurn && Random.value > 0.5f)
@@ -47,7 +47,7 @@ public class EnemyAlertState : EnemyState
     {
         if (useArcMovement && !isFacingTarget)
         {
-            UpdateArcDestination();
+            SetArcDestination();
             enemy.Animator.SetFloat("Speed", enemy.Agent.velocity.magnitude / enemy.Data.chaseSpeed, 0.2f, Time.deltaTime);
 
             if (GetDirectionAngle() < enemy.Data.alignAngleThreshold)
@@ -59,14 +59,14 @@ public class EnemyAlertState : EnemyState
         }
         else
         {
-            bool shouldLook = enemy.SuspicionLevel >= enemy.Data.lookThreshold
-                && enemy.DetectedNoisePosition != Vector3.zero
+            bool shouldLook = enemy.Suspicion >= enemy.Data.lookThreshold
+                && enemy.HasDetectedNoise
                 && GetDirectionAngle() >= enemy.Data.alignAngleThreshold;
 
             if (shouldLook)
             {
                 enemy.Animator.SetFloat("Speed", 0.5f, 0.2f, Time.deltaTime);
-                enemy.LookAtDetectedNoisePosition();
+                enemy.LookDetectedNoisePosition();
             }
             else
             {
@@ -80,28 +80,28 @@ public class EnemyAlertState : EnemyState
             return;
         }
 
-        if (enemy.SuspicionLevel >= enemy.Data.chaseThreshold)
+        if (enemy.Suspicion >= enemy.Data.chaseThreshold)
         {
             stateMachine.ChangeState(enemy.ChaseState);
             return;
         }
 
-        if (enemy.SuspicionLevel >= enemy.Data.searchThreshold)
+        if (enemy.Suspicion >= enemy.Data.searchThreshold)
         {
             stateMachine.ChangeState(enemy.SearchState);
             return;
         }
 
-        if (enemy.SuspicionLevel < enemy.Data.alertThreshold)
+        if (enemy.Suspicion < enemy.Data.alertThreshold)
         {
             stateMachine.ChangeState(enemy.PatrolState);
             return;
         }
     }
 
-    private void UpdateArcDestination()
+    private void SetArcDestination()
     {
-        if (enemy.DetectedNoisePosition == Vector3.zero) return;
+        if (!enemy.HasDetectedNoise) return;
 
         Vector3 noiseDirection = enemy.DetectedNoisePosition - enemy.transform.position;
         noiseDirection.y = 0f;
@@ -122,7 +122,7 @@ public class EnemyAlertState : EnemyState
 
     private float GetDirectionAngle()
     {
-        if (enemy.DetectedNoisePosition == Vector3.zero) return 0f;
+        if (!enemy.HasDetectedNoise) return 0f;
 
         Vector3 noiseDirection = enemy.DetectedNoisePosition - enemy.transform.position;
         noiseDirection.y = 0f;

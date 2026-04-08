@@ -58,7 +58,7 @@ public class EnemySearchState : EnemyState
             return;
         }
 
-        if (enemy.SuspicionLevel < enemy.Data.searchExitThreshold)
+        if (enemy.Suspicion < enemy.Data.searchExitThreshold)
         {
             stateMachine.ChangeState(enemy.AlertState);
             return;
@@ -129,22 +129,6 @@ public class EnemySearchState : EnemyState
         moveAfterTurn = false;
     }
 
-    private void HandleTurnEnd()
-    {
-        enemy.AnimationEventHandler.OnTurnEnd -= HandleTurnEnd;
-        isTurnPlaying = false;
-        enemy.Animator.CrossFade("Locomotion", 0.2f);
-
-        if (moveAfterTurn)
-        {
-            moveAfterTurn = false;
-            isWaiting = false;
-            enemy.Agent.isStopped = false;
-            enemy.Agent.updateRotation = true;
-            SetSearchDestination();
-        }
-    }
-
     private void SetApproachDestination()
     {
         Vector3 targetDirection = searchCenter - enemy.transform.position;
@@ -186,6 +170,22 @@ public class EnemySearchState : EnemyState
         if (NavMesh.SamplePosition(searchCenter, out NavMeshHit fallback, navMeshSampleRange, NavMesh.AllAreas))
         {
             enemy.Agent.SetDestination(fallback.position);
+        }
+    }
+
+    private void HandleTurnEnd()
+    {
+        enemy.AnimationEventHandler.OnTurnEnd -= HandleTurnEnd;
+        isTurnPlaying = false;
+        enemy.Animator.CrossFade("Locomotion", 0.2f);
+
+        if (moveAfterTurn)
+        {
+            moveAfterTurn = false;
+            isWaiting = false;
+            enemy.Agent.isStopped = false;
+            enemy.Agent.updateRotation = true;
+            SetSearchDestination();
         }
     }
 }
