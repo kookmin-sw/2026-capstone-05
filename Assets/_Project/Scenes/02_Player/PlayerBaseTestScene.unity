@@ -418,12 +418,28 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1915611918036273558, guid: 99a391bcaa825f940b51411a96e696d4, type: 3}
+      propertyPath: testItem
+      value: 
+      objectReference: {fileID: 11400000, guid: 6921d70e12eb2ca4a901db6545ef452d, type: 2}
+    - target: {fileID: 1915611918036273558, guid: 99a391bcaa825f940b51411a96e696d4, type: 3}
       propertyPath: testWeapon
       value: 
-      objectReference: {fileID: 11400000, guid: bdf1adb4989c37f47a6f20af4d940ee4, type: 2}
+      objectReference: {fileID: 11400000, guid: 6921d70e12eb2ca4a901db6545ef452d, type: 2}
     - target: {fileID: 3438671979807047463, guid: 99a391bcaa825f940b51411a96e696d4, type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 4191930427407386217, guid: 99a391bcaa825f940b51411a96e696d4, type: 3}
+      propertyPath: health.startValue
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 4191930427407386217, guid: 99a391bcaa825f940b51411a96e696d4, type: 3}
+      propertyPath: satiety.decreaseRate
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4191930427407386217, guid: 99a391bcaa825f940b51411a96e696d4, type: 3}
+      propertyPath: coldness.increaseRate
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5128881092086213484, guid: 99a391bcaa825f940b51411a96e696d4, type: 3}
       propertyPath: m_LocalPosition.x

@@ -14,6 +14,9 @@ public class PlayerNoiseEmitter : MonoBehaviour
     public float minAirTimeForLanding = 0.2f;
     public float minFallSpeedForLanding = 2.0f;
 
+    [Header("Exploit Settings")]
+    public float distanceDecayRate = 0.5f;
+
     private float accumulatedDistance = 0f;
 
     private bool wasGrounded = true;
@@ -71,7 +74,10 @@ public class PlayerNoiseEmitter : MonoBehaviour
         }
         else
         {
-            accumulatedDistance = 0f;
+            if (accumulatedDistance > 0f)
+            {
+                accumulatedDistance = Mathf.Max(0f, accumulatedDistance - (distanceDecayRate * Time.deltaTime));
+            }
         }
     }
 

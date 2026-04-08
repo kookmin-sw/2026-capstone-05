@@ -1,3 +1,4 @@
+using Unity.Cinemachine;
 using UnityEngine;
 
 /// <summary>
@@ -12,6 +13,8 @@ public abstract class EquippedItemBehaviour : MonoBehaviour
 
     protected float lastUseTime = -999f;
 
+    protected CinemachineImpulseSource impulseSource;
+
     public bool Is1PModel { get; private set; }
 
     public virtual void Initialize(PlayerController owner, ItemInstance instance, bool is1P)
@@ -19,11 +22,7 @@ public abstract class EquippedItemBehaviour : MonoBehaviour
         player = owner;
         itemInstance = instance;
         Is1PModel = is1P;
-
-        if (renderers == null || renderers.Length == 0)
-        {
-            renderers = GetComponentsInChildren<Renderer>(true);
-        }
+        renderers = GetComponentsInChildren<Renderer>(true);
 
         if (player.IsLocalPlayer)
         {
@@ -40,6 +39,8 @@ public abstract class EquippedItemBehaviour : MonoBehaviour
         {
             SetRenderersShadowCastingMode(UnityEngine.Rendering.ShadowCastingMode.On);
         }
+
+        impulseSource = GetComponent<CinemachineImpulseSource>();
     }
 
     /// <summary>

@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
 {
-    public ItemData testWeapon;
+    public ItemData testItem;
 
     // FSM 및 상태 인스턴스 (FSM & State Instances)
     public PlayerStateMachine StateMachine { get; private set; }
@@ -59,6 +59,16 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
     private Vector3 defaultCameraPosition;
     private Vector3 defaultCenter;
 
+    [Header("Stamina Settings")]
+    public float sprintStaminaCost = 15f; // 초당 스태미나 소모량
+    public float minStaminaToSprint = 10f; // 다시 달리기를 시작하기 위한 최소 스태미나
+    public float jumpStaminaCost = 10f; // 점프 시 소모되는 스태미나
+    public float staminaRegenDelay = 1.5f;   // 소모 후 회복이 시작되기까지의 대기 시간
+    public float idleRegenRate = 20f;
+    public float crouchWalkRegenRate = 15f;
+    public float walkRegenRate = 5f;
+    public float airborneRegenRate = 0f;
+
     private void Awake()
     {
         Controller = GetComponent<CharacterController>();
@@ -93,7 +103,8 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
 
         StateMachine.Initialize(GroundedState);
 
-        //Equipment.EquipItem(new ItemInstance(testWeapon));
+        if (testItem != null)
+            Equipment.EquipItem(new ItemInstance(testItem));
     }
 
     private void OnEnable()

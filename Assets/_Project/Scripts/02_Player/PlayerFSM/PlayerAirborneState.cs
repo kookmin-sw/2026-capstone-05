@@ -19,6 +19,8 @@ public class PlayerAirborneState : PlayerState
         player.canLook = true;
 
         player.Animator.SetGrounded(false);
+
+        player.Condition.stamina.increaseRate = player.airborneRegenRate;
     }
 
     public override void Exit()

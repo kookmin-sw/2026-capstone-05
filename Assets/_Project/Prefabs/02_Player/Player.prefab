@@ -411,7 +411,6 @@ MonoBehaviour:
   cameraTransform: {fileID: 219158335034487518}
   inputHandler: {fileID: 1374220835064663929}
   viewmodelTransform: {fileID: 6374640482249357330}
-  offsetSmoothSpeed: 10
   swayMultiplier: 2
   maxSwayAmount: 5
   swaySmoothSpeed: 8
@@ -436,6 +435,8 @@ GameObject:
   - component: {fileID: 62612821691926181}
   - component: {fileID: 948664621378346064}
   - component: {fileID: 7920691128559841607}
+  - component: {fileID: 6299269300820302306}
+  - component: {fileID: 7371084748485435245}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -498,7 +499,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3133082d33946b64fbb320281347e250, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  testWeapon: {fileID: 0}
+  testItem: {fileID: 0}
   cameraTransform: {fileID: 219158335034487518}
   walkSpeed: 2.5
   sprintSpeed: 5
@@ -517,6 +518,14 @@ MonoBehaviour:
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 64
+  sprintStaminaCost: 15
+  minStaminaToSprint: 10
+  jumpStaminaCost: 10
+  staminaRegenDelay: 1.5
+  idleRegenRate: 20
+  crouchWalkRegenRate: 15
+  walkRegenRate: 5
+  airborneRegenRate: 0
 --- !u!114 &1374220835064663929
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -561,7 +570,7 @@ MonoBehaviour:
     currentValue: 0
   coldness:
     maxValue: 100
-    startValue: 100
+    startValue: 0
     increaseRate: 0
     decreaseRate: 0
     currentValue: 0
@@ -601,6 +610,7 @@ MonoBehaviour:
   sprintStride: 1.8
   minAirTimeForLanding: 0.2
   minFallSpeedForLanding: 2
+  distanceDecayRate: 0.5
 --- !u!114 &1689880926387619475
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -616,7 +626,6 @@ MonoBehaviour:
   player: {fileID: 1915611918036273558}
   handSocket1P: {fileID: 170426603530453525}
   handSocket3P: {fileID: 7682995436253285626}
-  viewmodelController: {fileID: 3000804690413901849}
   unarmedDamage: 5
   unarmedAttackCooldown: 0.8
   unarmedRange: 0.8
@@ -672,6 +681,74 @@ MonoBehaviour:
   renderers3P:
   - {fileID: 2820516366555143989}
   - {fileID: 7240134736400741800}
+--- !u!114 &6299269300820302306
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3438671979807047463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b861ae5d6dfb21540b1f2cc8bca96bae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHitFeedback
+  player: {fileID: 1915611918036273558}
+  shakeMultiplier: 0.01
+  maxShakeForce: 0.3
+--- !u!114 &7371084748485435245
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3438671979807047463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 180ecf9b41d478f468eb3e9083753217, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineImpulseSource
+  ImpulseDefinition:
+    ImpulseChannel: 1
+    ImpulseShape: 2
+    CustomImpulseShape:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    ImpulseDuration: 0.2
+    ImpulseType: 0
+    DissipationRate: 0.25
+    RawSignal: {fileID: 0}
+    AmplitudeGain: 1
+    FrequencyGain: 1
+    RepeatMode: 0
+    Randomize: 1
+    TimeEnvelope:
+      AttackShape:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      DecayShape:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      AttackTime: 0
+      SustainTime: 0.2
+      DecayTime: 0.7
+      ScaleWithImpact: 1
+      HoldForever: 0
+    ImpactRadius: 100
+    DirectionMode: 0
+    DissipationMode: 2
+    DissipationDistance: 100
+    PropagationSpeed: 343
+  DefaultVelocity: {x: 0.5, y: -1, z: -0.5}
 --- !u!1 &3599445336930800097
 GameObject:
   m_ObjectHideFlags: 0
@@ -1945,7 +2022,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: 9df7e21cf96e21840858c1ce18bb1296, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 44fc654c7405caf4ab7f22495f9075b3, type: 2}
+      objectReference: {fileID: 22100000, guid: 409a31ce4699c524080012f6ac938c4f, type: 2}
     - target: {fileID: 5866666021909216657, guid: 9df7e21cf96e21840858c1ce18bb1296, type: 3}
       propertyPath: m_CullingMode
       value: 0
