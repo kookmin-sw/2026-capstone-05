@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ad675838f43e8340b5f80f6bbececf1, type: 3}
+  m_Name: Axe
+  m_EditorClassIdentifier: Assembly-CSharp::MeleeWeaponItemData
+  itemID: 
+  itemName: Axe
+  description: 
+  itemIcon: {fileID: 21300000, guid: 421ab94e71381b74f952f0c6affbcf4c, type: 3}
+  gridShape:
+    basePositions:
+    - {x: 0, y: 0}
+    - {x: 0, y: 1}
+    - {x: 1, y: 1}
+    - {x: 1, y: 0}
+  maxStackSize: 0
+  pickupPrefab: {fileID: 0}
+  equipPrefab: {fileID: 0}
+  useAnimationType: 0
+  actionCooldown: 1
+  isTradable: 1
+  price: 0
+  damage: 0
+  attackRange: 0
+  attackHitRadius: 0
+  staminaConsumePerSwing: 0
+  swingNoiseType: 0
+  hitNoiseType: 0
