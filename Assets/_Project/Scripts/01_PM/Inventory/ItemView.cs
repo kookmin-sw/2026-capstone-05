@@ -47,7 +47,23 @@ namespace Systems.Inventory {
             SetQuantity(qty);
             Add(StackLabel);
 
+            // 드래그 이벤트 등록
             RegisterCallback<PointerDownEvent>(OnPointerDown);
+            RegisterCallback<PointerMoveEvent>(OnPointerMove);
+            RegisterCallback<PointerUpEvent>(OnPointerUp);
+            
+            // 드래그 가능하게 설정
+            pickingMode = PickingMode.Position;
+        }
+        
+        private bool isDraggingThis = false;
+        private Vector2 dragStartPos;
+        private Action<ItemView, Vector2> onDragMove;
+        private Action<ItemView> onDragEnd;
+        
+        public void SetDragCallbacks(Action<ItemView, Vector2> onMove, Action<ItemView> onEnd) {
+            onDragMove = onMove;
+            onDragEnd = onEnd;
         }
 
         public void SetQuantity(int qty) {
@@ -65,7 +81,30 @@ namespace Systems.Inventory {
         void OnPointerDown(PointerDownEvent evt) {
             if (evt.button != 0) return;
             
-            OnStartDrag.Invoke(evt.position, this);
+            isDraggingThis = true;
+            dragStartPos = evt.position;
+            this.CapturePointer(evt.pointerId);
+            
+            // 기존 OnStartDrag 이벤트도 호출 (호환성을 위해)
+            OnStartDrag?.Invoke(evt.position, this);
+            
+            evt.StopPropagation();
+        }
+        
+        void OnPointerMove(PointerMoveEvent evt) {
+            if (!isDraggingThis) return;
+            
+            onDragMove?.Invoke(this, evt.position);
+            evt.StopPropagation();
+        }
+        
+        void OnPointerUp(PointerUpEvent evt) {
+            if (!isDraggingThis) return;
+            
+            isDraggingThis = false;
+            this.ReleasePointer(evt.pointerId);
+            
+            onDragEnd?.Invoke(this);
             evt.StopPropagation();
         }
     }
