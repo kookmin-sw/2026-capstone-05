@@ -15,6 +15,7 @@ public class EnemyAttackState : EnemyState
         animationEventHandler.OnAttackEnd += HandleAttackEnd;
         animationEventHandler.OnFinalAttackEnd += HandleFinalAttackEnd;
 
+        enemy.SetSuspicionLevel(100f);
         enemy.Agent.isStopped = true;
         enemy.Agent.updateRotation = false;
 
@@ -64,6 +65,6 @@ public class EnemyAttackState : EnemyState
             return;
         }
 
-        stateMachine.ChangeState(enemy.ChaseState);
+        stateMachine.ChangeState(enemy.SearchState);
     }
 }
