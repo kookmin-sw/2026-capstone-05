@@ -159,6 +159,16 @@ public class PlayerAdapter : MonoBehaviour
 
         if (isLocalPlayer)
         {
+            PlayerCameraHandler playerCameraHandler = GetComponent<PlayerCameraHandler>();
+            if (playerCameraHandler != null)
+            {
+                playerCameraHandler.SetupLocalCamera(virtualCamera);
+            }
+            else
+            {
+                Debug.LogWarning($"{LogPrefix} PlayerCameraHandler를 찾지 못해 SetupLocalCamera 호출을 건너뜁니다. name={name}");
+            }
+
             bool followMatched = virtualCamera.Follow == cameraTarget;
             bool lookAtMatched = virtualCamera.LookAt == cameraTarget;
             if (followMatched && lookAtMatched)
