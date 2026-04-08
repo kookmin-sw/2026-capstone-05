@@ -417,6 +417,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 948664621378346064, guid: 99a391bcaa825f940b51411a96e696d4, type: 3}
+      propertyPath: isLocalPlayerTest
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1915611918036273558, guid: 99a391bcaa825f940b51411a96e696d4, type: 3}
       propertyPath: testItem
       value: 
@@ -480,6 +484,10 @@ PrefabInstance:
     - target: {fileID: 5128881092086213484, guid: 99a391bcaa825f940b51411a96e696d4, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6804007478212921028, guid: 99a391bcaa825f940b51411a96e696d4, type: 3}
+      propertyPath: SortKey
+      value: 952625496
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
