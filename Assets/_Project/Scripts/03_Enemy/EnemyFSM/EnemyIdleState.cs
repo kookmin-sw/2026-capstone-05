@@ -26,19 +26,19 @@ public class EnemyIdleState : EnemyState
         enemy.Animator.SetFloat("Speed", 0f, 0.2f, Time.deltaTime);
         enemy.Animator.SetFloat("Angle", 0f, 0.2f, Time.deltaTime);
 
-        if (enemy.SuspicionLevel >= enemy.Data.chaseThreshold)
+        if (enemy.Suspicion >= enemy.Data.chaseThreshold)
         {
             stateMachine.ChangeState(enemy.ChaseState);
             return;
         }
 
-        if (enemy.SuspicionLevel >= enemy.Data.searchThreshold)
+        if (enemy.Suspicion >= enemy.Data.searchThreshold)
         {
             stateMachine.ChangeState(enemy.SearchState);
             return;
         }
 
-        if (enemy.SuspicionLevel >= enemy.Data.alertThreshold)
+        if (enemy.Suspicion >= enemy.Data.alertThreshold)
         {
             stateMachine.ChangeState(enemy.AlertState);
             return;

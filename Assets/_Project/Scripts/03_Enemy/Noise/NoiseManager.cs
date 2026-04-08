@@ -4,7 +4,7 @@ using System.Collections.Generic;
 public class NoiseManager : MonoBehaviour
 {
     // Singleton
-    public static NoiseManager Instance;
+    public static NoiseManager Instance { get; private set; }
 
     // Serialized Fields
     [SerializeField] private NoiseData noiseData;
@@ -12,33 +12,37 @@ public class NoiseManager : MonoBehaviour
     [Header("Noise Calculation")]
     [SerializeField] private float radiusMultiplier = 0.5f;
     [SerializeField] private float variationRange = 0.05f;
+
+    [Header("Obstacle Detection")]
+    [SerializeField] private LayerMask soundObstacleMask;
     
+#if UNITY_EDITOR
     [Header("Debug Settings")]
     [SerializeField] private bool showGizmos = true;
     [SerializeField] private float displayTime = 1f;
+#endif
     
     // Private Fields
-    private Dictionary<NoiseData.NoiseType, float> noiseDict = new Dictionary<NoiseData.NoiseType, float>();
+    private readonly Dictionary<NoiseData.NoiseType, float> noiseDict = new Dictionary<NoiseData.NoiseType, float>();
+    private readonly Collider[] overlapBuffer = new Collider[64];
+
+#if UNITY_EDITOR
     private List<ActiveNoise> activeNoises = new List<ActiveNoise>();
 
-    // Nested Types
     private struct ActiveNoise
     {
         public Vector3 position;
-        public float decibel;
         public float radius;
         public float expireTime;
-        public NoiseData.NoiseType noiseType;
 
-        public ActiveNoise(Vector3 pos, float decibel, float rad, float duration, NoiseData.NoiseType type)
+        public ActiveNoise(Vector3 pos, float rad, float duration)
         {
             position = pos;
-            this.decibel = decibel;
             radius = rad;
             expireTime = Time.time + duration;
-            noiseType = type;
         }
     }
+#endif
 
     private void Awake()
     {
@@ -64,16 +68,16 @@ public class NoiseManager : MonoBehaviour
         }
     }
     
+#if UNITY_EDITOR
     private void Update()
     {
         for (int i = activeNoises.Count - 1; i >= 0; i--)
         {
             if (Time.time >= activeNoises[i].expireTime)
-            {
                 activeNoises.RemoveAt(i);
-            }
         }
     }
+#endif
 
     public float GetDecibel(NoiseData.NoiseType type)
     {
@@ -87,7 +91,9 @@ public class NoiseManager : MonoBehaviour
 
         if (calculatedRadius <= 0f) return;
 
-        activeNoises.Add(new ActiveNoise(position, decibel, calculatedRadius, displayTime, noiseType));
+#if UNITY_EDITOR
+        activeNoises.Add(new ActiveNoise(position, calculatedRadius, displayTime));
+#endif
         NotifyEnemies(position, calculatedRadius);
     }
 
@@ -95,18 +101,23 @@ public class NoiseManager : MonoBehaviour
     {
         HashSet<INoiseListener> notified = new HashSet<INoiseListener>();
 
-        Collider[] hitColliders = Physics.OverlapSphere(position, radius);
-        foreach (var hit in hitColliders)
+        int count = Physics.OverlapSphereNonAlloc(position, radius, overlapBuffer);
+        for (int i = 0; i < count; i++)
         {
-            INoiseListener listener = hit.GetComponentInParent<INoiseListener>();
+            INoiseListener listener = overlapBuffer[i].GetComponentInParent<INoiseListener>();
             if (listener == null || !notified.Add(listener)) continue;
 
-            float distance = Vector3.Distance(hit.ClosestPoint(position), position);
+            Vector3 listenerPosition = overlapBuffer[i].bounds.center;
+            if (Physics.Linecast(position, listenerPosition, soundObstacleMask))
+                continue;
+
+            float distance = Vector3.Distance(overlapBuffer[i].ClosestPoint(position), position);
             float noiseIntensity = 1f - distance / radius;
             listener.OnNoiseDetected(position, noiseIntensity);
         }
     }
 
+#if UNITY_EDITOR
     private void OnDrawGizmos()
     {
         if (!showGizmos || activeNoises == null) return;
@@ -120,4 +131,5 @@ public class NoiseManager : MonoBehaviour
             Gizmos.DrawWireSphere(noise.position, noise.radius);
         }
     }
+#endif
 }
