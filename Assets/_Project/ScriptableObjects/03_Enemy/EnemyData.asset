@@ -21,18 +21,24 @@ MonoBehaviour:
   idleStartTime: 1
   idleEndTime: 3
   patrolRadius: 15
+  alignAngleThreshold: 12
+  alertArcRadiusMin: 0.2
+  alertArcRadiusMax: 1.2
   searchRadius: 6
-  waitStartTime: 0.5
-  waitEndTime: 1.5
-  detectionRadius: 6
+  waitStartTime: 0.8
+  waitEndTime: 1.2
   alertThreshold: 20
+  lookThreshold: 40
   searchThreshold: 60
+  searchExitThreshold: 40
   chaseThreshold: 100
-  suspicionSensitivity: 0.4
+  chaseExitThreshold: 80
+  suspicionSensitivity: 0.5
   suspicionGainAmount: 100
-  suspicionReduceRate: 15
+  suspicionReduceRate: 10
   suspicionReduceDelay: 2
   suspicionOnChaseArrival: 99
   attackDamage: 10
   attackCooldown: 1
   attackRadius: 2
+  attackAngle: 120

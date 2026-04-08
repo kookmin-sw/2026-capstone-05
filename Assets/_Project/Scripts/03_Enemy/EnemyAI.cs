@@ -1,6 +1,9 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class EnemyAI : MonoBehaviour, INoiseListener
 {
@@ -34,7 +37,6 @@ public class EnemyAI : MonoBehaviour, INoiseListener
     public Vector3 PatrolCenter { get; private set; }
     public Vector3 DetectedNoisePosition { get; private set; }
     public float SuspicionLevel { get; private set; }
-    public float DetectionRadius => data != null ? data.detectionRadius : 0f;
 
     private void Awake()
     {
@@ -82,14 +84,11 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         SuspicionLevel = Mathf.Clamp(value, 0f, 100f);
     }
 
-    public void OnNoiseDetected(Vector3 noisePosition, float noiseRadius)
+    public void OnNoiseDetected(Vector3 noisePosition, float noiseIntensity)
     {
-        float distance = Mathf.Max(0.01f, Vector3.Distance(transform.position, noisePosition));
-        if (distance > noiseRadius + data.detectionRadius) return;
-
         DetectedNoisePosition = noisePosition;
 
-        float gain = data.suspicionGainAmount * (noiseRadius / distance) * data.suspicionSensitivity;
+        float gain = noiseIntensity * data.suspicionGainAmount * data.suspicionSensitivity;
         SuspicionLevel = Mathf.Clamp(SuspicionLevel + gain, 0f, 100f);
 
         if (reduceCoroutine != null)
@@ -102,7 +101,10 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         Collider[] hits = Physics.OverlapSphere(transform.position, data.attackRadius);
         foreach (var hit in hits)
         {
-            if (hit.CompareTag("Player"))
+            if (!hit.CompareTag("Player")) continue;
+            Vector3 dir = hit.transform.position - transform.position;
+            dir.y = 0f;
+            if (Vector3.Angle(transform.forward, dir) <= data.attackAngle * 0.5f)
                 return true;
         }
         return false;
@@ -137,21 +139,27 @@ public class EnemyAI : MonoBehaviour, INoiseListener
 
     private void OnDrawGizmos()
     {
-        UnityEditor.Handles.Label(transform.position + Vector3.up * 2.2f,
+#if UNITY_EDITOR
+        Handles.Label(transform.position + Vector3.up * 2.2f,
             $"Suspicion: {SuspicionLevel:F0}%");
+#endif
     }
 
     private void OnDrawGizmosSelected()
     {
         if (data == null) return;
 
-        UnityEditor.Handles.color = new Color(0.2f, 0.5f, 1f, 1f);
-        UnityEditor.Handles.DrawWireDisc(PatrolCenter, Vector3.up, data.patrolRadius);
+#if UNITY_EDITOR
+        Handles.color = new Color(0.2f, 0.5f, 1f, 1f);
+        Handles.DrawWireDisc(PatrolCenter, Vector3.up, data.patrolRadius);
 
-        UnityEditor.Handles.color = new Color(1f, 0.9f, 0.1f, 1f);
-        UnityEditor.Handles.DrawWireDisc(transform.position, Vector3.up, data.detectionRadius);
-
-        UnityEditor.Handles.color = new Color(1f, 0.2f, 0.2f, 1f);
-        UnityEditor.Handles.DrawWireDisc(transform.position, Vector3.up, data.attackRadius);
+        Handles.color = new Color(1f, 0.2f, 0.2f, 1f);
+        float halfAngle = data.attackAngle * 0.5f;
+        Vector3 leftDir = Quaternion.Euler(0f, -halfAngle, 0f) * transform.forward;
+        Vector3 rightDir = Quaternion.Euler(0f, halfAngle, 0f) * transform.forward;
+        Handles.DrawLine(transform.position, transform.position + leftDir * data.attackRadius);
+        Handles.DrawLine(transform.position, transform.position + rightDir * data.attackRadius);
+        Handles.DrawWireArc(transform.position, Vector3.up, leftDir, data.attackAngle, data.attackRadius);
+#endif
     }
 }

@@ -10,9 +10,8 @@ public class NoiseManager : MonoBehaviour
     [SerializeField] private NoiseData noiseData;
     
     [Header("Noise Calculation")]
-    [SerializeField] private float radiusMultiplier = 0.2f;
+    [SerializeField] private float radiusMultiplier = 0.5f;
     [SerializeField] private float variationRange = 0.05f;
-    [SerializeField] private float maxListenerDetectionRadius = 20f;
     
     [Header("Debug Settings")]
     [SerializeField] private bool showGizmos = true;
@@ -96,19 +95,15 @@ public class NoiseManager : MonoBehaviour
     {
         HashSet<INoiseListener> notified = new HashSet<INoiseListener>();
 
-        Collider[] hitColliders = Physics.OverlapSphere(position, radius + maxListenerDetectionRadius);
+        Collider[] hitColliders = Physics.OverlapSphere(position, radius);
         foreach (var hit in hitColliders)
         {
             INoiseListener listener = hit.GetComponentInParent<INoiseListener>();
             if (listener == null || !notified.Add(listener)) continue;
 
-            if (listener is not MonoBehaviour listenerMb) continue;
-
-            float distance = Vector3.Distance(listenerMb.transform.position, position);
-            if (distance < radius + listener.DetectionRadius)
-            {
-                listener.OnNoiseDetected(position, radius);
-            }
+            float distance = Vector3.Distance(hit.ClosestPoint(position), position);
+            float noiseIntensity = 1f - distance / radius;
+            listener.OnNoiseDetected(position, noiseIntensity);
         }
     }
 

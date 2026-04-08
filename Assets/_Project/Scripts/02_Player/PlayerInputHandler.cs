@@ -12,6 +12,7 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
     [Header("Action States (Hold)")]
     public bool IsSprinting { get; private set; }
     public bool IsAiming { get; private set; } // 필요하다면 추가
+    public bool IsCrouchPressed { get; private set; }
 
     [Header("Action Triggers (One-shot)")]
     public bool JumpTriggered { get; private set; }
@@ -19,13 +20,22 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
     public bool InteractTriggered { get; private set; }
     public bool ActionTriggered { get; private set; }
 
+    private bool _useNetworkInputOverride;
+    private PlayerInputSnapshot _networkSnapshot;
+    private bool _previousNetworkCrouch;
+
     private void Awake()
     {
         inputActions = new PlayerInputActions();
 
         // Triggers
         inputActions.Player.Jump.started += ctx => JumpTriggered = true;
-        inputActions.Player.Crouch.started += ctx => CrouchTriggered = true;
+        inputActions.Player.Crouch.started += ctx =>
+        {
+            IsCrouchPressed = true;
+            CrouchTriggered = true;
+        };
+        inputActions.Player.Crouch.canceled += ctx => IsCrouchPressed = false;
         inputActions.Player.Interact.started += ctx => InteractTriggered = true;
         inputActions.Player.Action.started += ctx => ActionTriggered = true;
 
@@ -38,6 +48,12 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
 
     private void Update()
     {
+        if (_useNetworkInputOverride)
+        {
+            ApplySnapshotToCurrentState(_networkSnapshot);
+            return;
+        }
+
         // Pollings
         MoveInput = inputActions.Player.Move.ReadValue<Vector2>();
         LookInput = inputActions.Player.Look.ReadValue<Vector2>();
@@ -81,12 +97,58 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
         LookInput = Vector2.zero;
         IsSprinting = false;
         IsAiming = false;
+        IsCrouchPressed = false;
         JumpTriggered = false;
         CrouchTriggered = false;
         InteractTriggered = false;
         ActionTriggered = false;
+        _previousNetworkCrouch = false;
     }
 
+
+
+    public void SetNetworkInputOverride(bool enabled)
+    {
+        if (_useNetworkInputOverride == enabled)
+            return;
+
+        _useNetworkInputOverride = enabled;
+
+        if (enabled)
+        {
+            if (inputActions != null)
+                inputActions.Disable();
+            ResetAllInputs();
+            return;
+        }
+
+        if (isActiveAndEnabled && inputActions != null)
+            inputActions.Enable();
+    }
+
+    public void ApplyNetworkSnapshot(PlayerInputSnapshot snapshot)
+    {
+        _networkSnapshot = snapshot;
+    }
+
+    private void ApplySnapshotToCurrentState(PlayerInputSnapshot snapshot)
+    {
+        MoveInput = snapshot.Move;
+        LookInput = snapshot.Look;
+        IsSprinting = snapshot.Sprint;
+        IsCrouchPressed = snapshot.Crouch;
+
+        if (snapshot.Jump)
+            JumpTriggered = true;
+        if (snapshot.Crouch && !_previousNetworkCrouch)
+            CrouchTriggered = true;
+        if (snapshot.Interact)
+            InteractTriggered = true;
+        if (snapshot.Action)
+            ActionTriggered = true;
+
+        _previousNetworkCrouch = snapshot.Crouch;
+    }
 
     public void ConfigureForNetwork(bool isLocalPlayer)
     {

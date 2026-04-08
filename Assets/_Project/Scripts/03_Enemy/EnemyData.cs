@@ -21,17 +21,20 @@ public class EnemyData : ScriptableObject
 
     [Header("Patrol Settings")]
     public float patrolRadius = 15f;
+    
+    [Header("Alert Settings")]
+    public float alignAngleThreshold = 12f;
+    public float alertArcRadiusMin = 0.2f;
+    public float alertArcRadiusMax = 1.2f;
 
     [Header("Search Settings")]
     public float searchRadius = 6f;
     public float waitStartTime = 0.5f;
     public float waitEndTime = 1.5f;
 
-    [Header("Detection Settings")]
-    public float detectionRadius = 10f;
-
     [Header("Suspicion Thresholds")]
     public float alertThreshold = 20f;
+    public float lookThreshold = 40f;
     public float searchThreshold = 70f;
     public float searchExitThreshold = 40f;
     public float chaseThreshold = 100f;
@@ -48,5 +51,6 @@ public class EnemyData : ScriptableObject
     public float attackDamage = 10f;
     public float attackCooldown = 1f;
     public float attackRadius = 2f;
+    public float attackAngle = 60f;
 }
 
