@@ -1,46 +1,78 @@
 using UnityEngine;
+using UnityEngine.AI;
 
 public class EnemyAlertState : EnemyState
 {
-    private bool isLeftTurn;
+    private bool useArcMovement;
+    private bool isFacingTarget;
+    private float arcRadius;
 
     public EnemyAlertState(EnemyAI enemy, EnemyStateMachine stateMachine)
         : base(enemy, stateMachine) { }
 
     public override void Enter()
     {
-        enemy.Agent.isStopped = true;
-        // enemy.Agent.updateRotation = false;
         enemy.Animator.SetBool("IsAlert", true);
-        enemy.AnimationEventHandler.OnTurnEnd += HandleTurnEnd;
-        enemy.AnimationEventHandler.OnTurnREnd += HandleTurnREnd;
 
-        isLeftTurn = GetTurnDirection();
-        enemy.Animator.SetTrigger(isLeftTurn ? "TurnLeft" : "TurnRight");
+        bool shouldTurn = enemy.SuspicionLevel >= enemy.Data.lookThreshold
+            && enemy.DetectedNoisePosition != Vector3.zero
+            && GetDirectionAngle() >= enemy.Data.alignAngleThreshold;
+
+        if (shouldTurn && Random.value > 0.5f)
+        {
+            useArcMovement = true;
+            isFacingTarget = false;
+            arcRadius = Random.Range(enemy.Data.alertArcRadiusMin, enemy.Data.alertArcRadiusMax);
+            enemy.Agent.isStopped = false;
+            enemy.Agent.updateRotation = true;
+            enemy.Agent.speed = enemy.Data.chaseSpeed;
+        }
+        else
+        {
+            useArcMovement = false;
+            enemy.Agent.isStopped = true;
+            enemy.Agent.updateRotation = false;
+        }
     }
 
     public override void Exit()
     {
-        enemy.AnimationEventHandler.OnTurnEnd -= HandleTurnEnd;
-        enemy.AnimationEventHandler.OnTurnREnd -= HandleTurnREnd;
-
-        enemy.Animator.ResetTrigger("TurnLeft");
-        enemy.Animator.ResetTrigger("TurnRight");
-        enemy.Animator.ResetTrigger("TurnLeftR");
-        enemy.Animator.ResetTrigger("TurnRightR");
         enemy.Animator.SetBool("IsAlert", false);
         enemy.Animator.CrossFade("Locomotion", 0.2f);
-
         enemy.Agent.isStopped = false;
-        // enemy.Agent.updateRotation = true;
+        enemy.Agent.updateRotation = true;
     }
 
     public override void LogicUpdate()
     {
-        enemy.Animator.SetFloat("Speed", 0f, 0.1f, Time.deltaTime);
+        if (useArcMovement && !isFacingTarget)
+        {
+            UpdateArcDestination();
+            enemy.Animator.SetFloat("Speed", enemy.Agent.velocity.magnitude / enemy.Data.chaseSpeed, 0.2f, Time.deltaTime);
 
-        if (enemy.DetectedNoisePosition != Vector3.zero)
-            // enemy.LookAtDetectedNoisePosition();
+            if (GetDirectionAngle() < enemy.Data.alignAngleThreshold)
+            {
+                isFacingTarget = true;
+                enemy.Agent.isStopped = true;
+                enemy.Agent.updateRotation = false;
+            }
+        }
+        else
+        {
+            bool shouldLook = enemy.SuspicionLevel >= enemy.Data.lookThreshold
+                && enemy.DetectedNoisePosition != Vector3.zero
+                && GetDirectionAngle() >= enemy.Data.alignAngleThreshold;
+
+            if (shouldLook)
+            {
+                enemy.Animator.SetFloat("Speed", 0.5f, 0.2f, Time.deltaTime);
+                enemy.LookAtDetectedNoisePosition();
+            }
+            else
+            {
+                enemy.Animator.SetFloat("Speed", 0f, 0.2f, Time.deltaTime);
+            }
+        }
 
         if (enemy.IsPlayerInAttackRadius())
         {
@@ -67,30 +99,33 @@ public class EnemyAlertState : EnemyState
         }
     }
 
-    private bool GetTurnDirection()
+    private void UpdateArcDestination()
     {
-        if (enemy.DetectedNoisePosition == Vector3.zero)
-            return true;
+        if (enemy.DetectedNoisePosition == Vector3.zero) return;
 
-        Vector3 toNoise = enemy.DetectedNoisePosition - enemy.transform.position;
-        toNoise.y = 0f;
-        float angle = Vector3.SignedAngle(enemy.transform.forward, toNoise, Vector3.up);
-        return angle < 0f;
+        Vector3 noiseDirection = enemy.DetectedNoisePosition - enemy.transform.position;
+        noiseDirection.y = 0f;
+
+        float signedAngle = Vector3.SignedAngle(enemy.transform.forward, noiseDirection, Vector3.up);
+        float side = signedAngle < 0f ? -arcRadius : arcRadius;
+
+        Vector3 candidate = enemy.transform.position
+            + enemy.transform.forward * arcRadius
+            + enemy.transform.right * side;
+
+        const float navMeshSampleRange = 2f;
+        if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, navMeshSampleRange, NavMesh.AllAreas))
+            enemy.Agent.SetDestination(hit.position);
+        else
+            enemy.Agent.isStopped = true;
     }
 
-    private void HandleTurnEnd()
+    private float GetDirectionAngle()
     {
-        enemy.Animator.SetTrigger(isLeftTurn ? "TurnLeftR" : "TurnRightR");
-    }
+        if (enemy.DetectedNoisePosition == Vector3.zero) return 0f;
 
-    private void HandleTurnREnd()
-    {
-        if (enemy.SuspicionLevel < enemy.Data.alertThreshold)
-        {
-            stateMachine.ChangeState(enemy.PatrolState);
-            return;
-        }
-
-        enemy.Animator.SetTrigger(isLeftTurn ? "TurnLeft" : "TurnRight");
+        Vector3 noiseDirection = enemy.DetectedNoisePosition - enemy.transform.position;
+        noiseDirection.y = 0f;
+        return Vector3.Angle(enemy.transform.forward, noiseDirection);
     }
 }
