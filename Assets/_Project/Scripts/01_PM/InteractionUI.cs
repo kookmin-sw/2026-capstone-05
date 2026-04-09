@@ -49,34 +49,12 @@ public class InteractionUI : MonoBehaviour
             return;
         }
 
-        // 월드 좌표를 스크린 좌표로 변환
-        Vector3 screenPos = mainCamera.WorldToScreenPoint(targetTransform.position);
-        
-        // 카메라 뒤에 있는 경우 UI 숨김
-        if (screenPos.z < 0)
-        {
-            container.style.opacity = 0;
-        }
-        else
-        {
-            container.style.opacity = 1;
-            
-            // UI Toolkit 화면 비율에 맞춘 정확한 포지셔닝
-            if (container.panel != null)
-            {
-                Vector2 uiPos = RuntimePanelUtils.CameraTransformWorldToPanel(container.panel, targetTransform.position, mainCamera);
-                
-                container.style.left = uiPos.x - (container.resolvedStyle.width / 2f);
-                container.style.top = uiPos.y - (container.resolvedStyle.height / 2f);
-            }
-            else
-            {
-                // Fallback
-                Vector2 uiPos = new Vector2(screenPos.x, Screen.height - screenPos.y);
-                container.style.left = uiPos.x - (container.resolvedStyle.width / 2f);
-                container.style.top = uiPos.y - (container.resolvedStyle.height / 2f);
-            }
-        }
+        // 항상 화면에 보이도록 불투명도 1 유지
+        container.style.opacity = 1;
+
+        // 화면 중앙에 위치하도록 left/top 초기화
+        container.style.left = StyleKeyword.Null;
+        container.style.top = StyleKeyword.Null;
     }
 
     public void Show(string objectName, string prompt, Transform target)
