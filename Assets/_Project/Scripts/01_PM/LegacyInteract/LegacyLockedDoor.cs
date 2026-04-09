@@ -1,3 +1,4 @@
+/*
 using UnityEngine;
 using TMPro;
 
@@ -161,3 +162,4 @@ public class LegacyLockedDoor : MonoBehaviour, IInteractable
         }
     }
 }
+*/

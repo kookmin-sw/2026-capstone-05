@@ -1,0 +1,78 @@
+using UnityEngine;
+using UnityEngine.UIElements;
+
+public class InteractionUI : MonoBehaviour
+{
+    public static InteractionUI Instance { get; private set; }
+
+    [Header("UI Components")]
+    [SerializeField] private UIDocument uiDocument;
+
+    private VisualElement container;
+    private Label objectNameLabel;
+    private Label interactionPromptLabel;
+
+    private Camera mainCamera;
+    private Transform targetTransform;
+
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+
+        mainCamera = Camera.main;
+    }
+
+    private void OnEnable()
+    {
+        if (uiDocument != null && uiDocument.rootVisualElement != null)
+        {
+            var root = uiDocument.rootVisualElement;
+
+            container = root.Q<VisualElement>(className: "interaction-container");
+            objectNameLabel = root.Q<Label>("ObjectName");
+            interactionPromptLabel = root.Q<Label>("InteractionPrompt");
+
+            Hide(); // 처음에 숨기기
+        }
+    }
+
+    private void Update()
+    {
+        // 컨테이너가 없거나 숨겨져 있으면 패스
+        if (container == null || container.style.display == DisplayStyle.None) return;
+
+        // 추적 중이던 대상이 파괴되었을 경우 UI 숨김
+        if (targetTransform == null)
+        {
+            Hide();
+            return;
+        }
+
+        // 항상 화면에 보이도록 불투명도 1 유지
+        container.style.opacity = 1;
+
+        // 화면 중앙에 위치하도록 left/top 초기화
+        container.style.left = StyleKeyword.Null;
+        container.style.top = StyleKeyword.Null;
+    }
+
+    public void Show(string objectName, string prompt, Transform target)
+    {
+        if (container == null) return;
+
+        targetTransform = target;
+        objectNameLabel.text = objectName;
+        interactionPromptLabel.text = prompt;
+
+        container.style.display = DisplayStyle.Flex;
+    }
+
+    public void Hide()
+    {
+        if (container == null) return;
+
+        targetTransform = null;
+        container.style.display = DisplayStyle.None;
+    }
+}

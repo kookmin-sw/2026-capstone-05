@@ -10,6 +10,9 @@ public class PlayerEquipment : MonoBehaviour
     public EquippedItemBehaviour Item1P { get; private set; }
     public EquippedItemBehaviour Item3P { get; private set; }
 
+    private GameObject currentObj1P;
+    private GameObject currentObj3P;
+
     private Transform cameraTransform;
 
     [Header("Unarmed Settings")]
@@ -46,8 +49,8 @@ public class PlayerEquipment : MonoBehaviour
 
         if (player.IsLocalPlayer && handSocket1P != null)
         {
-            GameObject obj1P = Instantiate(prefab, handSocket1P);
-            Item1P = obj1P.GetComponent<EquippedItemBehaviour>();
+            currentObj1P = Instantiate(prefab, handSocket1P);
+            Item1P = currentObj1P.GetComponent<EquippedItemBehaviour>();
 
             if (Item1P != null)
             {
@@ -57,8 +60,8 @@ public class PlayerEquipment : MonoBehaviour
 
         if (handSocket3P != null)
         {
-            GameObject obj3P = Instantiate(prefab, handSocket3P);
-            Item3P = obj3P.GetComponent<EquippedItemBehaviour>();
+            currentObj3P = Instantiate(prefab, handSocket3P);
+            Item3P = currentObj3P.GetComponent<EquippedItemBehaviour>();
 
             if (Item3P != null)
             {
@@ -81,15 +84,26 @@ public class PlayerEquipment : MonoBehaviour
     /// </summary>
     public void UnequipItem()
     {
-        if (Item1P != null)
+        if (currentObj1P != null)
+        {
+            Destroy(currentObj1P);
+        }
+        else if (Item1P != null)
         {
             Destroy(Item1P.gameObject);
         }
-        if (Item3P != null)
+
+        if (currentObj3P != null)
+        {
+            Destroy(currentObj3P);
+        }
+        else if (Item3P != null)
         {
             Destroy(Item3P.gameObject);
         }
 
+        currentObj1P = null;
+        currentObj3P = null;
         Item1P = null;
         Item3P = null;
 

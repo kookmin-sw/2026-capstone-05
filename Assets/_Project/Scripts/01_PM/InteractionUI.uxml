@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="InteractionUI.uss" />
+    <ui:VisualElement class="interaction-container" picking-mode="Ignore" style="align-items: center; justify-content: center;">
+        <ui:VisualElement class="interaction-panel" picking-mode="Ignore">
+            <ui:Label name="ObjectName" text="Cabinet" class="object-name" picking-mode="Ignore" />
+            <ui:Label name="InteractionPrompt" text="Interact [E]" class="interaction-prompt" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

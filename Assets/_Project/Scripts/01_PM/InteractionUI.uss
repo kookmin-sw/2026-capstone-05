@@ -1,0 +1,29 @@
+.interaction-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+}
+
+.interaction-panel {
+    align-items: center;
+    justify-content: center;
+}
+
+.object-name {
+    color: white;
+    font-size: 24px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    text-shadow: 2px 2px 2px rgba(0, 0, 0, 1.0);
+    margin-bottom: -5px;
+}
+
+.interaction-prompt {
+    color: white;
+    font-size: 18px;
+    -unity-text-align: middle-center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
