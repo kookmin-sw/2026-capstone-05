@@ -1,0 +1,189 @@
+﻿using System;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+namespace Systems.GridInventory {
+    public class GridItemView : VisualElement {
+        public Image Icon;
+        public Label StackLabel;
+        
+        public ItemInstance ItemInst { get; private set; }
+        
+        public int Width { get; private set; }
+        public int Height { get; private set; }
+        
+        public int MinX { get; private set; }
+        public int MinY { get; private set; }
+        
+        public ItemRotation OriginalRotation { get; set; }
+        public float VisualAngle { get; set; }
+
+        public event Action<Vector2, GridItemView> OnStartDrag = delegate { };
+
+        public GridItemView(ItemInstance itemInst) {
+            ItemInst = itemInst;
+            
+            // Setup styling for absolute positioning
+            style.position = Position.Absolute;
+            
+            // Background / Icon
+            Icon = new Image {
+                sprite = itemInst.Data.itemIcon,
+                scaleMode = ScaleMode.ScaleToFit
+            };
+            Icon.style.flexGrow = 1;
+            Icon.style.paddingLeft = Icon.style.paddingRight = Icon.style.paddingTop = Icon.style.paddingBottom = 2;
+            
+            Add(Icon);
+
+            // Stack count
+            StackLabel = new Label();
+            StackLabel.style.position = Position.Absolute;
+            StackLabel.style.bottom = 2;
+            StackLabel.style.right = 4;
+            StackLabel.style.color = Color.white;
+            StackLabel.style.fontSize = 14;
+            StackLabel.style.textShadow = new TextShadow {
+                blurRadius = 0,
+                color = Color.black,
+                offset = new Vector2(1, 1)
+            };
+            SetQuantity(itemInst.currentStackCount);
+            Add(StackLabel);
+
+            RegisterCallback<PointerDownEvent>(OnPointerDown);
+            RegisterCallback<PointerMoveEvent>(OnPointerMove);
+            RegisterCallback<PointerUpEvent>(OnPointerUp);
+            
+            pickingMode = PickingMode.Position;
+            
+            VisualAngle = (int)ItemInst.currentRotation * 90f;
+            RefreshVisuals();
+        }
+
+        public void RotateClockwise() {
+            VisualAngle += 90f;
+            ItemInst.Rotate(true);
+            RefreshBoundsAndIcon();
+        }
+
+        public void RevertRotation(ItemRotation rotation) {
+            ItemInst.currentRotation = rotation;
+            VisualAngle = (int)rotation * 90f;
+            RefreshBoundsAndIcon();
+        }
+
+        public void RefreshVisuals() {
+            VisualAngle = (int)ItemInst.currentRotation * 90f;
+            RefreshBoundsAndIcon();
+        }
+
+        private void RefreshBoundsAndIcon() {
+            var rotatedPositions = ItemInst.Data.gridShape.GetRotatedPositions(ItemInst.currentRotation);
+            
+            int minX = 0, minY = 0, maxX = 0, maxY = 0;
+            foreach(var pos in rotatedPositions) {
+                if(pos.x < minX) minX = pos.x;
+                if(pos.y < minY) minY = pos.y;
+                if(pos.x > maxX) maxX = pos.x;
+                if(pos.y > maxY) maxY = pos.y;
+            }
+
+            Width = (maxX - minX) + 1;
+            Height = (maxY - minY) + 1;
+            MinX = minX;
+            MinY = minY;
+
+            // Icon의 transformOrigin은 항상 "회전되지 않은 원본(Deg0) 기준"의 논리적 원점이어야 합니다.
+            // 이미지는 항상 원본 상태로 그려진 후 VisualAngle만큼 회전되기 때문입니다.
+            var basePositions = ItemInst.Data.gridShape.GetRotatedPositions(ItemRotation.Deg0);
+            int baseMinX = 0, baseMinY = 0, baseMaxX = 0, baseMaxY = 0;
+            foreach(var pos in basePositions) {
+                if(pos.x < baseMinX) baseMinX = pos.x;
+                if(pos.y < baseMinY) baseMinY = pos.y;
+                if(pos.x > baseMaxX) baseMaxX = pos.x;
+                if(pos.y > baseMaxY) baseMaxY = pos.y;
+            }
+            int baseWidth = (baseMaxX - baseMinX) + 1;
+            int baseHeight = (baseMaxY - baseMinY) + 1;
+            
+            float baseAnchorXRatio = (-baseMinX + 0.5f) / baseWidth;
+            float baseAnchorYRatio = (-baseMinY + 0.5f) / baseHeight;
+
+            // 회전 시 크기가 변하더라도 Icon이 항상 원래 비율대로 유지된 채 회전되어야 올바른 형태로 렌더링됩니다.
+            // 부모 GridItemView는 회전된 바운딩 박스 크기를 가지지만, Icon은 항상 원래 크기(Base)를 가집니다.
+            float slotSize = 65f;
+            float slotSpacing = 4f;
+            float baseW = (baseWidth * slotSize) + ((baseWidth - 1) * slotSpacing);
+            float baseH = (baseHeight * slotSize) + ((baseHeight - 1) * slotSpacing);
+
+            Icon.style.position = Position.Absolute;
+            Icon.style.width = baseW;
+            Icon.style.height = baseH;
+
+            Icon.style.transformOrigin = new TransformOrigin(
+                new Length(baseAnchorXRatio * 100f, LengthUnit.Percent), 
+                new Length(baseAnchorYRatio * 100f, LengthUnit.Percent));
+
+            // 논리적 앵커(0,0)가 부모(회전된 바운딩 박스)의 앵커(0,0) 위치와 일치하도록 오프셋을 계산합니다.
+            // 부모 박스 내에서 앵커(0,0)의 위치:
+            float rotatedAnchorX = (-minX * (slotSize + slotSpacing));
+            float rotatedAnchorY = (-minY * (slotSize + slotSpacing));
+
+            // Icon(자식)의 앵커(0,0)를 부모의 앵커 위치에 일치시키기 위한 left, top:
+            float iconLeft = rotatedAnchorX - (baseAnchorXRatio * baseW - (slotSize/2));
+            float iconTop = rotatedAnchorY - (baseAnchorYRatio * baseH - (slotSize/2));
+
+            Icon.style.left = iconLeft;
+            Icon.style.top = iconTop;
+
+            // 누적 각도를 사용하여 항상 시계방향으로 회전 애니메이션 되도록 처리
+            Icon.style.rotate = new Rotate(new Angle(VisualAngle));
+            
+            SetQuantity(ItemInst.currentStackCount);
+        }
+        
+        private bool isDraggingThis = false;
+        private Action<GridItemView, Vector2> onDragMove;
+        private Action<GridItemView> onDragEnd;
+        
+        public void SetDragCallbacks(Action<GridItemView, Vector2> onMove, Action<GridItemView> onEnd) {
+            onDragMove = onMove;
+            onDragEnd = onEnd;
+        }
+
+        public void SetQuantity(int qty) {
+            StackLabel.text = qty > 1 ? qty.ToString() : string.Empty;
+            StackLabel.visible = qty > 1;
+        }
+
+        void OnPointerDown(PointerDownEvent evt) {
+            if (evt.button != 0) return;
+            
+            isDraggingThis = true;
+            this.CapturePointer(evt.pointerId);
+            
+            OnStartDrag?.Invoke(evt.position, this);
+            
+            evt.StopPropagation();
+        }
+        
+        void OnPointerMove(PointerMoveEvent evt) {
+            if (!isDraggingThis) return;
+            
+            onDragMove?.Invoke(this, evt.position);
+            evt.StopPropagation();
+        }
+        
+        void OnPointerUp(PointerUpEvent evt) {
+            if (!isDraggingThis) return;
+            
+            isDraggingThis = false;
+            this.ReleasePointer(evt.pointerId);
+            
+            onDragEnd?.Invoke(this);
+            evt.StopPropagation();
+        }
+    }
+}
+
