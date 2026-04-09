@@ -197,7 +197,7 @@ public static class TerrainGenerator
         return arr;
     }
 
-    // ── 원본 참조 없이 노이즈+바이옴 규칙으로 지형 생성 (HTML 시뮬레이터와 동일 로직)
+    // ── 원본 참조 없이 노이즈+바이옴 규칙으로 지형 생성 (과도한 뾰족함 개선, 둥글고 부드러운 산맥)
     public static float[,] GenerateFromScratch(
         int H, int W, int S,
         float baseScale, float detailScale, float detailStrength,
@@ -206,38 +206,84 @@ public static class TerrainGenerator
         float ox1, float oy1, float ox2, float oy2, float ox3, float oy3)
     {
         var full = new float[H, W];
-        float blendPixels = S * 0.5f;
+        float invW = 1f / W;
+        float invH = 1f / H;
 
         for (int y = 0; y < H; y++)
         for (int x = 0; x < W; x++)
         {
-            // 1. 기본 고도 노이즈
-            float baseVal   = (Mathf.PerlinNoise(x * baseScale   + ox1, y * baseScale   + oy1));
-            float detailVal = (Mathf.PerlinNoise(x * detailScale  + ox2, y * detailScale  + oy2) - 0.5f) * detailStrength;
-            float elevation = Mathf.Clamp01(baseVal + detailVal);
+            // 1. 다중 옥타브 노이즈 (거대하고 듬성듬성한 산맥 뼈대)
+            // 빽빽하게 솟는 지형 대신, 큼직하고 완만한 덩어리가 큰 산맥을 만듭니다.
+            float elevation = 0f;
+            float amplitude = 1f;
+            float frequency = baseScale * 0.3f; // 주파수를 확 낮춰 산봉우리의 밀도를 크게 줄임
+            float maxAmplitude = 0f;
 
-            // 2. 바이옴 맵 (0=평야, 1=산맥)
-            float biomeRaw = Mathf.PerlinNoise(x * biomeScale + ox3, y * biomeScale + oy3);
-
-            // 오른쪽 아래 4분면 → 평야 강제 (경계 블렌딩)
-            float maskStrength = 0f;
-            if (flatMaskEnabled && x > W / 2 && y > H / 2)
+            // 5 Octave로 자연스러운 굴곡 형성
+            for (int i = 0; i < 5; i++)
             {
-                float wx = Mathf.Clamp01((x - W / 2f) / blendPixels);
-                float wy = Mathf.Clamp01((y - H / 2f) / blendPixels);
-                wx = wx * wx * (3f - 2f * wx);
-                wy = wy * wy * (3f - 2f * wy);
-                maskStrength = wx * wy;
+                elevation += Mathf.PerlinNoise(x * frequency + ox1, y * frequency + oy1) * amplitude;
+                maxAmplitude += amplitude;
+                amplitude *= 0.5f;
+                frequency *= 2f;
             }
-            biomeRaw = biomeRaw * (1f - maskStrength);
+            elevation /= maxAmplitude; // 0.0 ~ 1.0 정규화
 
-            // 대비 증가 (0.3 이하 = 평야, 이상 = 산맥)
-            float biomeVal = Mathf.Clamp01((biomeRaw - 0.3f) * 2f);
+            // 표면의 미세한 거칠기 (디테일 노이즈)
+            float detailVal = (Mathf.PerlinNoise(x * detailScale + ox2, y * detailScale + oy2) - 0.5f) * detailStrength;
+            elevation = Mathf.Clamp01(elevation + detailVal);
 
-            // 3. 평야/산맥 합성
-            float plainVal    = elevation * 0.6f;
-            float mountainVal = Mathf.Pow(elevation, mountainExp) * mountainHeight;
-            full[y, x] = Mathf.Clamp01(plainVal * (1f - biomeVal) + mountainVal * biomeVal);
+            // 전체 높이에서 빈번하게 일어나는 굴곡(하위 40%)은 완전히 평지로 깎아버리고, 상위 일부만 산맥으로 남김
+            float elevatedFilter = Mathf.SmoothStep(0.4f, 0.8f, elevation);
+            float mountainVal = Mathf.Pow(elevatedFilter, mountainExp) * (mountainHeight * 1.5f);
+
+            // 2. 바이옴 마스크 (산맥 지대 vs 평원 지대)
+            // 맵 곳곳에 산이 흩뿌려지지 않도록, 바이옴 스케일을 키우고 문턱(Threshold)을 높여
+            // 전체의 약 20~30%(1~2개의 거대한 덩어리)에만 산맥을 허용합니다.
+            float biomeRaw = Mathf.PerlinNoise(x * biomeScale * 0.4f + ox3, y * biomeScale * 0.4f + oy3);
+            float biomeMask = Mathf.SmoothStep(0.55f, 0.7f, biomeRaw);
+
+            // 3. 우측 하단 강제 평지화 (Linear Screen Space Gradient)
+            // 원형 수학거리 기반 연산은 화면 경계선에서 어두운 절벽을 만들 위험이 큽니다.
+            // 대신 스크린 좌측상단(0,0)에서 우측하단(1,1)으로 흐르는 절대적인 그라데이션 값을 사용합니다.
+            float u = x * invW;
+            float v = y * invH;
+            float cornerVal = (u + v) * 0.5f; // 대각선 진행도 (0.0=좌상단, 1.0=우하단)
+            
+            float flatMask = 0f;
+            if (flatMaskEnabled)
+            {
+                // 중간 지점(0.3)부터 우측 하단 끝(0.9)까지 아주 길고 서서히 1.0(완전 평지화)로 변환
+                flatMask = Mathf.SmoothStep(0.3f, 0.9f, cornerVal);
+            }
+
+            // 4. 최종 마스크와 고도 병합
+            // 산맥이 솟아오를 수 있는 최종 권한 마스크 (강제 평지가 적용된 곳에선 산맥 소멸)
+            float finalMountainMask = biomeMask * (1f - flatMask);
+
+            // 5. Lerp 융합 (절벽 0% 보장)
+            // 기초 바닥(눈밭)에도 약간의 굴곡을 주어 평원도 단조롭지 않게 만듦
+            float basePlain = 0.02f + (elevation * 0.1f);
+
+            // 평지 -> 산맥으로의 단차를 Lerp로 그라데이션 처리하므로 마스크 영역 변경으로 인한
+            // 지형 단절이나 뚝 끊어지는 절벽이 절대 발생하지 않습니다.
+            float rawElevation = Mathf.Lerp(basePlain, basePlain + mountainVal, finalMountainMask);
+
+            // [사용자 요구사항 반영] 특정 고도 값을 강제 고정하면 산과 평야가 깎여나가는 문제 해결
+            // 맵의 '절대 높이(산의 높이)'는 100% 원본을 유지하되, 모든 지형을 "등고선(계단)"으로 쪼개서 블록처럼 만듦
+            float steps = 15f; // 지대의 층 개수 (15층 정도로 세밀하게 쪼개어 산이 깎이는 현상 방지)
+            float scaledElevation = rawElevation * steps;
+            
+            float lowerTier = Mathf.Floor(scaledElevation); // 현재 높이가 속한 베이스 층
+            float fraction = scaledElevation - lowerTier;   // 한 단위 층(0.0~1.0) 내에서의 소수점 높이 진행도
+            
+            // 한 층 내에서 0% ~ 75% 높이까지는 "완전한 평면(0.0)"으로 깎고,
+            // 75% ~ 100% 부분에서만 다음 층(1.0)으로 스무스하게 상승시켜 절벽 형성
+            float cliffSteepness = Mathf.InverseLerp(0.75f, 1.0f, fraction);
+            float smoothedCliff = Mathf.SmoothStep(0f, 1f, cliffSteepness);
+            
+            // 최종 고도 (원본 산맥의 웅장한 높이를 보존하며 계단화)
+            full[y, x] = (lowerTier + smoothedCliff) / steps;
         }
 
         return full;
