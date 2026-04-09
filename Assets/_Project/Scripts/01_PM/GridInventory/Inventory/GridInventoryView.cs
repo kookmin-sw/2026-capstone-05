@@ -10,6 +10,9 @@ namespace Systems.GridInventory {
 
         public static bool IsAnyInventoryOpen { get; private set; }
 
+        public event System.Action OnSaveClicked;
+        public event System.Action OnLoadClicked;
+
         public override IEnumerator InitializeView(int size = 20) {
             Slots = new GridSlot[size];
             root = document.rootVisualElement;
@@ -100,6 +103,16 @@ namespace Systems.GridInventory {
                 ghostIcon.pickingMode = PickingMode.Ignore;
             }
             
+            var btnSave = inventory.Q<Button>(name: "btn-save");
+            if (btnSave != null) {
+                btnSave.clicked += () => OnSaveClicked?.Invoke();
+            }
+
+            var btnLoad = inventory.Q<Button>(name: "btn-load");
+            if (btnLoad != null) {
+                btnLoad.clicked += () => OnLoadClicked?.Invoke();
+            }
+
             // 인벤토리 창 게임 시작 시 안 보이도록 숨기기
             container.style.display = DisplayStyle.None;
             IsAnyInventoryOpen = false;

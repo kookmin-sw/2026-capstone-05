@@ -188,7 +188,7 @@ namespace Den.Tools
 					if (genAroundMainCam) 
 					{
 						Camera mainCam = Camera.main;
-						if (mainCam == null) mainCam = GameObject.FindObjectOfType<Camera>(); //in case it was destroyed or something
+						if (mainCam == null) mainCam = GameObject.FindAnyObjectByType<Camera>(); //in case it was destroyed or something
 						if (mainCam != null) //if still no camera
 						{
 							Vector3 camPos = mainCam.transform.position;

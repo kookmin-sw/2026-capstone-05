@@ -36,8 +36,12 @@ namespace Systems.GridInventory {
         }
 
         public void Clear() {
-            Items.Clear();
+            for (int i = 0; i < Items.Length; i++)
+            {
+                Items.SetSilent(i, null);
+            }
             itemAnchors.Clear();
+            Items.Invoke();
         }
         
         public bool TryAdd(ItemInstance item) {

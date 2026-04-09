@@ -30,8 +30,19 @@ namespace Systems.GridInventory {
             yield return view.Initialize(Capacity, width);
 
             view.OnDrop += HandleDrop;
+            view.OnSaveClicked += HandleSave;
+            view.OnLoadClicked += HandleLoad;
             model.OnModelChanged += HandleModelChanged;
 
+            RefreshView();
+        }
+
+        void HandleSave() {
+            GridInventorySaveSystem.SaveInventory(model);
+        }
+
+        void HandleLoad() {
+            GridInventorySaveSystem.LoadInventory(model);
             RefreshView();
         }
 
@@ -187,7 +198,13 @@ namespace Systems.GridInventory {
                 // Add initial items if provided
                 if (startingItems != null) {
                     foreach (var item in startingItems) {
-                        model.AddItemQuantity(item.itemData, item.quantity);
+                        int amount = item.quantity;
+                        while (amount > 0) {
+                            int addAmount = Math.Min(amount, item.itemData.maxStackSize);
+                            var newItem = new ItemInstance(item.itemData, addAmount);
+                            model.TryAdd(newItem);
+                            amount -= addAmount;
+                        }
                     }
                 }
                 return new GridInventoryController(view, model, width, height);
