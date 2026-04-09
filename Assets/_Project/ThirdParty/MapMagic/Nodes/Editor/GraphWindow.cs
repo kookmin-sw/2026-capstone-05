@@ -67,7 +67,7 @@ namespace MapMagic.Nodes.GUI
 			UnityEngine.SceneManagement.Scene scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
 			if (scene != prevSceneLoaded || scene.rootCount != prevRootObjsCount || Selection.activeObject != prevObjSelected)
 			{
-				MapMagicObject[] allMM = GameObject.FindObjectsOfType<MapMagicObject>();
+				MapMagicObject[] allMM = GameObject.FindObjectsByType<MapMagicObject>(UnityEngine.FindObjectsSortMode.None);
 				for (int m=0; m<allMM.Length; m++)
 					if (allMM[m].ContainsGraph(graph)) return allMM[m];
 
@@ -1142,7 +1142,7 @@ namespace MapMagic.Nodes.GUI
 			[MenuItem ("Window/MapMagic/Editor")]
 			public static void ShowEditor ()
 			{
-				MapMagicObject mm = FindObjectOfType<MapMagicObject>();
+				MapMagicObject mm = GameObject.FindFirstObjectByType<MapMagicObject>();
 				Graph gens = mm!=null? mm.graph : null;
 				GraphWindow.Show(mm?.graph);
 			}
@@ -1150,7 +1150,9 @@ namespace MapMagic.Nodes.GUI
 			[UnityEditor.Callbacks.OnOpenAsset(0)]
 			public static bool ShowEditor (int instanceID, int line)
 			{
+#pragma warning disable CS0618 // Type or member is obsolete
 				UnityEngine.Object obj = EditorUtility.InstanceIDToObject(instanceID);
+#pragma warning restore CS0618 // Type or member is obsolete
 				if (obj is Nodes.Graph graph) 
 				{ 
 					if (graph.generators == null)

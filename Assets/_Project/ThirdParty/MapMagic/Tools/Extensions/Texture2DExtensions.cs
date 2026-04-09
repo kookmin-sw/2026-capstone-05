@@ -347,7 +347,9 @@ namespace Den.Tools
 						case UnityEditor.BuildTarget.Android: 
 							if (type==TextureType.RGBA) return TextureFormat.ETC2_RGBA8;
 							else return TextureFormat.ETC2_RGB;
+#pragma warning disable CS0618 // Type or member is obsolete
 						case UnityEditor.BuildTarget.iOS: return TextureFormat.PVRTC_RGBA4;
+#pragma warning restore CS0618 // Type or member is obsolete
 						case UnityEditor.BuildTarget.tvOS: return TextureFormat.ASTC_4x4;
 						default: return TextureFormat.DXT5;
 					}

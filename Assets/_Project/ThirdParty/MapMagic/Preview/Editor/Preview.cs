@@ -176,7 +176,7 @@ namespace MapMagic.Previews
 		/// Loads all of the previews for current MapMagic object in scene
 		/// And finds proper windows to all of the previews
 		{
-			MapMagicObject mapMagic = GameObject.FindObjectOfType<MapMagicObject>();
+			MapMagicObject mapMagic = GameObject.FindFirstObjectByType<MapMagicObject>();
 			if (mapMagic == null  ||  mapMagic.graph==null) return;
 			foreach (Generator gen in mapMagic.graph.generators)
 				if (gen.guiPreview  &&  gen is IOutlet<object> outlet)

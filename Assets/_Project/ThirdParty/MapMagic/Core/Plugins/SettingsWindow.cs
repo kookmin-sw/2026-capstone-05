@@ -58,8 +58,8 @@ namespace MapMagic.GUI
 		static void InitializeSettings ()
 		/// Initializes settings on first MM import
 		{
-			BuildTargetGroup group = EditorUserBuildSettings.selectedBuildTargetGroup;
-			string symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup(group);
+			UnityEditor.Build.NamedBuildTarget group = UnityEditor.Build.NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+			string symbols = PlayerSettings.GetScriptingDefineSymbols(group);
 			
 			//removing beta marks
 			if (symbols.Contains("_MAPMAGIC_BETA"))
@@ -75,7 +75,7 @@ namespace MapMagic.GUI
 				ToggleKeyword(true, "MM_NATIVE", ref symbols);
 				#endif
 
-				PlayerSettings.SetScriptingDefineSymbolsForGroup(group, symbols);
+				PlayerSettings.SetScriptingDefineSymbols(group, symbols);
 			}
 
 			//ShowNet20Notification();
@@ -106,8 +106,8 @@ namespace MapMagic.GUI
 				EditorGUILayout.Space();
 				using (new EditorGUILayout.VerticalScope())
 				{
-					BuildTargetGroup group = EditorUserBuildSettings.selectedBuildTargetGroup;
-					string symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup(group);
+					UnityEditor.Build.NamedBuildTarget group = UnityEditor.Build.NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+					string symbols = PlayerSettings.GetScriptingDefineSymbols(group);
 
 					EditorGUILayout.Space();
 
@@ -185,8 +185,8 @@ namespace MapMagic.GUI
 		{
 			Settings settings = new Settings();
 
-			BuildTargetGroup group = EditorUserBuildSettings.selectedBuildTargetGroup;
-			string symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup(group);
+			UnityEditor.Build.NamedBuildTarget group = UnityEditor.Build.NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+			string symbols = PlayerSettings.GetScriptingDefineSymbols(group);
 
 			settings.native = symbols.Contains("MM_NATIVE");
 			settings.debug = symbols.Contains("MM_DEBUG");
@@ -211,8 +211,8 @@ namespace MapMagic.GUI
 
 		static void ApplySettings (Settings settings)
 		{
-			BuildTargetGroup group = EditorUserBuildSettings.selectedBuildTargetGroup;
-			string symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup(group);
+			UnityEditor.Build.NamedBuildTarget group = UnityEditor.Build.NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+			string symbols = PlayerSettings.GetScriptingDefineSymbols(group);
 
 			ToggleKeyword(settings.native, "MM_NATIVE", ref symbols);
 			ToggleKeyword(settings.debug, "MM_DEBUG", ref symbols);
@@ -230,7 +230,7 @@ namespace MapMagic.GUI
 			SetAutoRef("Den.Tools", settings.autoRef);
 			SetAutoRef("Den.Tools.Editor", settings.autoRef);
 
-			PlayerSettings.SetScriptingDefineSymbolsForGroup(group, symbols);
+			PlayerSettings.SetScriptingDefineSymbols(group, symbols);
 		}
 
 
@@ -305,13 +305,14 @@ namespace MapMagic.GUI
 		public static void ShowNet20Notification ()
 		{
 			//#if !NET_STANDARD_2_0 won't work since editor is always NET_4
-			if (PlayerSettings.GetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup) != ApiCompatibilityLevel.NET_4_6  &&
+			UnityEditor.Build.NamedBuildTarget group = UnityEditor.Build.NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+			if (PlayerSettings.GetApiCompatibilityLevel(group) != ApiCompatibilityLevel.NET_4_6  &&
 				EditorUtility.DisplayDialog("MapMagic API Compatibility Warning", "MapMagic requires .NET 4.x API Compatibility level. \n"+
 					"Do you want to switch compatibility level now? \n\n"+
 					"You can switch compatibility level manually in Project Settings -> Player -> Api Compatibility Level",
 					"Switch to .NET 4.x",
 					"Cancel"))
-						PlayerSettings.SetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup, ApiCompatibilityLevel.NET_4_6);
+						PlayerSettings.SetApiCompatibilityLevel(group, ApiCompatibilityLevel.NET_4_6);
 			
 		}
 	}
