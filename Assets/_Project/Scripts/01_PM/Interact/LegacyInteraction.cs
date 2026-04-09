@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 /// <summary>
 /// 플레이어의 상호작용을 관리하는 클래스
 /// </summary>
-public class PlayerInteraction : MonoBehaviour
+public class LegacyInteraction : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private PlayerController player;
