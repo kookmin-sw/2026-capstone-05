@@ -8,6 +8,11 @@ public class MeleeWeaponItemData : WeaponItemData
     public float staminaConsumePerSwing;
 
     [Header("Noise Settings")]
-    public NoiseData.NoiseType swingNoiseType;
-    public NoiseData.NoiseType hitNoiseType;
+    public NoiseData.NoiseType swingNoiseType = NoiseData.NoiseType.MeleeSwing;
+    public NoiseData.NoiseType hitNoiseType = NoiseData.NoiseType.MeleeHit;
+
+    private void Reset()
+    {
+        useAnimationType = ItemUseAnimationType.MeleeAttack;
+    }
 }

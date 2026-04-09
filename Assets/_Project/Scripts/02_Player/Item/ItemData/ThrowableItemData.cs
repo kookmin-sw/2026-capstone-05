@@ -11,4 +11,9 @@ public class ThrowableItemData : ItemData
 
     [Header("Noise Settings")]
     public NoiseData.NoiseType throwNoiseType;
+
+    private void Reset()
+    {
+        useAnimationType = ItemUseAnimationType.Throw;
+    }
 }

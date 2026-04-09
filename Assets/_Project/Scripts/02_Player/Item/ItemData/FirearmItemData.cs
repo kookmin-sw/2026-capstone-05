@@ -11,6 +11,11 @@ public class FirearmItemData : WeaponItemData
     public float reloadTime; // 재장전 시간 (초)
 
     [Header("Noise Settings")]
-    public NoiseData.NoiseType shootNoiseType;
-    public NoiseData.NoiseType reloadNoiseType;
+    public NoiseData.NoiseType shootNoiseType = NoiseData.NoiseType.GunShot;
+    public NoiseData.NoiseType reloadNoiseType = NoiseData.NoiseType.GunReload;
+
+    private void Reset()
+    {
+        useAnimationType = ItemUseAnimationType.FirearmShoot;
+    }
 }

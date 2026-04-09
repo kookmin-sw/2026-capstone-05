@@ -1,0 +1,23 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/_Project/Scripts/01_PM/Quickslot/QuickslotUI.uss?fileID=7433441132597879392&amp;guid=8d358ebea1d0a644a99fd66581cfc89d&amp;type=3#QuickslotUI"/>
+    <ui:VisualElement class="main-container" picking-mode="Ignore" style="top: 3px; left: 0;">
+        <ui:VisualElement class="bottom-center-panel" picking-mode="Ignore">
+            <ui:VisualElement name="Quickslot1" class="quickslot" style="position: absolute; left: 0; top: 0;">
+                <ui:VisualElement name="Icon" style="width: 100%; height: 100%; position: absolute; left: 0; top: 0;"/>
+                <ui:Label text="1" class="quickslot-number"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="Quickslot2" class="quickslot" style="position: absolute; left: 70px; top: 0;">
+                <ui:VisualElement name="Icon" style="width: 100%; height: 100%; position: absolute; left: 0; top: 0;"/>
+                <ui:Label text="2" class="quickslot-number"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="Quickslot3" class="quickslot" style="position: absolute; left: 140px; top: 0;">
+                <ui:VisualElement name="Icon" style="width: 100%; height: 100%; position: absolute; left: 0; top: 0;"/>
+                <ui:Label text="3" class="quickslot-number"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="Quickslot4" class="quickslot" style="position: absolute; left: 210px; top: 0;">
+                <ui:VisualElement name="Icon" style="width: 100%; height: 100%; position: absolute; left: 0; top: 0;"/>
+                <ui:Label text="4" class="quickslot-number"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

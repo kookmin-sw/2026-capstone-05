@@ -16,8 +16,18 @@ public class ItemPickup : MonoBehaviour, IInteractable
 
     public void OnInteract(PlayerController player)
     {
-        // 1. 플레이어 인벤토리에 아이템 추가 시도
-        // 2. 성공하면 월드에서 이 오브젝트 파괴 (Destroy)
-        // 3. 줍는 소음(Noise) 발생 등
+        // 1. 플레이어 인벤토리(퀵슬롯)에 아이템 추가 시도
+        if (QuickslotUIController.Instance != null && QuickslotUIController.Instance.AddItemToEmptySlot(itemInstance))
+        {
+            // 2. 성공하면 월드에서 이 오브젝트 파괴 (Destroy)
+            Destroy(gameObject);
+            
+            // 3. 줍는 소음(Noise) 발생 등
+            if (player.NoiseEmitter != null)
+            {
+                // 소음 발생 로직 예시
+                // player.NoiseEmitter.EmitNoise(1.5f, transform.position);
+            }
+        }
     }
 }
