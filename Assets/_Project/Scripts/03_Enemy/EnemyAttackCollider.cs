@@ -16,7 +16,7 @@ public class EnemyAttackCollider : MonoBehaviour
         enemy = GetComponentInParent<EnemyAI>();
         attackCollider = GetComponent<Collider>();
         attackCollider.isTrigger = !isBodyCollider;
-        attackCollider.enabled = true;
+        attackCollider.enabled = isBodyCollider;
     }
 
     public void EnableAttackCollider()

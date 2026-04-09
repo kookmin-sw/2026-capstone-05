@@ -255,11 +255,6 @@ public class PlayerAdapter : MonoBehaviour
             brain = renderCamera.gameObject.AddComponent<CinemachineBrain>();
             Debug.Log($"{LogPrefix} 렌더 카메라에 CinemachineBrain을 추가했습니다. camera={renderCamera.name}");
         }
-
-        if (renderCamera.GetComponent<AudioListener>() == null && FindAnyObjectByType<AudioListener>() == null)
-        {
-            renderCamera.gameObject.AddComponent<AudioListener>();
-        }
     }
 
     private Transform TryGetCameraTarget()

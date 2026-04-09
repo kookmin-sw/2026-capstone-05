@@ -32,7 +32,7 @@ public class PlayerCameraHandler : MonoBehaviour, IPlayerNetworkConfigurable
     private void Start()
     {
         // 테스트코드
-        //TestLocalCameraSetup();
+        TestLocalCameraSetup();
     }
 
     public void SetupLocalCamera(CinemachineCamera sceneCam)

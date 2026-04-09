@@ -14,10 +14,6 @@ public class PlayerAnimator : MonoBehaviour
     [Header("Animation Parameters")]
     public float speedDampTime = 0.1f;
 
-    [Header("IK Settings")]
-    public RigBuilder rigBuilder1P;
-    [Range(0f, 1f)] public float ikWeight1P = 0f;
-
     private readonly int hashIsGrounded = Animator.StringToHash("IsGrounded");
     private readonly int hashIsCrouching = Animator.StringToHash("IsCrouching");
     private readonly int hashIsSprinting = Animator.StringToHash("IsSprinting");
@@ -35,14 +31,6 @@ public class PlayerAnimator : MonoBehaviour
         { ItemUseAnimationType.Throw, 5 }, // Throw
         { ItemUseAnimationType.ToolUse, 6 } // Use Tool
     };
-
-    private void Update()
-    {
-        if (rigBuilder1P != null && rigBuilder1P.layers.Count > 0)
-        {
-            rigBuilder1P.layers[0].rig.weight = ikWeight1P;
-        }
-    }
 
     public void SetGrounded(bool isGrounded)
     {

@@ -17,7 +17,7 @@ public abstract class ItemData : ScriptableObject
     [Header("Inventory & UI")]
     public Sprite itemIcon;
     public ItemGridShape gridShape; // 인벤토리에서 차지하는 모양
-    public int maxStackSize; // 최대 스택 수 (1이면 스택 불가)
+    public int maxStackSize = 1; // 최대 스택 수 (1이면 스택 불가)
     //public float weight;
 
     [Header("World Interaction")]

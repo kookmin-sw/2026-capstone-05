@@ -1,5 +1,5 @@
 using UnityEngine;
-using Systems.Inventory;
+using Systems.GridInventory;
 
 /// <summary>
 /// 메인 인벤토리(Grid)와 상호작용(Key 등)을 연결해주는 브릿지 인벤토리 클래스
@@ -8,16 +8,16 @@ public class PlayerInventory : MonoBehaviour
 {
     [Header("Item Link Settings")]
     [Tooltip("열쇠로 사용할 아이템 데이터를 연결해주세요.")]
-    [SerializeField] private ItemDetails keyItemAsset; 
+    [SerializeField] private ItemData keyItemAsset; 
 
     [Header("UI Settings")]
     [SerializeField] private GameObject keyUIObject; // 기존 UI 하위호환용 (선택)
 
-    private Systems.Inventory.Inventory mainInventory;
+    private Systems.GridInventory.GridInventory mainInventory;
 
     private void Start()
     {
-        mainInventory = FindFirstObjectByType<Systems.Inventory.Inventory>();
+        mainInventory = FindFirstObjectByType<Systems.GridInventory.GridInventory>();
         UpdateKeyUI();
     }
     
@@ -30,7 +30,7 @@ public class PlayerInventory : MonoBehaviour
         if (mainInventory != null && keyItemAsset != null)
         {
             mainInventory.AddItem(keyItemAsset, amount);
-            Debug.Log($"🔑 {amount}개의 열쇠({keyItemAsset.Name})를 획득했습니다!");
+            Debug.Log($"🔑 {amount}개의 열쇠({keyItemAsset.itemName})를 획득했습니다!");
             UpdateKeyUI();
         }
         else
