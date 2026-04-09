@@ -663,8 +663,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1836118013}
   - component: {fileID: 1836118012}
-  - component: {fileID: 1836118011}
-  - component: {fileID: 1836118010}
+  - component: {fileID: 1836118015}
+  - component: {fileID: 1836118014}
   m_Layer: 5
   m_Name: GridInventory
   m_TagString: Untagged
@@ -672,41 +672,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1836118010
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1836118009}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d6ca8bd0e6611af4699a523c6751bc63, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Systems.GridInventory.GridInventory
-  view: {fileID: 1836118011}
-  startingItems:
-  - itemData: {fileID: 11400000, guid: 8c07a2bab85ea894c9d765aae48a0a9b, type: 2}
-    quantity: 1
-  - itemData: {fileID: 11400000, guid: 07c102f04c8a15b44a1a18f3cb49ad1e, type: 2}
-    quantity: 1
-  - itemData: {fileID: 11400000, guid: 07c102f04c8a15b44a1a18f3cb49ad1e, type: 2}
-    quantity: 1
---- !u!114 &1836118011
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1836118009}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51cac2060a2f8a242a51ce79e6fbcc21, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Systems.GridInventory.GridInventoryView
-  document: {fileID: 1836118012}
-  styleSheet: {fileID: 7433441132597879392, guid: f4cafb33d6955654c81381f4f6da94a9, type: 3}
-  panelName: GridInventory
 --- !u!114 &1836118012
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -745,6 +710,41 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1836118014
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1836118009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6ca8bd0e6611af4699a523c6751bc63, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Systems.GridInventory.GridInventory
+  view: {fileID: 1836118015}
+  startingItems:
+  - itemData: {fileID: 11400000, guid: 8c07a2bab85ea894c9d765aae48a0a9b, type: 2}
+    quantity: 1
+  - itemData: {fileID: 11400000, guid: 07c102f04c8a15b44a1a18f3cb49ad1e, type: 2}
+    quantity: 1
+  - itemData: {fileID: 11400000, guid: 07c102f04c8a15b44a1a18f3cb49ad1e, type: 2}
+    quantity: 1
+--- !u!114 &1836118015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1836118009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51cac2060a2f8a242a51ce79e6fbcc21, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Systems.GridInventory.GridInventoryView
+  document: {fileID: 1836118012}
+  styleSheet: {fileID: 7433441132597879392, guid: f4cafb33d6955654c81381f4f6da94a9, type: 3}
+  panelName: GridInventory
 --- !u!1 &1880987258
 GameObject:
   m_ObjectHideFlags: 0
