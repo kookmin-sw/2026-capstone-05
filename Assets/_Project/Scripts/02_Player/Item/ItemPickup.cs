@@ -16,8 +16,16 @@ public class ItemPickup : MonoBehaviour, IInteractable
 
     public void OnInteract(PlayerController player)
     {
+        if (QuickslotUIController.Instance == null)
+        {
+            Debug.LogError("QuickslotUIController.Instance 가 없습니다! 씬에 QuickslotUIController가 배치되어 있는지 확인해주세요.");
+            return;
+        }
+
         // 1. 플레이어 인벤토리(퀵슬롯)에 아이템 추가 시도
-        if (QuickslotUIController.Instance != null && QuickslotUIController.Instance.AddItemToEmptySlot(itemInstance))
+        bool added = QuickslotUIController.Instance.AddItemToEmptySlot(itemInstance);
+        
+        if (added)
         {
             // 2. 성공하면 월드에서 이 오브젝트 파괴 (Destroy)
             Destroy(gameObject);
@@ -29,5 +37,19 @@ public class ItemPickup : MonoBehaviour, IInteractable
                 // player.NoiseEmitter.EmitNoise(1.5f, transform.position);
             }
         }
+        else
+        {
+            Debug.LogWarning("퀵슬롯에 빈 자리가 없습니다!");
+        }
+    }
+
+    public string GetInteractPrompt()
+    {
+        return "[E] 줍기";
+    }
+
+    public string GetObjectName()
+    {
+        return itemInstance?.Data?.itemName ?? "알 수 없는 아이템";
     }
 }

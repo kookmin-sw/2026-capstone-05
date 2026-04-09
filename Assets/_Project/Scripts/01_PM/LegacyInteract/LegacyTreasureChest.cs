@@ -1,3 +1,4 @@
+/*
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -251,3 +252,4 @@ public class LegacyTreasureChest : MonoBehaviour, IInteractable
         }
     }
 }
+*/

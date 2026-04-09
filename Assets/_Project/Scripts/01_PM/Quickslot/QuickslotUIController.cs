@@ -21,23 +21,37 @@ public class QuickslotUIController : MonoBehaviour
         {
             Instance = this;
         }
-        else
+        else if (Instance != this)
         {
             Destroy(gameObject);
+            return;
+        }
+
+        // 도메인 리로드 비활성화 시 캐시가 남는 현상을 방지하기 위해 Awake에서 명시적으로 배열을 재할당합니다.
+        quickslots = new ItemInstance[MaxSlots];
+        selectedSlotIndex = -1;
+        slotElements.Clear();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
         }
     }
 
-    private void Start()
+    private void EnsureUIInitialized()
     {
+        if (slotElements.Count == MaxSlots) return;
+
         if (uiDocument == null)
             uiDocument = GetComponent<UIDocument>();
 
         if (uiDocument != null && uiDocument.rootVisualElement != null)
         {
+            slotElements.Clear();
             var root = uiDocument.rootVisualElement;
-            
-            // 예상되는 구조에 맞춰서 슬롯 요소를 찾습니다. 
-            // StatUI 였던 것을 고려해 적절히 수정하거나, 없으면 이름 규칙으로 찾습니다.
             for (int i = 0; i < MaxSlots; i++)
             {
                 var slot = root.Q<VisualElement>($"Quickslot{i + 1}");
@@ -47,6 +61,11 @@ public class QuickslotUIController : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void Start()
+    {
+        EnsureUIInitialized();
     }
 
     private void Update()
@@ -94,7 +113,7 @@ public class QuickslotUIController : MonoBehaviour
     {
         for (int i = 0; i < MaxSlots; i++)
         {
-            if (quickslots[i] == null)
+            if (quickslots[i] == null || quickslots[i].Data == null)
             {
                 quickslots[i] = item;
                 UpdateSlotUI(i);
@@ -108,6 +127,10 @@ public class QuickslotUIController : MonoBehaviour
     {
         if (index >= 0 && index < MaxSlots)
         {
+            if (quickslots[index] != null && quickslots[index].Data == null)
+            {
+                return null;
+            }
             return quickslots[index];
         }
         return null;
@@ -115,6 +138,7 @@ public class QuickslotUIController : MonoBehaviour
 
     public void SelectSlot(int index)
     {
+        EnsureUIInitialized();
         if (index >= 0 && index < MaxSlots)
         {
             selectedSlotIndex = index;
@@ -135,6 +159,7 @@ public class QuickslotUIController : MonoBehaviour
 
     private void UpdateSlotUI(int index)
     {
+        EnsureUIInitialized();
         if (index >= 0 && index < slotElements.Count)
         {
             var slot = slotElements[index];

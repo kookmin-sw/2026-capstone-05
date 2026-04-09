@@ -1,3 +1,4 @@
+/*
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -88,3 +89,4 @@ public class LegacyInteraction : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, interactionRange);
     }
 }
+*/
