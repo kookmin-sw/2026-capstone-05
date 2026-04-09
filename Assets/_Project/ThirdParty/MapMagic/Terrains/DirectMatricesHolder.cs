@@ -90,7 +90,7 @@ namespace MapMagic.Terrains
 			/// Uses GameObject.FindObjectOfType so it's not quick. Just an example.
 			public static DirectMatricesHolder FindHolder (float x, float z)
 			{
-				DirectMatricesHolder[] holders = GameObject.FindObjectsOfType<DirectMatricesHolder>();
+				DirectMatricesHolder[] holders = GameObject.FindObjectsByType<DirectMatricesHolder>(FindObjectsSortMode.None);
 
 				foreach (DirectMatricesHolder holder in holders)
 				{

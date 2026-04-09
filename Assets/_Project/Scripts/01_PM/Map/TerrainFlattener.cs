@@ -55,22 +55,6 @@ public class TerrainFlattener : MonoBehaviour
     [Tooltip("Assets/_Project/Assets/01_PM/Material/FlatZone.mat 연결")]
     public Material flatZoneMaterial;
 
-    [Header("Generate From Scratch")]
-    [Tooltip("기본 지형 노이즈 스케일 (작을수록 완만한 큰 굴곡)")]
-    public float genBaseScale     = 0.015f;
-    [Tooltip("세부 질감 노이즈 스케일")]
-    public float genDetailScale   = 0.05f;
-    [Range(0f, 1f), Tooltip("세부 질감 강도")]
-    public float genDetailStrength = 0.2f;
-    [Tooltip("산맥 바이옴 맵 스케일")]
-    public float genBiomeScale    = 0.008f;
-    [Tooltip("산맥 가파름 (높을수록 뾰족)")]
-    public float genMountainExp   = 3f;
-    [Tooltip("산맥 높이 증폭")]
-    public float genMountainHeight = 1.5f;
-    [Tooltip("체크 시 오른쪽 아래 4분면을 평야로 강제 고정")]
-    public bool genFlatMaskEnabled = true;
-
     // ──────────────────────────────────────────────────────────────
     //  Public API
     // ──────────────────────────────────────────────────────────────
@@ -90,21 +74,23 @@ public class TerrainFlattener : MonoBehaviour
         int S = copyTerrains[0] != null ? copyTerrains[0].heightmapResolution : 513;
         int H = S * 2 - 1, W = S * 2 - 1;
 
+        // 향상된 자연스러운 지형 생성을 위한 고정 파라미터 (인스펙터 노출 제거)
+        float optBaseScale = 0.006f;        // 산맥의 빈도 조절 (조금 더 넓고 자연스럽게)
+        float optDetailScale = 0.02f;       // 디테일 노이즈 크기
+        float optDetailStrength = 0.05f;    // 뾰족함을 줄이기 위해 디테일 강도 완화
+        float optBiomeScale = 0.01f;        // 산맥과 평야의 교차 빈도
+        float optMountainExp = 1.2f;        // 산맥의 가파름 완화 (뾰족함 제거)
+        float optMountainHeight = 0.8f;     // 산맥 높이 증폭 완화 (구릉과 산 사이의 자연스러운 높이)
+        bool optFlatMaskEnabled = true;
+
         var full = TerrainGenerator.GenerateFromScratch(
             H, W, S,
-            genBaseScale, genDetailScale, genDetailStrength,
-            genBiomeScale, genMountainExp, genMountainHeight,
-            genFlatMaskEnabled,
+            optBaseScale, optDetailScale, optDetailStrength,
+            optBiomeScale, optMountainExp, optMountainHeight,
+            optFlatMaskEnabled,
             ox1, oy1, ox2, oy2, ox3, oy3);
 
         full = TerrainGenerator.GaussianBlur(full, H, W, 2);
-
-        TerrainGenerator.DetectAndApplyWaterZones(full, new TerrainAnalysisData
-        {
-            numWaterZones = 4,
-            waterZoneSize = 200,
-            tileRes       = S,
-        });
 
         for (int y = 0; y < H; y++)
         for (int x = 0; x < W; x++)
@@ -244,7 +230,7 @@ public class TerrainFlattener : MonoBehaviour
         for (int i = transform.childCount - 1; i >= 0; i--)
         {
 #if UNITY_EDITOR
-            DestroyImmediate(transform.GetChild(i).gameObject);
+            UnityEditor.Undo.DestroyObjectImmediate(transform.GetChild(i).gameObject);
 #else
             Destroy(transform.GetChild(i).gameObject);
 #endif
@@ -266,8 +252,8 @@ public class TerrainFlattener : MonoBehaviour
 
             float wx = tp.x + (cx / (float)(res - 1)) * ts.x;
             float wz = tp.z + (cy / (float)(res - 1)) * ts.z;
-            float wy = tp.y + target * ts.y;    // 큐브 중심 = 지면 높이 (위 5, 아래 5)
-
+            // 큐브 중심 = 지면 높이 - 4.9f (위 0.1, 아래 9.9) => 큐브가 살짝 땅에 묻히도록 (높이 10f 기준)
+            float wy = tp.y + target * ts.y - 4.9f;    
             GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
             cube.name = $"FlatZone_T{terrainIndex}_B{i + 1}";
             cube.transform.SetParent(transform, worldPositionStays: true);
@@ -276,6 +262,14 @@ public class TerrainFlattener : MonoBehaviour
 
             if (flatZoneMaterial != null)
                 cube.GetComponent<Renderer>().sharedMaterial = flatZoneMaterial;
+
+            // 추가적인 건물/오브젝트 배치는 전용 스크립트(BuildingSpawner)로 위임
+            BuildingSpawner spawner = GetComponent<BuildingSpawner>();
+            if (spawner != null)
+            {
+                float groundY = tp.y + target * ts.y;
+                spawner.SpawnBuilding(new Vector3(wx, groundY, wz), transform, $"Building_T{terrainIndex}_B{i + 1}");
+            }
         }
     }
 

@@ -344,7 +344,7 @@ namespace MapMagic.Nodes.MatrixGenerators
 		public static void OnMatrixAssetReloaded_ReGenerate (MatrixAsset ma)
 		/// If this matrixAsset is used then clearing this node in all related mapmagics and starting generate
 		{
-			MapMagicObject[] mapMagics = GameObject.FindObjectsOfType<MapMagicObject>();
+			MapMagicObject[] mapMagics = GameObject.FindObjectsByType<MapMagicObject>(FindObjectsSortMode.None);
 			foreach (MapMagicObject mapMagic in mapMagics)
 			{
 				bool containsMa = false;
