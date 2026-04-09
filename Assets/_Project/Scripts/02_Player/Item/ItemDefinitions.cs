@@ -52,13 +52,13 @@ public class ItemGridShape
             switch (rotation)
             {
                 case ItemRotation.Deg90:
-                    newPos = new Vector2Int(pos.y, -pos.x);
+                    newPos = new Vector2Int(-pos.y, pos.x);
                     break;
                 case ItemRotation.Deg180:
                     newPos = new Vector2Int(-pos.x, -pos.y);
                     break;
                 case ItemRotation.Deg270:
-                    newPos = new Vector2Int(-pos.y, pos.x);
+                    newPos = new Vector2Int(pos.y, -pos.x);
                     break;
             }
             rotatedPositions.Add(newPos);
