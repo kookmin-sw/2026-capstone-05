@@ -1,0 +1,159 @@
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+public class QuickslotUIController : MonoBehaviour
+{
+    public static QuickslotUIController Instance { get; private set; }
+
+    [SerializeField] private UIDocument uiDocument;
+    
+    private const int MaxSlots = 4;
+    private ItemInstance[] quickslots = new ItemInstance[MaxSlots];
+    private int selectedSlotIndex = -1;
+
+    private List<VisualElement> slotElements = new List<VisualElement>();
+    private PlayerEquipment localPlayerEquipment;
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private void Start()
+    {
+        if (uiDocument == null)
+            uiDocument = GetComponent<UIDocument>();
+
+        if (uiDocument != null && uiDocument.rootVisualElement != null)
+        {
+            var root = uiDocument.rootVisualElement;
+            
+            // 예상되는 구조에 맞춰서 슬롯 요소를 찾습니다. 
+            // StatUI 였던 것을 고려해 적절히 수정하거나, 없으면 이름 규칙으로 찾습니다.
+            for (int i = 0; i < MaxSlots; i++)
+            {
+                var slot = root.Q<VisualElement>($"Quickslot{i + 1}");
+                if (slot != null)
+                {
+                    slotElements.Add(slot);
+                }
+            }
+        }
+    }
+
+    private void Update()
+    {
+        if (localPlayerEquipment == null)
+        {
+            PlayerController[] controllers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+            foreach (var controller in controllers)
+            {
+                if (controller.IsLocalPlayer)
+                {
+                    localPlayerEquipment = controller.Equipment;
+                    break;
+                }
+            }
+        }
+
+        if (localPlayerEquipment == null) return;
+
+        if (Input.GetKeyDown(KeyCode.Alpha1)) EquipFromQuickslot(0);
+        else if (Input.GetKeyDown(KeyCode.Alpha2)) EquipFromQuickslot(1);
+        else if (Input.GetKeyDown(KeyCode.Alpha3)) EquipFromQuickslot(2);
+        else if (Input.GetKeyDown(KeyCode.Alpha4)) EquipFromQuickslot(3);
+    }
+
+    private void EquipFromQuickslot(int index)
+    {
+        SelectSlot(index);
+        ItemInstance item = GetItem(index);
+        
+        if (item != null)
+        {
+            localPlayerEquipment.EquipItem(item);
+        }
+        else
+        {
+            localPlayerEquipment.UnequipItem();
+        }
+    }
+
+    /// <summary>
+    /// 빈 슬롯에 아이템을 추가합니다.
+    /// </summary>
+    public bool AddItemToEmptySlot(ItemInstance item)
+    {
+        for (int i = 0; i < MaxSlots; i++)
+        {
+            if (quickslots[i] == null)
+            {
+                quickslots[i] = item;
+                UpdateSlotUI(i);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public ItemInstance GetItem(int index)
+    {
+        if (index >= 0 && index < MaxSlots)
+        {
+            return quickslots[index];
+        }
+        return null;
+    }
+
+    public void SelectSlot(int index)
+    {
+        if (index >= 0 && index < MaxSlots)
+        {
+            selectedSlotIndex = index;
+            // UI에 선택된 슬롯 표시 (Highlight 등)
+            for (int i = 0; i < slotElements.Count; i++)
+            {
+                if (i == selectedSlotIndex)
+                {
+                    slotElements[i].AddToClassList("selected-slot");
+                }
+                else
+                {
+                    slotElements[i].RemoveFromClassList("selected-slot");
+                }
+            }
+        }
+    }
+
+    private void UpdateSlotUI(int index)
+    {
+        if (index >= 0 && index < slotElements.Count)
+        {
+            var slot = slotElements[index];
+            var item = quickslots[index];
+            
+            var iconNode = slot.Q<VisualElement>("Icon");
+            if (iconNode != null)
+            {
+                if (item != null && item.Data != null && item.Data.itemIcon != null)
+                {
+                    iconNode.style.backgroundImage = new StyleBackground(item.Data.itemIcon);
+                    // 이미지가 깨지지 않게 비율 유지하도록 스케일 모드 변경
+                    iconNode.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Contain));
+                }
+                else
+                {
+                    iconNode.style.backgroundImage = null;
+                }
+            }
+        }
+    }
+}

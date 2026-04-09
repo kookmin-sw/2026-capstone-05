@@ -6,7 +6,8 @@ using UnityEngine;
 [System.Serializable]
 public class ItemInstance
 {
-    public ItemData Data { get; private set; }
+    [SerializeField] private ItemData data;
+    public ItemData Data => data;
 
     public ItemRotation currentRotation = ItemRotation.Deg0;
 
@@ -20,7 +21,7 @@ public class ItemInstance
             return;
         }
 
-        Data = data;
+        this.data = data;
 
         currentStackCount = Mathf.Clamp(amount, 1, data.maxStackSize);
     }
