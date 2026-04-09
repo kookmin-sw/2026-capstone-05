@@ -9,8 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4601028691156517280}
-  - component: {fileID: 5589182192598379908}
   - component: {fileID: 942730792815811415}
+  - component: {fileID: 6870986721773574944}
   m_Layer: 0
   m_Name: Axe
   m_TagString: Untagged
@@ -34,7 +34,23 @@ Transform:
   - {fileID: 6019670487309971118}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!135 &5589182192598379908
+--- !u!114 &942730792815811415
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8913893071405321284}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 39de963f7a14bb543962d895d68f1be3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemPickup
+  itemInstance:
+    data: {fileID: 11400000, guid: 8c07a2bab85ea894c9d765aae48a0a9b, type: 2}
+    currentRotation: 0
+    currentStackCount: 1
+--- !u!135 &6870986721773574944
 SphereCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -55,22 +71,6 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 1
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &942730792815811415
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8913893071405321284}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 39de963f7a14bb543962d895d68f1be3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ItemPickup
-  itemInstance:
-    data: {fileID: 11400000, guid: 8c07a2bab85ea894c9d765aae48a0a9b, type: 2}
-    currentRotation: 0
-    currentStackCount: 1
 --- !u!1001 &6052999627718658373
 PrefabInstance:
   m_ObjectHideFlags: 0

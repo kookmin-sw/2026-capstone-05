@@ -1,3 +1,4 @@
+/*
 using UnityEngine;
 using Systems.GridInventory;
 
@@ -79,3 +80,4 @@ public class LegacyInventory : MonoBehaviour
         }
     }
 }
+*/

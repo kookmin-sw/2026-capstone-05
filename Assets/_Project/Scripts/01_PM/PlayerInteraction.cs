@@ -7,6 +7,7 @@ public class PlayerInteraction : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private PlayerController player;
+    [SerializeField] private Camera mainCamera;
 
     [Header("Interaction Settings")]
     [SerializeField] private float interactionRange = 3f;
@@ -14,15 +15,27 @@ public class PlayerInteraction : MonoBehaviour
     [SerializeField] private float interactionCooldown = 0.3f; // 상호작용 쿨다운 시간
     
     private float lastInteractionTime = 0f;
+    private IInteractable currentInteractable = null;
+    private GameObject currentLookObject = null;
     
+    // 외곽선 효과를 위한 변수
+    private Outline currentOutline;
+
     private void Awake()
     {
         if (player == null)
-            player = GetComponent<PlayerController>();
-    }
+            player = GetComponentInParent<PlayerController>(); // PlayerController가 부모나 상위에 있을 가능성 대비
+        
+        if (player == null)
+            player = FindAnyObjectByType<PlayerController>();
 
+        if (mainCamera == null)
+            mainCamera = Camera.main;
+    }
     private void Update()
     {
+        CheckInteractionFocus();
+
         // Player Controller 와 InputHandler 가 잘 존재하는지 확인
         if (player != null && player.InputHandler != null)
         {
@@ -36,9 +49,106 @@ public class PlayerInteraction : MonoBehaviour
             }
         }
     }
+
+    /// <summary>
+    /// 플레이어의 시선을 추적하여 상호작용 가능한 객체에 외곽선과 UI를 표시합니다.
+    /// </summary>
+    private void CheckInteractionFocus()
+    {
+        if (mainCamera == null)
+        {
+            mainCamera = Camera.main; // 런타임에라도 빈 값이면 채워줌
+            if (mainCamera == null) return;
+        }
+
+        Ray ray = new Ray(mainCamera.transform.position, mainCamera.transform.forward);
+        RaycastHit[] hits = Physics.RaycastAll(ray, interactionRange, interactableLayers);
+        
+        if (hits.Length > 0)
+        {
+            // 거리순 정렬 (람다 사용 없이 간단히)
+            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+            foreach (var h in hits)
+            {
+                // 플레이어 자신의 콜라이더는 완전히 무시
+                if (player != null && h.collider.transform.root == player.transform.root)
+                    continue;
+
+                // 콜라이더 자체나 부모 객체에 IInteractable 인터페이스가 있는지 확인
+                IInteractable interactable = h.collider.GetComponentInParent<IInteractable>();
+
+                if (interactable != null && interactable.CanInteract(player))
+                {
+                    // 실제 스크립트가 붙어있는 객체를 대상으로 상호작용 설정
+                    GameObject targetObj = (interactable as MonoBehaviour)?.gameObject ?? h.collider.gameObject;
+
+                    if (currentLookObject != targetObj)
+                    {
+                        ClearCurrentInteractable();
+                        SetCurrentInteractable(targetObj, interactable);
+                    }
+                    return; // 가장 가까운 상호작용 가능 객체를 찾았으므로 종료
+                }
+            }
+            
+            // 유효한 IInteractable을 찾지 못했다면 클리어
+            ClearCurrentInteractable();
+        }
+        else
+        {
+            ClearCurrentInteractable();
+        }
+    }
+
+    private void SetCurrentInteractable(GameObject obj, IInteractable interactable)
+    {
+        currentLookObject = obj;
+        currentInteractable = interactable;
+
+        // 외곽선 활성화
+        currentOutline = obj.GetComponent<Outline>();
+        if (currentOutline == null)
+        {
+            currentOutline = obj.AddComponent<Outline>();
+            currentOutline.OutlineMode = Outline.Mode.OutlineAll; // 렌더러 위에 항상 외곽선 표시 (가려져 있어도 표시되게 하여 확실히 뜨게 함)
+            currentOutline.OutlineColor = Color.white; // 사진과 동일한 흰색
+            currentOutline.OutlineWidth = 5f; // 좀 더 명확하게 두께를 설정
+        }
+        currentOutline.enabled = true;
+
+        // UI 표시 (임시 이름 사용, 필요 시 IInteractable에 속성 추가해서 사용)
+        if (InteractionUI.Instance != null)
+        {
+            // 객체 이름과 상호작용 키 표시 (E키)
+            string objName = interactable.GetObjectName();
+            string prompt = interactable.GetInteractPrompt();
+            InteractionUI.Instance.Show(objName, prompt, obj.transform);
+        }
+    }
+
+    private void ClearCurrentInteractable()
+    {
+        // 1. UI 먼저 무조건 숨김 (오브젝트가 방금 파괴되었더라도 UI는 남아있을 수 있으므로)
+        if (InteractionUI.Instance != null)
+        {
+            InteractionUI.Instance.Hide();
+        }
+
+        // 2. 오브젝트가 아직 파괴되지 않고 남아있다면 외곽선 꺼줌
+        if (currentLookObject != null && currentOutline != null)
+        {
+            currentOutline.enabled = false;
+        }
+
+        // 3. 변수 초기화
+        currentLookObject = null;
+        currentInteractable = null;
+        currentOutline = null;
+    }
     
     /// <summary>
-    /// 상호작용을 수행하는 공용 메서드 - 레거시 로직 유지 (가장 가까운 객체 찾기)
+    /// 상호작용을 수행하는 공용 메서드 - 시선이 향한 대상과 상호작용
     /// </summary>
     public void PerformInteraction()
     {
@@ -50,37 +160,12 @@ public class PlayerInteraction : MonoBehaviour
         
         lastInteractionTime = Time.time;
         
-        IInteractable nearestInteractable = null;
-        float nearestDistance = interactionRange;
-        
-        // 플레이어 주변의 모든 상호작용 가능한 오브젝트 확인
-        Collider[] colliders = Physics.OverlapSphere(transform.position, interactionRange, interactableLayers);
-        
-        foreach (Collider col in colliders)
+        if (currentInteractable != null)
         {
-            // 한 오브젝트에 여러 IInteractable이 있을 수 있으므로 모두 확인
-            IInteractable[] interactables = col.GetComponents<IInteractable>();
-            
-            foreach (IInteractable interactable in interactables)
-            {
-                if (interactable != null && interactable.CanInteract(player))
-                {
-                    float distance = Vector3.Distance(transform.position, col.transform.position);
-                    if (distance < nearestDistance)
-                    {
-                        nearestDistance = distance;
-                        nearestInteractable = interactable;
-                    }
-                }
-            }
-        }
-        
-        // 상호작용 대상이 있다면 실행
-        if (nearestInteractable != null)
-        {
-            nearestInteractable.OnInteract(player);
+            currentInteractable.OnInteract(player);
         }
     }
+    
     private void OnDrawGizmosSelected()
     {
         // 상호작용 범위 시각화
