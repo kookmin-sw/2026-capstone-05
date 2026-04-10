@@ -118,7 +118,7 @@ namespace Systems.GridInventory {
 
             if (saveData == null || saveData.items == null) return;
 
-            model.Clear(); // 전체 아이템 비우기 (OnModelChanged Invoke는 추후 처리)
+            model.Clear();
 
             // 퀵슬롯 비우기
             if (QuickslotUIController.Instance != null)
@@ -129,13 +129,9 @@ namespace Systems.GridInventory {
                 }
             }
 
-            // 아이템 데이터를 로드하기 위한 Resource/ScriptableObject 매퍼 필요 (간단히 Resources 검색 또는 Resources.Load. 구조에 따라 변경)
-            // 임시로 모든 ItemData를 찾아 매핑
-            ItemData[] allItems = Resources.LoadAll<ItemData>(""); // Resource 폴더에 있을 경우, Addressable/다른 방식일 경우 수정 필요
-
+            // 아이템 데이터를 로드
             foreach (var itemDataSave in saveData.items)
             {
-                // TODO: ItemData 로드 로직은 실제 프로젝트 설계(AssetDatabase/Resources/Addressables)에 따라 최적화 요망
                 ItemData matchedData = FindItemDataByID(itemDataSave.item_id);
                 if (matchedData != null)
                 {
@@ -167,24 +163,41 @@ namespace Systems.GridInventory {
             Debug.Log("[Inventory] Loaded successfully.");
         }
 
-        // Runtime 환경에서 ItemData를 찾기 위한 임시 헬퍼. 실제 프로젝트 상황에 맞게 커스텀.
+        // Runtime 환경에서 ItemData를 찾기 위한 최적화된 헬퍼
+        private static Dictionary<string, ItemData> itemDataCache;
+
         private static ItemData FindItemDataByID(string id)
         {
+            if (itemDataCache == null)
+            {
+                itemDataCache = new Dictionary<string, ItemData>();
 #if UNITY_EDITOR
-            string[] guids = UnityEditor.AssetDatabase.FindAssets("t:ItemData");
-            foreach (var guid in guids)
-            {
-                string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
-                ItemData data = UnityEditor.AssetDatabase.LoadAssetAtPath<ItemData>(path);
-                if (data != null && data.itemID == id) return data;
-            }
+                string[] guids = UnityEditor.AssetDatabase.FindAssets("t:ItemData");
+                foreach (var guid in guids)
+                {
+                    string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+                    ItemData data = UnityEditor.AssetDatabase.LoadAssetAtPath<ItemData>(path);
+                    if (data != null && !itemDataCache.ContainsKey(data.itemID))
+                    {
+                        itemDataCache.Add(data.itemID, data);
+                    }
+                }
 #else
-            ItemData[] allItems = Resources.LoadAll<ItemData>("");
-            foreach (var data in allItems)
-            {
-                if (data.itemID == id) return data;
-            }
+                ItemData[] allItems = Resources.LoadAll<ItemData>("");
+                foreach (var data in allItems)
+                {
+                    if (data != null && !itemDataCache.ContainsKey(data.itemID))
+                    {
+                        itemDataCache.Add(data.itemID, data);
+                    }
+                }
 #endif
+            }
+
+            if (itemDataCache.TryGetValue(id, out ItemData result))
+            {
+                return result;
+            }
             return null;
         }
     }
