@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Systems.GridInventory {
@@ -35,13 +36,12 @@ namespace Systems.GridInventory {
             view.OnLoadClicked += HandleLoad;
             model.OnModelChanged += HandleModelChanged;
 
-            if (QuickslotUIController.Instance != null) {
-                QuickslotUIController.Instance.OnItemDropped += HandleQuickslotItemDropped;
-            }
+            // 정적 이벤트를 활용해 객체 생성(순서) 여부와 무관하게 즉시 구독
+            QuickslotUIController.OnItemDroppedGlobal -= HandleQuickslotItemDropped;
+            QuickslotUIController.OnItemDroppedGlobal += HandleQuickslotItemDropped;
 
             RefreshView();
         }
-
         void HandleQuickslotItemDropped(ItemInstance item, int sourceQuickslotIndex, Vector2 screenPosition) {
             if (GridInventoryView.Instance != null && GridInventoryView.Instance.isActiveAndEnabled) {
                 var slot = GridInventoryView.Instance.GetGridSlotAtPosition(screenPosition);
@@ -177,77 +177,110 @@ namespace Systems.GridInventory {
 
         void HandleDrop(GridItemView originalGridItemView, GridSlot closestGridSlot) {
             ItemInstance sourceItem = originalGridItemView.ItemInst;
-
             if (sourceItem == null) return;
 
             var sourcePos = model.GetItemAnchorPosition(sourceItem);
-            
             if (sourcePos.x == -1 || sourcePos.y == -1) return;
             
             var targetCoords = model.GetCoordinates(closestGridSlot.Index);
+            var aOld = sourcePos;
+            var aNew = new Vector2Int(targetCoords.x, targetCoords.y);
+            
+            // 1. Remove sourceItem from grid momentarily for collision check
+            model.TryRemove(sourceItem);
 
-            var targetItem = model.Get(targetCoords.x, targetCoords.y);
-
-            // 동일한 아이템인 경우 무시 (자기 자신의 다른 슬롯에 떨군 경우 Swap 내부에서 처리하거나 이쪽에서 거름)
-            if(targetItem == sourceItem) {
-                targetItem = null;
+            // 2. Discover all overlapping items at the new position
+            HashSet<ItemInstance> overlappingItems = new HashSet<ItemInstance>();
+            var positions = sourceItem.Data.gridShape.GetRotatedPositions(sourceItem.currentRotation);
+            bool outOfBounds = false;
+            
+            foreach (var pos in positions) {
+                int checkX = aNew.x + pos.x;
+                int checkY = aNew.y + pos.y;
+                
+                if (checkX < 0 || checkY < 0 || checkX >= width || checkY >= height) {
+                    outOfBounds = true;
+                    break;
+                }
+                
+                var foundItem = model.Get(checkX, checkY);
+                if (foundItem != null) {
+                    overlappingItems.Add(foundItem);
+                }
             }
 
-            if (targetItem == null) {
-                // Remove first
-                model.TryRemove(sourceItem);
+            if (outOfBounds) {
+                originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation);
+                model.PlaceItem(sourceItem, aOld.x, aOld.y);
+                return;
+            }
+
+            if (overlappingItems.Count == 0) {
+                // Free space!
+                model.PlaceItem(sourceItem, aNew.x, aNew.y);
+                return;
+            }
+
+            if (overlappingItems.Count == 1) {
+                var targetItem = overlappingItems.First();
                 
-                if (model.CanPlaceItem(sourceItem, targetCoords.x, targetCoords.y)) {
-                    model.PlaceItem(sourceItem, targetCoords.x, targetCoords.y);
+                // Stack Combine logic
+                if (sourceItem.Data == targetItem.Data && targetItem.Data.maxStackSize > 1) {
+                    int total = sourceItem.currentStackCount + targetItem.currentStackCount;
+                    if (total <= targetItem.Data.maxStackSize) {
+                        targetItem.currentStackCount = total;
+                        model.Items.Invoke();
+                    } else {
+                        originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation); 
+                        targetItem.currentStackCount = targetItem.Data.maxStackSize;
+                        sourceItem.currentStackCount = total - targetItem.Data.maxStackSize;
+                        model.PlaceItem(sourceItem, aOld.x, aOld.y); // Return remaining to original
+                    }
+                    return;
+                }
+                
+                // 1:1 Swap Logic
+                var delta = aNew - new Vector2Int(aOld.x, aOld.y);
+                var bOld = model.GetItemAnchorPosition(targetItem);
+                var bNew = new Vector2Int(bOld.x - delta.x, bOld.y - delta.y);
+                
+                // Safely check if we can place BOTH items without removing targetItem yet!
+                // aNew might overlap with targetItem's old position, so we ignore targetItem.
+                // bNew might overlap with targetItem's old position, so we ignore targetItem.
+                // sourceItem is already removed from grid, so it won't block anything.
+                bool canPlaceA = model.CanPlaceItem(sourceItem, aNew.x, aNew.y, targetItem);
+                bool canPlaceB = model.CanPlaceItem(targetItem, bNew.x, bNew.y, targetItem);
+                
+                // Intersect check for swap overlapping each other at their new positions
+                bool overlapEachOther = false;
+                var aPositions = sourceItem.Data.gridShape.GetRotatedPositions(sourceItem.currentRotation);
+                var bPositionsTarget = targetItem.Data.gridShape.GetRotatedPositions(targetItem.currentRotation);
+                foreach (var a in aPositions) {
+                    var absA = new Vector2Int(aNew.x + a.x, aNew.y + a.y);
+                    foreach (var b in bPositionsTarget) {
+                        var absB = new Vector2Int(bNew.x + b.x, bNew.y + b.y);
+                        if (absA == absB) {
+                            overlapEachOther = true;
+                            break;
+                        }
+                    }
+                    if (overlapEachOther) break;
+                }
+                
+                if (!overlapEachOther && canPlaceA && canPlaceB) {
+                    model.TryRemove(targetItem); // Remove target only if successful
+                    model.PlaceItem(sourceItem, aNew.x, aNew.y);
+                    model.PlaceItem(targetItem, bNew.x, bNew.y);
                 } else {
-                    originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation); // Undo rotation if failed
-                    model.PlaceItem(sourceItem, sourcePos.x, sourcePos.y); // Undo 
+                    originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation);
+                    model.PlaceItem(sourceItem, aOld.x, aOld.y); // Revert source item
                 }
                 return;
             }
 
-            if (sourceItem.Data == targetItem.Data && targetItem.Data.maxStackSize > 1) {
-                // Stack Combine logic
-                int total = sourceItem.currentStackCount + targetItem.currentStackCount;
-                if (total <= targetItem.Data.maxStackSize) {
-                    targetItem.currentStackCount = total;
-                    model.TryRemove(sourceItem);
-                    model.Items.Invoke();
-                } else {
-                    originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation); 
-                    // 부분 합치기 이후 남은 수량을 소스 아이템에 보존
-                    targetItem.currentStackCount = targetItem.Data.maxStackSize;
-                    sourceItem.currentStackCount = total - targetItem.Data.maxStackSize;
-                    model.Items.Invoke();
-                }
-            } else {
-                // Swap logic implementation needs to calculate correctly with shapes
-                var targetPos = model.GetItemAnchorPosition(targetItem);
-                model.TryRemove(sourceItem);
-                model.TryRemove(targetItem);
-                
-                bool placedFirst = false;
-                bool swapSuccess = false;
-
-                if (model.CanPlaceItem(sourceItem, targetPos.x, targetPos.y)) {
-                    model.PlaceItem(sourceItem, targetPos.x, targetPos.y);
-                    placedFirst = true;
-
-                    if (model.CanPlaceItem(targetItem, sourcePos.x, sourcePos.y)) {
-                        model.PlaceItem(targetItem, sourcePos.x, sourcePos.y);
-                        swapSuccess = true;
-                    }
-                }
-
-                if (!swapSuccess) {
-                    if (placedFirst) {
-                        model.TryRemove(sourceItem);
-                    }
-                    originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation); // Undo rotation on fail
-                    model.PlaceItem(sourceItem, sourcePos.x, sourcePos.y);
-                    model.PlaceItem(targetItem, targetPos.x, targetPos.y);
-                }
-            }
+            // More than 1 item overlapping = fail: rollback
+            originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation);
+            model.PlaceItem(sourceItem, aOld.x, aOld.y);
         }
 
         void HandleModelChanged(IList<ItemInstance> items) => RefreshView();
