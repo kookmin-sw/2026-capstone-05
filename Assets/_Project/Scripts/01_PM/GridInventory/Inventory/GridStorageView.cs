@@ -28,6 +28,7 @@ namespace Systems.GridInventory {
         private bool eventsRegistered = false;
 
         public event Action<GridItemView, GridSlot> OnDrop;
+        public event Action<GridItemView, int> OnDropToQuickslot;
         
         public IEnumerator Initialize(int size, int columns = 8) {
             this.currentColumns = columns;
@@ -172,11 +173,10 @@ namespace Systems.GridInventory {
             }
         }
 
-        void ProcessDrop(Vector2 position) {
-            // itemsContainer 占쏙옙占쏙옙 占쏙옙표占쏙옙 占쏙옙환
+        public GridSlot GetGridSlotAtPosition(Vector2 position) {
+            if (itemsContainer == null || Slots == null) return null;
             Vector2 localPos = itemsContainer.WorldToLocal(position);
             
-            // 占쏙옙占쏙옙 占쏙옙占쏙옙占?占쏙옙占쏙옙 찾占쏙옙
             GridSlot closestGridSlot = null;
             float closestDistance = float.MaxValue;
             
@@ -197,6 +197,23 @@ namespace Systems.GridInventory {
                     closestDistance = distance;
                 }
             }
+            return closestGridSlot;
+        }
+
+        void ProcessDrop(Vector2 position) {
+            if (QuickslotUIController.Instance != null) {
+                int quickslotIndex = QuickslotUIController.Instance.GetSlotIndexAtPosition(position);
+                if (quickslotIndex >= 0) {
+                    OnDropToQuickslot?.Invoke(draggedItem, quickslotIndex);
+                    ResetDragState();
+                    return;
+                }
+            }
+
+            Vector2 localPos = itemsContainer.WorldToLocal(position);
+            
+            // 가장 가까운 슬롯 찾기
+            GridSlot closestGridSlot = GetGridSlotAtPosition(position);
             
             if (closestGridSlot != null) {
                 OnDrop?.Invoke(draggedItem, closestGridSlot);

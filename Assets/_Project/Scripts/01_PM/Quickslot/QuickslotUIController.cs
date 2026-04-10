@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Systems.GridInventory;
 
 public class QuickslotUIController : MonoBehaviour
 {
@@ -13,6 +14,10 @@ public class QuickslotUIController : MonoBehaviour
     private int selectedSlotIndex = -1;
 
     private List<VisualElement> slotElements = new List<VisualElement>();
+    private VisualElement dragGhostIcon;
+    private int draggingSlotIndex = -1;
+    private bool isDragging = false;
+
     private PlayerEquipment localPlayerEquipment;
 
     private void Awake()
@@ -58,7 +63,24 @@ public class QuickslotUIController : MonoBehaviour
                 if (slot != null)
                 {
                     slotElements.Add(slot);
+                    
+                    int slotIndex = i;
+                    slot.RegisterCallback<PointerDownEvent>(evt => OnPointerDown(evt, slotIndex));
+                    slot.RegisterCallback<PointerMoveEvent>(OnPointerMove);
+                    slot.RegisterCallback<PointerUpEvent>(OnPointerUp);
+                    slot.pickingMode = PickingMode.Position;
                 }
+            }
+
+            if (dragGhostIcon == null)
+            {
+                dragGhostIcon = new VisualElement();
+                dragGhostIcon.style.position = Position.Absolute;
+                dragGhostIcon.style.visibility = Visibility.Hidden;
+                dragGhostIcon.style.width = 60; // quickslot size
+                dragGhostIcon.style.height = 60;
+                dragGhostIcon.pickingMode = PickingMode.Ignore;
+                root.Add(dragGhostIcon);
             }
         }
     }
@@ -66,6 +88,89 @@ public class QuickslotUIController : MonoBehaviour
     private void Start()
     {
         EnsureUIInitialized();
+    }
+
+    private void OnPointerDown(PointerDownEvent evt, int slotIndex)
+    {
+        if (evt.button != 0 || quickslots[slotIndex] == null || quickslots[slotIndex].Data == null) return;
+        
+        isDragging = true;
+        draggingSlotIndex = slotIndex;
+        
+        var slotElement = slotElements[slotIndex];
+        slotElement.CapturePointer(evt.pointerId);
+        
+        // Setup Ghost
+        dragGhostIcon.style.backgroundImage = new StyleBackground(quickslots[slotIndex].Data.itemIcon);
+        dragGhostIcon.style.visibility = Visibility.Visible;
+        dragGhostIcon.BringToFront();
+        dragGhostIcon.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Contain));
+        
+        UpdateGhostPosition(evt.position);
+        
+        evt.StopPropagation();
+    }
+
+    private void OnPointerMove(PointerMoveEvent evt)
+    {
+        if (!isDragging) return;
+        
+        UpdateGhostPosition(evt.position);
+        evt.StopPropagation();
+    }
+
+    private void UpdateGhostPosition(Vector2 position)
+    {
+        if (dragGhostIcon != null)
+        {
+            dragGhostIcon.style.left = position.x - (dragGhostIcon.style.width.value.value / 2);
+            dragGhostIcon.style.top = position.y - (dragGhostIcon.style.height.value.value / 2);
+        }
+    }
+
+    public delegate void QuickslotItemDropAction(ItemInstance item, int sourceQuickslotIndex, Vector2 screenPosition);
+    public event QuickslotItemDropAction OnItemDropped;
+
+    private void OnPointerUp(PointerUpEvent evt)
+    {
+        if (!isDragging) return;
+        
+        isDragging = false;
+        if (draggingSlotIndex >= 0 && draggingSlotIndex < slotElements.Count)
+        {
+            slotElements[draggingSlotIndex].ReleasePointer(evt.pointerId);
+        }
+        
+        if (dragGhostIcon != null)
+        {
+            dragGhostIcon.style.visibility = Visibility.Hidden;
+        }
+
+        if (draggingSlotIndex >= 0 && draggingSlotIndex < quickslots.Length)
+        {
+            var item = quickslots[draggingSlotIndex];
+            if (item != null)
+            {
+                int targetQuickslot = GetSlotIndexAtPosition(evt.position);
+                
+                if (targetQuickslot >= 0 && targetQuickslot != draggingSlotIndex)
+                {
+                    // Swap within quickslots
+                    var temp = quickslots[targetQuickslot];
+                    quickslots[targetQuickslot] = item;
+                    quickslots[draggingSlotIndex] = temp;
+                    UpdateSlotUI(targetQuickslot);
+                    UpdateSlotUI(draggingSlotIndex);
+                }
+                else
+                {
+                    OnItemDropped?.Invoke(item, draggingSlotIndex, evt.position);
+                }
+            }
+        }
+        
+        draggingSlotIndex = -1;
+        evt.StopPropagation();
     }
 
     private void Update()
@@ -121,6 +226,43 @@ public class QuickslotUIController : MonoBehaviour
             }
         }
         return false;
+    }
+
+    public int GetSlotIndexAtPosition(Vector2 screenPosition)
+    {
+        EnsureUIInitialized();
+        if (uiDocument != null && uiDocument.panelSettings != null)
+        {
+            // Vector2 screenPosition usually from Input/Pointer events is (0,0) at top-left or bottom-left?
+            // UIElements pointer events have (0,0) at top-left.
+            for (int i = 0; i < slotElements.Count; i++)
+            {
+                var slot = slotElements[i];
+                if (slot != null && slot.worldBound.Contains(screenPosition))
+                {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    public void SetItemInSlot(int index, ItemInstance item)
+    {
+        if (index >= 0 && index < MaxSlots)
+        {
+            quickslots[index] = item;
+            UpdateSlotUI(index);
+        }
+    }
+
+    public void RemoveItemFromSlot(int index)
+    {
+        if (index >= 0 && index < MaxSlots)
+        {
+            quickslots[index] = null;
+            UpdateSlotUI(index);
+        }
     }
 
     public ItemInstance GetItem(int index)

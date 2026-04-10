@@ -30,11 +30,97 @@ namespace Systems.GridInventory {
             yield return view.Initialize(Capacity, width);
 
             view.OnDrop += HandleDrop;
+            view.OnDropToQuickslot += HandleDropToQuickslot;
             view.OnSaveClicked += HandleSave;
             view.OnLoadClicked += HandleLoad;
             model.OnModelChanged += HandleModelChanged;
 
+            if (QuickslotUIController.Instance != null) {
+                QuickslotUIController.Instance.OnItemDropped += HandleQuickslotItemDropped;
+            }
+
             RefreshView();
+        }
+
+        void HandleQuickslotItemDropped(ItemInstance item, int sourceQuickslotIndex, Vector2 screenPosition) {
+            if (GridInventoryView.Instance != null && GridInventoryView.Instance.isActiveAndEnabled) {
+                var slot = GridInventoryView.Instance.GetGridSlotAtPosition(screenPosition);
+                if (slot != null) {
+                    var targetCoords = model.GetCoordinates(slot.Index);
+                    // Check if the place target has an item
+                    var baseTargetItem = model.Get(targetCoords.x, targetCoords.y);
+                    
+                    if (baseTargetItem == item) return;
+                    
+                    // Simple logic:
+                    if (baseTargetItem == null) {
+                        if (model.CanPlaceItem(item, targetCoords.x, targetCoords.y)) {
+                            QuickslotUIController.Instance.RemoveItemFromSlot(sourceQuickslotIndex);
+                            model.PlaceItem(item, targetCoords.x, targetCoords.y);
+                        }
+                    } else {
+                        // For swapping, figure out its start pos
+                        var baseTargetPos = model.GetItemAnchorPosition(baseTargetItem);
+                        model.TryRemove(baseTargetItem); // Try taking out the grid item
+                        
+                        if (model.CanPlaceItem(item, targetCoords.x, targetCoords.y)) {
+                            QuickslotUIController.Instance.RemoveItemFromSlot(sourceQuickslotIndex);
+                            model.PlaceItem(item, targetCoords.x, targetCoords.y);
+                            
+                            // Successful swap, push the grid item into the quickslot
+                            QuickslotUIController.Instance.SetItemInSlot(sourceQuickslotIndex, baseTargetItem);
+                        } else {
+                            // Revert taking out the grid item
+                            model.PlaceItem(baseTargetItem, baseTargetPos.x, baseTargetPos.y);
+                        }
+                    }
+                }
+            }
+        }
+
+        void HandleDropToQuickslot(GridItemView originalGridItemView, int quickslotIndex) {
+            ItemInstance sourceItem = originalGridItemView.ItemInst;
+            if (sourceItem == null) return;
+            
+            var sourcePos = model.GetItemAnchorPosition(sourceItem);
+            if (sourcePos.x == -1 || sourcePos.y == -1) return; // not in model somehow?
+            
+            // Check if there's already an item in quickslot
+            ItemInstance targetItem = QuickslotUIController.Instance.GetItem(quickslotIndex);
+            
+            if (targetItem == sourceItem) {
+                // If it's literally the same item, just reset view
+                originalGridItemView.style.visibility = UnityEngine.UIElements.Visibility.Visible;
+                return;
+            }
+            
+            model.TryRemove(sourceItem); // Pull out from grid
+            
+            if (targetItem != null) {
+                // Swap logic: We need to place targetItem at sourcePos
+                // The Quickslot item needs to be unequipped/removed from quickslot before we put it in grid
+                QuickslotUIController.Instance.RemoveItemFromSlot(quickslotIndex); // remove first
+                
+                if (model.CanPlaceItem(targetItem, sourcePos.x, sourcePos.y)) {
+                    model.PlaceItem(targetItem, sourcePos.x, sourcePos.y);
+                } else {
+                    // Try auto layout or fallback? Quickslot items are 1x1 or their original size
+                    // Since it replaces the big item, it should fit in most cases unless quickslot item is HUGE
+                    if (!model.TryAdd(targetItem)) {
+                        // Undo everything if it completely fails to fit
+                        model.TryRemove(targetItem);
+                        model.PlaceItem(sourceItem, sourcePos.x, sourcePos.y);
+                        QuickslotUIController.Instance.SetItemInSlot(quickslotIndex, targetItem);
+                        return; // swap failed
+                    }
+                }
+            }
+            
+            // Success, place sourceItem into quickslot
+            QuickslotUIController.Instance.SetItemInSlot(quickslotIndex, sourceItem);
+            
+            // We trigger model update just in case
+            model.Items.Invoke();
         }
 
         void HandleSave() {

@@ -8,10 +8,20 @@ namespace Systems.GridInventory {
     public class GridInventoryView : GridStorageView {
         [SerializeField] string panelName = "GridInventory";
 
+        public static GridInventoryView Instance { get; private set; }
         public static bool IsAnyInventoryOpen { get; private set; }
 
         public event System.Action OnSaveClicked;
         public event System.Action OnLoadClicked;
+
+        private void Awake() {
+            if (Instance == null) Instance = this;
+            else if (Instance != this) Destroy(gameObject);
+        }
+
+        private void OnDestroy() {
+            if (Instance == this) Instance = null;
+        }
 
         public override IEnumerator InitializeView(int size = 20) {
             Slots = new GridSlot[size];
