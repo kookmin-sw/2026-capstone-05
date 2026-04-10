@@ -24,6 +24,10 @@ namespace Systems.GridInventory {
         public int slot_x;            
         public int slot_y;            
         public int rotated;           
+        
+        // 퀵슬롯용 데이터
+        public bool is_quickslot;
+        public int quickslot_index;
     }
 
     public class GridInventorySaveSystem
@@ -56,10 +60,38 @@ namespace Systems.GridInventory {
                         updated_at = DateTime.UtcNow.ToString("o"),
                         slot_x = pos.x,
                         slot_y = pos.y,
-                        rotated = (int)item.currentRotation
+                        rotated = (int)item.currentRotation,
+                        is_quickslot = false
                     };
 
                     saveData.items.Add(itemSaveData);
+                }
+            }
+
+            // Quickslot items 저장 추가
+            if (QuickslotUIController.Instance != null)
+            {
+                for (int i = 0; i < 4; i++) // MaxSlots (Quickslots 0~3)
+                {
+                    var item = QuickslotUIController.Instance.GetItem(i);
+                    if (item != null && item.Data != null)
+                    {
+                        InventoryItemSaveData quickItemData = new InventoryItemSaveData
+                        {
+                            id = DateTime.UtcNow.Ticks,
+                            user_id = "player1",
+                            item_id = item.Data.itemID,
+                            quantity = item.currentStackCount,
+                            acquired_at = DateTime.UtcNow.ToString("o"),
+                            updated_at = DateTime.UtcNow.ToString("o"),
+                            slot_x = 0,
+                            slot_y = 0,
+                            rotated = (int)item.currentRotation,
+                            is_quickslot = true,
+                            quickslot_index = i
+                        };
+                        saveData.items.Add(quickItemData);
+                    }
                 }
             }
 
@@ -88,6 +120,15 @@ namespace Systems.GridInventory {
 
             model.Clear(); // 전체 아이템 비우기 (OnModelChanged Invoke는 추후 처리)
 
+            // 퀵슬롯 비우기
+            if (QuickslotUIController.Instance != null)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    QuickslotUIController.Instance.RemoveItemFromSlot(i);
+                }
+            }
+
             // 아이템 데이터를 로드하기 위한 Resource/ScriptableObject 매퍼 필요 (간단히 Resources 검색 또는 Resources.Load. 구조에 따라 변경)
             // 임시로 모든 ItemData를 찾아 매핑
             ItemData[] allItems = Resources.LoadAll<ItemData>(""); // Resource 폴더에 있을 경우, Addressable/다른 방식일 경우 수정 필요
@@ -101,10 +142,20 @@ namespace Systems.GridInventory {
                     ItemInstance newItem = new ItemInstance(matchedData, itemDataSave.quantity);
                     newItem.currentRotation = (ItemRotation)itemDataSave.rotated;
                     
-                    // 위치 배치
-                    if (!model.PlaceItem(newItem, itemDataSave.slot_x, itemDataSave.slot_y))
+                    if (itemDataSave.is_quickslot)
                     {
-                        Debug.LogWarning($"[Inventory] Failed to place loaded item {matchedData.itemID} at {itemDataSave.slot_x},{itemDataSave.slot_y}");
+                        if (QuickslotUIController.Instance != null)
+                        {
+                            QuickslotUIController.Instance.SetItemInSlot(itemDataSave.quickslot_index, newItem);
+                        }
+                    }
+                    else
+                    {
+                        // 위치 배치
+                        if (!model.PlaceItem(newItem, itemDataSave.slot_x, itemDataSave.slot_y))
+                        {
+                            Debug.LogWarning($"[Inventory] Failed to place loaded item {matchedData.itemID} at {itemDataSave.slot_x},{itemDataSave.slot_y}");
+                        }
                     }
                 }
                 else

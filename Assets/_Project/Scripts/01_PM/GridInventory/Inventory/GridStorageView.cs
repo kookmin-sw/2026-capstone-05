@@ -228,25 +228,7 @@ namespace Systems.GridInventory {
         
         void SetGhostIconPosition(Vector2 position, GridItemView originItem) {
             if(ghostIcon != null && originItem != null) {
-                // ghostIcon은 현재 originItem.Icon과 동일한 크기, transformOrigin, 회전값을 가지고 있습니다.
-                // Icon의 transformOrigin은 정확히 (0,0) 슬롯의 중심점 좌표 비율(%)입니다.
-                // 따라서 마우스 위치(position)가 (0,0) 중심점 위치에 오게 하려면
-                // Icon의 실제 픽셀 기준 오프셋을 역산하여 빼주면 됩니다.
-                
-                float baseW = originItem.Icon.style.width.value.value;
-                float baseH = originItem.Icon.style.height.value.value;
-                
-                float pivotXRatio = originItem.Icon.style.transformOrigin.value.x.value / 100f;
-                float pivotYRatio = originItem.Icon.style.transformOrigin.value.y.value / 100f;
-                
-                float pivotX = pivotXRatio * baseW;
-                float pivotY = pivotYRatio * baseH;
-
-                // 마우스 포인트(position - 전역 Screen/Panel 좌표)를 ghostIcon 부모의 Local 좌표계로 변환해야 딱 맞습니다.
-                Vector2 localPos = ghostIcon.parent.WorldToLocal(position);
-                
-                ghostIcon.style.left = localPos.x - pivotX;
-                ghostIcon.style.top = localPos.y - pivotY;
+                GridInventoryDragHelper.UpdateGhostPosition(ghostIcon, position);
             }
         }
         

@@ -59,7 +59,7 @@ public class QuickslotUIController : MonoBehaviour
             var root = uiDocument.rootVisualElement;
             for (int i = 0; i < MaxSlots; i++)
             {
-                var slot = root.Q<VisualElement>($"Quickslot{i + 1}");
+                var slot = root.Q<VisualElement>($"Quickslot{i}");
                 if (slot != null)
                 {
                     slotElements.Add(slot);
@@ -100,8 +100,25 @@ public class QuickslotUIController : MonoBehaviour
         var slotElement = slotElements[slotIndex];
         slotElement.CapturePointer(evt.pointerId);
         
+        var itemInstance = quickslots[slotIndex];
+        
+        // 아이템의 원래 크기(grid shape) 계산하여 드래그 고스트에 반영 (인벤토리 드래그 방식과 동일하게)
+        GridInventoryDragHelper.GetGhostSizeAndPivot(itemInstance, out float baseW, out float baseH, out float baseAnchorXRatio, out float baseAnchorYRatio);
+
         // Setup Ghost
-        dragGhostIcon.style.backgroundImage = new StyleBackground(quickslots[slotIndex].Data.itemIcon);
+        dragGhostIcon.style.backgroundImage = new StyleBackground(itemInstance.Data.itemIcon);
+        dragGhostIcon.style.width = baseW;
+        dragGhostIcon.style.height = baseH;
+        
+        // 올바른 기준점 도출 
+        dragGhostIcon.style.transformOrigin = new TransformOrigin(
+            new Length(baseAnchorXRatio * 100f, LengthUnit.Percent), 
+            new Length(baseAnchorYRatio * 100f, LengthUnit.Percent)
+        );
+        
+        // 회전값 적용 (VisualAngle 계산)
+        float visualAngle = (int)itemInstance.currentRotation * 90f;
+        dragGhostIcon.style.rotate = new Rotate(new Angle(visualAngle));
         dragGhostIcon.style.visibility = Visibility.Visible;
         dragGhostIcon.BringToFront();
         dragGhostIcon.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Contain));
@@ -123,8 +140,7 @@ public class QuickslotUIController : MonoBehaviour
     {
         if (dragGhostIcon != null)
         {
-            dragGhostIcon.style.left = position.x - (dragGhostIcon.style.width.value.value / 2);
-            dragGhostIcon.style.top = position.y - (dragGhostIcon.style.height.value.value / 2);
+            GridInventoryDragHelper.UpdateGhostPosition(dragGhostIcon, position);
         }
     }
 
@@ -155,12 +171,34 @@ public class QuickslotUIController : MonoBehaviour
                 
                 if (targetQuickslot >= 0 && targetQuickslot != draggingSlotIndex)
                 {
-                    // Swap within quickslots
-                    var temp = quickslots[targetQuickslot];
-                    quickslots[targetQuickslot] = item;
-                    quickslots[draggingSlotIndex] = temp;
-                    UpdateSlotUI(targetQuickslot);
-                    UpdateSlotUI(draggingSlotIndex);
+                    var targetItem = quickslots[targetQuickslot];
+                    
+                    // 같은 아이템이고 스택이 가능한 경우 합치기
+                    if (targetItem != null && targetItem.Data == item.Data && targetItem.Data.maxStackSize > 1)
+                    {
+                        int total = item.currentStackCount + targetItem.currentStackCount;
+                        if (total <= targetItem.Data.maxStackSize)
+                        {
+                            targetItem.currentStackCount = total;
+                            quickslots[draggingSlotIndex] = null;
+                        }
+                        else
+                        {
+                            targetItem.currentStackCount = targetItem.Data.maxStackSize;
+                            item.currentStackCount = total - targetItem.Data.maxStackSize;
+                        }
+                        UpdateSlotUI(targetQuickslot);
+                        UpdateSlotUI(draggingSlotIndex);
+                    }
+                    else
+                    {
+                        // Swap within quickslots
+                        var temp = quickslots[targetQuickslot];
+                        quickslots[targetQuickslot] = item;
+                        quickslots[draggingSlotIndex] = temp;
+                        UpdateSlotUI(targetQuickslot);
+                        UpdateSlotUI(draggingSlotIndex);
+                    }
                 }
                 else
                 {
@@ -299,7 +337,7 @@ public class QuickslotUIController : MonoBehaviour
         }
     }
 
-    private void UpdateSlotUI(int index)
+    public void UpdateSlotUI(int index)
     {
         EnsureUIInitialized();
         if (index >= 0 && index < slotElements.Count)
@@ -315,10 +353,33 @@ public class QuickslotUIController : MonoBehaviour
                     iconNode.style.backgroundImage = new StyleBackground(item.Data.itemIcon);
                     // 이미지가 깨지지 않게 비율 유지하도록 스케일 모드 변경
                     iconNode.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Contain));
+
+                    // 퀵슬롯 개수(스택) 표시
+                    var stackLabel = slot.Q<Label>("StackLabel");
+                    if (stackLabel == null)
+                    {
+                        stackLabel = new Label();
+                        stackLabel.name = "StackLabel";
+                        stackLabel.style.position = Position.Absolute;
+                        stackLabel.style.bottom = 2;
+                        stackLabel.style.right = 4;
+                        stackLabel.style.color = Color.white;
+                        stackLabel.style.fontSize = 14;
+                        stackLabel.style.textShadow = new TextShadow {
+                            blurRadius = 0,
+                            color = Color.black,
+                            offset = new Vector2(1, 1)
+                        };
+                        slot.Add(stackLabel);
+                    }
+                    stackLabel.text = item.currentStackCount > 1 ? item.currentStackCount.ToString() : string.Empty;
+                    stackLabel.visible = item.currentStackCount > 1;
                 }
                 else
                 {
                     iconNode.style.backgroundImage = null;
+                    var stackLabel = slot.Q<Label>("StackLabel");
+                    if (stackLabel != null) stackLabel.visible = false;
                 }
             }
         }

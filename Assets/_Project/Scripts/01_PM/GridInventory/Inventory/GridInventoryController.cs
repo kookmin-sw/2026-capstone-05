@@ -52,6 +52,23 @@ namespace Systems.GridInventory {
                     
                     if (baseTargetItem == item) return;
                     
+                    // 겹쳤을 때 스택 합치기 로직
+                    if (baseTargetItem != null && baseTargetItem.Data == item.Data && item.Data.maxStackSize > 1) {
+                        int total = item.currentStackCount + baseTargetItem.currentStackCount;
+                        if (total <= item.Data.maxStackSize) {
+                            baseTargetItem.currentStackCount = total;
+                            QuickslotUIController.Instance.RemoveItemFromSlot(sourceQuickslotIndex);
+                            model.Items.Invoke();
+                            return;
+                        } else {
+                            baseTargetItem.currentStackCount = item.Data.maxStackSize;
+                            item.currentStackCount = total - item.Data.maxStackSize;
+                            QuickslotUIController.Instance.UpdateSlotUI(sourceQuickslotIndex);
+                            model.Items.Invoke();
+                            return;
+                        }
+                    }
+                    
                     // Simple logic:
                     if (baseTargetItem == null) {
                         if (model.CanPlaceItem(item, targetCoords.x, targetCoords.y)) {
@@ -67,6 +84,8 @@ namespace Systems.GridInventory {
                             QuickslotUIController.Instance.RemoveItemFromSlot(sourceQuickslotIndex);
                             model.PlaceItem(item, targetCoords.x, targetCoords.y);
                             
+                            // 퀵슬롯에 들어가는 아이템의 회전각은 0도로 초기화
+                            baseTargetItem.currentRotation = ItemRotation.Deg0;
                             // Successful swap, push the grid item into the quickslot
                             QuickslotUIController.Instance.SetItemInSlot(sourceQuickslotIndex, baseTargetItem);
                         } else {
@@ -94,20 +113,42 @@ namespace Systems.GridInventory {
                 return;
             }
             
+            // 겹쳤을 때 스택 합치기 (동일 아이템이고, 스택 가능할 때)
+            if (targetItem != null && targetItem.Data == sourceItem.Data && targetItem.Data.maxStackSize > 1) {
+                int total = sourceItem.currentStackCount + targetItem.currentStackCount;
+                if (total <= targetItem.Data.maxStackSize) {
+                    targetItem.currentStackCount = total;
+                    model.TryRemove(sourceItem); // 인벤토리의 소스 아이템 데이터 완벽히 파괴
+                    QuickslotUIController.Instance.UpdateSlotUI(quickslotIndex);
+                    model.Items.Invoke();
+                    return;
+                } else {
+                    originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation);
+                    targetItem.currentStackCount = targetItem.Data.maxStackSize;
+                    sourceItem.currentStackCount = total - targetItem.Data.maxStackSize;
+                    QuickslotUIController.Instance.UpdateSlotUI(quickslotIndex);
+                    model.Items.Invoke();
+                    return; // 소스 아이템은 스택이 줄어든 채로 인벤토리에 남음
+                }
+            }
+            
             model.TryRemove(sourceItem); // Pull out from grid
             
+            // 퀵슬롯에 새로 들어가는 아이템의 회전각은 0도로 초기화
+            ItemRotation oldRotation = sourceItem.currentRotation;
+            sourceItem.currentRotation = ItemRotation.Deg0;
+            
             if (targetItem != null) {
-                // Swap logic: We need to place targetItem at sourcePos
                 // The Quickslot item needs to be unequipped/removed from quickslot before we put it in grid
                 QuickslotUIController.Instance.RemoveItemFromSlot(quickslotIndex); // remove first
                 
                 if (model.CanPlaceItem(targetItem, sourcePos.x, sourcePos.y)) {
                     model.PlaceItem(targetItem, sourcePos.x, sourcePos.y);
                 } else {
-                    // Try auto layout or fallback? Quickslot items are 1x1 or their original size
-                    // Since it replaces the big item, it should fit in most cases unless quickslot item is HUGE
+                    // Try auto layout or fallback?
                     if (!model.TryAdd(targetItem)) {
                         // Undo everything if it completely fails to fit
+                        sourceItem.currentRotation = oldRotation;
                         model.TryRemove(targetItem);
                         model.PlaceItem(sourceItem, sourcePos.x, sourcePos.y);
                         QuickslotUIController.Instance.SetItemInSlot(quickslotIndex, targetItem);
