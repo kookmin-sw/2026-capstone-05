@@ -8,10 +8,20 @@ namespace Systems.GridInventory {
     public class GridInventoryView : GridStorageView {
         [SerializeField] string panelName = "GridInventory";
 
+        public static GridInventoryView Instance { get; private set; }
         public static bool IsAnyInventoryOpen { get; private set; }
 
         public event System.Action OnSaveClicked;
         public event System.Action OnLoadClicked;
+
+        private void Awake() {
+            if (Instance == null) Instance = this;
+            else if (Instance != this) Destroy(gameObject);
+        }
+
+        private void OnDestroy() {
+            if (Instance == this) Instance = null;
+        }
 
         public override IEnumerator InitializeView(int size = 20) {
             Slots = new GridSlot[size];
@@ -19,38 +29,19 @@ namespace Systems.GridInventory {
 
             container = root.Q<VisualElement>(className: "container");
             if (container == null) {
-                // 대비책 (UXML이 비어있을 경우)
+                // UXML 구조가 비정상일 경우 코드로 기본 뼈대 동적 생성 (Fallback)
                 root.Clear();
                 root.styleSheets.Add(styleSheet);
                 container = root.CreateChild("container");
                 var inv = container.CreateChild("inventory-window");
-                inv.CreateChild("inventoryHeader").Add(new Label(panelName.ToUpper()));
-                var sContainer = inv.CreateChild("slotsContainer");
-                sContainer.style.width = (currentColumns * 69f) + 22f;
-                int rows = Mathf.CeilToInt((float)size / currentColumns);
-                sContainer.style.height = (rows * 69f) + 22f;
-                for (int i = 0; i < size; i++) {
-                    var slot = new GridSlot();
-                    slot.name = "slot";
-                    slot.AddToClassList("slot");
-                    sContainer.Add(slot);
-                    Slots[i] = slot;
-                }
-
-                // Append the specialized overlay itemsContainer inside the slotsContainer
-                itemsContainer = sContainer.CreateChild("itemsContainer");
-                itemsContainer.style.position = Position.Absolute;
-                itemsContainer.style.top = 0;
-                itemsContainer.style.left = 0;
-                itemsContainer.style.right = 0;
-                itemsContainer.style.bottom = 0;
-
-                ghostIcon = container.CreateChild("ghostIcon");
-                ghostIcon.AddToClassList("ghostIcon");
-                ghostIcon.style.position = Position.Absolute;
-                ghostIcon.style.visibility = Visibility.Hidden;
-                ghostIcon.pickingMode = PickingMode.Ignore;  // 마우스 이벤트 방지
-                yield break;
+                inv.name = "inventory-window"; // Q<VisualElement>(name: "inventory-window") 대응
+                
+                var header = inv.CreateChild("inventoryHeader");
+                header.name = "inventoryHeader";
+                header.Add(new Label(panelName.ToUpper()));
+                
+                var sc = inv.CreateChild("slotsContainer");
+                sc.name = "slotsContainer"; // Q<VisualElement>(name: "slotsContainer") 대응
             }
             
             var inventory = container.Q<VisualElement>(name: "inventory-window");
@@ -62,24 +53,19 @@ namespace Systems.GridInventory {
 
             var slotsContainer = inventory.Q<VisualElement>(name: "slotsContainer");
             
-            // 동적으로 가로 폭 계산 (슬롯크기 65 + 양옆마진 4 = 69) * 컬럼수 + 패딩 20 + 테두리 2 = 딱 맞는 사이즈
-            slotsContainer.style.width = (currentColumns * 69f) + 22f;
-            
-            // 세로 폭 동적 계산 (빈 공간 최소화)
+            // 컨테이너 크기 동적 계산 (슬롯 사이즈 대응)
+            float containerPaddingTotal = 22f; // 12f left/top + 10f right/bottom
+            slotsContainer.style.width = (currentColumns * SlotTotalSize) + containerPaddingTotal;
             int rowsForUpdate = Mathf.CeilToInt((float)size / currentColumns);
-            slotsContainer.style.height = (rowsForUpdate * 69f) + 22f;
+            slotsContainer.style.height = (rowsForUpdate * SlotTotalSize) + containerPaddingTotal;
             
             var existingSlots = slotsContainer.Query<GridSlot>().ToList();
 
-            if (existingSlots.Count >= size) {
-                for (int i = 0; i < size; i++) {
+            // 슬롯 UI 동기화 (부족하면 추가, 많으면 기존 것 재사용)
+            for (int i = 0; i < size; i++) {
+                if (i < existingSlots.Count) {
                     Slots[i] = existingSlots[i];
-                }
-            } else {
-                for (int i = 0; i < existingSlots.Count; i++) {
-                    Slots[i] = existingSlots[i];
-                }
-                for (int i = existingSlots.Count; i < size; i++) {
+                } else {
                     var slot = new GridSlot();
                     slot.name = "slot";
                     slot.AddToClassList("slot");
@@ -88,20 +74,21 @@ namespace Systems.GridInventory {
                 }
             }
 
-            // Also attach/re-attach the itemsContainer
+            // 아이템 컨테이너 초기화
             itemsContainer = slotsContainer.Q<VisualElement>("itemsContainer") ?? slotsContainer.CreateChild("itemsContainer");
             itemsContainer.style.position = Position.Absolute;
             itemsContainer.style.top = 0;
             itemsContainer.style.left = 0;
+            itemsContainer.style.right = 0;
+            itemsContainer.style.bottom = 0;
+            itemsContainer.BringToFront(); // 슬롯들 위로 렌더링되도록 수정
             
-            ghostIcon = container.Q<VisualElement>(className: "ghostIcon");
-            if (ghostIcon == null) {
-                ghostIcon = container.CreateChild("ghostIcon");
-                ghostIcon.AddToClassList("ghostIcon");
-                ghostIcon.style.position = Position.Absolute;
-                ghostIcon.style.visibility = Visibility.Hidden;
-                ghostIcon.pickingMode = PickingMode.Ignore;
-            }
+            // 고스트 아이콘 (드래그 시 표시) 초기화
+            ghostIcon = container.Q<VisualElement>(className: "ghostIcon") ?? container.CreateChild("ghostIcon");
+            ghostIcon.AddToClassList("ghostIcon");
+            ghostIcon.style.position = Position.Absolute;
+            ghostIcon.style.visibility = Visibility.Hidden;
+            ghostIcon.pickingMode = PickingMode.Ignore;
             
             var btnSave = inventory.Q<Button>(name: "btn-save");
             if (btnSave != null) {

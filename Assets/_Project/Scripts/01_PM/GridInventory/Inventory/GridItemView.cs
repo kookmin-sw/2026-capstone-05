@@ -96,27 +96,8 @@ namespace Systems.GridInventory {
 
             // Icon의 transformOrigin은 항상 "회전되지 않은 원본(Deg0) 기준"의 논리적 원점이어야 합니다.
             // 이미지는 항상 원본 상태로 그려진 후 VisualAngle만큼 회전되기 때문입니다.
-            var basePositions = ItemInst.Data.gridShape.GetRotatedPositions(ItemRotation.Deg0);
-            int baseMinX = 0, baseMinY = 0, baseMaxX = 0, baseMaxY = 0;
-            foreach(var pos in basePositions) {
-                if(pos.x < baseMinX) baseMinX = pos.x;
-                if(pos.y < baseMinY) baseMinY = pos.y;
-                if(pos.x > baseMaxX) baseMaxX = pos.x;
-                if(pos.y > baseMaxY) baseMaxY = pos.y;
-            }
-            int baseWidth = (baseMaxX - baseMinX) + 1;
-            int baseHeight = (baseMaxY - baseMinY) + 1;
+            GridInventoryDragHelper.GetGhostSizeAndPivot(ItemInst, out float baseW, out float baseH, out float baseAnchorXRatio, out float baseAnchorYRatio);
             
-            float baseAnchorXRatio = (-baseMinX + 0.5f) / baseWidth;
-            float baseAnchorYRatio = (-baseMinY + 0.5f) / baseHeight;
-
-            // 회전 시 크기가 변하더라도 Icon이 항상 원래 비율대로 유지된 채 회전되어야 올바른 형태로 렌더링됩니다.
-            // 부모 GridItemView는 회전된 바운딩 박스 크기를 가지지만, Icon은 항상 원래 크기(Base)를 가집니다.
-            float slotSize = 65f;
-            float slotSpacing = 4f;
-            float baseW = (baseWidth * slotSize) + ((baseWidth - 1) * slotSpacing);
-            float baseH = (baseHeight * slotSize) + ((baseHeight - 1) * slotSpacing);
-
             Icon.style.position = Position.Absolute;
             Icon.style.width = baseW;
             Icon.style.height = baseH;
@@ -127,6 +108,8 @@ namespace Systems.GridInventory {
 
             // 논리적 앵커(0,0)가 부모(회전된 바운딩 박스)의 앵커(0,0) 위치와 일치하도록 오프셋을 계산합니다.
             // 부모 박스 내에서 앵커(0,0)의 위치:
+            float slotSize = 65f;
+            float slotSpacing = 4f;
             float rotatedAnchorX = (-minX * (slotSize + slotSpacing));
             float rotatedAnchorY = (-minY * (slotSize + slotSpacing));
 

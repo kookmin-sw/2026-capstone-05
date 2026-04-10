@@ -71,7 +71,7 @@ namespace Systems.GridInventory {
             return removed;
         }
 
-        public bool CanPlaceItem(ItemInstance item, int startX, int startY, ItemInstance ignoreItem = null) {
+        public bool CanPlaceItem(ItemInstance item, int startX, int startY, ItemInstance ignoreItem = null, ItemInstance ignoreItem2 = null) {
             if (item == null || item.Data == null || item.Data.gridShape == null) return false;
 
             var positions = item.Data.gridShape.GetRotatedPositions(item.currentRotation);
@@ -85,7 +85,9 @@ namespace Systems.GridInventory {
                 }
 
                 var existingItem = Get(px, py);
-                if (existingItem != null && existingItem != ignoreItem) {
+                if (existingItem != null && existingItem != item) {
+                    if (ignoreItem != null && existingItem == ignoreItem) continue;
+                    if (ignoreItem2 != null && existingItem == ignoreItem2) continue;
                     return false;
                 }
             }
