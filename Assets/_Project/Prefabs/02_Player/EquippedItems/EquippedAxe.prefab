@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4601028691156517280}
   - component: {fileID: 8105372785482453825}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: EquippedAxe
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -112,6 +112,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 8cbe6d927d3ab4dbc8f4066c51f70139, type: 3}
       propertyPath: m_Name
       value: axe
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 8cbe6d927d3ab4dbc8f4066c51f70139, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

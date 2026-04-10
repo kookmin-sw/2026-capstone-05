@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5139315739869764634}
   - component: {fileID: -4486764291707853381}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: EquippedPan
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -112,6 +112,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 3ad5f33da613e40079a44ba06b58c5eb, type: 3}
       propertyPath: m_Name
       value: pan
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 3ad5f33da613e40079a44ba06b58c5eb, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
