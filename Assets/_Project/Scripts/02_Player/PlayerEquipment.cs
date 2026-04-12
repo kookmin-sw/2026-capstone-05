@@ -154,24 +154,24 @@ public class PlayerEquipment : MonoBehaviour
     /// </summary>
     private void PerformUnarmedHitCheck()
     {
-        Transform originTransform = cameraTransform != null ? cameraTransform : Camera.main.transform;
+        Transform originTransform = player.CameraTransform != null ? player.CameraTransform : Camera.main.transform;
+        Vector3 checkCenter = originTransform.position + originTransform.forward * unarmedRange;
 
-        Ray ray = new Ray(originTransform.position, originTransform.forward);
-        if (Physics.SphereCast(ray, unarmedHitRadius, out RaycastHit hit, unarmedRange, hitLayerMask))
+        Collider[] hitColliders = Physics.OverlapSphere(checkCenter, unarmedHitRadius, hitLayerMask);
+        if (hitColliders.Length > 0)
         {
-            if (hit.collider.TryGetComponent(out IDamageable target))
+            foreach (var hit in hitColliders)
             {
-                target.TakeDamage(unarmedDamage);
-                // TODO: 적중 타격음 발생
+                if (hit.TryGetComponent(out IDamageable target))
+                {
+                    target.TakeDamage(unarmedDamage);
+                }
             }
-            else
-            {
-                // TODO: 벽/사물 타격음 발생
-            }
+            // TODO: 타격 시 소리
         }
         else
         {
-            // TODO: 허공 헛스윙 소리 발생
+            // TODO: 빗나갔을 때 소리
         }
     }
 }

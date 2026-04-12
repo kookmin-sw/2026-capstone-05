@@ -29,18 +29,23 @@ public class MeleeWeaponBehaviour : EquippedItemBehaviour
         base.OnAnimationEventTriggered();
 
         Transform originTransform = player.CameraTransform != null ? player.CameraTransform : Camera.main.transform;
-        Ray ray = new Ray(originTransform.position, originTransform.forward);
+        Vector3 checkCenter = originTransform.position + originTransform.forward * data.attackRange;
 
-        if (Physics.SphereCast(ray, data.attackHitRadius, out RaycastHit hit, data.attackRange, player.Equipment.hitLayerMask))
+        Collider[] hitColliders = Physics.OverlapSphere(checkCenter, data.attackHitRadius, player.Equipment.hitLayerMask);
+        if (hitColliders.Length > 0)
         {
-            if (hit.collider.TryGetComponent(out IDamageable target))
+            foreach (var hit in hitColliders)
             {
-                target.TakeDamage(data.damage);
+                if (hit.TryGetComponent(out IDamageable target))
+                {
+                    target.TakeDamage(data.damage);
+                }
             }
-
-            NoiseManager.Instance.GenerateNoise(transform.position, data.hitNoiseType);
+            NoiseManager.Instance.GenerateNoise(checkCenter, data.hitNoiseType);
         }
-
-        NoiseManager.Instance.GenerateNoise(transform.position, data.swingNoiseType);
+        else
+        {
+            NoiseManager.Instance.GenerateNoise(checkCenter, data.swingNoiseType);
+        }
     }
 }
