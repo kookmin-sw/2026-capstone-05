@@ -56,6 +56,11 @@ public abstract class EquippedItemBehaviour : MonoBehaviour
         lastUseTime = Time.time;
 
         player.Animator.PlayUseItemAnimation(itemInstance.Data.useAnimationType);
+
+        if (impulseSource != null)
+        {
+            impulseSource.GenerateImpulse();
+        }
     }
 
     /// <summary>
