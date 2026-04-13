@@ -1,0 +1,44 @@
+name: gameserver-local
+
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: src/GameServer.Api/Dockerfile
+    container_name: gameserver-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Database__Postgres__Host: postgres
+      Database__Postgres__Port: 5432
+      Database__Postgres__Database: ${POSTGRES_DB:-gameserver_db}
+      Database__Postgres__Username: ${POSTGRES_USER:-postgres}
+      Database__Postgres__Password: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16
+    container_name: gameserver-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-gameserver_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../../db/001_core_schema.sql:/docker-entrypoint-initdb.d/001_core_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-gameserver_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

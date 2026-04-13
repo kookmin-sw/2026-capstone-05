@@ -1,30 +1,47 @@
 using GameServer.Application.Interfaces;
 using GameServer.Domain.Entities;
+using GameServer.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace GameServer.Infrastructure.Repositories;
 
 public sealed class UserRepository : IUserRepository
 {
+    private readonly GameDbContext _dbContext;
+
+    public UserRepository(GameDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Users
+            .AsNoTracking()
+            .AnyAsync(x => x.Email == username, cancellationToken);
+    }
+
+    public Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Email == username, cancellationToken);
+    }
+
     public Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        // TODO: query users table by email
-        _ = email;
-        _ = cancellationToken;
-        return Task.FromResult(false);
+        return ExistsByUsernameAsync(email, cancellationToken);
     }
 
     public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        // TODO: query users table by email
-        _ = email;
-        _ = cancellationToken;
-        return Task.FromResult<User?>(null);
+        return GetByUsernameAsync(email, cancellationToken);
     }
 
-    public Task<User> AddAsync(User user, CancellationToken cancellationToken = default)
+    public async Task<User> AddAsync(User user, CancellationToken cancellationToken = default)
     {
-        // TODO: insert into users table and return created row
-        _ = cancellationToken;
-        return Task.FromResult(user);
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return user;
     }
 }

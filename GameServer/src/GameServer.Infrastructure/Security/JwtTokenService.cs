@@ -7,8 +7,7 @@ public sealed class JwtTokenService : IJwtTokenService
 {
     public string CreateAccessToken(User user)
     {
-        // TODO: implement JWT signing with claims
-        _ = user;
-        return string.Empty;
+        // TODO: 실제 JWT 서명 로직으로 교체
+        return $"dev-token-{user.Id}";
     }
 }
