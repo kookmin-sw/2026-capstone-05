@@ -17,9 +17,20 @@ public class PlayerIKManager : MonoBehaviour
     private float baseRightWeight = 1f;
 
     private int actionOverrideCount = 0;
-
     private float actionLeftWeight = 0f;
     private float actionRightWeight = 0f;
+
+    private Transform currentWeaponLeftGrip;
+
+    /// <summary>
+    /// 무기를 장착/해제할 때 호출합니다.
+    /// </summary>
+    public void SetLeftHandWeaponGrip(Transform gripTarget)
+    {
+        currentWeaponLeftGrip = gripTarget;
+
+        baseLeftWeight = gripTarget != null ? 1f : 0f;
+    }
 
     public void SetActionIKOverride(bool isOverride, float left, float right)
     {
@@ -54,6 +65,15 @@ public class PlayerIKManager : MonoBehaviour
         if (rightHandIK != null)
         {
             rightHandIK.weight = Mathf.Lerp(rightHandIK.weight, targetRight, Time.deltaTime * lerpSpeed);
+        }
+    }
+
+    private void LateUpdate()
+    {
+        if (currentWeaponLeftGrip != null && leftHandIK != null)
+        {
+            leftHandIK.data.target.position = currentWeaponLeftGrip.position;
+            leftHandIK.data.target.rotation = currentWeaponLeftGrip.rotation;
         }
     }
 }
