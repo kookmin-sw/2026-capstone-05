@@ -1,3 +1,5 @@
+using System;
+
 namespace GameServer.Application.DTOs.Responses;
 
 public sealed record UserResponse(
