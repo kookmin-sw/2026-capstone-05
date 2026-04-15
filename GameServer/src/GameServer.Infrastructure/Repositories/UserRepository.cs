@@ -38,6 +38,13 @@ public sealed class UserRepository : IUserRepository
         return GetByUsernameAsync(email, cancellationToken);
     }
 
+    public Task<bool> ExistsByNicknameAsync(string nickname, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Users
+            .AsNoTracking()
+            .AnyAsync(x => x.Nickname == nickname, cancellationToken);
+    }
+
     public async Task<User> AddAsync(User user, CancellationToken cancellationToken = default)
     {
         _dbContext.Users.Add(user);

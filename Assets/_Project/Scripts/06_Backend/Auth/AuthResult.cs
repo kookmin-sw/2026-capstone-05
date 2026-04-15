@@ -3,8 +3,10 @@ public enum AuthResultCode
     Success,
     InvalidInput,
     DuplicateUsername,
+    DuplicateNickname,
     UserNotFound,
     WrongPassword,
+    NetworkError,
     DatabaseError
 }
 

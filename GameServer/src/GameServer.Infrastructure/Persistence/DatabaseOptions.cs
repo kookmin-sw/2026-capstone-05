@@ -9,9 +9,15 @@ public sealed class DatabaseOptions
     public string Database { get; set; } = "gameserver_db";
     public string Username { get; set; } = "postgres";
     public string Password { get; set; } = "postgres";
+    public string? ConnectionString { get; set; }
 
     public string BuildConnectionString()
     {
+        if (!string.IsNullOrWhiteSpace(ConnectionString))
+        {
+            return ConnectionString;
+        }
+
         return $"Host={Host};Port={Port};Database={Database};Username={Username};Password={Password};";
     }
 }

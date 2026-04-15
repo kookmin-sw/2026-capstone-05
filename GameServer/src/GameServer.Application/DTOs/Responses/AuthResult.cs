@@ -5,6 +5,7 @@ public enum AuthFailureCode
     None,
     InvalidInput,
     DuplicateUsername,
+    DuplicateNickname,
     UserNotFound,
     WrongPassword,
     DatabaseError
