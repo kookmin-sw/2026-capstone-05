@@ -22,7 +22,7 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     [SerializeField] private string gameSceneNameFallback = "TestMain";
 
     [Header("Network")]
-    [SerializeField] private int maxPlayers = 8;
+    [SerializeField] private int maxPlayers = 4;
     [SerializeField] private string roomSessionPrefix = string.Empty;
     [SerializeField] private NetworkObject playerPrefab;
 
@@ -683,10 +683,7 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     private Vector3 GetSpawnPosition(PlayerRef player)
     {
-        int index = Math.Abs(player.RawEncoded % Math.Max(1, maxPlayers));
-        float angle = 360f / Math.Max(1, maxPlayers) * index;
-        Vector3 offset = Quaternion.Euler(0f, angle, 0f) * (Vector3.forward * 2.5f);
-        return new Vector3(0f, 1f, 0f) + offset;
+        return new Vector3(1004f, -29f, -993f); // 원하는 좌표
     }
 
     private void ConfigurePlayerObjectIfNeeded(NetworkObject playerObject, string reason)
