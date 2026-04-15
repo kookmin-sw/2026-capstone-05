@@ -31,6 +31,7 @@ namespace Systems.GridInventory {
                 sprite = itemInst.Data.itemIcon,
                 scaleMode = ScaleMode.ScaleToFit
             };
+            Icon.pickingMode = PickingMode.Ignore;
             Icon.style.flexGrow = 1;
             Icon.style.paddingLeft = Icon.style.paddingRight = Icon.style.paddingTop = Icon.style.paddingBottom = 2;
             
@@ -38,6 +39,7 @@ namespace Systems.GridInventory {
 
             // Stack count
             StackLabel = new Label();
+            StackLabel.pickingMode = PickingMode.Ignore;
             StackLabel.style.position = Position.Absolute;
             StackLabel.style.bottom = 2;
             StackLabel.style.right = 4;
@@ -166,6 +168,31 @@ namespace Systems.GridInventory {
             
             onDragEnd?.Invoke(this);
             evt.StopPropagation();
+        }
+
+        public override bool ContainsPoint(Vector2 localPoint) {
+            if (!base.ContainsPoint(localPoint)) return false;
+
+            float slotSize = 65f;
+            float slotSpacing = 4f;
+            float slotTotalSize = slotSize + slotSpacing;
+
+            int lx = Mathf.FloorToInt(localPoint.x / slotTotalSize);
+            int ly = Mathf.FloorToInt(localPoint.y / slotTotalSize);
+            
+            if (lx < 0 || lx >= Width || ly < 0 || ly >= Height) return false;
+
+            int itemX = lx + MinX;
+            int itemY = ly + MinY;
+
+            var rotatedPositions = ItemInst.Data.gridShape.GetRotatedPositions(ItemInst.currentRotation);
+            foreach (var pos in rotatedPositions) {
+                if (pos.x == itemX && pos.y == itemY) {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

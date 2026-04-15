@@ -18,43 +18,28 @@ public sealed class AuthService
     {
         Debug.Log($"{LogPrefix} 회원가입 API 호출 시도. email={email}");
 
-        if (string.IsNullOrWhiteSpace(email) ||
-            string.IsNullOrWhiteSpace(password) ||
-            string.IsNullOrWhiteSpace(confirmPassword))
+        if (!TryValidateSignup(email, nickname, password, confirmPassword, out var invalidResult, out var normalizedEmail, out var normalizedNickname))
         {
-            onCompleted?.Invoke(new AuthResult(AuthResultCode.InvalidInput, "이메일/비밀번호/비밀번호 재입력은 공백일 수 없습니다."));
+            onCompleted?.Invoke(invalidResult);
             yield break;
         }
 
-        string normalizedEmail = email.Trim().ToLowerInvariant();
-        if (!normalizedEmail.Contains("@"))
-        {
-            onCompleted?.Invoke(new AuthResult(AuthResultCode.InvalidInput, "이메일 형식이 올바르지 않습니다. (@ 포함 필수)"));
-            yield break;
-        }
-
-        if (!string.Equals(password, confirmPassword, StringComparison.Ordinal))
-        {
-            onCompleted?.Invoke(new AuthResult(AuthResultCode.InvalidInput, "비밀번호와 비밀번호 재입력이 일치하지 않습니다."));
-            yield break;
-        }
-
-        SignupRequest requestDto = new SignupRequest
+        SignupRequest requestDto = new()
         {
             Email = normalizedEmail,
-            Nickname = string.IsNullOrWhiteSpace(nickname) ? normalizedEmail : nickname.Trim(),
+            Nickname = normalizedNickname,
             Password = password,
             ConfirmPassword = confirmPassword
         };
-        string json = JsonUtility.ToJson(requestDto);
 
+        string json = JsonUtility.ToJson(requestDto);
         using UnityWebRequest request = BuildJsonPostRequest($"{_baseUrl}/api/auth/signup", json);
         yield return request.SendWebRequest();
 
         if (request.result == UnityWebRequest.Result.Success)
         {
             UserResponse user = JsonUtility.FromJson<UserResponse>(request.downloadHandler.text);
-            UserAccount created = new UserAccount
+            UserAccount created = new()
             {
                 Id = user.id,
                 Username = user.email,
@@ -66,7 +51,7 @@ public sealed class AuthService
             yield break;
         }
 
-        Debug.LogError($"{LogPrefix} 회원가입 실패. code={request.responseCode}, body={request.downloadHandler.text}");
+        Debug.LogError($"{LogPrefix} 회원가입 실패. code={request.responseCode}, body={request.downloadHandler.text}, error={request.error}");
         onCompleted?.Invoke(MapFailure((int)request.responseCode, request.error, request.downloadHandler.text));
     }
 
@@ -89,20 +74,13 @@ public sealed class AuthService
     {
         Debug.Log($"{LogPrefix} 로그인 API 호출 시도. email={email}");
 
-        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+        if (!TryValidateLogin(email, password, out var invalidResult, out var normalizedEmail))
         {
-            onCompleted?.Invoke(new AuthResult(AuthResultCode.InvalidInput, "이메일/비밀번호는 공백일 수 없습니다."));
+            onCompleted?.Invoke(invalidResult);
             yield break;
         }
 
-        string normalizedEmail = email.Trim().ToLowerInvariant();
-        if (!normalizedEmail.Contains("@"))
-        {
-            onCompleted?.Invoke(new AuthResult(AuthResultCode.InvalidInput, "이메일 형식이 올바르지 않습니다. (@ 포함 필수)"));
-            yield break;
-        }
-
-        LoginRequest requestDto = new LoginRequest { Email = normalizedEmail, Password = password };
+        LoginRequest requestDto = new() { Email = normalizedEmail, Password = password };
         string json = JsonUtility.ToJson(requestDto);
 
         using UnityWebRequest request = BuildJsonPostRequest($"{_baseUrl}/api/auth/login", json);
@@ -111,7 +89,7 @@ public sealed class AuthService
         if (request.result == UnityWebRequest.Result.Success)
         {
             LoginResponse response = JsonUtility.FromJson<LoginResponse>(request.downloadHandler.text);
-            UserAccount account = new UserAccount
+            UserAccount account = new()
             {
                 Id = response.user.id,
                 Username = response.user.email,
@@ -124,14 +102,83 @@ public sealed class AuthService
             yield break;
         }
 
-        Debug.LogError($"{LogPrefix} 로그인 실패. code={request.responseCode}, body={request.downloadHandler.text}");
+        Debug.LogError($"{LogPrefix} 로그인 실패. code={request.responseCode}, body={request.downloadHandler.text}, error={request.error}");
         onCompleted?.Invoke(MapFailure((int)request.responseCode, request.error, request.downloadHandler.text));
+    }
+
+    private static bool TryValidateSignup(
+        string email,
+        string nickname,
+        string password,
+        string confirmPassword,
+        out AuthResult invalidResult,
+        out string normalizedEmail,
+        out string normalizedNickname)
+    {
+        invalidResult = null;
+        normalizedEmail = email?.Trim().ToLowerInvariant() ?? string.Empty;
+        normalizedNickname = nickname?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(normalizedEmail) ||
+            string.IsNullOrWhiteSpace(password) ||
+            string.IsNullOrWhiteSpace(confirmPassword) ||
+            string.IsNullOrWhiteSpace(normalizedNickname))
+        {
+            invalidResult = new AuthResult(AuthResultCode.InvalidInput, "이메일/닉네임/비밀번호/비밀번호 확인은 필수입니다.");
+            return false;
+        }
+
+        if (!normalizedEmail.Contains("@"))
+        {
+            invalidResult = new AuthResult(AuthResultCode.InvalidInput, "이메일 형식이 올바르지 않습니다. (@ 포함 필수)");
+            return false;
+        }
+
+        if (normalizedNickname.Length < 2 || normalizedNickname.Length > 20)
+        {
+            invalidResult = new AuthResult(AuthResultCode.InvalidInput, "닉네임은 2~20자여야 합니다.");
+            return false;
+        }
+
+        if (password.Length < 4)
+        {
+            invalidResult = new AuthResult(AuthResultCode.InvalidInput, "비밀번호는 최소 4자 이상이어야 합니다.");
+            return false;
+        }
+
+        if (!string.Equals(password, confirmPassword, StringComparison.Ordinal))
+        {
+            invalidResult = new AuthResult(AuthResultCode.InvalidInput, "비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool TryValidateLogin(string email, string password, out AuthResult invalidResult, out string normalizedEmail)
+    {
+        invalidResult = null;
+        normalizedEmail = email?.Trim().ToLowerInvariant() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(normalizedEmail) || string.IsNullOrWhiteSpace(password))
+        {
+            invalidResult = new AuthResult(AuthResultCode.InvalidInput, "이메일/비밀번호는 공백일 수 없습니다.");
+            return false;
+        }
+
+        if (!normalizedEmail.Contains("@"))
+        {
+            invalidResult = new AuthResult(AuthResultCode.InvalidInput, "이메일 형식이 올바르지 않습니다. (@ 포함 필수)");
+            return false;
+        }
+
+        return true;
     }
 
     private static UnityWebRequest BuildJsonPostRequest(string url, string json)
     {
         byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
-        UnityWebRequest request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST)
+        UnityWebRequest request = new(url, UnityWebRequest.kHttpVerbPOST)
         {
             uploadHandler = new UploadHandlerRaw(bodyRaw),
             downloadHandler = new DownloadHandlerBuffer()
@@ -142,14 +189,43 @@ public sealed class AuthService
 
     private static AuthResult MapFailure(int statusCode, string error, string responseText)
     {
+        string serverMessage = ExtractErrorMessage(responseText);
+
+        if (statusCode <= 0)
+            return new AuthResult(AuthResultCode.NetworkError, $"네트워크 오류: {error}");
+
         return statusCode switch
         {
-            400 => new AuthResult(AuthResultCode.InvalidInput, "입력값이 올바르지 않습니다."),
-            404 => new AuthResult(AuthResultCode.UserNotFound, "계정이 존재하지 않습니다."),
-            401 => new AuthResult(AuthResultCode.WrongPassword, "비밀번호가 일치하지 않습니다."),
-            409 => new AuthResult(AuthResultCode.DuplicateUsername, "이미 존재하는 아이디입니다."),
-            _ => new AuthResult(AuthResultCode.DatabaseError, $"DB/API 오류: {responseText} {error}")
+            400 => new AuthResult(AuthResultCode.InvalidInput, string.IsNullOrEmpty(serverMessage) ? "입력값이 올바르지 않습니다." : serverMessage),
+            401 => new AuthResult(AuthResultCode.WrongPassword, string.IsNullOrEmpty(serverMessage) ? "비밀번호가 일치하지 않습니다." : serverMessage),
+            404 => new AuthResult(AuthResultCode.UserNotFound, string.IsNullOrEmpty(serverMessage) ? "계정이 존재하지 않습니다." : serverMessage),
+            409 => new AuthResult(ResolveDuplicateCode(serverMessage), string.IsNullOrEmpty(serverMessage) ? "중복된 계정 정보입니다." : serverMessage),
+            _ => new AuthResult(AuthResultCode.DatabaseError, string.IsNullOrEmpty(serverMessage) ? $"DB/API 오류: {error}" : serverMessage)
         };
+    }
+
+    private static AuthResultCode ResolveDuplicateCode(string serverMessage)
+    {
+        if (!string.IsNullOrEmpty(serverMessage) &&
+            serverMessage.IndexOf("nick", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            return AuthResultCode.DuplicateNickname;
+        }
+
+        return AuthResultCode.DuplicateUsername;
+    }
+
+    private static string ExtractErrorMessage(string responseText)
+    {
+        if (string.IsNullOrWhiteSpace(responseText))
+            return string.Empty;
+
+        string trimmed = responseText.Trim();
+
+        if (trimmed.Length >= 2 && trimmed[0] == '"' && trimmed[^1] == '"')
+            return trimmed.Substring(1, trimmed.Length - 2);
+
+        return trimmed;
     }
 
     [Serializable]

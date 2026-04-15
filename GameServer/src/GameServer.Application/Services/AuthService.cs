@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using GameServer.Application.DTOs.Requests;
 using GameServer.Application.DTOs.Responses;
 using GameServer.Application.Interfaces;
@@ -9,6 +10,8 @@ namespace GameServer.Application.Services;
 
 public sealed class AuthService
 {
+    private static readonly Regex NicknameRegex = new("^[a-zA-Z0-9가-힣_]+$", RegexOptions.Compiled);
+
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenService _jwtTokenService;
@@ -32,17 +35,38 @@ public sealed class AuthService
 
         if (string.IsNullOrWhiteSpace(request.Email) ||
             string.IsNullOrWhiteSpace(request.Password) ||
-            string.IsNullOrWhiteSpace(request.ConfirmPassword))
+            string.IsNullOrWhiteSpace(request.ConfirmPassword) ||
+            string.IsNullOrWhiteSpace(request.Nickname))
         {
             _logger.LogWarning("[AuthService] Signup 유효성 실패: 필수 입력 누락. email={Email}", request.Email);
-            return AuthResult<UserResponse>.Fail(AuthFailureCode.InvalidInput, "email/password/confirmPassword는 필수입니다.");
+            return AuthResult<UserResponse>.Fail(AuthFailureCode.InvalidInput, "email/nickname/password/confirmPassword는 필수입니다.");
         }
 
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var normalizedNickname = request.Nickname.Trim();
+
         if (!normalizedEmail.Contains('@'))
         {
             _logger.LogWarning("[AuthService] Signup 유효성 실패: 이메일 형식 오류. email={Email}", request.Email);
             return AuthResult<UserResponse>.Fail(AuthFailureCode.InvalidInput, "email 형식이 올바르지 않습니다. (@ 포함 필수)");
+        }
+
+        if (normalizedNickname.Length < 2 || normalizedNickname.Length > 20)
+        {
+            _logger.LogWarning("[AuthService] Signup 유효성 실패: 닉네임 길이 오류. nickname={Nickname}", normalizedNickname);
+            return AuthResult<UserResponse>.Fail(AuthFailureCode.InvalidInput, "nickname은 2~20자여야 합니다.");
+        }
+
+        if (!NicknameRegex.IsMatch(normalizedNickname))
+        {
+            _logger.LogWarning("[AuthService] Signup 유효성 실패: 닉네임 문자 규칙 오류. nickname={Nickname}", normalizedNickname);
+            return AuthResult<UserResponse>.Fail(AuthFailureCode.InvalidInput, "nickname은 한글/영문/숫자/_ 만 허용됩니다.");
+        }
+
+        if (request.Password.Length < 4)
+        {
+            _logger.LogWarning("[AuthService] Signup 유효성 실패: 비밀번호 길이 부족. email={Email}", normalizedEmail);
+            return AuthResult<UserResponse>.Fail(AuthFailureCode.InvalidInput, "password는 최소 4자 이상이어야 합니다.");
         }
 
         if (!string.Equals(request.Password, request.ConfirmPassword, StringComparison.Ordinal))
@@ -60,11 +84,18 @@ public sealed class AuthService
                 return AuthResult<UserResponse>.Fail(AuthFailureCode.DuplicateUsername, "이미 존재하는 email 입니다.");
             }
 
+            var duplicateNickname = await _userRepository.ExistsByNicknameAsync(normalizedNickname, cancellationToken);
+            if (duplicateNickname)
+            {
+                _logger.LogWarning("[AuthService] Signup 중복 닉네임. nickname={Nickname}", normalizedNickname);
+                return AuthResult<UserResponse>.Fail(AuthFailureCode.DuplicateNickname, "이미 존재하는 nickname 입니다.");
+            }
+
             var user = new User
             {
                 Email = normalizedEmail,
                 PasswordHash = _passwordHasher.Hash(request.Password),
-                Nickname = request.Nickname,
+                Nickname = normalizedNickname,
                 Role = 0,
                 Status = 1
             };

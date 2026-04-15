@@ -7,6 +7,19 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "applicationUrl": "https://localhost:49816;http://localhost:49817"
+    },
+    "GameServer.Api (NunboraServer DB)": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Database__Postgres__Host": "127.0.0.1",
+        "Database__Postgres__Port": "5432",
+        "Database__Postgres__Database": "gameserver_db",
+        "Database__Postgres__Username": "postgres",
+        "Database__Postgres__Password": "postgres"
+      },
+      "applicationUrl": "https://localhost:49816;http://localhost:49817"
     }
   }
 }

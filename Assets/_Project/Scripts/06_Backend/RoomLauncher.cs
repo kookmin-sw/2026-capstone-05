@@ -299,6 +299,15 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         return string.Empty;
     }
 
+    private bool EnsureLoggedInForMenuAction(string actionName)
+    {
+        if (AuthSession.IsLoggedIn)
+            return true;
+
+        Debug.LogWarning($"{LogPrefix} {actionName} 차단: 로그인 성공 전에는 진입할 수 없습니다.");
+        return false;
+    }
+
     private void OnLoginButtonClicked()
     {
         Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 로그인 버튼 클릭.");
@@ -306,11 +315,17 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     private void OnStartButtonClicked()
     {
+        if (!EnsureLoggedInForMenuAction("시작하기"))
+            return;
+
         Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 시작하기 버튼 클릭.");
     }
 
     private void OnHostButtonClicked()
     {
+        if (!EnsureLoggedInForMenuAction("호스트"))
+            return;
+
         Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 호스트 버튼 클릭.");
 
         int roomCode = GenerateHostRoomCode();
@@ -329,11 +344,17 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     private void OnJoinButtonClicked()
     {
+        if (!EnsureLoggedInForMenuAction("참가"))
+            return;
+
         Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 참가 버튼 클릭.");
     }
 
     private void OnEnterButtonClicked()
     {
+        if (!EnsureLoggedInForMenuAction("입장하기"))
+            return;
+
         Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 입장하기 버튼 클릭.");
         string rawInputCode = GetRoomCodeInputText().Trim();
         if (!TryParseRoomCode(rawInputCode, out int roomCode))
