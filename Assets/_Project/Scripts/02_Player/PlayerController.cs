@@ -22,6 +22,7 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
     public PlayerCondition Condition { get; private set; }
     public PlayerNoiseEmitter NoiseEmitter { get; private set; }
     public PlayerEquipment Equipment { get; private set; }
+    public PlayerViewmodelController ViewmodelController { get; private set; }
     public Transform CameraTransform => cameraTransform;
 
     // 스탯 및 설정 (Stats & Settings)
@@ -69,6 +70,10 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
     public float walkRegenRate = 5f;
     public float airborneRegenRate = 0f;
 
+    [Header("Camera Recoil")]
+    public float recoilReturnSpeed = 2f; // 반동이 원위치로 돌아오는 속도
+    private float currentRecoilOffset = 0f; // 현재 적용된 반동 수치
+
     private void Awake()
     {
         Controller = GetComponent<CharacterController>();
@@ -77,6 +82,7 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
         Condition = GetComponent<PlayerCondition>();
         NoiseEmitter = GetComponent<PlayerNoiseEmitter>();
         Equipment = GetComponent<PlayerEquipment>();
+        ViewmodelController = GetComponentInChildren<PlayerViewmodelController>();
 
 
         StateMachine = new PlayerStateMachine();
@@ -172,6 +178,15 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
         }
     }
 
+    public void AddCameraRecoil(float recoilAmount, Vector3 viewmodelKickbackPos, Vector3 viewmodelKickbackRot)
+    {
+        currentRecoilOffset += recoilAmount;
+        if (ViewmodelController != null)
+        {
+            ViewmodelController.ApplyRecoil(viewmodelKickbackPos, viewmodelKickbackRot);
+        }
+    }
+
     private void HandleLook()
     {
         if (InputHandler == null || CameraTransform == null)
@@ -186,7 +201,9 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
         verticalRotation -= lookInput.y;
         verticalRotation = Mathf.Clamp(verticalRotation, -upDownRange, upDownRange);
 
-        CameraTransform.localRotation = Quaternion.Euler(verticalRotation, 0f, 0f);
+        currentRecoilOffset = Mathf.Lerp(currentRecoilOffset, 0f, Time.deltaTime * recoilReturnSpeed);
+
+        CameraTransform.localRotation = Quaternion.Euler(verticalRotation - currentRecoilOffset, 0f, 0f);
     }
 
     private void HandleAction()

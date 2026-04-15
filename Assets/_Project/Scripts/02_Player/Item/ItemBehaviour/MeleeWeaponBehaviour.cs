@@ -2,20 +2,25 @@ using UnityEngine;
 
 public class MeleeWeaponBehaviour : EquippedItemBehaviour
 {
-    public override void Use()
+    public override bool Use()
     {
         MeleeWeaponItemData data = itemInstance.Data as MeleeWeaponItemData;
         if (data == null)
         {
-            return;
+            return false;
         }
         if (!player.Condition.UseStamina(data.staminaConsumePerSwing))
         {
             Debug.Log("Not enough stamina to attack.");
-            return;
+            return false;
         }
 
-        base.Use();
+        if (!base.Use())
+        {
+            return false;
+        }
+
+        return true;
     }
 
     public override void OnAnimationEventTriggered()

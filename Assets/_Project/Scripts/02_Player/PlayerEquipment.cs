@@ -7,6 +7,10 @@ public class PlayerEquipment : MonoBehaviour
     [SerializeField] private Transform handSocket1P;
     [SerializeField] private Transform handSocket3P;
 
+    [Header("IK Managers")]
+    [SerializeField] private PlayerIKManager ikManager1P;
+    [SerializeField] private PlayerIKManager ikManager3P;
+
     public EquippedItemBehaviour Item1P { get; private set; }
     public EquippedItemBehaviour Item3P { get; private set; }
 
@@ -47,6 +51,8 @@ public class PlayerEquipment : MonoBehaviour
             return;
         }
 
+        player.Animator.SetItemPose(itemInstance.Data.poseType);
+
         if (player.IsLocalPlayer && handSocket1P != null)
         {
             currentObj1P = Instantiate(prefab, handSocket1P);
@@ -69,14 +75,15 @@ public class PlayerEquipment : MonoBehaviour
             }
         }
 
-        //if (player.IsLocalPlayer && Item1P != null)
-        //{
-        //    player.IKManager.SetWeaponGrips(Item1P.leftHandGrip, Item1P.rightHandGrip);
-        //}
-        //else if (!player.IsLocalPlayer && Item3P != null)
-        //{
-        //    player.IKManager.SetWeaponGrips(Item3P.leftHandGrip, Item3P.rightHandGrip);
-        //}
+        if (player.IsLocalPlayer && Item1P != null && ikManager1P != null)
+        {
+            ikManager1P.SetLeftHandWeaponGrip(Item1P.leftHandGrip);
+        }
+
+        if (Item3P != null && ikManager3P != null)
+        {
+            ikManager3P.SetLeftHandWeaponGrip(Item3P.leftHandGrip);
+        }
     }
 
     /// <summary>
@@ -102,12 +109,21 @@ public class PlayerEquipment : MonoBehaviour
             Destroy(Item3P.gameObject);
         }
 
+        player.Animator.SetItemPose(ItemPoseType.Default);
+
         currentObj1P = null;
         currentObj3P = null;
         Item1P = null;
         Item3P = null;
 
-        //player.IKManager.SetWeaponGrips(null, null);
+        if (ikManager1P != null)
+        {
+            ikManager1P.SetLeftHandWeaponGrip(null);
+        }
+        if (ikManager3P != null)
+        {
+            ikManager3P.SetLeftHandWeaponGrip(null);
+        }
     }
 
     /// <summary>
@@ -129,7 +145,7 @@ public class PlayerEquipment : MonoBehaviour
             if (Time.time - lastUnarmedAttackTime >= unarmedAttackCooldown)
             {
                 lastUnarmedAttackTime = Time.time;
-                player.Animator.PlayUseItemAnimation(ItemUseAnimationType.None);
+                player.Animator.PlayUseItemAnimation(ItemUseAnimationType.UnarmedAttack);
             }
         }
     }

@@ -4,19 +4,26 @@ public class FirearmWeaponBehaviour : EquippedItemBehaviour
 {
     [SerializeField] private Transform muzzlePoint; // 총구 위치
 
-    public override void Use()
+    public override bool Use()
     {
         FirearmItemData data = itemInstance.Data as FirearmItemData;
         if (data == null)
         {
-            return;
+            return false;
         }
 
         // 총알 확인
 
-        base.Use();
+        if (!base.Use())
+        {
+            return false;
+        }
 
         Shoot(data);
+
+        player.AddCameraRecoil(data.recoilForce, new Vector3(0, 0, -0.05f), new Vector3(-5f, 0, 0));
+
+        return true;
     }
 
     private void Shoot(FirearmItemData data)
@@ -33,6 +40,7 @@ public class FirearmWeaponBehaviour : EquippedItemBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, data.attackRange, player.Equipment.hitLayerMask))
         {
+            Debug.Log($"Hit: {hit.collider.name}");
             if (hit.collider.TryGetComponent(out IDamageable target))
             {
                 target.TakeDamage(data.damage);

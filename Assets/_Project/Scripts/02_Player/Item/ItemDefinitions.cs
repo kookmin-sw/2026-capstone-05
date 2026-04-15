@@ -21,12 +21,18 @@ public enum ItemRotation
 public enum ItemUseAnimationType
 {
     None,
+    UnarmedAttack,
     MeleeAttack,
-    FirearmShoot,
     Eat,
     Drink,
     Throw,
     ToolUse
+}
+
+public enum ItemPoseType
+{
+    Default,
+    Rifle
 }
 
 [System.Serializable]

@@ -6,6 +6,9 @@ using UnityEngine;
 /// </summary>
 public abstract class EquippedItemBehaviour : MonoBehaviour
 {
+    [Header("IK Settings")]
+    public Transform leftHandGrip;
+
     private Renderer[] renderers;
 
     protected PlayerController player;
@@ -46,21 +49,32 @@ public abstract class EquippedItemBehaviour : MonoBehaviour
     /// <summary>
     /// 좌클릭(Primary Use) 시 호출되는 메서드.
     /// </summary>
-    public virtual void Use()
+    public virtual bool Use()
     {
+        if (player.StateMachine.CurrentState is PlayerGroundedState groundedState &&
+            groundedState.CurrentLocomotion == PlayerGroundedLocomotion.Sprinting)
+        {
+            return false;
+        }
+
         if (Time.time - lastUseTime < itemInstance.Data.actionCooldown)
         {
-            return;
+            return false;
         }
 
         lastUseTime = Time.time;
 
-        player.Animator.PlayUseItemAnimation(itemInstance.Data.useAnimationType);
+        if (itemInstance.Data.useAnimationType != ItemUseAnimationType.None)
+        {
+            player.Animator.PlayUseItemAnimation(itemInstance.Data.useAnimationType);
+        }
 
         if (impulseSource != null)
         {
             impulseSource.GenerateImpulse();
         }
+
+        return true;
     }
 
     /// <summary>

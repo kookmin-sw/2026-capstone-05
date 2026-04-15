@@ -2,15 +2,20 @@ using UnityEngine;
 
 public class ConsumableBehaviour : EquippedItemBehaviour
 {
-    public override void Use()
+    public override bool Use()
     {
         ConsumableItemData data = itemInstance.Data as ConsumableItemData;
         if (data == null)
         {
-            return;
+            return false;
         }
 
-        base.Use();
+        if (!base.Use())
+        {
+            return false;
+        }
+
+        return true;
     }
 
     public override void OnAnimationEventTriggered()

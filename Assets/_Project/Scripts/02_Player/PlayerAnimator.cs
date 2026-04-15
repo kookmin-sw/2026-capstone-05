@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Animations.Rigging;
 
 public class PlayerAnimator : MonoBehaviour
 {
@@ -20,16 +19,24 @@ public class PlayerAnimator : MonoBehaviour
     private readonly int hashOnHit = Animator.StringToHash("OnHit");
     private readonly int hashOnAction = Animator.StringToHash("OnAction");
     private readonly int hashActionID = Animator.StringToHash("ActionID");
+    private readonly int hashOnChangePose = Animator.StringToHash("OnChangePose");
+    private readonly int hashPoseID = Animator.StringToHash("PoseID");
 
     private Dictionary<ItemUseAnimationType, int> itemUseAnimTriggers = new Dictionary<ItemUseAnimationType, int>
     {
-        { ItemUseAnimationType.None, 0 }, // Unarmed Attack
-        { ItemUseAnimationType.MeleeAttack, 1 }, // Use Melee
-        { ItemUseAnimationType.FirearmShoot, 2 }, // Use Firearm
+        { ItemUseAnimationType.None, 0 },
+        { ItemUseAnimationType.UnarmedAttack, 1 }, // Unarmed Attack
+        { ItemUseAnimationType.MeleeAttack, 2 }, // Use Melee
         { ItemUseAnimationType.Eat, 3 }, // Eat
         { ItemUseAnimationType.Drink, 4 }, // Drink
         { ItemUseAnimationType.Throw, 5 }, // Throw
         { ItemUseAnimationType.ToolUse, 6 } // Use Tool
+    };
+
+    private Dictionary<ItemPoseType, int> itemPoseIDs = new Dictionary<ItemPoseType, int>
+    {
+        { ItemPoseType.Default, 0 },
+        { ItemPoseType.Rifle, 1 }
     };
 
     public void SetGrounded(bool isGrounded)
@@ -103,6 +110,10 @@ public class PlayerAnimator : MonoBehaviour
         {
             return;
         }
+        if (animType == ItemUseAnimationType.None)
+        {
+            return;
+        }
 
         int actionID = itemUseAnimTriggers[animType];
 
@@ -115,6 +126,31 @@ public class PlayerAnimator : MonoBehaviour
         {
             animator3P.SetInteger(hashActionID, actionID);
             animator3P.SetTrigger(hashOnAction);
+        }
+    }
+
+    /// <summary>
+    /// 아이템 데이터에 등록된 poseType을 받아 해당 포즈로 전환합니다.
+    /// </summary>
+    /// <param name="poseType"></param>
+    public void SetItemPose(ItemPoseType poseType)
+    {
+        if (!itemPoseIDs.ContainsKey(poseType))
+        {
+            return;
+        }
+
+        int poseID = itemPoseIDs[poseType];
+
+        if (animator1P != null)
+        {
+            animator1P.SetTrigger(hashOnChangePose);
+            animator1P.SetInteger(hashPoseID, poseID);
+        }
+        if (animator3P != null)
+        {
+            animator3P.SetTrigger(hashOnChangePose);
+            animator3P.SetInteger(hashPoseID, poseID);
         }
     }
 

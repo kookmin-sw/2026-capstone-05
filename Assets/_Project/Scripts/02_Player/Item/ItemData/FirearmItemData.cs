@@ -9,6 +9,7 @@ public class FirearmItemData : WeaponItemData
     public ItemData requiredAmmoType;
     public int maxMagazineSize; // 탄창 최대 크기
     public float reloadTime; // 재장전 시간 (초)
+    public float recoilForce; // 반동 세기
 
     [Header("Noise Settings")]
     public NoiseData.NoiseType shootNoiseType = NoiseData.NoiseType.GunShot;
@@ -16,6 +17,7 @@ public class FirearmItemData : WeaponItemData
 
     private void Reset()
     {
-        useAnimationType = ItemUseAnimationType.FirearmShoot;
+        useAnimationType = ItemUseAnimationType.None;
+        poseType = ItemPoseType.Rifle;
     }
 }

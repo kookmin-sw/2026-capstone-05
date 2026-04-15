@@ -34,26 +34,39 @@ public class PlayerViewmodelController : MonoBehaviour
     public float breathingAmount = 0.015f;
     private float breathingTimer;
 
-    [Header("Crouch Offset")]
-    public Vector3 crouchPosOffset = new Vector3(0f, -0.08f, -0.05f);
-    public Vector3 crouchRotOffset = new Vector3(0f, 0f, 5f);
-    public float crouchSmoothSpeed = 10f;
-
     private Vector3 defaultLocalPos;
     private Quaternion defaultLocalRot;
 
-    private Vector3 currentSwayPos, currentBobPos, currentCrouchPos;
-    private Quaternion currentSwayRot, currentCrouchRot;
+    private Vector3 currentSwayPos, currentBobPos;
+    private Quaternion currentSwayRot;
+
+    [Header("Recoil Settings")]
+    public float recoilSnappiness = 10f; // 쏠 때 훅! 들어오는 속도
+    public float recoilReturnSpeed = 5f; // 원위치로 스르륵 돌아가는 속도
+
+    private Vector3 currentRecoilPos;
+    private Vector3 targetRecoilPos;
+    private Quaternion currentRecoilRot;
+    private Quaternion targetRecoilRot;
 
     private void Awake()
     {
-        if (viewmodelTransform == null) viewmodelTransform = transform;
+        if (viewmodelTransform == null)
+        {
+            viewmodelTransform = transform;
+        }
+
         defaultLocalPos = viewmodelTransform.localPosition;
         defaultLocalRot = viewmodelTransform.localRotation;
 
-        // 초기화
         currentBobSpeed = walkBobSpeed;
         currentBobAmount = walkBobAmount;
+    }
+
+    public void ApplyRecoil(Vector3 kickbackPos, Vector3 kickbackRot)
+    {
+        targetRecoilPos += kickbackPos;
+        targetRecoilRot *= Quaternion.Euler(kickbackRot);
     }
 
     private void LateUpdate()
@@ -125,20 +138,18 @@ public class PlayerViewmodelController : MonoBehaviour
         currentBobPos = Vector3.Lerp(currentBobPos, targetBobPos, swaySmoothSpeed * Time.deltaTime);
 
         // ==========================================
-        // 3. Crouching
+        // 3. Recoil
         // ==========================================
-        bool isCrouching = player.StateMachine.CurrentState is PlayerGroundedState && (player.StateMachine.CurrentState as PlayerGroundedState).CurrentPosture == PlayerGroundedPosture.Crouching;
+        targetRecoilPos = Vector3.Lerp(targetRecoilPos, Vector3.zero, Time.deltaTime * recoilReturnSpeed);
+        targetRecoilRot = Quaternion.Slerp(targetRecoilRot, Quaternion.identity, Time.deltaTime * recoilReturnSpeed);
 
-        Vector3 targetCrouchPos = isCrouching ? crouchPosOffset : Vector3.zero;
-        Quaternion targetCrouchRot = isCrouching ? Quaternion.Euler(crouchRotOffset) : Quaternion.identity;
-
-        currentCrouchPos = Vector3.Lerp(currentCrouchPos, targetCrouchPos, crouchSmoothSpeed * Time.deltaTime);
-        currentCrouchRot = Quaternion.Slerp(currentCrouchRot, targetCrouchRot, crouchSmoothSpeed * Time.deltaTime);
+        currentRecoilPos = Vector3.Lerp(currentRecoilPos, targetRecoilPos, Time.deltaTime * recoilSnappiness);
+        currentRecoilRot = Quaternion.Slerp(currentRecoilRot, targetRecoilRot, Time.deltaTime * recoilSnappiness);
 
         // ==========================================
-        // 4. 최종 적용
+        // 최종 적용
         // ==========================================
-        viewmodelTransform.localPosition = defaultLocalPos + currentSwayPos + currentBobPos + currentCrouchPos;
-        viewmodelTransform.localRotation = defaultLocalRot * currentSwayRot * currentCrouchRot;
+        viewmodelTransform.localPosition = defaultLocalPos + currentSwayPos + currentBobPos + currentRecoilPos;
+        viewmodelTransform.localRotation = defaultLocalRot * currentSwayRot * currentRecoilRot;
     }
 }

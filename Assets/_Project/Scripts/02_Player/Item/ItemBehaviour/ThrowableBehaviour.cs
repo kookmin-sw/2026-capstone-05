@@ -2,12 +2,20 @@ using UnityEngine;
 
 public class ThrowableBehaviour : EquippedItemBehaviour
 {
-    public override void Use()
+    public override bool Use()
     {
         ThrowableItemData data = itemInstance.Data as ThrowableItemData;
-        if (data == null || itemInstance.currentStackCount <= 0) return;
+        if (data == null || itemInstance.currentStackCount <= 0)
+        {
+            return false;
+        }
 
-        base.Use();
+        if (!base.Use())
+        {
+            return false;
+        }
+
+        return true;
     }
 
     public override void OnAnimationEventTriggered()

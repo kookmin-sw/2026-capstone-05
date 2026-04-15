@@ -26,6 +26,7 @@ public abstract class ItemData : ScriptableObject
 
     [Header("Animation & Action Settings")]
     public ItemUseAnimationType useAnimationType = ItemUseAnimationType.None;
+    public ItemPoseType poseType = ItemPoseType.Default; // 아이템 사용 시 플레이어가 취하는 포즈 타입
     public float actionCooldown = 1f; // 아이템 사용 후 행동이 재사용 가능해질 때까지의 시간 (초)
 
     [Header("Economic Value")]

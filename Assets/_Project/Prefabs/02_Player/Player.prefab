@@ -418,9 +418,8 @@ MonoBehaviour:
   bobTransitionSpeed: 5
   breathingSpeed: 2
   breathingAmount: 0.015
-  crouchPosOffset: {x: 0.2, y: -0.08, z: 0}
-  crouchRotOffset: {x: 5, y: 0, z: 5}
-  crouchSmoothSpeed: 10
+  recoilSnappiness: 10
+  recoilReturnSpeed: 5
 --- !u!1 &3438671979807047463
 GameObject:
   m_ObjectHideFlags: 0
@@ -530,6 +529,7 @@ MonoBehaviour:
   crouchWalkRegenRate: 15
   walkRegenRate: 5
   airborneRegenRate: 0
+  recoilReturnSpeed: 3
 --- !u!114 &1374220835064663929
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -628,6 +628,8 @@ MonoBehaviour:
   player: {fileID: 1915611918036273558}
   handSocket1P: {fileID: 170426603530453525}
   handSocket3P: {fileID: 7682995436253285626}
+  ikManager1P: {fileID: 8457677230617751466}
+  ikManager3P: {fileID: 4843299934781204946}
   unarmedDamage: 5
   unarmedAttackCooldown: 0.5
   unarmedRange: 0.8
