@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GameServer.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+93eb01c477adcc5be92310426885279c8508e7e0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c0320ddaaa7b2ed5809e853197459bc3c458eea1")]
 [assembly: System.Reflection.AssemblyProductAttribute("GameServer.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GameServer.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

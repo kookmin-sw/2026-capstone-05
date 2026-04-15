@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 public sealed class MainMenuAuthController : MonoBehaviour
@@ -23,13 +24,27 @@ public sealed class MainMenuAuthController : MonoBehaviour
     [SerializeField] private Button signupButton;
     [SerializeField] private Button loginButton;
 
+    [Header("Post Login Fallback UI")]
+    [SerializeField] private GameObject loginMenuRoot;
+    [SerializeField] private GameObject mainMenuRoot;
+
+    [Header("Flow")]
+    [SerializeField] private bool replaceLoginButtonPersistentOnClick = true;
+    [Tooltip("로그인 성공 시 Inspector에서 연결한 패널 전환/애니메이션 함수를 호출합니다.")]
+    [SerializeField] private UnityEvent onLoginSuccess;
+
     [Header("Status")]
     [SerializeField] private TMP_Text statusText;
+    [SerializeField] private Color normalStatusColor = Color.white;
+    [SerializeField] private Color successStatusColor = new(0.6f, 1f, 0.6f);
+    [SerializeField] private Color errorStatusColor = new(1f, 0.6f, 0.6f);
 
     private AuthService _authService;
+    private bool _isSubmitting;
 
     private void Awake()
     {
+        AuthSession.Clear();
         AutoBindIfNeeded();
 
         string normalizedApiBaseUrl = NormalizeApiBaseUrl(authApiBaseUrl);
@@ -39,6 +54,7 @@ public sealed class MainMenuAuthController : MonoBehaviour
         {
             signupButton.onClick.RemoveListener(OnSignupClicked);
             signupButton.onClick.AddListener(OnSignupClicked);
+            EnsureButtonFeedback(signupButton);
             Debug.Log($"{LogPrefix} signupButton 리스너 연결 완료. object={signupButton.gameObject.name}");
         }
         else
@@ -48,8 +64,12 @@ public sealed class MainMenuAuthController : MonoBehaviour
 
         if (loginButton != null)
         {
+            if (replaceLoginButtonPersistentOnClick)
+                loginButton.onClick = new Button.ButtonClickedEvent();
+
             loginButton.onClick.RemoveListener(OnLoginClicked);
             loginButton.onClick.AddListener(OnLoginClicked);
+            EnsureButtonFeedback(loginButton);
             Debug.Log($"{LogPrefix} loginButton 리스너 연결 완료. object={loginButton.gameObject.name}");
         }
         else
@@ -57,13 +77,19 @@ public sealed class MainMenuAuthController : MonoBehaviour
             Debug.LogWarning($"{LogPrefix} loginButton 참조가 없습니다.");
         }
 
-        Debug.Log($"{LogPrefix} 초기화 완료. api={normalizedApiBaseUrl}");
+        int onLoginSuccessCount = onLoginSuccess != null ? onLoginSuccess.GetPersistentEventCount() : 0;
+        bool hasValidPersistentListener = HasValidPersistentListener(onLoginSuccess);
+        Debug.Log($"{LogPrefix} 로그인 성공 이벤트 슬롯 수={onLoginSuccessCount}, 유효 리스너={hasValidPersistentListener}, fallbackLoginMenu={loginMenuRoot != null}, fallbackMainMenu={mainMenuRoot != null}");
+
+        SetStatus("서버 연결 확인 중...", normalStatusColor);
         StartCoroutine(_authService.PingDatabase(result =>
         {
             SetStatus(result.IsSuccess
                 ? "서버/DB 연결 확인 완료"
-                : $"서버/DB 연결 실패: {BuildUserMessage(result)}");
+                : $"서버/DB 연결 실패: {BuildUserMessage(result)}", result.IsSuccess ? successStatusColor : errorStatusColor);
         }));
+
+        Debug.Log($"{LogPrefix} 초기화 완료. api={normalizedApiBaseUrl}");
     }
 
     private void OnDestroy()
@@ -77,17 +103,20 @@ public sealed class MainMenuAuthController : MonoBehaviour
 
     private void AutoBindIfNeeded()
     {
-        signupButton ??= FindButtonByCandidates("Signup Button", "Signup", "SignUp", "회원가입", "Join");
+        signupButton ??= FindButtonByCandidates("Signup Button", "Signup", "SignUp", "회원가입", "Join", "Registration Button");
         loginButton ??= FindButtonByCandidates("Login Button", "Login", "로그인");
 
-        signupEmailInput ??= FindInputByCandidates("Signup Email Input", "SignupEmail", "Email");
-        signupNicknameInput ??= FindInputByCandidates("Signup Nickname Input", "SignupNickname", "Nickname");
-        signupPasswordInput ??= FindInputByCandidates("Signup Password Input", "SignupPassword", "Password");
-        signupConfirmPasswordInput ??= FindInputByCandidates("Signup Confirm Password Input", "SignupConfirmPassword", "ConfirmPassword");
+        signupEmailInput ??= FindInputByCandidates("Signup Email Input", "SignupEmail", "Email", "ID InputField");
+        signupNicknameInput ??= FindInputByCandidates("Signup Nickname Input", "SignupNickname", "Nickname", "Name InputField");
+        signupPasswordInput ??= FindInputByCandidates("Signup Password Input", "SignupPassword", "Password", "PW InputField");
+        signupConfirmPasswordInput ??= FindInputByCandidates("Signup Confirm Password Input", "SignupConfirmPassword", "ConfirmPassword", "PW Confirm InputField");
 
-        loginEmailInput ??= FindInputByCandidates("Login Email Input", "LoginEmail");
-        loginPasswordInput ??= FindInputByCandidates("Login Password Input", "LoginPassword");
-        statusText ??= FindTextByCandidates("Status Text", "StatusText", "AuthStatus", "Status");
+        loginEmailInput ??= FindInputByCandidates("Login Email Input", "LoginEmail", "ID InputField");
+        loginPasswordInput ??= FindInputByCandidates("Login Password Input", "LoginPassword", "PW InputField");
+
+        statusText ??= FindTextByCandidates("Status Text", "AuthStatus", "Status", "StatusText", "Notice Text");
+        loginMenuRoot ??= FindObjectByCandidates("Login Menu", "LoginMenu");
+        mainMenuRoot ??= FindObjectByCandidates("Main Menu", "MainMenu");
     }
 
     private static Button FindButtonByCandidates(params string[] candidates)
@@ -126,40 +155,143 @@ public sealed class MainMenuAuthController : MonoBehaviour
         return null;
     }
 
+    private static GameObject FindObjectByCandidates(params string[] candidates)
+    {
+        foreach (string candidate in candidates)
+        {
+            GameObject found = GameObject.Find(candidate);
+            if (found != null)
+                return found;
+        }
+
+        return null;
+    }
+
+    private static void EnsureButtonFeedback(Button button)
+    {
+        if (button == null || button.GetComponent<AuthButtonFeedback>() != null)
+            return;
+
+        button.gameObject.AddComponent<AuthButtonFeedback>();
+    }
+
     private void OnSignupClicked()
     {
+        if (_isSubmitting)
+            return;
+
         string email = signupEmailInput != null ? signupEmailInput.text.Trim() : string.Empty;
         string nickname = signupNicknameInput != null ? signupNicknameInput.text.Trim() : string.Empty;
         string password = signupPasswordInput != null ? signupPasswordInput.text : string.Empty;
         string confirmPassword = signupConfirmPasswordInput != null ? signupConfirmPasswordInput.text : string.Empty;
 
+        SetBusy(true);
+        SetStatus("회원가입 요청 중...", normalStatusColor);
+
         StartCoroutine(_authService.Signup(email, nickname, password, confirmPassword, result =>
         {
-            SetStatus(BuildUserMessage(result));
+            SetBusy(false);
+            SetStatus(BuildUserMessage(result), result.IsSuccess ? successStatusColor : errorStatusColor);
 
             if (!result.IsSuccess)
                 return;
 
             Debug.Log($"{LogPrefix} 회원가입 성공 처리 완료. email={email}");
+
             if (loginEmailInput != null)
                 loginEmailInput.text = email;
 
             if (loginPasswordInput != null)
                 loginPasswordInput.text = password;
+
+            if (signupPasswordInput != null)
+                signupPasswordInput.text = string.Empty;
+
+            if (signupConfirmPasswordInput != null)
+                signupConfirmPasswordInput.text = string.Empty;
         }));
     }
 
     private void OnLoginClicked()
     {
+        if (_isSubmitting)
+            return;
+
         string email = loginEmailInput != null ? loginEmailInput.text.Trim() : string.Empty;
         string password = loginPasswordInput != null ? loginPasswordInput.text : string.Empty;
 
+        SetBusy(true);
+        SetStatus("로그인 요청 중...", normalStatusColor);
+
         StartCoroutine(_authService.Login(email, password, result =>
         {
-            SetStatus(BuildUserMessage(result));
-            if (result.IsSuccess)
-                Debug.Log($"{LogPrefix} 로그인 성공 처리 완료. RoomLauncher 진입 가능 상태.");
+            SetBusy(false);
+            SetStatus(BuildUserMessage(result), result.IsSuccess ? successStatusColor : errorStatusColor);
+
+            if (!result.IsSuccess)
+                return;
+
+            Debug.Log($"{LogPrefix} 로그인 성공 처리 완료. 후속 이벤트 실행.");
+            ExecutePostLoginFlow();
         }));
+    }
+
+    private void ExecutePostLoginFlow()
+    {
+        if (HasValidPersistentListener(onLoginSuccess))
+        {
+            onLoginSuccess?.Invoke();
+            return;
+        }
+
+        bool usedFallback = false;
+
+        if (loginMenuRoot != null)
+        {
+            loginMenuRoot.SetActive(false);
+            usedFallback = true;
+        }
+
+        if (mainMenuRoot != null)
+        {
+            mainMenuRoot.SetActive(true);
+            usedFallback = true;
+        }
+
+        if (usedFallback)
+        {
+            Debug.LogWarning($"{LogPrefix} onLoginSuccess 함수가 없어 fallback 패널 전환 실행(loginMenu off / mainMenu on).");
+            return;
+        }
+
+        Debug.LogError($"{LogPrefix} 로그인 성공 후 전환할 동작이 없습니다. onLoginSuccess 함수 또는 fallback 패널 참조를 설정하세요.");
+    }
+
+    private static bool HasValidPersistentListener(UnityEvent unityEvent)
+    {
+        if (unityEvent == null)
+            return false;
+
+        int count = unityEvent.GetPersistentEventCount();
+        for (int i = 0; i < count; i++)
+        {
+            Object target = unityEvent.GetPersistentTarget(i);
+            string methodName = unityEvent.GetPersistentMethodName(i);
+            if (target != null && !string.IsNullOrWhiteSpace(methodName))
+                return true;
+        }
+
+        return false;
+    }
+
+    private void SetBusy(bool isBusy)
+    {
+        _isSubmitting = isBusy;
+        if (signupButton != null)
+            signupButton.interactable = !isBusy;
+
+        if (loginButton != null)
+            loginButton.interactable = !isBusy;
     }
 
     private static string BuildUserMessage(AuthResult result)
@@ -168,20 +300,25 @@ public sealed class MainMenuAuthController : MonoBehaviour
         {
             AuthResultCode.Success => result.Message,
             AuthResultCode.InvalidInput => $"입력 오류: {result.Message}",
-            AuthResultCode.DuplicateUsername => "회원가입 실패: 이미 존재하는 이메일입니다.",
-            AuthResultCode.UserNotFound => "로그인 실패: 계정이 없습니다.",
-            AuthResultCode.WrongPassword => "로그인 실패: 비밀번호가 일치하지 않습니다.",
-            AuthResultCode.DatabaseError => "DB/API 오류가 발생했습니다. 콘솔 로그를 확인하세요.",
+            AuthResultCode.DuplicateUsername => $"회원가입 실패: {result.Message}",
+            AuthResultCode.DuplicateNickname => $"회원가입 실패: {result.Message}",
+            AuthResultCode.UserNotFound => $"로그인 실패: {result.Message}",
+            AuthResultCode.WrongPassword => $"로그인 실패: {result.Message}",
+            AuthResultCode.NetworkError => $"네트워크 오류: {result.Message}",
+            AuthResultCode.DatabaseError => $"서버 오류: {result.Message}",
             _ => result.Message
         };
     }
 
-    private void SetStatus(string message)
+    private void SetStatus(string message, Color color)
     {
         Debug.Log($"{LogPrefix} 상태 메시지 갱신. message={message}");
 
         if (statusText != null)
+        {
             statusText.text = message;
+            statusText.color = color;
+        }
     }
 
     private static string NormalizeApiBaseUrl(string baseUrl)

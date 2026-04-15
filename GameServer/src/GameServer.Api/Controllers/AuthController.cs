@@ -47,6 +47,7 @@ public sealed class AuthController : ControllerBase
         {
             AuthFailureCode.InvalidInput => BadRequest(result.Message),
             AuthFailureCode.DuplicateUsername => Conflict(result.Message),
+            AuthFailureCode.DuplicateNickname => Conflict(result.Message),
             AuthFailureCode.DatabaseError => StatusCode(500, result.Message),
             _ => BadRequest(result.Message)
         };
