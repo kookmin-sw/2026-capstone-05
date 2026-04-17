@@ -3,8 +3,9 @@ using UnityEngine.UIElements;
 
 namespace Systems.GridInventory {
     public static class GridInventoryDragHelper {
-        public static float SlotSize { get; set; } = 65f;
-        public static float SlotSpacing { get; set; } = 4f;
+        public static float SlotSize { get; set; } = 100f;
+        public static float SlotSpacing { get; set; } = 0f;
+        public static float ItemPadding { get; set; } = 4f;
 
         public static void GetGhostSizeAndPivot(ItemInstance item, out float dragWidth, out float dragHeight, out float anchorXRatio, out float anchorYRatio) {
             var basePositions = item.Data.gridShape.GetRotatedPositions(ItemRotation.Deg0);
@@ -18,11 +19,18 @@ namespace Systems.GridInventory {
             int baseWidth = (baseMaxX - baseMinX) + 1;
             int baseHeight = (baseMaxY - baseMinY) + 1;
             
-            anchorXRatio = (-baseMinX + 0.5f) / baseWidth;
-            anchorYRatio = (-baseMinY + 0.5f) / baseHeight;
+            float slotTotalSize = SlotSize + SlotSpacing;
+            dragWidth = (baseWidth * slotTotalSize) - ItemPadding;
+            dragHeight = (baseHeight * slotTotalSize) - ItemPadding;
 
-            dragWidth = (baseWidth * SlotSize) + ((baseWidth - 1) * SlotSpacing);
-            dragHeight = (baseHeight * SlotSize) + ((baseHeight - 1) * SlotSpacing);
+            // 앵커(Pivot)는 원본(Deg0) 기준 0,0 셀의 정중앙이어야 합니다.
+            // 아이템의 왼쪽 끝은 (ItemPadding / 2) 만큼 패딩이 들어가 있습니다.
+            // 0,0 셀의 중앙은 로컬 좌표계에서 (-baseMinX * slotTotalSize) + (SlotSize / 2f) - (ItemPadding / 2f) 입니다.
+            float anchorXPixel = (-baseMinX * slotTotalSize) + (SlotSize / 2f) - (ItemPadding / 2f);
+            float anchorYPixel = (-baseMinY * slotTotalSize) + (SlotSize / 2f) - (ItemPadding / 2f);
+
+            anchorXRatio = dragWidth > 0 ? anchorXPixel / dragWidth : 0f;
+            anchorYRatio = dragHeight > 0 ? anchorYPixel / dragHeight : 0f;
         }
 
         public static void UpdateGhostPosition(VisualElement ghost, Vector2 screenPosition) {
