@@ -30,7 +30,8 @@ public class EnemyHealth : MonoBehaviour, IDamageable
         }
 
         if (enemy.StateMachine.CurrentState != enemy.DeadState &&
-            enemy.StateMachine.CurrentState != enemy.AttackState)
+        enemy.StateMachine.CurrentState != enemy.AttackState &&
+        enemy.StateMachine.CurrentState != enemy.HitState)
         {
             enemy.StateMachine.ChangeState(enemy.HitState);
         }
