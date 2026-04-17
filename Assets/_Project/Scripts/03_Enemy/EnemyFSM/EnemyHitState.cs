@@ -26,6 +26,8 @@ public class EnemyHitState : EnemyState
 
         enemy.Agent.isStopped = false;
         enemy.Agent.updateRotation = true;
+
+        enemy.Animator.CrossFade("Locomotion", 0.2f);
     }
 
     public override void LogicUpdate()
