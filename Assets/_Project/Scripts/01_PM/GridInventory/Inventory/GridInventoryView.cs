@@ -54,10 +54,10 @@ namespace Systems.GridInventory {
             var slotsContainer = inventory.Q<VisualElement>(name: "slotsContainer");
             
             // 컨테이너 크기 동적 계산 (슬롯 사이즈 대응)
-            float containerPaddingTotal = 22f; // 12f left/top + 10f right/bottom
-            slotsContainer.style.width = (currentColumns * SlotTotalSize) + containerPaddingTotal;
+            float containerPaddingTotal = 20f; // 10f left/top + 10f right/bottom
+            slotsContainer.style.width = (currentColumns * SlotTotalSize) + containerPaddingTotal + 4f; // 4f 여유 공간 추가 (Flex-wrap 오차 방지)
             int rowsForUpdate = Mathf.CeilToInt((float)size / currentColumns);
-            slotsContainer.style.height = (rowsForUpdate * SlotTotalSize) + containerPaddingTotal;
+            slotsContainer.style.height = (rowsForUpdate * SlotTotalSize) + containerPaddingTotal + 4f;
             
             var existingSlots = slotsContainer.Query<GridSlot>().ToList();
 

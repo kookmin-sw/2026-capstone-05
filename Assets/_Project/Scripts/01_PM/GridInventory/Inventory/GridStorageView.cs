@@ -21,9 +21,10 @@ namespace Systems.GridInventory {
         protected VisualElement root;
         protected VisualElement container;
 
-        protected float slotSize = 65f;
-        protected float slotSpacing = 4f;
-        protected float paddingLeftTop = 12f;
+        protected float slotSize = 100f;
+        protected float slotSpacing = 0f;
+        protected float paddingLeftTop = 10f;
+        protected float itemPadding = 4f; // 아이템의 시각적 여백 (슬롯 마진을 없애고 아이템 크기를 줄임)
 
         protected float SlotTotalSize => slotSize + slotSpacing;
 
@@ -91,11 +92,11 @@ namespace Systems.GridInventory {
                 int logicalLeftCol = col + item.MinX;
                 int logicalTopRow = row + item.MinY;
 
-                item.style.left = paddingLeftTop + logicalLeftCol * SlotTotalSize;
-                item.style.top = paddingLeftTop + logicalTopRow * SlotTotalSize;
+                item.style.left = paddingLeftTop + logicalLeftCol * SlotTotalSize + (itemPadding / 2f);
+                item.style.top = paddingLeftTop + logicalTopRow * SlotTotalSize + (itemPadding / 2f);
 
-                item.style.width = (item.Width * SlotTotalSize) - slotSpacing;
-                item.style.height = (item.Height * SlotTotalSize) - slotSpacing;
+                item.style.width = (item.Width * SlotTotalSize) - itemPadding;
+                item.style.height = (item.Height * SlotTotalSize) - itemPadding;
             }
         }
 
@@ -145,8 +146,8 @@ namespace Systems.GridInventory {
                     ghostIcon.style.width = draggedItem.Icon.style.width;
                     ghostIcon.style.height = draggedItem.Icon.style.height;
 
-                    float newWidth = (draggedItem.Width * SlotTotalSize) - slotSpacing;
-                    float newHeight = (draggedItem.Height * SlotTotalSize) - slotSpacing;
+                    float newWidth = (draggedItem.Width * SlotTotalSize) - itemPadding;
+                    float newHeight = (draggedItem.Height * SlotTotalSize) - itemPadding;
 
                     draggedItem.style.width = newWidth;
                     draggedItem.style.height = newHeight;
