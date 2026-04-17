@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 6145595453461541907}
   - component: {fileID: 7475947378720659353}
   - component: {fileID: 8524155529575229384}
+  - component: {fileID: 1295530464003885314}
   m_Layer: 7
   m_Name: Enemy1_1
   m_TagString: Enemy
@@ -118,6 +119,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 91ad3ac7ce093504faf5712b94f225ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAnimationEventHandler
+--- !u!136 &1295530464003885314
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6947545585843501229}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 1
+  m_Height: 2
+  m_Direction: 1
+  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1001 &4801926030991762472
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -126,6 +150,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7263378446141510871}
     m_Modifications:
+    - target: {fileID: 3417274790482185124, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4764799934287172908, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -170,7 +198,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: OtherSideBeast1_1
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 3417274790482185124, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
