@@ -4,25 +4,21 @@
     right: 0;
     top: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.75); /* 반투명 검은색 배경 (흐린 효과) */
+    background-color: rgba(0, 0, 0, 0.75);
     align-items: center;
     justify-content: center;
     -unity-font-definition: url("project://database/Assets/_Project/ThirdParty/TextMesh%20Pro/Examples%20&%20Extras/Fonts/Anton.ttf?fileID=12800000&guid=997a43b767814dd0a7642ec9b78cba41&type=3#Anton");
     color: rgb(220, 220, 220);
-    /* display: none; 처음에 숨겨둠: Tab키로 토글 (스크립트에서 런타임에 숨기도록 변경) */
 }
 
 .main-window {
-    width: 60%;
-    height: 80%;
-    min-width: 1000px;
-    min-height: 700px;
-    background-color: rgb(15, 15, 15);
-    border-color: rgb(40, 40, 40);
-    border-width: 2px;
-    border-radius: 4px;
+    width: 1440px;
+    height: 810px;
+    background-color: transparent;
+    border-width: 0;
     flex-direction: column;
     padding: 20px;
+    background-image: url("project://database/Assets/_Project/Assets/04_UI/UI/popup.png?fileID=21300000&guid=d377e82806aac4a4088e123845017d41&type=3#popup");
 }
 
 .inventoryHeader {
@@ -82,20 +78,20 @@
     flex-direction: row;
     align-items: flex-start;
     justify-content: flex-start;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: transparent;
     padding: 10px;
-    border-width: 1px;
-    border-color: rgb(40, 40, 40);
+    border-width: 0;
     flex-shrink: 0;
 }
 
 .slot {
-    width: 65px;
-    height: 65px;
-    margin: 2px;
-    background-color: rgb(10, 10, 10);
-    border-color: rgb(60, 60, 60);
-    border-width: 1px;
+    width: 100px;
+    height: 100px;
+    margin: 0;
+    background-color: transparent;
+    border-width: 0;
+    background-image: url("project://database/Assets/_Project/Assets/04_UI/UI/inventory_square.png?fileID=21300000&guid=ce6485323fc06ef42bf85cc61e70e4a7&type=3#inventory_square");
+    -unity-background-scale-mode: stretch-to-fill;
 }
 
 .slot:hover {
@@ -113,8 +109,8 @@
 .ghostIcon {
     visibility: hidden;
     position: absolute;
-    width: 65px;
-    height: 65px;
+    width: 100px;
+    height: 100px;
     background-image: none;
     -unity-background-scale-mode: scale-to-fit;
 }

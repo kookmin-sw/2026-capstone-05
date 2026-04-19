@@ -110,14 +110,16 @@ namespace Systems.GridInventory {
 
             // 논리적 앵커(0,0)가 부모(회전된 바운딩 박스)의 앵커(0,0) 위치와 일치하도록 오프셋을 계산합니다.
             // 부모 박스 내에서 앵커(0,0)의 위치:
-            float slotSize = 65f;
-            float slotSpacing = 4f;
+            float slotSize = 100f;
+            float slotSpacing = 0f; // 동기화됨: 슬롯 간격 0
             float rotatedAnchorX = (-minX * (slotSize + slotSpacing));
             float rotatedAnchorY = (-minY * (slotSize + slotSpacing));
 
-            // Icon(자식)의 앵커(0,0)를 부모의 앵커 위치에 일치시키기 위한 left, top:
-            float iconLeft = rotatedAnchorX - (baseAnchorXRatio * baseW - (slotSize/2));
-            float iconTop = rotatedAnchorY - (baseAnchorYRatio * baseH - (slotSize/2));
+        // Icon(자식)의 앵커(0,0)를 부모의 앵커 위치에 일치시키기 위한 left, top:
+        // 아이템 패딩(4px)으로 인해 아이템 크기가 줄어들었으므로, 내부 아이콘 배치 시 이를 보정합니다.
+        float itemPadding = 4f;
+        float iconLeft = rotatedAnchorX - (baseAnchorXRatio * baseW - ((slotSize - itemPadding)/2f));
+        float iconTop = rotatedAnchorY - (baseAnchorYRatio * baseH - ((slotSize - itemPadding)/2f));
 
             Icon.style.left = iconLeft;
             Icon.style.top = iconTop;
@@ -173,8 +175,8 @@ namespace Systems.GridInventory {
         public override bool ContainsPoint(Vector2 localPoint) {
             if (!base.ContainsPoint(localPoint)) return false;
 
-            float slotSize = 65f;
-            float slotSpacing = 4f;
+            float slotSize = 100f;
+            float slotSpacing = 0f;
             float slotTotalSize = slotSize + slotSpacing;
 
             int lx = Mathf.FloorToInt(localPoint.x / slotTotalSize);
