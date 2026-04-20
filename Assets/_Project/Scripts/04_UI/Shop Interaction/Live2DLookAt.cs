@@ -1,67 +1,77 @@
 using UnityEngine;
 using Live2D.Cubism.Framework.LookAt;
 
-[RequireComponent(typeof(CubismLookController))]
-[RequireComponent(typeof(Animator))]
 public class Live2DLookAt : MonoBehaviour, ICubismLookTarget
 {
-    [Header("시선 추적 세팅")]
-    [Range(0.1f, 10f)] public float damping = 5f; // 고개 돌아가는 속도
+    [Header("UI 세팅")]
+    [Tooltip("마스코트 화면이 나오는 RawImage (Mascot RT)")]
+    public RectTransform mascotUIRect; 
+
+    private Camera uiCamera; 
     private CubismLookController lookController;
-    private Vector3 targetPos;
+    private Vector3 targetPosition;
 
-    [Header("애니메이션 세팅")]
-    private Animator mascotAnimator;
-
-    void Awake()
+    private void Start()
     {
         lookController = GetComponent<CubismLookController>();
-        mascotAnimator = GetComponent<Animator>();
+        if (lookController != null)
+        {
+            lookController.Target = this; // 스크립트 스스로를 타겟으로 등록
+        }
+
+        // 캔버스의 렌더 모드를 파악하여 적절한 카메라 찾기
+        if (mascotUIRect != null)
+        {
+            Canvas canvas = mascotUIRect.GetComponentInParent<Canvas>();
+            if (canvas != null && canvas.renderMode == RenderMode.ScreenSpaceCamera)
+            {
+                uiCamera = canvas.worldCamera;
+            }
+        }
+    }
+
+    private void Update()
+    {
+        if (mascotUIRect == null) return;
+
+        Vector2 mousePos = Input.mousePosition;
+        Vector2 localPoint;
+
+        // 1. 캔버스 모드에 따라 마우스 화면 좌표를 UI 로컬 좌표로 변환
+        if (uiCamera != null) 
+        {
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(mascotUIRect, mousePos, uiCamera, out localPoint);
+        }
+        else 
+        {
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(mascotUIRect, mousePos, null, out localPoint);
+        }
+
+        // 2. 피벗(Pivot) 위치에 상관없이 정확하게 화면 비율을 구함
+        Rect rect = mascotUIRect.rect;
         
-        // 룩 컨트롤러에게 내가 타겟이라고 알려줌
-        if (lookController != null) lookController.Target = this;
+        // InverseLerp: localPoint.x가 사각형의 왼쪽 끝(xMin)이면 0, 오른쪽 끝(xMax)이면 1을 반환
+        // 그 후 * 2 - 1 을 해주면 0~1 값이 완벽하게 -1 ~ 1 사이의 값으로 변환됨
+        float normalizedX = Mathf.InverseLerp(rect.xMin, rect.xMax, localPoint.x) * 2f - 1f;
+        float normalizedY = Mathf.InverseLerp(rect.yMin, rect.yMax, localPoint.y) * 2f - 1f;
+
+        // 3. 눈동자 제한 (부드러운 시선 처리를 위해 필요시 0.8f 정도로 줄여도 좋습니다)
+        normalizedX = Mathf.Clamp(normalizedX, -1f, 1f);
+        normalizedY = Mathf.Clamp(normalizedY, -1f, 1f);
+
+        targetPosition = new Vector3(normalizedX, normalizedY, 0f);
+
+        // 테스트용 로그 (마우스 움직일 때마다 값이 -1.00 에서 1.00 사이로 잘 변하는지 확인)
+        Debug.Log($"최종 타겟 -> X: {targetPosition.x:F2}, Y: {targetPosition.y:F2}");
     }
 
-    // --- 애니메이션 이벤트 구독 ---
-    private void OnEnable()
+    public Vector3 GetPosition()
     {
-        MascotEventManager.OnGreeting += PlayGreeting;
-        MascotEventManager.OnThankYou += PlayThankYou;
-        MascotEventManager.OnSurprise += PlaySurprise;
-        MascotEventManager.OnLaugh    += PlayLaugh;
-        MascotEventManager.OnReject   += PlayReject;
+        return targetPosition;
     }
 
-    private void OnDisable()
+    public bool IsActive()
     {
-        MascotEventManager.OnGreeting -= PlayGreeting;
-        MascotEventManager.OnThankYou -= PlayThankYou;
-        MascotEventManager.OnSurprise -= PlaySurprise;
-        MascotEventManager.OnLaugh    -= PlayLaugh;
-        MascotEventManager.OnReject   -= PlayReject;
+        return true;
     }
-
-    // --- 마우스 추적 (Render Texture UI 환경에 완벽 최적화) ---
-    void Update()
-    {
-        // 화면 전체에서 마우스가 어디 있는지 비율(-1 ~ 1)로 정확히 계산
-        float x = (Input.mousePosition.x / Screen.width) * 2f - 1f;
-        float y = (Input.mousePosition.y / Screen.height) * 2f - 1f;
-
-        Vector3 newTarget = new Vector3(x, y, 0);
-        
-        // 부드러운 시선 이동 (Lerp)
-        targetPos = Vector3.Lerp(targetPos, newTarget, Time.deltaTime * damping);
-    }
-
-    // Live2D 엔진이 이 함수를 통해 targetPos 값을 가져감
-    public Vector3 GetPosition() => targetPos;
-    public bool IsActive() => true;
-
-    // --- 애니메이션 실행 함수들 ---
-    private void PlayGreeting()  { mascotAnimator.SetTrigger("PlayGreeting"); }
-    private void PlayThankYou()  { mascotAnimator.SetTrigger("PlayThankYou"); }
-    private void PlaySurprise()  { mascotAnimator.SetTrigger("PlaySurprise"); }
-    private void PlayLaugh()     { mascotAnimator.SetTrigger("PlaySmile"); }
-    private void PlayReject()    { mascotAnimator.SetTrigger("PlayReject"); }
 }
