@@ -1,25 +1,27 @@
 using UnityEngine;
 using System.Collections;
+using DG.Tweening;
 
 public class MascotDialogueUI : MonoBehaviour
 {
-    [Header("말풍선 배경")]
-    public GameObject speechBubbleBackground; 
+    [Header("말풍선 전체 묶음")]
+    public GameObject speechBubbleRoot; 
 
-    [Header("대사별 텍스트 오브젝트 (Localization 적용됨)")]
+    [Header("대사별 텍스트 오브젝트")]
     public GameObject textGreeting;
     public GameObject textThankYou;
     public GameObject textSurprise;
     public GameObject textLaugh;
     public GameObject textReject;
 
-    [Header("설정")]
-    public float displayTime = 3.0f; // 말풍선 표시 시간
+    public float displayTime = 3.0f; 
+    public float animationDuration = 0.3f;
 
-    private GameObject currentActiveText; // 현재 켜져 있는 텍스트 추적용
+    private GameObject currentActiveText; 
     private Coroutine hideCoroutine;
 
-    private void OnEnable()
+    // 💡 1. Start 대신 Awake에서 구독하여 이벤트를 놓치지 않게 함
+    private void Awake()
     {
         MascotEventManager.OnGreeting  += ShowGreeting;
         MascotEventManager.OnThankYou  += ShowThankYou;
@@ -28,7 +30,17 @@ public class MascotDialogueUI : MonoBehaviour
         MascotEventManager.OnReject    += ShowReject;
     }
 
-    private void OnDisable()
+    // 💡 2. 상점 UI가 켜질 때마다 스케일을 0으로 초기화
+    private void OnEnable()
+    {
+        if (speechBubbleRoot != null)
+        {
+            speechBubbleRoot.transform.localScale = Vector3.zero;
+            speechBubbleRoot.SetActive(false);
+        }
+    }
+
+    private void OnDestroy()
     {
         MascotEventManager.OnGreeting  -= ShowGreeting;
         MascotEventManager.OnThankYou  -= ShowThankYou;
@@ -37,43 +49,46 @@ public class MascotDialogueUI : MonoBehaviour
         MascotEventManager.OnReject    -= ShowReject;
     }
 
-    // --- 이벤트 수신 함수 ---
-    private void ShowGreeting() => ActivateSpecificText(textGreeting);
-    private void ShowThankYou() => ActivateSpecificText(textThankYou);
-    private void ShowSurprise() => ActivateSpecificText(textSurprise);
-    private void ShowLaugh()    => ActivateSpecificText(textLaugh);
-    private void ShowReject()   => ActivateSpecificText(textReject);
+    // 외부에서 버튼이나 상점 스크립트가 직접 호출할 수 있도록 public으로 둠
+    public void ShowGreeting() => ActivateSpecificText(textGreeting);
+    public void ShowThankYou() => ActivateSpecificText(textThankYou);
+    public void ShowSurprise() => ActivateSpecificText(textSurprise);
+    public void ShowLaugh()    => ActivateSpecificText(textLaugh);
+    public void ShowReject()   => ActivateSpecificText(textReject);
 
-    // 핵심 로직: 기존 것을 끄고 원하는 것만 켬
     private void ActivateSpecificText(GameObject targetTextObj)
     {
         if (targetTextObj == null) return;
 
-        // 1. 말풍선 배경 켜기
-        if (speechBubbleBackground != null) 
-            speechBubbleBackground.SetActive(true);
+        if (currentActiveText != null) currentActiveText.SetActive(false);
 
-        // 2. 이전에 켜져 있던 텍스트가 있다면 끄기 (겹침 방지)
-        if (currentActiveText != null && currentActiveText != targetTextObj)
-        {
-            currentActiveText.SetActive(false);
-        }
-
-        // 3. 목표 텍스트 켜고 현재 상태 업데이트
         targetTextObj.SetActive(true);
         currentActiveText = targetTextObj;
 
-        // 4. 타이머 초기화
+        if (speechBubbleRoot != null)
+        {
+            speechBubbleRoot.transform.DOKill(); 
+            speechBubbleRoot.SetActive(true);
+            speechBubbleRoot.transform.localScale = Vector3.zero;
+            // 등장 애니메이션
+            speechBubbleRoot.transform.DOScale(Vector3.one, animationDuration).SetEase(Ease.OutBack);
+        }
+
         if (hideCoroutine != null) StopCoroutine(hideCoroutine);
         hideCoroutine = StartCoroutine(HideDialogueAfterTime());
     }
 
-    // 시간 경과 후 모두 끄기
     private IEnumerator HideDialogueAfterTime()
     {
         yield return new WaitForSeconds(displayTime);
         
-        if (speechBubbleBackground != null) speechBubbleBackground.SetActive(false);
-        if (currentActiveText != null)      currentActiveText.SetActive(false);
+        if (speechBubbleRoot != null) 
+        {
+            speechBubbleRoot.transform.DOScale(Vector3.zero, 0.2f).SetEase(Ease.InBack).OnComplete(() => 
+            {
+                speechBubbleRoot.SetActive(false);
+                if (currentActiveText != null) currentActiveText.SetActive(false);
+            });
+        }
     }
 }
