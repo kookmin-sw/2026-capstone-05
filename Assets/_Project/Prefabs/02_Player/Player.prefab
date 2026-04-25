@@ -441,6 +441,7 @@ GameObject:
   - component: {fileID: 7920691128559841607}
   - component: {fileID: 6804007478212921028}
   - component: {fileID: 238594519516289107}
+  - component: {fileID: 1979278333881505096}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -504,9 +505,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   testItem: {fileID: 0}
   cameraTransform: {fileID: 219158335034487518}
-  walkSpeed: 2.5
-  sprintSpeed: 5
-  crouchSpeed: 1.5
+  walkSpeed: 3
+  sprintSpeed: 6
+  crouchSpeed: 2
   jumpForce: 6
   gravityScale: 1.5
   currentVelocity: {x: 0, y: 0, z: 0}
@@ -521,7 +522,7 @@ MonoBehaviour:
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 64
-  sprintStaminaCost: 15
+  sprintStaminaCost: 10
   minStaminaToSprint: 10
   jumpStaminaCost: 10
   staminaRegenDelay: 1.5
@@ -716,6 +717,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f5e6451a1af4e9ab0ed88c1f9d95f22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackendPlayerNetworkSync
+--- !u!114 &1979278333881505096
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3438671979807047463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44a90c7318e3e914ba8e2befb1998c41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
+  player: {fileID: 1915611918036273558}
+  mainCamera: {fileID: 0}
+  interactionRange: 3
+  interactableLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  interactionCooldown: 0.3
 --- !u!1 &4209545890320065660
 GameObject:
   m_ObjectHideFlags: 0
