@@ -22,9 +22,11 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     [SerializeField] private string gameSceneNameFallback = "TestMain";
 
     [Header("Network")]
-    [SerializeField] private int maxPlayers = 8;
+    [SerializeField] private int maxPlayers = 4;
     [SerializeField] private string roomSessionPrefix = string.Empty;
     [SerializeField] private NetworkObject playerPrefab;
+    [SerializeField] private Vector3 spawnBasePosition = new(1004f, -29f, -993f);
+    [SerializeField] private Vector3 spawnPerPlayerOffset = Vector3.zero;
 
     [Header("Room Code Overlay")]
     [SerializeField] private bool showRoomCodeOverlay = true;
@@ -681,12 +683,18 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    private Vector3 GetSpawnPosition(PlayerRef player)
+    private (Vector3 position, Quaternion rotation) GetSpawnPose(PlayerRef player)
     {
-        int index = Math.Abs(player.RawEncoded % Math.Max(1, maxPlayers));
-        float angle = 360f / Math.Max(1, maxPlayers) * index;
-        Vector3 offset = Quaternion.Euler(0f, angle, 0f) * (Vector3.forward * 2.5f);
-        return new Vector3(0f, 1f, 0f) + offset;
+        int playerIndex = Mathf.Max(0, player.RawEncoded - 1);
+        Vector3 offset = spawnPerPlayerOffset * playerIndex;
+
+        if (Spawner.Instance != null)
+        {
+            Transform spawnPoint = Spawner.Instance.GetSpawnPoint();
+            return (spawnPoint.position + offset, spawnPoint.rotation);
+        }
+
+        return (spawnBasePosition + offset, Quaternion.identity);
     }
 
     private void ConfigurePlayerObjectIfNeeded(NetworkObject playerObject, string reason)
@@ -812,9 +820,29 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
                 return;
             }
 
-            Vector3 spawnPos = GetSpawnPosition(player);
-            Debug.Log($"{LogPrefix} 플레이어 스폰 요청. player={player}, pos={spawnPos}");
-            NetworkObject spawned = runner.Spawn(playerPrefab, spawnPos, Quaternion.identity, player);
+            (Vector3 spawnPos, Quaternion spawnRot) = GetSpawnPose(player);
+            Debug.Log($"{LogPrefix} 플레이어 스폰 요청. player={player}, pos={spawnPos}, rot={spawnRot.eulerAngles}");
+            NetworkObject spawned = runner.Spawn(
+                playerPrefab,
+                spawnPos,
+                spawnRot,
+                player,
+                onBeforeSpawned: (_, networkObject) =>
+                {
+                    if (networkObject != null)
+                    {
+                        networkObject.transform.SetPositionAndRotation(spawnPos, spawnRot);
+                    }
+                });
+
+            if (spawned == null)
+            {
+                Debug.LogError($"{LogPrefix} 플레이어 스폰 실패. player={player}, requestedPos={spawnPos}");
+                return;
+            }
+
+            spawned.transform.SetPositionAndRotation(spawnPos, spawnRot);
+            Debug.Log($"{LogPrefix} 플레이어 스폰 위치 강제 적용 완료. player={player}, actualPos={spawned.transform.position}");
             runner.SetPlayerObject(player, spawned);
             _spawnedPlayers[player] = spawned;
             Debug.Log($"{LogPrefix} 플레이어 네트워크 오브젝트 생성 완료. player={player}, netId={spawned.Id}, prefab={playerPrefab.name}");
