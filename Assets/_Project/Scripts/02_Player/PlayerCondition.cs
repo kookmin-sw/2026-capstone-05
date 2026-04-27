@@ -17,6 +17,10 @@ public class PlayerCondition : MonoBehaviour, IDamageable
 
     public event Action<float> OnTakeDamageEvent;
 
+    public event Action OnDiedEvent;
+
+    private bool hasRaisedDeathEvent;
+
 
     private void Start()
     {
@@ -65,9 +69,24 @@ public class PlayerCondition : MonoBehaviour, IDamageable
 
             if (!IsAlive)
             {
+                if (!hasRaisedDeathEvent)
+                {
+                    hasRaisedDeathEvent = true;
+                    OnDiedEvent?.Invoke();
+                }
                 Debug.Log("Player has died.");
             }
         }
+    }
+
+    public void ReviveToFull()
+    {
+        health.Add(health.maxValue);
+        stamina.Add(stamina.maxValue);
+        satiety.Add(satiety.maxValue);
+        coldness.Add(coldness.maxValue);
+
+        hasRaisedDeathEvent = false;
     }
 
     /// <summary>

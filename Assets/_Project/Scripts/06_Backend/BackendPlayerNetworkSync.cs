@@ -4,11 +4,17 @@ using UnityEngine;
 [RequireComponent(typeof(NetworkObject))]
 public class BackendPlayerNetworkSync : NetworkBehaviour
 {
+    private const float SpawnLockDurationSeconds = 0.35f;
 
     private PlayerController _playerController;
     private PlayerInputHandler _inputHandler;
     private PlayerAnimator _playerAnimator;
     private Transform _cameraTransform;
+    private Vector3 _authoritativeSpawnPosition;
+    private Quaternion _authoritativeSpawnRotation;
+    private float _spawnLockRemainingSeconds;
+    private bool _spawnGravityWasEnabled;
+    private bool _spawnLockInitialized;
 
     [Networked] private Vector3 NetworkPosition { get; set; }
     [Networked] private Quaternion NetworkRotation { get; set; }
@@ -35,6 +41,7 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
 
         if (HasStateAuthority)
         {
+            BeginServerSpawnLock();
             NetworkPosition = transform.position;
             NetworkRotation = transform.rotation;
             CameraPitch = ReadPitch();
@@ -51,6 +58,8 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
 
         if (HasStateAuthority)
         {
+            UpdateServerSpawnLock();
+
             if (_inputHandler != null &&
                 !Object.HasInputAuthority &&
                 GetInput(out BackendPlayerNetworkInput input))
@@ -76,6 +85,48 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
             NetworkIsCrouching = _playerController != null &&
                                 _playerController.GroundedState != null &&
                                 _playerController.GroundedState.CurrentPosture == PlayerGroundedPosture.Crouching;
+        }
+    }
+
+    private void BeginServerSpawnLock()
+    {
+        _authoritativeSpawnPosition = transform.position;
+        _authoritativeSpawnRotation = transform.rotation;
+        _spawnLockRemainingSeconds = SpawnLockDurationSeconds;
+        _spawnLockInitialized = true;
+
+        if (_playerController != null)
+        {
+            _spawnGravityWasEnabled = _playerController.useGravity;
+            _playerController.useGravity = false;
+            _playerController.currentVelocity = Vector3.zero;
+        }
+    }
+
+    private void UpdateServerSpawnLock()
+    {
+        if (!_spawnLockInitialized)
+            return;
+
+        if (_spawnLockRemainingSeconds > 0f)
+        {
+            _spawnLockRemainingSeconds -= Runner != null ? Runner.DeltaTime : Time.deltaTime;
+
+            transform.SetPositionAndRotation(_authoritativeSpawnPosition, _authoritativeSpawnRotation);
+
+            if (_playerController != null)
+            {
+                _playerController.currentVelocity = Vector3.zero;
+            }
+
+            return;
+        }
+
+        _spawnLockInitialized = false;
+
+        if (_playerController != null)
+        {
+            _playerController.useGravity = _spawnGravityWasEnabled;
         }
     }
 
