@@ -20,6 +20,8 @@ public class PlayerInteraction : MonoBehaviour
     
     // 외곽선 효과를 위한 변수
     private Outline currentOutline;
+    private float holdProgressSeconds;
+    private bool holdTriggered;
 
     private void Awake()
     {
@@ -29,24 +31,27 @@ public class PlayerInteraction : MonoBehaviour
         if (player == null)
             player = FindAnyObjectByType<PlayerController>();
 
-        if (mainCamera == null)
-            mainCamera = Camera.main;
+        ResolveInteractionCamera();
     }
     private void Update()
     {
         CheckInteractionFocus();
 
-        // Player Controller 와 InputHandler 가 잘 존재하는지 확인
-        if (player != null && player.InputHandler != null)
+        if (player == null || player.InputHandler == null)
         {
-            // 사용자가 상호작용 키(E 등)를 눌렀는지 확인
-            if (player.InputHandler.InteractTriggered)
-            {
-                PerformInteraction();
-                
-                // 중복해서 여러 오브젝트와 한 번에 상호작용하지 않게 입력 소모
-                player.InputHandler.ConsumeInteract();
-            }
+            return;
+        }
+
+        if (currentInteractable is IHoldInteractable holdInteractable)
+        {
+            UpdateHoldInteraction(holdInteractable);
+            return;
+        }
+
+        if (player.InputHandler.InteractTriggered)
+        {
+            PerformInteraction();
+            player.InputHandler.ConsumeInteract();
         }
     }
 
@@ -55,11 +60,8 @@ public class PlayerInteraction : MonoBehaviour
     /// </summary>
     private void CheckInteractionFocus()
     {
-        if (mainCamera == null)
-        {
-            mainCamera = Camera.main; // 런타임에라도 빈 값이면 채워줌
-            if (mainCamera == null) return;
-        }
+        ResolveInteractionCamera();
+        if (mainCamera == null) return;
 
         Ray ray = new Ray(mainCamera.transform.position, mainCamera.transform.forward);
         RaycastHit[] hits = Physics.RaycastAll(ray, interactionRange, interactableLayers);
@@ -101,6 +103,39 @@ public class PlayerInteraction : MonoBehaviour
         }
     }
 
+
+    private void UpdateHoldInteraction(IHoldInteractable holdInteractable)
+    {
+        if (Time.time - lastInteractionTime < interactionCooldown)
+        {
+            return;
+        }
+
+        if (!player.InputHandler.IsInteractPressed)
+        {
+            holdProgressSeconds = 0f;
+            holdTriggered = false;
+            return;
+        }
+
+        if (holdTriggered)
+        {
+            return;
+        }
+
+        holdProgressSeconds += Time.deltaTime;
+        float requiredSeconds = Mathf.Max(0.1f, holdInteractable.GetHoldDuration(player));
+
+        if (holdProgressSeconds >= requiredSeconds)
+        {
+            holdTriggered = true;
+            holdProgressSeconds = 0f;
+            holdInteractable.OnHoldInteract(player);
+            lastInteractionTime = Time.time;
+            player.InputHandler.ConsumeInteract();
+        }
+    }
+
     private void SetCurrentInteractable(GameObject obj, IInteractable interactable)
     {
         currentLookObject = obj;
@@ -123,6 +158,11 @@ public class PlayerInteraction : MonoBehaviour
             // 객체 이름과 상호작용 키 표시 (E키)
             string objName = interactable.GetObjectName();
             string prompt = interactable.GetInteractPrompt();
+            if (interactable is IHoldInteractable holdInteractable)
+            {
+                float holdSeconds = Mathf.Max(0.1f, holdInteractable.GetHoldDuration(player));
+                prompt = $"[Hold E {holdSeconds:0.#}s]";
+            }
             InteractionUI.Instance.Show(objName, prompt, obj.transform);
         }
     }
@@ -145,6 +185,8 @@ public class PlayerInteraction : MonoBehaviour
         currentLookObject = null;
         currentInteractable = null;
         currentOutline = null;
+        holdProgressSeconds = 0f;
+        holdTriggered = false;
     }
     
     /// <summary>
@@ -171,5 +213,33 @@ public class PlayerInteraction : MonoBehaviour
         // 상호작용 범위 시각화
         Gizmos.color = Color.yellow; 
         Gizmos.DrawWireSphere(transform.position, interactionRange);
+    }
+
+    private void ResolveInteractionCamera()
+    {
+        if (mainCamera != null && mainCamera.isActiveAndEnabled)
+        {
+            return;
+        }
+
+        // 1) MainCamera 태그 우선
+        mainCamera = Camera.main;
+        if (mainCamera != null && mainCamera.isActiveAndEnabled)
+        {
+            return;
+        }
+
+        // 2) 플레이어 하위 카메라(프리팹 구조 변경 대응)
+        if (player != null)
+        {
+            mainCamera = player.GetComponentInChildren<Camera>(true);
+            if (mainCamera != null && mainCamera.isActiveAndEnabled)
+            {
+                return;
+            }
+        }
+
+        // 3) 마지막 폴백: 씬의 활성 카메라 아무거나
+        mainCamera = FindAnyObjectByType<Camera>();
     }
 }

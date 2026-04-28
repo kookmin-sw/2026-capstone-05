@@ -16,7 +16,7 @@ public class PlayerNetworkSetup : MonoBehaviour
     private void Start()
     {
         // 테스트 코드
-        InitializeNetworkState(true);
+        //InitializeNetworkState(true);
     }
 
     public void InitializeNetworkState(bool isLocalPlayer)

@@ -18,6 +18,7 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
     public bool JumpTriggered { get; private set; }
     public bool CrouchTriggered { get; private set; }
     public bool InteractTriggered { get; private set; }
+    public bool IsInteractPressed { get; private set; }
     public bool ActionTriggered { get; private set; }
 
     private bool _useNetworkInputOverride;
@@ -36,7 +37,12 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
             CrouchTriggered = true;
         };
         inputActions.Player.Crouch.canceled += ctx => IsCrouchPressed = false;
-        inputActions.Player.Interact.started += ctx => InteractTriggered = true;
+        inputActions.Player.Interact.started += ctx =>
+        {
+            InteractTriggered = true;
+            IsInteractPressed = true;
+        };
+        inputActions.Player.Interact.canceled += ctx => IsInteractPressed = false;
         inputActions.Player.Action.started += ctx => ActionTriggered = true;
 
         // Holds
@@ -101,6 +107,7 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
         JumpTriggered = false;
         CrouchTriggered = false;
         InteractTriggered = false;
+        IsInteractPressed = false;
         ActionTriggered = false;
         _previousNetworkCrouch = false;
     }
@@ -143,7 +150,14 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
         if (snapshot.Crouch && !_previousNetworkCrouch)
             CrouchTriggered = true;
         if (snapshot.Interact)
+        {
             InteractTriggered = true;
+            IsInteractPressed = true;
+        }
+        else
+        {
+            IsInteractPressed = false;
+        }
         if (snapshot.Action)
             ActionTriggered = true;
 
