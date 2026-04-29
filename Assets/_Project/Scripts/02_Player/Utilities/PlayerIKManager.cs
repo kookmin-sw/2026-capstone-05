@@ -20,6 +20,13 @@ public class PlayerIKManager : MonoBehaviour
     private float actionLeftWeight = 0f;
     private float actionRightWeight = 0f;
 
+    private RigBuilder rigBuilder;
+
+    private void Awake()
+    {
+        rigBuilder = GetComponent<RigBuilder>();
+    }
+
     /// <summary>
     /// 무기를 장착/해제할 때 호출합니다.
     /// </summary>
@@ -27,6 +34,7 @@ public class PlayerIKManager : MonoBehaviour
     {
         leftHandIK.data.target = gripTarget;
         baseLeftWeight = gripTarget != null ? 1f : 0f;
+        rigBuilder.Build();
     }
 
     public void SetActionIKOverride(bool isOverride, float left, float right)
