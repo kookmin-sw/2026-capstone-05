@@ -24,6 +24,9 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     [Header("Network")]
     [SerializeField] private int maxPlayers = 4;
     [SerializeField] private string roomSessionPrefix = string.Empty;
+    [SerializeField] private bool forceFixedNetworkTick = true;
+    [SerializeField, Range(15, 120)] private int forcedNetworkTickRate = 30;
+    [SerializeField] private bool disableVSyncWhenForcingTick = true;
     [SerializeField] private NetworkObject playerPrefab;
     [SerializeField] private Vector3 spawnBasePosition = new(1004f, -29f, -993f);
     [SerializeField] private Vector3 spawnPerPlayerOffset = Vector3.zero;
@@ -443,7 +446,8 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
                 SessionName = sessionName,
                 PlayerCount = maxPlayers,
                 Scene = SceneRef.FromIndex(gameSceneBuildIndex),
-                SceneManager = _sceneManager
+                SceneManager = _sceneManager,
+                Config = BuildStartGameConfig()
             });
 
             if (result.Ok)
@@ -583,6 +587,27 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
             _runner.AddCallbacks(this);
             _callbacksRegistered = true;
         }
+    }
+
+    private NetworkProjectConfig BuildStartGameConfig()
+    {
+        NetworkProjectConfig baseConfig = NetworkProjectConfig.Global;
+        if (baseConfig == null)
+            return null;
+
+        if (!forceFixedNetworkTick)
+            return baseConfig;
+
+        int clampedTickRate = Mathf.Clamp(forcedNetworkTickRate, 15, 120);
+
+        Time.fixedDeltaTime = 1f / clampedTickRate;
+        if (disableVSyncWhenForcingTick)
+            QualitySettings.vSyncCount = 0;
+
+        Application.targetFrameRate = clampedTickRate;
+
+        Debug.Log($"{LogPrefix} 고정 틱 적용. tickRate={clampedTickRate}, fixedDeltaTime={Time.fixedDeltaTime:0.0000}, vSync={QualitySettings.vSyncCount}, targetFps={Application.targetFrameRate}");
+        return baseConfig;
     }
 
     private int ResolveGameSceneBuildIndex()
@@ -875,7 +900,6 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
                 _cachedLocalInputHandler = null;
             }
 
-
             runner.Despawn(spawned);
             _spawnedPlayers.Remove(player);
         }
@@ -913,7 +937,6 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
             return;
 
         BackendPlayerNetworkInput payload = default;
-
         PlayerInputHandler inputHandler = GetOrResolveLocalInputHandler(runner);
         if (inputHandler != null)
         {
@@ -949,6 +972,7 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }
     public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
+
     private PlayerInputHandler GetOrResolveLocalInputHandler(NetworkRunner runner)
     {
         if (_cachedLocalInputHandler != null && _cachedLocalPlayerObject != null)
