@@ -42,6 +42,8 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     private readonly Dictionary<PlayerRef, NetworkObject> _spawnedPlayers = new();
     private readonly Dictionary<NetworkId, bool> _configuredLocalStates = new();
     private readonly HashSet<NetworkId> _pendingAuthorityChecks = new();
+    private NetworkObject _cachedLocalPlayerObject;
+    private PlayerInputHandler _cachedLocalInputHandler;
 
     private Button _loginButton;
     private Button _startButton;
@@ -728,6 +730,12 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
         adapter.ApplyNetworkSetup(isLocal, reason);
         _configuredLocalStates[playerObject.Id] = isLocal;
+
+        if (isLocal)
+        {
+            _cachedLocalPlayerObject = playerObject;
+            _cachedLocalInputHandler = playerObject.GetComponent<PlayerInputHandler>();
+        }
     }
 
     private void ScheduleAuthorityReadyReconfigure(NetworkObject playerObject, string reason)
@@ -861,6 +869,13 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
         if (_spawnedPlayers.TryGetValue(player, out NetworkObject spawned) && spawned != null)
         {
+            if (_cachedLocalPlayerObject == spawned)
+            {
+                _cachedLocalPlayerObject = null;
+                _cachedLocalInputHandler = null;
+            }
+
+
             runner.Despawn(spawned);
             _spawnedPlayers.Remove(player);
         }
@@ -887,6 +902,8 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         _spawnedPlayers.Clear();
         _configuredLocalStates.Clear();
         _pendingAuthorityChecks.Clear();
+        _cachedLocalPlayerObject = null;
+        _cachedLocalInputHandler = null;
         Debug.LogWarning($"{LogPrefix} 네트워크 세션 종료. reason={shutdownReason}");
     }
 
@@ -897,23 +914,20 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
         BackendPlayerNetworkInput payload = default;
 
-        if (runner.TryGetPlayerObject(runner.LocalPlayer, out NetworkObject localObject) && localObject != null)
+        PlayerInputHandler inputHandler = GetOrResolveLocalInputHandler(runner);
+        if (inputHandler != null)
         {
-            PlayerInputHandler inputHandler = localObject.GetComponent<PlayerInputHandler>();
-            if (inputHandler != null)
-            {
-                payload.Move = inputHandler.MoveInput;
-                payload.Look = inputHandler.LookInput;
+            payload.Move = inputHandler.MoveInput;
+            payload.Look = inputHandler.LookInput;
 
-                NetworkButtons buttons = default;
-                buttons.Set(BackendPlayerNetworkInput.SprintButton, inputHandler.IsSprinting);
-                buttons.Set(BackendPlayerNetworkInput.JumpButton, inputHandler.JumpTriggered);
-                // Crouch는 trigger가 아닌 hold 상태를 전송해야 패킷 손실 시에도 상태가 꼬이지 않습니다.
-                buttons.Set(BackendPlayerNetworkInput.CrouchButton, inputHandler.IsCrouchPressed);
-                buttons.Set(BackendPlayerNetworkInput.InteractButton, inputHandler.InteractTriggered);
-                buttons.Set(BackendPlayerNetworkInput.ActionButton, inputHandler.ActionTriggered);
-                payload.Buttons = buttons;
-            }
+            NetworkButtons buttons = default;
+            buttons.Set(BackendPlayerNetworkInput.SprintButton, inputHandler.IsSprinting);
+            buttons.Set(BackendPlayerNetworkInput.JumpButton, inputHandler.JumpTriggered);
+            // Crouch는 trigger가 아닌 hold 상태를 전송해야 패킷 손실 시에도 상태가 꼬이지 않습니다.
+            buttons.Set(BackendPlayerNetworkInput.CrouchButton, inputHandler.IsCrouchPressed);
+            buttons.Set(BackendPlayerNetworkInput.InteractButton, inputHandler.InteractTriggered);
+            buttons.Set(BackendPlayerNetworkInput.ActionButton, inputHandler.ActionTriggered);
+            payload.Buttons = buttons;
         }
 
         input.Set(payload);
@@ -935,4 +949,16 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }
     public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
+    private PlayerInputHandler GetOrResolveLocalInputHandler(NetworkRunner runner)
+    {
+        if (_cachedLocalInputHandler != null && _cachedLocalPlayerObject != null)
+            return _cachedLocalInputHandler;
+
+        if (!runner.TryGetPlayerObject(runner.LocalPlayer, out NetworkObject localObject) || localObject == null)
+            return null;
+
+        _cachedLocalPlayerObject = localObject;
+        _cachedLocalInputHandler = localObject.GetComponent<PlayerInputHandler>();
+        return _cachedLocalInputHandler;
+    }
 }
