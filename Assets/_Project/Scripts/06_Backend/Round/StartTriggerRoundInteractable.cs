@@ -6,6 +6,7 @@ public class StartTriggerRoundInteractable : NetworkBehaviour, IInteractable, IH
     [Header("Round Trigger")]
     [SerializeField] private BackendRoundManager roundManager;
     [SerializeField] private float holdSeconds = 2f;
+    [SerializeField] private float toggleDebounceSeconds = 0.75f;
 
     [Header("Interaction Assist")]
     [SerializeField] private bool autoCreateInteractionCollider = true;
@@ -20,6 +21,7 @@ public class StartTriggerRoundInteractable : NetworkBehaviour, IInteractable, IH
 
     private SphereCollider assistCollider;
     private Outline cachedOutline;
+    private float lastToggleRequestTime = float.NegativeInfinity;
 
     public bool CanInteract(PlayerController player)
     {
@@ -50,6 +52,11 @@ public class StartTriggerRoundInteractable : NetworkBehaviour, IInteractable, IH
             return;
         }
 
+        if (Time.time - lastToggleRequestTime < toggleDebounceSeconds)
+        {
+            return;
+        }
+
         PlayerRef requester = PlayerRef.None;
         NetworkObject playerNetworkObject = player != null ? player.GetComponent<NetworkObject>() : null;
         if (playerNetworkObject != null)
@@ -57,7 +64,9 @@ public class StartTriggerRoundInteractable : NetworkBehaviour, IInteractable, IH
             requester = playerNetworkObject.InputAuthority;
         }
 
-        roundManager.RpcRequestToggleRound(requester);
+        bool shouldStartRound = !roundManager.IsRoundRunning;
+        roundManager.RpcRequestSetRoundState(requester, shouldStartRound);
+        lastToggleRequestTime = Time.time;
     }
 
     public string GetInteractPrompt()
@@ -99,6 +108,7 @@ public class StartTriggerRoundInteractable : NetworkBehaviour, IInteractable, IH
     {
         assistColliderRadius = Mathf.Max(0.5f, assistColliderRadius);
         maxInteractDistance = Mathf.Max(assistColliderRadius, maxInteractDistance);
+        toggleDebounceSeconds = Mathf.Max(0.1f, toggleDebounceSeconds);
 
         if (assistCollider != null)
         {
