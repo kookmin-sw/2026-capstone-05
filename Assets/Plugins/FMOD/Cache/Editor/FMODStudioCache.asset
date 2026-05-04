@@ -15,10 +15,10 @@ MonoBehaviour:
   Path: FMOD_Project/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639105671637910729
+  lastModified: 639135027245757915
   FileSizes:
   - Name: Desktop
-    Value: 1074
+    Value: 2027200
   Exists: 1
 --- !u!114 &11400000
 MonoBehaviour:
@@ -35,15 +35,45 @@ MonoBehaviour:
   EditorBanks:
   - {fileID: 2120258606684106499}
   - {fileID: -1094752039627391627}
-  EditorEvents: []
+  EditorEvents:
+  - {fileID: 1454783420652357023}
   EditorParameters: []
   MasterBanks:
   - {fileID: -1094752039627391627}
   StringsBanks:
   - {fileID: 2120258606684106499}
   cacheVersion: 131858
-  cacheTime: 639105671637920709
-  SerializableEventsDict: []
+  cacheTime: 639135027245767907
+  SerializableEventsDict:
+  - key: event:/TestAmbience
+    index: 0
+--- !u!114 &1454783420652357023
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/TestAmbience
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/TestAmbience
+  Guid:
+    Data1: 414267257
+    Data2: 1183318280
+    Data3: 1741834672
+    Data4: -2087058585
+  Banks:
+  - {fileID: -1094752039627391627}
+  IsStream: 1
+  Is3D: 0
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 163005
 --- !u!114 &2120258606684106499
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -59,8 +89,8 @@ MonoBehaviour:
   Path: FMOD_Project/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639105671637920709
+  lastModified: 639135027245767907
   FileSizes:
   - Name: Desktop
-    Value: 724
+    Value: 972
   Exists: 1
