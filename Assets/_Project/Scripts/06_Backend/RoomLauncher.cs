@@ -15,6 +15,9 @@ using UnityEngine.UI;
 public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 {
     private const string LogPrefix = "[06_Backend][RoomLauncher]";
+    private const string HostRoundCountPrefKeyPrefix = "06_Backend.HostRoundCount";
+    private const string HostSelectedSlotPrefKey = "HostSaveSlot";
+    private const string DefaultHostIdentity = "anonymous-host";
 
     [Header("Scene")]
     [SerializeField] private string startSceneName = "Main_menu";
@@ -53,8 +56,13 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     private Button _hostButton;
     private Button _joinButton;
     private Button _enterButton;
+    private readonly Dictionary<int, Button> _hostSlotButtons = new();
+    private readonly Dictionary<int, Button> _hostConfirmButtons = new();
+    private int _pendingHostSlot = -1;
+    private bool _hostFlowBound;
     private TMP_InputField _roomCodeInput;
     private InputField _roomCodeInputLegacy;
+    private LoadGameMenuController _loadGameMenuController;
 
     private string _latestRoomCode = string.Empty;
     private Canvas _roomCodeCanvas;
@@ -179,6 +187,10 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
             Debug.LogWarning($"{LogPrefix} Host Button을 찾지 못했습니다.");
         }
 
+        BindHostFlowUi();
+        _loadGameMenuController ??= new LoadGameMenuController(this);
+        _loadGameMenuController.BindAndRefresh();
+
         if (_joinButton != null)
         {
             _joinButton.onClick.RemoveListener(OnJoinButtonClicked);
@@ -212,6 +224,64 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
         return true;
     }
+
+
+    private void BindHostFlowUi()
+    {
+        _hostSlotButtons.Clear();
+        _hostConfirmButtons.Clear();
+        _hostFlowBound = false;
+
+        BindHostSlotButton(1, "Start Game Box1", "Gmae1 Start Box", "Start Box1");
+        BindHostSlotButton(2, "Start Game Box2", "Gmae2 Start Box", "Start Box2");
+        BindHostSlotButton(3, "Start Game Box3", "Gmae3 Start Box", "Start Box3");
+
+        BindHostConfirmButton(1, "Start Game Confirm PopUp1");
+        BindHostConfirmButton(2, "Start Game Confirm PopUp2");
+        BindHostConfirmButton(3, "Start Game Confirm PopUp3");
+
+        _hostFlowBound = _hostSlotButtons.Count == 3 && _hostConfirmButtons.Count == 3;
+    }
+
+    private void BindHostSlotButton(int slot, params string[] containerCandidates)
+    {
+        Button button = FindButtonInNamedContainer(containerCandidates);
+        if (button == null)
+            return;
+
+        button.onClick.AddListener(() => OnHostSlotButtonClicked(slot));
+        _hostSlotButtons[slot] = button;
+    }
+
+    private void BindHostConfirmButton(int slot, params string[] containerCandidates)
+    {
+        Button button = FindButtonInNamedContainer(containerCandidates);
+        if (button == null)
+            return;
+
+        button.onClick.AddListener(() => OnHostConfirmButtonClicked(slot));
+        _hostConfirmButtons[slot] = button;
+    }
+
+    private static Button FindButtonInNamedContainer(params string[] containerCandidates)
+    {
+        if (containerCandidates == null || containerCandidates.Length == 0)
+            return null;        
+
+        Transform[] transforms = FindObjectsOfType<Transform>(true);
+        foreach (Transform target in transforms)
+        {
+            if (!ContainsAny(target.name, containerCandidates))
+                continue;
+
+            Button button = target.GetComponentInChildren<Button>(true);
+            if (button != null)
+                return button;
+        }
+
+        return null;
+    }
+
 
     private static Button FindButtonByCandidates(params string[] candidates)
     {
@@ -325,7 +395,8 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         if (!EnsureLoggedInForMenuAction("시작하기"))
             return;
 
-        Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 시작하기 버튼 클릭.");
+        _loadGameMenuController?.BindAndRefresh();
+        Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 시작하기 버튼 클릭. 슬롯 UI 최신화 완료.");
     }
 
     private void OnHostButtonClicked()
@@ -333,8 +404,46 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         if (!EnsureLoggedInForMenuAction("호스트"))
             return;
 
-        Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 호스트 버튼 클릭.");
+        if (!_hostFlowBound)
+        {
+            BindHostFlowUi();
+            if (!_hostFlowBound)
+            {
+                Debug.LogWarning($"{LogPrefix} Host 흐름 UI 바인딩 실패. Start Box(1/2/3), Confirm PopUp(1/2/3) 오브젝트 이름을 확인하세요.");
+                return;
+            }
+        }
 
+        _pendingHostSlot = -1;
+        Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 호스트 버튼 클릭. Start Game Menu에서 저장 슬롯(1/2/3) 선택 대기.");
+    }
+
+    private void OnHostSlotButtonClicked(int slot)
+    {
+        if (!EnsureLoggedInForMenuAction($"호스트 슬롯 {slot}"))
+            return;
+
+        _pendingHostSlot = slot;
+        Debug.Log($"{LogPrefix} 호스트 슬롯 선택. slot={slot}. Start Game Confirm PopUp{slot} 확인 버튼 대기.");
+    }
+
+    private void OnHostConfirmButtonClicked(int slot)
+    {
+        if (!EnsureLoggedInForMenuAction($"호스트 확인 {slot}"))
+            return;
+
+        if (_pendingHostSlot != slot)
+        {
+            Debug.LogWarning($"{LogPrefix} 확인 팝업 슬롯 불일치. pending={_pendingHostSlot}, clicked={slot}. 슬롯 선택 후 다시 시도하세요.");
+            return;
+        }
+
+        _pendingHostSlot = -1;
+        StartHostGameForSlot(slot);
+    }
+
+    private void StartHostGameForSlot(int slot)
+    {
         int roomCode = GenerateHostRoomCode();
         string normalizedCode = roomCode.ToString();
         string sessionName = ResolveSessionName(roomCode);
@@ -343,7 +452,14 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         SetRoomCodeInputText(normalizedCode);
         RefreshRoomCodeOverlay();
 
-        Debug.Log($"{LogPrefix} 호스트 방 생성. 생성된 방 코드(1~1000)={normalizedCode}");
+        PlayerPrefs.SetInt(HostSelectedSlotPrefKey, slot);
+        PlayerPrefs.SetString($"HostSlot{slot}_RoomCode", normalizedCode);
+        BackendRoundManager.ResetAllHostSlotRoundsToOne();
+        PlayerPrefs.SetString(BuildHostSaveDatePrefKey(slot), DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        PlayerPrefs.Save();
+        _loadGameMenuController?.RefreshSlotUi();
+
+        Debug.Log($"{LogPrefix} 호스트 방 생성. slot={slot}, 생성된 방 코드(1~1000)={normalizedCode}");
         Debug.Log($"{LogPrefix} 코드 -> 룸 이름 매핑. code={normalizedCode}, session={sessionName}");
 
         _ = StartGameAsync(normalizedCode, sessionName, GameMode.Host);
@@ -355,6 +471,30 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
             return;
 
         Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 참가 버튼 클릭.");
+    }
+
+    internal bool CanProceedMenuAction(string actionName)
+    {
+        return EnsureLoggedInForMenuAction(actionName);
+    }
+
+    internal void StartLoadedHostGameForSlot(int slot)
+    {
+        int roomCode = GenerateHostRoomCode();
+        string normalizedCode = roomCode.ToString();
+        string sessionName = ResolveSessionName(roomCode);
+
+        _latestRoomCode = normalizedCode;
+        SetRoomCodeInputText(normalizedCode);
+        RefreshRoomCodeOverlay();
+
+        PlayerPrefs.SetInt(HostSelectedSlotPrefKey, slot);
+        PlayerPrefs.SetString($"HostSlot{slot}_RoomCode", normalizedCode);
+        PlayerPrefs.Save();
+
+        int round = Mathf.Max(1, PlayerPrefs.GetInt(BuildHostRoundCountPrefKey(slot), 1));
+        Debug.Log($"{LogPrefix} 불러오기 시작(Host). slot={slot}, roomCode={normalizedCode}, resumeRound={round}");
+        _ = StartGameAsync(normalizedCode, sessionName, GameMode.Host);
     }
 
     private void OnEnterButtonClicked()
@@ -405,6 +545,24 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     private static bool IsValidRoomCode(string code)
     {
         return TryParseRoomCode(code, out _);
+    }
+
+    internal static string BuildHostRoundCountPrefKey(int slot)
+    {
+        int safeSlot = Mathf.Clamp(slot, 1, 3);
+        return $"{HostRoundCountPrefKeyPrefix}.{GetNormalizedHostIdentity()}.slot{safeSlot}";
+    }
+
+    internal static string BuildHostSaveDatePrefKey(int slot)
+    {
+        int safeSlot = Mathf.Clamp(slot, 1, 3);
+        return $"HostSlotSavedDate.{GetNormalizedHostIdentity()}.slot{safeSlot}";
+    }
+
+    private static string GetNormalizedHostIdentity()
+    {
+        string rawIdentity = AuthSession.IsLoggedIn ? AuthSession.CurrentUserId : DefaultHostIdentity;
+        return string.IsNullOrWhiteSpace(rawIdentity) ? DefaultHostIdentity : rawIdentity.Trim().ToLowerInvariant();
     }
 
     private string ResolveSessionName(int roomCode)

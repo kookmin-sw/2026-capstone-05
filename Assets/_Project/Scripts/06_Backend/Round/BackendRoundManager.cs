@@ -4,8 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(NetworkObject))]
 public class BackendRoundManager : NetworkBehaviour
 {
-    private const string HostRoundCountPrefKeyPrefix = "06_Backend.HostRoundCount";
-    private const string DefaultHostIdentity = "anonymous-host";
+    private const string HostSelectedSlotPrefKey = "HostSaveSlot";
 
     [Header("Round")]
     [SerializeField] private float roundDurationSeconds = 300f;
@@ -14,7 +13,8 @@ public class BackendRoundManager : NetworkBehaviour
     [Networked] public TickTimer RoundTimer { get; private set; }
     [Networked] public int CurrentRoundNumber { get; private set; }
 
-    private string _hostRoundCountPrefKey = $"{HostRoundCountPrefKeyPrefix}.{DefaultHostIdentity}";
+    private string _hostRoundCountPrefKey = RoomLauncher.BuildHostRoundCountPrefKey(1);
+    private int _activeHostSlot = 1;
 
     public float RoundTimeRemainingSeconds
     {
@@ -36,8 +36,9 @@ public class BackendRoundManager : NetworkBehaviour
             return;
         }
 
-        _hostRoundCountPrefKey = BuildHostRoundCountPrefKey();
-        CurrentRoundNumber = Mathf.Max(0, PlayerPrefs.GetInt(_hostRoundCountPrefKey, 0));
+        _activeHostSlot = Mathf.Clamp(PlayerPrefs.GetInt(HostSelectedSlotPrefKey, 1), 1, 3);
+        _hostRoundCountPrefKey = RoomLauncher.BuildHostRoundCountPrefKey(_activeHostSlot);
+        CurrentRoundNumber = Mathf.Max(1, PlayerPrefs.GetInt(_hostRoundCountPrefKey, 1));
         IsRoundRunning = false;
         RoundTimer = TickTimer.None;
 
@@ -58,20 +59,27 @@ public class BackendRoundManager : NetworkBehaviour
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    public void RpcRequestToggleRound(PlayerRef requestedBy)
+    public void RpcRequestSetRoundState(PlayerRef requestedBy, NetworkBool shouldRun)
     {
         if (!HasStateAuthority)
         {
             return;
         }
 
-        if (IsRoundRunning)
+        if (shouldRun)
         {
-            EndRound($"RequestedBy:{requestedBy}");
+            if (!IsRoundRunning)
+            {
+                StartRound($"RequestedBy:{requestedBy}");
+            }
+
             return;
         }
 
-        StartRound($"RequestedBy:{requestedBy}");
+        if (IsRoundRunning)
+        {
+            EndRound($"RequestedBy:{requestedBy}");
+        }
     }
 
     private void StartRound(string reason)
@@ -81,6 +89,7 @@ public class BackendRoundManager : NetworkBehaviour
         CurrentRoundNumber += 1;
 
         PlayerPrefs.SetInt(_hostRoundCountPrefKey, CurrentRoundNumber);
+        PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(_activeHostSlot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         PlayerPrefs.Save();
 
         Debug.Log($"[BackendRoundManager] 라운드 시작. round={CurrentRoundNumber}, reason={reason}, duration={roundDurationSeconds}s");
@@ -91,9 +100,13 @@ public class BackendRoundManager : NetworkBehaviour
         IsRoundRunning = false;
         RoundTimer = TickTimer.None;
 
+        PlayerPrefs.SetInt(_hostRoundCountPrefKey, CurrentRoundNumber);
+        PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(_activeHostSlot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        PlayerPrefs.Save();
+
         RespawnAllPlayersAtSpawner();
 
-        Debug.Log($"[BackendRoundManager] 라운드 종료. round={CurrentRoundNumber}, reason={reason}");
+        Debug.Log($"[BackendRoundManager] 라운드 종료. slot={_activeHostSlot}, round={CurrentRoundNumber}, reason={reason}");
     }
 
     private void RespawnAllPlayersAtSpawner()
@@ -127,16 +140,16 @@ public class BackendRoundManager : NetworkBehaviour
         }
     }
 
-    private static string BuildHostRoundCountPrefKey()
+    public static void ResetAllHostSlotRoundsToOne()
     {
-        string rawIdentity = AuthSession.IsLoggedIn
-            ? AuthSession.CurrentUserId
-            : DefaultHostIdentity;
+        for (int slot = 1; slot <= 3; slot++)
+        {
+            string key = RoomLauncher.BuildHostRoundCountPrefKey(slot);
+            PlayerPrefs.SetInt(key, 1);
+            PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(slot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        }
 
-        string normalizedIdentity = string.IsNullOrWhiteSpace(rawIdentity)
-            ? DefaultHostIdentity
-            : rawIdentity.Trim().ToLowerInvariant();
-
-        return $"{HostRoundCountPrefKeyPrefix}.{normalizedIdentity}";
+        PlayerPrefs.Save();
     }
+
 }
