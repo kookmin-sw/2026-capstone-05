@@ -443,7 +443,6 @@ GameObject:
   - component: {fileID: 238594519516289107}
   - component: {fileID: 1979278333881505096}
   - component: {fileID: -1790409643959626491}
-  - component: {fileID: 3918628400317177669}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -750,25 +749,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerRespawn
   respawnDelaySeconds: 3
---- !u!114 &3918628400317177669
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3438671979807047463}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 44a90c7318e3e914ba8e2befb1998c41, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
-  player: {fileID: 1915611918036273558}
-  mainCamera: {fileID: 0}
-  interactionRange: 3
-  interactableLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  interactionCooldown: 0.3
 --- !u!1 &4209545890320065660
 GameObject:
   m_ObjectHideFlags: 0
