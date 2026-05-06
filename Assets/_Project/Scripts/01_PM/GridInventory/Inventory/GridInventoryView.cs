@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -13,6 +13,9 @@ namespace Systems.GridInventory {
 
         public event System.Action OnSaveClicked;
         public event System.Action OnLoadClicked;
+
+        private PlayerInputHandler localPlayerInputHandler;
+        private float playerSearchTimer = 0f;
 
         private void Awake() {
             if (Instance == null) Instance = this;
@@ -114,7 +117,25 @@ namespace Systems.GridInventory {
 
         protected override void Update() {
             base.Update();
-            
+
+            if (localPlayerInputHandler == null)
+            {
+                playerSearchTimer -= Time.deltaTime;
+                if (playerSearchTimer <= 0f)
+                {
+                    playerSearchTimer = 1f; // 1초 간격으로 플레이어 탐색 (성능 최적화)
+                    PlayerController[] controllers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+                    foreach (var controller in controllers)
+                    {
+                        if (controller.IsLocalPlayer)
+                        {
+                            localPlayerInputHandler = controller.InputHandler;
+                            break;
+                        }
+                    }
+                }
+            }
+
             // Tab 키를 누르면 인벤토리 토글 (표시/숨김)
             if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame && container != null) {
                 bool isHidden = container.style.display == DisplayStyle.None;
@@ -132,9 +153,8 @@ namespace Systems.GridInventory {
                 }
 
                 // 플레이어 조작 활성/비활성화 (열렸을 때 조작 끄기)
-                PlayerInputHandler playerInput = UnityEngine.Object.FindAnyObjectByType<PlayerInputHandler>();
-                if (playerInput != null) {
-                    playerInput.SetInputActive(!isHidden);
+                if (localPlayerInputHandler != null) {
+                    localPlayerInputHandler.SetInputActive(!isHidden);
                 }
             }
         }

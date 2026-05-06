@@ -23,10 +23,8 @@ public enum ItemUseAnimationType
     None,
     UnarmedAttack,
     MeleeAttack,
-    Eat,
-    Drink,
     Throw,
-    ToolUse
+    ConsumeItem
 }
 
 public enum ItemPoseType
