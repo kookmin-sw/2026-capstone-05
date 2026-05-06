@@ -16,6 +16,7 @@ public class EnemyDeadState : EnemyState
         enemy.Agent.enabled = false;
 
         enemy.Animator.SetTrigger("Dead");
+        enemy.NotifyAnimatorTrigger("Dead");
     }
 
     public override void Exit() { }

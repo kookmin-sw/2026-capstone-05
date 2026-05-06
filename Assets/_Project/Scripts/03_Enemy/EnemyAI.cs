@@ -1,10 +1,12 @@
+using Fusion;
 using UnityEngine;
 using UnityEngine.AI;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
-public class EnemyAI : MonoBehaviour, INoiseListener
+[RequireComponent(typeof(NetworkObject))]
+public class EnemyAI : NetworkBehaviour, INoiseListener
 {
     // Serialized Fields
     [SerializeField] private EnemyData data;
@@ -13,6 +15,30 @@ public class EnemyAI : MonoBehaviour, INoiseListener
     private float lastNoiseTime;
     private float rotationVelocity;
     private readonly Collider[] attackCheckBuffer = new Collider[16];
+    private int lastAttackTriggerCount;
+    private int lastHitTriggerCount;
+    private int lastDeadTriggerCount;
+    private int lastTurnLeftTriggerCount;
+    private int lastTurnRightTriggerCount;
+
+    [Networked] private Vector3 NetworkPosition { get; set; }
+    [Networked] private Quaternion NetworkRotation { get; set; }
+    [Networked] private Vector3 NetworkDetectedNoisePosition { get; set; }
+    [Networked] private float NetworkSuspicion { get; set; }
+    [Networked] private NetworkBool NetworkHasDetectedNoise { get; set; }
+
+    [Networked] private float NetworkAnimSpeed { get; set; }
+    [Networked] private float NetworkAnimAngle { get; set; }
+    [Networked] private NetworkBool NetworkAnimIsAlert { get; set; }
+    [Networked] private int NetworkAnimWaitIndex { get; set; }
+    [Networked] private int NetworkAnimHitIndex { get; set; }
+    [Networked] private int NetworkAttackTriggerCount { get; set; }
+    [Networked] private int NetworkHitTriggerCount { get; set; }
+    [Networked] private int NetworkDeadTriggerCount { get; set; }
+    [Networked] private int NetworkTurnLeftTriggerCount { get; set; }
+    [Networked] private int NetworkTurnRightTriggerCount { get; set; }
+    [Networked] private int NetworkAnimStateChangeCount { get; set; }
+    [Networked] private byte NetworkAnimStateId { get; set; }
 
     // Properties: Core
     public EnemyData Data => data;
@@ -22,6 +48,7 @@ public class EnemyAI : MonoBehaviour, INoiseListener
     public EnemyHealth Health { get; private set; }
     public EnemyAnimationEventHandler AnimationEventHandler { get; private set; }
     public EnemyAttackCollider[] AttackColliders { get; private set; }
+    private int lastAnimStateChangeCount;
 
     // Properties: States
     public EnemyIdleState IdleState { get; private set; }
@@ -35,9 +62,9 @@ public class EnemyAI : MonoBehaviour, INoiseListener
 
     // Properties: Gameplay
     public Vector3 PatrolCenter { get; private set; }
-    public Vector3 DetectedNoisePosition { get; private set; }
-    public float Suspicion { get; private set; }
-    public bool HasDetectedNoise { get; private set; }
+    public Vector3 DetectedNoisePosition => NetworkDetectedNoisePosition;
+    public float Suspicion => NetworkSuspicion;
+    public bool HasDetectedNoise => NetworkHasDetectedNoise;
 
     private void Awake()
     {
@@ -60,20 +87,108 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         DeadState = new EnemyDeadState(this, StateMachine);
     }
 
-    private void Start()
+    public override void Spawned()
     {
         StateMachine.Initialize(IdleState);
+
+        if (HasStateAuthority)
+        {
+            PatrolCenter = transform.position;
+            NetworkPosition = transform.position;
+            NetworkRotation = transform.rotation;
+            NetworkDetectedNoisePosition = Vector3.zero;
+            NetworkSuspicion = 0f;
+            NetworkHasDetectedNoise = false;
+        }
     }
 
-    private void Update()
+    public override void FixedUpdateNetwork()
     {
+        if (!HasStateAuthority)
+            return;
+
         StateMachine.CurrentState.LogicUpdate();
+        StateMachine.CurrentState.PhysicsUpdate();
         UpdateSuspicion();
+
+        NetworkPosition = transform.position;
+        NetworkRotation = transform.rotation;
+        SyncAnimatorSnapshot();
     }
 
-    private void FixedUpdate()
+    public override void Render()
     {
-        StateMachine.CurrentState.PhysicsUpdate();
+        if (HasStateAuthority)
+            return;
+
+        transform.SetPositionAndRotation(NetworkPosition, NetworkRotation);
+        Animator.SetFloat("Speed", NetworkAnimSpeed, 0.2f, Time.deltaTime);
+        Animator.SetFloat("Angle", NetworkAnimAngle, 0.2f, Time.deltaTime);
+        Animator.SetBool("IsAlert", NetworkAnimIsAlert);
+        Animator.SetInteger("WaitIndex", NetworkAnimWaitIndex);
+        Animator.SetInteger("HitIndex", NetworkAnimHitIndex);
+
+        if (lastAttackTriggerCount != NetworkAttackTriggerCount) { Animator.SetTrigger("Attack"); lastAttackTriggerCount = NetworkAttackTriggerCount; }
+        if (lastHitTriggerCount != NetworkHitTriggerCount) { Animator.SetTrigger("Hit"); lastHitTriggerCount = NetworkHitTriggerCount; }
+        if (lastDeadTriggerCount != NetworkDeadTriggerCount) { Animator.SetTrigger("Dead"); lastDeadTriggerCount = NetworkDeadTriggerCount; }
+        if (lastTurnLeftTriggerCount != NetworkTurnLeftTriggerCount) { Animator.SetTrigger("TurnLeft"); lastTurnLeftTriggerCount = NetworkTurnLeftTriggerCount; }
+        if (lastTurnRightTriggerCount != NetworkTurnRightTriggerCount) { Animator.SetTrigger("TurnRight"); lastTurnRightTriggerCount = NetworkTurnRightTriggerCount; }
+        if (lastAnimStateChangeCount != NetworkAnimStateChangeCount)
+        {
+            ApplyNetworkAnimState();
+            lastAnimStateChangeCount = NetworkAnimStateChangeCount;
+        }
+
+    }
+
+    private void SyncAnimatorSnapshot()
+    {
+        NetworkAnimSpeed = Animator.GetFloat("Speed");
+        NetworkAnimAngle = Animator.GetFloat("Angle");
+        NetworkAnimIsAlert = Animator.GetBool("IsAlert");
+        NetworkAnimWaitIndex = Animator.GetInteger("WaitIndex");
+        NetworkAnimHitIndex = Animator.GetInteger("HitIndex");
+
+    }
+
+    public void NotifyAnimatorTrigger(string triggerName)
+    {
+        if (!HasStateAuthority)
+            return;
+
+        switch (triggerName)
+        {
+            case "Attack": NetworkAttackTriggerCount++; break;
+            case "Hit": NetworkHitTriggerCount++; break;
+            case "Dead": NetworkDeadTriggerCount++; break;
+            case "TurnLeft": NetworkTurnLeftTriggerCount++; break;
+            case "TurnRight": NetworkTurnRightTriggerCount++; break;
+        }
+    }
+
+    public void NotifyAnimatorState(byte stateId)
+    {
+        if (!HasStateAuthority)
+            return;
+
+        NetworkAnimStateId = stateId;
+        NetworkAnimStateChangeCount++;
+    }
+
+    private void ApplyNetworkAnimState()
+    {
+        switch (NetworkAnimStateId)
+        {
+            case 1:
+                Animator.CrossFade("Locomotion", 0.2f);
+                break;
+            case 2:
+                Animator.CrossFade("Wait1", 0.2f);
+                break;
+            case 3:
+                Animator.CrossFade("Wait2", 0.2f);
+                break;
+        }
     }
 
     public void SetPatrolCenter(Vector3 newCenter)
@@ -83,12 +198,12 @@ public class EnemyAI : MonoBehaviour, INoiseListener
 
     public void OnNoiseDetected(Vector3 noisePosition, float noiseIntensity)
     {
-        DetectedNoisePosition = noisePosition;
-        HasDetectedNoise = true;
+        NetworkDetectedNoisePosition = noisePosition;
+        NetworkHasDetectedNoise = true;
         lastNoiseTime = Time.time;
 
         float gain = noiseIntensity * data.suspicionGainAmount * data.suspicionSensitivity;
-        Suspicion = Mathf.Clamp(Suspicion + gain, 0f, 100f);
+        NetworkSuspicion = Mathf.Clamp(NetworkSuspicion + gain, 0f, 100f);
     }
 
     public void LookDetectedNoisePosition()
@@ -130,14 +245,14 @@ public class EnemyAI : MonoBehaviour, INoiseListener
         if (Time.time < lastNoiseTime + data.suspicionReduceDelay)
             return;
 
-        if (Suspicion > 0f)
+        if (NetworkSuspicion > 0f)
         {
-            Suspicion = Mathf.Max(0f, Suspicion - data.suspicionReduceRate * Time.deltaTime);
-            if (Suspicion <= 0f)
+            NetworkSuspicion = Mathf.Max(0f, NetworkSuspicion - data.suspicionReduceRate * Runner.DeltaTime);
+            if (NetworkSuspicion <= 0f)
             {
-                Suspicion = 0f;
-                HasDetectedNoise = false;
-                DetectedNoisePosition = Vector3.zero;
+                NetworkSuspicion = 0f;
+                NetworkHasDetectedNoise = false;
+                NetworkDetectedNoisePosition = Vector3.zero;
             }
         }
     }

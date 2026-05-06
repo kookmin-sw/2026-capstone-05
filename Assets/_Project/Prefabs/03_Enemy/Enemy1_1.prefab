@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 7475947378720659353}
   - component: {fileID: 8524155529575229384}
   - component: {fileID: 1295530464003885314}
+  - component: {fileID: 6141188037711129945}
   m_Layer: 7
   m_Name: Enemy1_1
   m_TagString: Enemy
@@ -142,6 +143,26 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 1, z: 0}
+--- !u!114 &6141188037711129945
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6947545585843501229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 957007881
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 6145595453461541907}
+  - {fileID: 7475947378720659353}
+  ForceRemoteRenderTimeframe: 0
 --- !u!1001 &4801926030991762472
 PrefabInstance:
   m_ObjectHideFlags: 0

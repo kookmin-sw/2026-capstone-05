@@ -24,6 +24,7 @@ public class EnemyAttackState : EnemyState
         {
             enemy.Animator.SetInteger("WaitIndex", Random.Range(0, 2));
             enemy.Animator.SetTrigger("Attack");
+            enemy.NotifyAnimatorTrigger("Attack");
         }
     }
 
@@ -40,6 +41,7 @@ public class EnemyAttackState : EnemyState
         enemy.Agent.updateRotation = true;
 
         enemy.Animator.CrossFade("Locomotion", 0.2f);
+        enemy.NotifyAnimatorState(1);
     }
 
     public override void LogicUpdate()
@@ -59,6 +61,7 @@ public class EnemyAttackState : EnemyState
                 {
                     enemy.Animator.SetInteger("WaitIndex", Random.Range(0, 2));
                     enemy.Animator.SetTrigger("Attack");
+                    enemy.NotifyAnimatorTrigger("Attack");
                 }
                 else
                     stateMachine.ChangeState(enemy.SearchState);
@@ -82,7 +85,8 @@ public class EnemyAttackState : EnemyState
     {
         isCoolingDown = true;
         cooldownTimer = enemy.Data.attackCooldown;
-        string attackIdleState = Random.value > 0.5f ? "Wait1" : "Wait2";
-        enemy.Animator.CrossFade(attackIdleState, 0.2f);
+        bool useWait1 = Random.value > 0.5f;
+        enemy.Animator.CrossFade(useWait1 ? "Wait1" : "Wait2", 0.2f);
+        enemy.NotifyAnimatorState(useWait1 ? (byte)2 : (byte)3);
     }
 }
