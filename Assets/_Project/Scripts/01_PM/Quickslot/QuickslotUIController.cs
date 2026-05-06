@@ -463,5 +463,17 @@ public class QuickslotUIController : MonoBehaviour
             view.Icon.style.backgroundImage = null;
             view.StackLabel.visible = false;
         }
+
+        if (index == selectedSlotIndex && localPlayerEquipment != null)
+        {
+            if (item == null)
+            {
+                localPlayerEquipment.UnequipItem();
+            }
+            else 
+            {
+                localPlayerEquipment.EquipItem(item);
+            }
+        }
     }
 }

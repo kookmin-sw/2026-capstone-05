@@ -15,16 +15,19 @@ MonoBehaviour:
   itemID: 13
   itemName: ToiletPaper
   description: 
-  itemIcon: {fileID: 0}
+  itemIcon: {fileID: 21300000, guid: 43eac0017dd2ddd44bf2c43649088e56, type: 3}
   gridShape:
     basePositions:
     - {x: 0, y: 0}
+    - {x: 0, y: 1}
+    - {x: 1, y: 0}
+    - {x: 1, y: 1}
   maxStackSize: 1
   pickupPrefab: {fileID: 5926503991142483839, guid: 686651aa023ef4d43abfef7808c5e5d5, type: 3}
   equipPrefab: {fileID: 5926503991142483839, guid: 78e3767d568644449bfbee0abf2fd89b, type: 3}
   useAnimationType: 4
   poseType: 0
-  actionCooldown: 2
+  actionCooldown: 3
   isTradable: 1
   price: 0
   effects:

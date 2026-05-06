@@ -15,10 +15,13 @@ MonoBehaviour:
   itemID: 5
   itemName: Bandage
   description: 
-  itemIcon: {fileID: 0}
+  itemIcon: {fileID: 21300000, guid: 15f7d67cc70da35419e08bb64d3c2f77, type: 3}
   gridShape:
     basePositions:
     - {x: 0, y: 0}
+    - {x: 0, y: 1}
+    - {x: 1, y: 0}
+    - {x: 1, y: 1}
   maxStackSize: 1
   pickupPrefab: {fileID: 2042484452278347756, guid: d0b4e4246e55069479dd681715a72265, type: 3}
   equipPrefab: {fileID: 2042484452278347756, guid: 4a4916683be66fb47b962032369ce9e1, type: 3}

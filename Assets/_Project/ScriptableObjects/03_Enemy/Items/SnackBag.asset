@@ -15,16 +15,17 @@ MonoBehaviour:
   itemID: 11
   itemName: SnackBag
   description: 
-  itemIcon: {fileID: 0}
+  itemIcon: {fileID: 21300000, guid: 2dc616115b2da764ca843aca5e161273, type: 3}
   gridShape:
     basePositions:
     - {x: 0, y: 0}
+    - {x: 1, y: 0}
   maxStackSize: 1
   pickupPrefab: {fileID: 2238194580360366278, guid: 5ca900ced6e479b4ba57e5563c71212a, type: 3}
   equipPrefab: {fileID: 2238194580360366278, guid: 82638841991817143b1278ce625c7d02, type: 3}
   useAnimationType: 4
   poseType: 0
-  actionCooldown: 1
+  actionCooldown: 2
   isTradable: 1
   price: 0
   effects:

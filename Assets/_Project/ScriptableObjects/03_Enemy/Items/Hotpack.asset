@@ -15,20 +15,23 @@ MonoBehaviour:
   itemID: 10
   itemName: Hotpack
   description: 
-  itemIcon: {fileID: 0}
+  itemIcon: {fileID: 21300000, guid: 557b9388e9648704699e9d0b6e426ea5, type: 3}
   gridShape:
     basePositions:
     - {x: 0, y: 0}
+    - {x: 0, y: 1}
+    - {x: 1, y: 0}
+    - {x: 1, y: 1}
   maxStackSize: 1
   pickupPrefab: {fileID: 3644349579391833138, guid: 61b05f62a7cd550428e9cf873aeafd26, type: 3}
   equipPrefab: {fileID: 3644349579391833138, guid: 44fbd17bbd92d604a8c2ecb3aaad0ccf, type: 3}
   useAnimationType: 4
   poseType: 0
-  actionCooldown: 1.5
+  actionCooldown: 3
   isTradable: 1
   price: 0
   effects:
   - targetStat: 3
-    totalAmount: -30
+    totalAmount: -50
     duration: 10
   consumeNoiseType: 0

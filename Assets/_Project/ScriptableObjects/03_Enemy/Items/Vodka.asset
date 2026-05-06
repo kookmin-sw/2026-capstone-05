@@ -15,16 +15,21 @@ MonoBehaviour:
   itemID: 14
   itemName: Vodka
   description: 
-  itemIcon: {fileID: 0}
+  itemIcon: {fileID: 21300000, guid: 8bc3b94dee391e849a88fd2a0a8cd9a0, type: 3}
   gridShape:
     basePositions:
     - {x: 0, y: 0}
+    - {x: 0, y: 1}
+    - {x: 0, y: 2}
+    - {x: 1, y: 0}
+    - {x: 1, y: 1}
+    - {x: 1, y: 2}
   maxStackSize: 1
   pickupPrefab: {fileID: 7922157769770656249, guid: a1fdd2043fd176b4ca6acfa950c52a34, type: 3}
   equipPrefab: {fileID: 7922157769770656249, guid: eb8c2199565b46d4baddeba72e7c94a4, type: 3}
   useAnimationType: 4
   poseType: 0
-  actionCooldown: 1
+  actionCooldown: 2
   isTradable: 1
   price: 0
   effects:
