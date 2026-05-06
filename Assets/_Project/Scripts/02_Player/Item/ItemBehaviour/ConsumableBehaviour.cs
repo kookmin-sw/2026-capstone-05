@@ -1,7 +1,11 @@
+using System.Collections;
 using UnityEngine;
 
 public class ConsumableBehaviour : EquippedItemBehaviour
 {
+    private Coroutine consumeCoroutine;
+    private bool isConsuming = false;
+
     public override bool Use()
     {
         ConsumableItemData data = itemInstance.Data as ConsumableItemData;
@@ -15,6 +19,7 @@ public class ConsumableBehaviour : EquippedItemBehaviour
             return false;
         }
 
+        consumeCoroutine = StartCoroutine(ConsumeRoutine(data));
         return true;
     }
 
@@ -28,6 +33,17 @@ public class ConsumableBehaviour : EquippedItemBehaviour
 
         base.OnAnimationEventTriggered();
 
+        Consume();
+    }
+
+    private bool Consume()
+    {
+        ConsumableItemData data = itemInstance.Data as ConsumableItemData;
+        if (data == null)
+        {
+            return false;
+        }
+
         itemInstance.currentStackCount--;
 
         foreach (var effect in data.effects)
@@ -40,8 +56,43 @@ public class ConsumableBehaviour : EquippedItemBehaviour
 
         if (itemInstance.currentStackCount <= 0)
         {
-            // TODO: 인벤토리 매니저에 이 아이템을 리스트에서 완전히 지우라고 알림
+            ItemEventManager.TriggerItemDestroyed(itemInstance);
             Destroy(gameObject);
+        }
+        else
+        {
+            ItemEventManager.TriggerItemStackChanged(itemInstance);
+        }
+
+        return true;
+    }
+
+    private IEnumerator ConsumeRoutine(ConsumableItemData data)
+    {
+        isConsuming = true;
+
+        player.Animator.SetConsuming(true);
+
+        yield return new WaitForSeconds(data.actionCooldown);
+
+        Consume();
+
+        player.Animator.SetConsuming(false);
+
+        isConsuming = false;
+    }
+
+    public void CancelConsume()
+    {
+        if (isConsuming)
+        {
+            if (consumeCoroutine != null)
+            {
+                StopCoroutine(consumeCoroutine);
+                consumeCoroutine = null;
+            }
+            player.Animator.SetConsuming(false);
+            isConsuming = false;
         }
     }
 }

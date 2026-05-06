@@ -95,6 +95,7 @@ public class QuickslotUIController : MonoBehaviour
     {
         if (Instance == this)
         {
+            model?.Dispose();
             Instance = null;
             OnItemDroppedGlobal = null;
             OnInitialized = null;

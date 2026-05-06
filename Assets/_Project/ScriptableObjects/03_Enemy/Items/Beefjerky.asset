@@ -20,12 +20,15 @@ MonoBehaviour:
     basePositions:
     - {x: 0, y: 0}
   maxStackSize: 1
-  pickupPrefab: {fileID: 0}
+  pickupPrefab: {fileID: 6008268714265918818, guid: 932363cd062c3f048a4939ed7cac0697, type: 3}
   equipPrefab: {fileID: 6008268714265918818, guid: a12bec0e47f456d40ba2e2332d4ed484, type: 3}
-  useAnimationType: 0
+  useAnimationType: 4
   poseType: 0
-  actionCooldown: 1
+  actionCooldown: 2
   isTradable: 1
   price: 0
-  effects: []
+  effects:
+  - targetStat: 2
+    totalAmount: 40
+    duration: 0
   consumeNoiseType: 0

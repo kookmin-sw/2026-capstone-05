@@ -11,6 +11,40 @@ public class QuickslotModel
     public void Initialize()
     {
         slots = new ItemInstance[MaxSlots];
+
+        ItemEventManager.OnItemStackChangedGlobal += HandleItemStackChanged;
+        ItemEventManager.OnItemDestroyedGlobal += HandleItemDestroyed;
+    }
+
+    public void Dispose()
+    {
+        ItemEventManager.OnItemStackChangedGlobal -= HandleItemStackChanged;
+        ItemEventManager.OnItemDestroyedGlobal -= HandleItemDestroyed;
+    }
+
+    private void HandleItemStackChanged(ItemInstance item)
+    {
+        for (int i = 0; i < MaxSlots; i++)
+        {
+            // 참조(레퍼런스) 비교: 이벤트로 넘어온 아이템이 내 슬롯에 있는 그 아이템인가?
+            if (slots[i] == item) 
+            {
+                OnSlotChanged?.Invoke(i); // 숫자 텍스트만 갱신하도록 UI에 알림
+                break; // 같은 아이템이 여러 슬롯에 들어갈 수 없다면 break로 최적화
+            }
+        }
+    }
+
+    private void HandleItemDestroyed(ItemInstance item)
+    {
+        for (int i = 0; i < MaxSlots; i++)
+        {
+            if (slots[i] == item)
+            {
+                Set(i, null); // 슬롯을 완전히 비움 (내부적으로 OnSlotChanged 자동 호출됨)
+                break;
+            }
+        }
     }
 
     public ItemInstance Get(int index)
