@@ -15,7 +15,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &7837823225478368382
 Transform:
@@ -112,7 +112,12 @@ PrefabInstance:
       propertyPath: m_Name
       value: rock8
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 8664169628363555611, guid: 6f928771fbb5fd945ad2883df42f0fbc, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 8308179259851784232, guid: 6f928771fbb5fd945ad2883df42f0fbc, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
