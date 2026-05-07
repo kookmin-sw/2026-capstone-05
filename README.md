@@ -159,10 +159,10 @@
 
 | **역할** | **종류** |
 |-|-|
-| **Framework** |  |
-| **Database** |  |
-| **ORM** |  |
-| **API** |  |
+| **Framework** | ASP.NET Core (.NET 8) |
+| **Database** | PostgreSQL 16 |
+| **ORM** | Entity Framework Core + Npgsql Provider |
+| **API** | REST API |
 
 ### Art
 
@@ -176,7 +176,7 @@
 
 | **역할** | **종류** |
 |-|-|
-| **Version Control** | Git |
+| **Version Control** | Git, GitHub |
 | **Project Management** | Notion |
 
 ## 실행 가이드
