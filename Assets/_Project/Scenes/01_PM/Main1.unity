@@ -4480,6 +4480,34 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1733667576}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &851248456 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4310469699413648748, guid: 671ca4b9af17fc948a27160f3c20aede, type: 3}
+  m_PrefabInstance: {fileID: 7582298602632764436}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &851248459
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 851248456}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef305753c5a0a154faabdcfaed740f8c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Systems.Shop.VendingMachineShop
+  itemsToSell:
+  - ItemData: {fileID: 11400000, guid: 8c07a2bab85ea894c9d765aae48a0a9b, type: 2}
+    BuyPrice: 1000
+  - ItemData: {fileID: 11400000, guid: 54df0fbd0b3b3bc46aee7f3786d94ce7, type: 2}
+    BuyPrice: 200
+  - ItemData: {fileID: 11400000, guid: 45d2259d5b7884c4581cecf5cc1c6263, type: 2}
+    BuyPrice: 500
+  - ItemData: {fileID: 11400000, guid: 4d3c7d3e161956a4991ec55b73883912, type: 2}
+    BuyPrice: 1000
+  interactPrompt: Open Shop
+  objectName: Pokopia Vending Machine
 --- !u!1 &870866735
 GameObject:
   m_ObjectHideFlags: 0
@@ -33405,6 +33433,90 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   interactionCooldown: 0.3
+--- !u!1 &1663920665
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1663920669}
+  - component: {fileID: 1663920668}
+  - component: {fileID: 1663920667}
+  - component: {fileID: 1663920666}
+  m_Layer: 0
+  m_Name: ShopUI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1663920666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1663920665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d7582d91ea86774288ace570041bf24, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Systems.Shop.ShopController
+  shopView: {fileID: 1663920667}
+  startingGold: 500
+--- !u!114 &1663920667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1663920665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e25d4a5fad5ffe4bb1798c5510f982e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Systems.Shop.ShopView
+  document: {fileID: 1663920668}
+--- !u!114 &1663920668
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1663920665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 11400000, guid: 9c5d19d7f8bbba24f81aa347acefdfa1, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: b6989b0ae102cdd4dbc3985e53d035ec, type: 3}
+  m_SortingOrder: 0
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!4 &1663920669
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1663920665}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -6.96873, y: 40, z: -27.62677}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1677669310
 GameObject:
   m_ObjectHideFlags: 0
@@ -36197,10 +36309,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Log
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 1585223142289573373, guid: 671ca4b9af17fc948a27160f3c20aede, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4310469699413648748, guid: 671ca4b9af17fc948a27160f3c20aede, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 851248459}
   m_SourcePrefab: {fileID: 100100000, guid: 671ca4b9af17fc948a27160f3c20aede, type: 3}
 --- !u!1001 &8392292315775391289
 PrefabInstance:
@@ -36401,6 +36517,7 @@ SceneRoots:
   - {fileID: 443808118}
   - {fileID: 1081324506}
   - {fileID: 668133880}
+  - {fileID: 1663920669}
   - {fileID: 8993207766280968140}
   - {fileID: 7582298602632764436}
   - {fileID: 597728421112393831}

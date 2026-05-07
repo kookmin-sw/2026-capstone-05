@@ -65,7 +65,10 @@ public class QuickslotUIController : MonoBehaviour
         // 인벤토리 패널이 퀵슬롯 위에 올라가 이벤트를 가로챌 수 있음.
         if (uiDocument == null) uiDocument = GetComponent<UIDocument>();
         if (uiDocument != null) uiDocument.sortingOrder = 10f;
-
+        
+        // 퀵슬롯 UI는 평상시 보이되, 상점(Shop)이나 다른 모달이 열리면 가려질 수 있도록 상점 뷰에서는 sortingOrder를 높이거나,
+        // 상점이 열릴 때 퀵슬롯을 끄는 로직을 추가.
+        
         OnInitialized?.Invoke();
     }
 
