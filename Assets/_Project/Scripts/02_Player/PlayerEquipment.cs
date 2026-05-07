@@ -150,6 +150,19 @@ public class PlayerEquipment : MonoBehaviour
         }
     }
 
+    public void CancelCurrentItemUse()
+    {
+        // 현재 손에 들고 있는 아이템 스크립트가 있다면 취소 명령 전달
+        if (Item1P != null)
+        {
+            Item1P.CancelUse();
+        }
+        if (Item3P != null)
+        {
+            Item3P.CancelUse();
+        }
+    }
+
     /// <summary>
     /// ⭐️ PlayerAnimator(문지기)가 1P/3P 중복을 걸러내고 순수하게 넘겨준 단일 이벤트입니다.
     /// </summary>
