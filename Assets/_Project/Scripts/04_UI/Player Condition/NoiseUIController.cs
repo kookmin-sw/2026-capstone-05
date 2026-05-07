@@ -1,66 +1,106 @@
 using UnityEngine;
 using UnityEngine.UI;
-using DG.Tweening;
 
 public class NoiseUIController : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private PlayerNoiseEmitter noiseEmitter;
-    [SerializeField] private Image gaugeBar; 
     
-    [Header("UI Effects (New)")]
-    [SerializeField] private CanvasGroup canvasGroup; // 캔버스 그룹 연결
-    [SerializeField] private float fadeSpeed = 5f;    // 투명도 변하는 속도
-    [SerializeField] private float minAlpha = 0.2f;   // 가만히 있을 때 최소 투명도
-    [SerializeField] private float dangerThreshold = 0.7f; // 붉은색 도달 기준치 (70%)
+    [Header("개별 블록 UI 연결 (1~30)")]
+    public Image[] noiseBars; 
+    public Image[] neonBars;
 
     [Header("Settings")]
     [SerializeField] private float smoothSpeed = 8f; 
+    [SerializeField] private float dangerThreshold = 0.7f; 
+    
+    [Header("위험 수치 깜빡임 설정")]
+    public float flashSpeed = 8f;       // 깜빡이는 속도 (높을수록 빠름)
+    
+    [Tooltip("위험할 때 '기본 노이즈 바'의 최소 투명도")]
+    public float minNoiseAlpha = 0.3f;  // 1.0(선명)과 이 수치 사이를 깜빡임
+
+    public float maxNeonAlpha = 1.0f;   // 위험할 때 네온 최대 밝기
+    public float minNeonAlpha = 0.2f;   // 위험할 때 네온 최소 밝기
+    public float normalNeonAlpha = 0.0f;// 평소 안전할 때 네온 밝기 (0 = 안 보임)
     
     private CharacterController controller; 
     private float targetFill = 0f;          
-    private bool isDangerPulsing = false;   
-    private Sequence dangerSequence;
+    private float currentFill = 0f; 
 
     private void Start()
     {
-        controller = noiseEmitter.GetComponent<CharacterController>();
-        
-        // 시작할 때 투명하게 세팅
-        if (canvasGroup != null) canvasGroup.alpha = minAlpha;
+        if (noiseEmitter != null)
+        {
+            controller = noiseEmitter.GetComponent<CharacterController>();
+        }
     }
 
     private void Update()
     {
         UpdateNoiseLogic();
         
-        // 1. 부드럽게 게이지 조절
-        gaugeBar.fillAmount = Mathf.Lerp(gaugeBar.fillAmount, targetFill, Time.deltaTime * smoothSpeed);
+        // 1. 부드러운 타겟 수치(0.0 ~ 1.0) 계산
+        currentFill = Mathf.Lerp(currentFill, targetFill, Time.deltaTime * smoothSpeed);
 
-        // 2. 투명도 자동 조절
-        if (canvasGroup != null)
+        // 2. 0.0~1.0 사이의 값을 전체 블록 개수에 곱해 몇 칸을 켤지 계산
+        int totalBars = noiseBars.Length;
+        int activeBarsCount = Mathf.RoundToInt(currentFill * totalBars);
+
+        // 3. 알파값 계산 (위험 수치일 때 파동을 일으켜 깜빡임)
+        float currentNeonAlpha = normalNeonAlpha;
+        float currentNoiseAlpha = 1.0f; // 평소 기본 바는 100% 선명함
+
+        if (currentFill >= dangerThreshold)
         {
-            float targetAlpha = (targetFill > 0.05f) ? 1f : minAlpha;
-            canvasGroup.alpha = Mathf.Lerp(canvasGroup.alpha, targetAlpha, Time.deltaTime * fadeSpeed);
+            // Time.time을 이용한 동기화된 파동 (0.0 ~ 1.0)
+            float wave = (Mathf.Sin(Time.time * flashSpeed) + 1f) * 0.5f; 
+            
+            // 동일한 파동(wave)을 이용해 네온과 기본 바의 투명도를 동시에 조절
+            currentNeonAlpha = Mathf.Lerp(minNeonAlpha, maxNeonAlpha, wave);
+            currentNoiseAlpha = Mathf.Lerp(minNoiseAlpha, 1.0f, wave);
         }
 
-        // 3. 위험 구역 쿵쾅거림 효과
-        // 수정: 들쭉날쭉한 targetFill이 아니라, 스무스하게 쫓아가는 gaugeBar.fillAmount를 기준으로 체크합니다.
-        HandleDangerPulse(gaugeBar.fillAmount); 
+        // 4. 1번부터 30번까지 루프를 돌며 각 블록 켜고 끄기 및 색상 적용
+        for (int i = 0; i < totalBars; i++)
+        {
+            bool isActive = i < activeBarsCount; 
+
+            // 기본 노이즈 바 제어
+            if (noiseBars[i] != null)
+            {
+                noiseBars[i].enabled = isActive;
+                if (isActive)
+                {
+                    Color c = noiseBars[i].color;
+                    c.a = currentNoiseAlpha; // 계산된 투명도 적용
+                    noiseBars[i].color = c;
+                }
+            }
+
+            // 네온 바 제어
+            if (neonBars.Length > i && neonBars[i] != null)
+            {
+                neonBars[i].enabled = isActive;
+                if (isActive)
+                {
+                    Color c = neonBars[i].color;
+                    c.a = currentNeonAlpha; // 계산된 투명도 적용
+                    neonBars[i].color = c;
+                }
+            }
+        }
     }
 
     private void UpdateNoiseLogic()
     {
         if (controller == null) return;
 
-        // 수평 속도 계산
         Vector3 horizontalVel = new Vector3(controller.velocity.x, 0, controller.velocity.z);
         float speed = horizontalVel.magnitude;
 
-        // 이동 상태에 따른 기본 수치 (최대 100 기준 비율)
         if (speed > 0.1f)
         {
-            // 속도에 비례하여 0.2 ~ 0.8 사이로 타겟 설정
             targetFill = Mathf.Clamp(speed / 7f, 0.1f, 0.9f);
         }
         else
@@ -68,63 +108,9 @@ public class NoiseUIController : MonoBehaviour
             targetFill = 0f;
         }
 
-        // 점프/낙하 중일 때 소음 강조
         if (Mathf.Abs(controller.velocity.y) > 0.5f)
         {
             targetFill = Mathf.Max(targetFill, 0.7f);
-        }
-    }
-
-    private void HandleDangerPulse(float currentFill)
-    {
-        if (currentFill >= dangerThreshold)
-        {
-            if (!isDangerPulsing)
-            {
-                isDangerPulsing = true;
-                
-                if (canvasGroup != null)
-                {
-                    // 혹시 실행 중인 다른 애니메이션이 있다면 깔끔하게 정리
-                    canvasGroup.transform.DOKill();
-                    if (dangerSequence != null) dangerSequence.Kill();
-
-                    // 새로운 애니메이션 시퀀스(순서도) 만들기
-                    dangerSequence = DOTween.Sequence();
-
-                    // 1. '두' (빠르고 살짝 커짐)
-                    dangerSequence.Append(canvasGroup.transform.DOScale(1.01f, 0.05f).SetEase(Ease.OutQuad));
-                    dangerSequence.Append(canvasGroup.transform.DOScale(1.0f, 0.05f).SetEase(Ease.InQuad));
-                    
-                    // 2. '둥' (조금 더 크고 여운 있게 커짐)
-                    dangerSequence.Append(canvasGroup.transform.DOScale(1.02f, 0.05f).SetEase(Ease.OutQuad));
-                    dangerSequence.Append(canvasGroup.transform.DOScale(1.0f, 0.05f).SetEase(Ease.InQuad));
-
-                    // 3. '(진동/휴식)' (0.6초 동안 가만히 대기)
-                    dangerSequence.AppendInterval(0.3f);
-
-                    // 4. 이 순서를 무한 반복!
-                    dangerSequence.SetLoops(-1);
-                }
-            }
-        }
-        else
-        {
-            // 위험 구역에서 벗어났을 때
-            if (isDangerPulsing)
-            {
-                isDangerPulsing = false;
-                
-                if (canvasGroup != null)
-                {
-                    // 진행 중인 심장박동 시퀀스를 즉시 파괴
-                    if (dangerSequence != null) dangerSequence.Kill();
-                    canvasGroup.transform.DOKill(); 
-                    
-                    // 원래 크기로 자연스럽게 복구
-                    canvasGroup.transform.DOScale(1f, 0.2f); 
-                }
-            }
         }
     }
 }
