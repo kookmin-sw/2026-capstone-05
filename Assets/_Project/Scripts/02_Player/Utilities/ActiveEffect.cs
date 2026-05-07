@@ -1,3 +1,5 @@
+using UnityEngine;
+
 public enum ConditionType
 {
     Health,
@@ -11,7 +13,8 @@ public class StatusEffectData
 {
     public ConditionType targetStat;
     public float totalAmount;
-    public float duration; // 0이면 즉시 적용
+    [Tooltip("0이면 즉시 적용")]
+    public float duration;
     public float AmountPerSecond => duration > 0f ? (totalAmount / duration) : totalAmount;
 }
 

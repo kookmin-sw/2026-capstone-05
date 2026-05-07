@@ -21,16 +21,15 @@ public class PlayerAnimator : MonoBehaviour
     private readonly int hashActionID = Animator.StringToHash("ActionID");
     private readonly int hashOnChangePose = Animator.StringToHash("OnChangePose");
     private readonly int hashPoseID = Animator.StringToHash("PoseID");
+    private readonly int hashIsConsuming = Animator.StringToHash("IsConsuming");
 
     private Dictionary<ItemUseAnimationType, int> itemUseAnimTriggers = new Dictionary<ItemUseAnimationType, int>
     {
         { ItemUseAnimationType.None, 0 },
         { ItemUseAnimationType.UnarmedAttack, 1 }, // Unarmed Attack
         { ItemUseAnimationType.MeleeAttack, 2 }, // Use Melee
-        { ItemUseAnimationType.Eat, 3 }, // Eat
-        { ItemUseAnimationType.Drink, 4 }, // Drink
-        { ItemUseAnimationType.Throw, 5 }, // Throw
-        { ItemUseAnimationType.ToolUse, 6 } // Use Tool
+        { ItemUseAnimationType.Throw, 3 }, // Throw
+        { ItemUseAnimationType.ConsumeItem, 4 } // Consume Item
     };
 
     private Dictionary<ItemPoseType, int> itemPoseIDs = new Dictionary<ItemPoseType, int>
@@ -163,5 +162,17 @@ public class PlayerAnimator : MonoBehaviour
         }
 
         player.Equipment.HandleAnimationEvent();
+    }
+
+    public void SetConsuming(bool isConsuming)
+    {
+        if (animator1P != null)
+        {
+            animator1P.SetBool(hashIsConsuming, isConsuming);
+        }
+        if (animator3P != null)
+        {
+            animator3P.SetBool(hashIsConsuming, isConsuming);
+        }
     }
 }

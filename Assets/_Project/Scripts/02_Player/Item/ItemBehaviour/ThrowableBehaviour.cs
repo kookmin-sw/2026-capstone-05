@@ -46,8 +46,12 @@ public class ThrowableBehaviour : EquippedItemBehaviour
 
         if (itemInstance.currentStackCount <= 0)
         {
-            // TODO: 인벤토리에서 삭제 알림
+            ItemEventManager.TriggerItemDestroyed(itemInstance);
             Destroy(gameObject);
+        }
+        else
+        {
+            ItemEventManager.TriggerItemStackChanged(itemInstance);
         }
     }
 }

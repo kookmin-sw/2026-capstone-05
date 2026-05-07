@@ -11,4 +11,9 @@ public class ConsumableItemData : ItemData
 
     [Header("Noise Settings")]
     public NoiseData.NoiseType consumeNoiseType;
+
+    private void Reset()
+    {
+        useAnimationType = ItemUseAnimationType.ConsumeItem;
+    }
 }
