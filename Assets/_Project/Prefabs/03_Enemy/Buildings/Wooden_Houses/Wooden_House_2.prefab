@@ -238,8 +238,9 @@ GameObject:
   - component: {fileID: 3506918136485849186}
   - component: {fileID: 1737579307031984331}
   - component: {fileID: 3766500398956462247}
+  - component: {fileID: 1650706662235131241}
   m_Layer: 0
-  m_Name: Cube.005
+  m_Name: Door_3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -339,6 +340,26 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 2212009239438826721, guid: 3da90a8e100313f4791663aa47750468, type: 3}
+--- !u!114 &1650706662235131241
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2920726349570488015}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9841d5c90054a989a77f8b9d0a86b51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DoorInteractable
+  doorTransform: {fileID: 976168661889192020}
+  objectName: "\uBB38"
+  openAngle: 90
+  rotationSpeed: 180
+  panelLocalDirection: {x: 1, y: 0, z: 0}
+  openPrompt: "[E] \uC5F4\uAE30"
+  closePrompt: "[E] \uB2EB\uAE30"
+  refreshPromptAfterInteract: 1
 --- !u!1 &3263318530953345044
 GameObject:
   m_ObjectHideFlags: 0
@@ -916,8 +937,9 @@ GameObject:
   - component: {fileID: 468598208592908513}
   - component: {fileID: 3190625200289862041}
   - component: {fileID: 5357076164629290538}
+  - component: {fileID: 7496173666532285708}
   m_Layer: 0
-  m_Name: Cube.023
+  m_Name: Door_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1017,6 +1039,26 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -7771613508976059695, guid: 3da90a8e100313f4791663aa47750468, type: 3}
+--- !u!114 &7496173666532285708
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4778549037031796847}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9841d5c90054a989a77f8b9d0a86b51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DoorInteractable
+  doorTransform: {fileID: 7460721831962249804}
+  objectName: "\uBB38"
+  openAngle: 90
+  rotationSpeed: 180
+  panelLocalDirection: {x: 1, y: 0, z: 0}
+  openPrompt: "[E] \uC5F4\uAE30"
+  closePrompt: "[E] \uB2EB\uAE30"
+  refreshPromptAfterInteract: 1
 --- !u!1 &4856898670824477262
 GameObject:
   m_ObjectHideFlags: 0
@@ -1454,8 +1496,9 @@ GameObject:
   - component: {fileID: 2788186037053215051}
   - component: {fileID: 5887110380168040542}
   - component: {fileID: 2506061832699322515}
+  - component: {fileID: 5436713666268464196}
   m_Layer: 0
-  m_Name: Cube.020
+  m_Name: Door_2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1555,6 +1598,26 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 2911736426955009642, guid: 3da90a8e100313f4791663aa47750468, type: 3}
+--- !u!114 &5436713666268464196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6673678166858695266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9841d5c90054a989a77f8b9d0a86b51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DoorInteractable
+  doorTransform: {fileID: 5765857395415362233}
+  objectName: "\uBB38"
+  openAngle: 90
+  rotationSpeed: 180
+  panelLocalDirection: {x: 1, y: 0, z: 0}
+  openPrompt: "[E] \uC5F4\uAE30"
+  closePrompt: "[E] \uB2EB\uAE30"
+  refreshPromptAfterInteract: 1
 --- !u!1 &6864812272338923697
 GameObject:
   m_ObjectHideFlags: 0
@@ -1680,8 +1743,9 @@ GameObject:
   - component: {fileID: 2076947284930632114}
   - component: {fileID: 6630667479988662954}
   - component: {fileID: 4884908147891735005}
+  - component: {fileID: 2513473711775536809}
   m_Layer: 0
-  m_Name: Cube.017
+  m_Name: Door_4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1781,6 +1845,26 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -1716842359454501035, guid: 3da90a8e100313f4791663aa47750468, type: 3}
+--- !u!114 &2513473711775536809
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7684475745076094866}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9841d5c90054a989a77f8b9d0a86b51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DoorInteractable
+  doorTransform: {fileID: 1103266480710412395}
+  objectName: "\uBB38"
+  openAngle: 90
+  rotationSpeed: 180
+  panelLocalDirection: {x: 1, y: 0, z: 0}
+  openPrompt: "[E] \uC5F4\uAE30"
+  closePrompt: "[E] \uB2EB\uAE30"
+  refreshPromptAfterInteract: 1
 --- !u!1001 &639201740656341118
 PrefabInstance:
   m_ObjectHideFlags: 0
