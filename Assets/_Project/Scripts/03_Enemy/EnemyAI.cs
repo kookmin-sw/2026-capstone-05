@@ -20,6 +20,9 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
     private int lastDeadTriggerCount;
     private int lastTurnLeftTriggerCount;
     private int lastTurnRightTriggerCount;
+    private Vector3 localDetectedNoisePosition;
+    private float localSuspicion;
+    private bool localHasDetectedNoise;
 
     [Networked] private Vector3 NetworkPosition { get; set; }
     [Networked] private Quaternion NetworkRotation { get; set; }
@@ -49,6 +52,7 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
     public EnemyAnimationEventHandler AnimationEventHandler { get; private set; }
     public EnemyAttackCollider[] AttackColliders { get; private set; }
     private int lastAnimStateChangeCount;
+    private bool isInitializedLocally;
 
     // Properties: States
     public EnemyIdleState IdleState { get; private set; }
@@ -62,9 +66,10 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
 
     // Properties: Gameplay
     public Vector3 PatrolCenter { get; private set; }
-    public Vector3 DetectedNoisePosition => NetworkDetectedNoisePosition;
-    public float Suspicion => NetworkSuspicion;
-    public bool HasDetectedNoise => NetworkHasDetectedNoise;
+    public Vector3 DetectedNoisePosition => IsNetworkStateReady ? NetworkDetectedNoisePosition : localDetectedNoisePosition;
+    public float Suspicion => IsNetworkStateReady ? NetworkSuspicion : localSuspicion;
+    public bool HasDetectedNoise => IsNetworkStateReady ? NetworkHasDetectedNoise : localHasDetectedNoise;
+    private bool IsNetworkStateReady => Runner != null && Object != null && Object.IsValid;
 
     private void Awake()
     {
@@ -87,9 +92,20 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         DeadState = new EnemyDeadState(this, StateMachine);
     }
 
+
+    private void Start()
+    {
+        if (Runner != null)
+        {
+            return;
+        }
+
+        InitializeForLocalOnlyMode();
+    }
+
     public override void Spawned()
     {
-        StateMachine.Initialize(IdleState);
+        InitializeForLocalOnlyMode();
 
         if (HasStateAuthority)
         {
@@ -107,13 +123,28 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         if (!HasStateAuthority)
             return;
 
-        StateMachine.CurrentState.LogicUpdate();
-        StateMachine.CurrentState.PhysicsUpdate();
-        UpdateSuspicion();
+        TickStateMachine(Runner != null ? Runner.DeltaTime : Time.deltaTime);
 
         NetworkPosition = transform.position;
         NetworkRotation = transform.rotation;
         SyncAnimatorSnapshot();
+    }
+
+    private void Update()
+    {
+        if (Runner != null || !isInitializedLocally)
+        {
+            return;
+        }
+
+        TickStateMachine(Time.deltaTime);
+    }
+
+    private void TickStateMachine(float deltaTime)
+    {
+        StateMachine.CurrentState.LogicUpdate();
+        StateMachine.CurrentState.PhysicsUpdate();
+        UpdateSuspicion(deltaTime);
     }
 
     public override void Render()
@@ -191,6 +222,33 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         }
     }
 
+
+    private void InitializeForLocalOnlyMode()
+    {
+        if (isInitializedLocally)
+        {
+            return;
+        }
+
+        StateMachine.Initialize(IdleState);
+        PatrolCenter = transform.position;
+
+        if (IsNetworkStateReady)
+        {
+            NetworkPosition = transform.position;
+            NetworkRotation = transform.rotation;
+            NetworkDetectedNoisePosition = Vector3.zero;
+            NetworkSuspicion = 0f;
+            NetworkHasDetectedNoise = false;
+        }
+
+        localDetectedNoisePosition = Vector3.zero;
+        localSuspicion = 0f;
+        localHasDetectedNoise = false;
+
+        isInitializedLocally = true;
+    }
+
     public void SetPatrolCenter(Vector3 newCenter)
     {
         PatrolCenter = newCenter;
@@ -198,12 +256,28 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
 
     public void OnNoiseDetected(Vector3 noisePosition, float noiseIntensity)
     {
-        NetworkDetectedNoisePosition = noisePosition;
-        NetworkHasDetectedNoise = true;
+        if (IsNetworkStateReady)
+        {
+            NetworkDetectedNoisePosition = noisePosition;
+            NetworkHasDetectedNoise = true;
+        }
+        else
+        {
+            localDetectedNoisePosition = noisePosition;
+            localHasDetectedNoise = true;
+        }
+
         lastNoiseTime = Time.time;
 
         float gain = noiseIntensity * data.suspicionGainAmount * data.suspicionSensitivity;
-        NetworkSuspicion = Mathf.Clamp(NetworkSuspicion + gain, 0f, 100f);
+        if (IsNetworkStateReady)
+        {
+            NetworkSuspicion = Mathf.Clamp(NetworkSuspicion + gain, 0f, 100f);
+        }
+        else
+        {
+            localSuspicion = Mathf.Clamp(localSuspicion + gain, 0f, 100f);
+        }
     }
 
     public void LookDetectedNoisePosition()
@@ -235,7 +309,7 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         return false;
     }
 
-    private void UpdateSuspicion()
+    private void UpdateSuspicion(float deltaTime)
     {
         if (StateMachine.CurrentState == ChaseState
             || StateMachine.CurrentState == AttackState
@@ -245,14 +319,32 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         if (Time.time < lastNoiseTime + data.suspicionReduceDelay)
             return;
 
-        if (NetworkSuspicion > 0f)
+        if (Suspicion > 0f)
         {
-            NetworkSuspicion = Mathf.Max(0f, NetworkSuspicion - data.suspicionReduceRate * Runner.DeltaTime);
-            if (NetworkSuspicion <= 0f)
+            float nextSuspicion = Mathf.Max(0f, Suspicion - data.suspicionReduceRate * deltaTime);
+            if (IsNetworkStateReady)
             {
-                NetworkSuspicion = 0f;
-                NetworkHasDetectedNoise = false;
-                NetworkDetectedNoisePosition = Vector3.zero;
+                NetworkSuspicion = nextSuspicion;
+            }
+            else
+            {
+                localSuspicion = nextSuspicion;
+            }
+
+            if (nextSuspicion <= 0f)
+            {
+                if (IsNetworkStateReady)
+                {
+                    NetworkSuspicion = 0f;
+                    NetworkHasDetectedNoise = false;
+                    NetworkDetectedNoisePosition = Vector3.zero;
+                }
+                else
+                {
+                    localSuspicion = 0f;
+                    localHasDetectedNoise = false;
+                    localDetectedNoisePosition = Vector3.zero;
+                }
             }
         }
     }

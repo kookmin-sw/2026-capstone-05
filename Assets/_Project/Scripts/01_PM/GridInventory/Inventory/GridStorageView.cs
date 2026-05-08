@@ -63,10 +63,6 @@ namespace Systems.GridInventory {
             ResetDragState();
         }
 
-        public StyleSheet GridStyleSheet => styleSheet;
-
-        public VisualElement Container { get { return container; } }
-
         public abstract IEnumerator InitializeView(int size = 20);
 
         public void BindItem(GridItemView itemView, int slotIndex) {

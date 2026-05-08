@@ -7,6 +7,9 @@ public class NoiseManager : MonoBehaviour
     public static NoiseManager Instance { get; private set; }
 
     // Serialized Fields
+    public delegate void NoiseGeneratedHandler(Vector3 position, NoiseData.NoiseType noiseType, float decibel, float radius);
+    public event NoiseGeneratedHandler OnNoiseGenerated;
+
     [SerializeField] private NoiseData noiseData;
     
     [Header("Noise Calculation")]
@@ -90,6 +93,8 @@ public class NoiseManager : MonoBehaviour
         float calculatedRadius = decibel * radiusMultiplier;
 
         if (calculatedRadius <= 0f) return;
+
+        OnNoiseGenerated?.Invoke(position, noiseType, decibel, calculatedRadius);
 
 #if UNITY_EDITOR
         activeNoises.Add(new ActiveNoise(position, calculatedRadius, displayTime));

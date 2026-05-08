@@ -17,13 +17,10 @@ namespace Systems.GridInventory {
         [SerializeField] List<StartingItem> startingItems = new List<StartingItem>();
 
         GridInventoryController controller;
-        public GridInventoryController Controller => controller;
-        public static GridInventory Instance { get; private set; }
+
+        public GridInventoryModel Model => controller?.Model;
 
         void Awake() {
-            if (Instance == null) Instance = this;
-            else Destroy(gameObject);
-
             controller = new GridInventoryController.Builder(view)
                 .WithStartingItems(startingItems)
                 .WithDimensions(gridWidth, gridHeight)

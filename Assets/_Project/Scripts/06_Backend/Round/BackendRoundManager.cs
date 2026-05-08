@@ -18,6 +18,7 @@ public class BackendRoundManager : NetworkBehaviour
     private string _hostRoundCountPrefKey = RoomLauncher.BuildHostRoundCountPrefKey(1);
     private int _activeHostSlot = 1;
     private readonly HashSet<int> _loadedPlayerRefs = new HashSet<int>();
+    private BackendInventorySaveManager _inventorySaveManager;
 
     public float RoundTimeRemainingSeconds
     {
@@ -39,6 +40,7 @@ public class BackendRoundManager : NetworkBehaviour
             return;
         }
 
+        _inventorySaveManager = FindFirstObjectByType<BackendInventorySaveManager>();
         _activeHostSlot = Mathf.Clamp(PlayerPrefs.GetInt(HostSelectedSlotPrefKey, 1), 1, 3);
         _hostRoundCountPrefKey = RoomLauncher.BuildHostRoundCountPrefKey(_activeHostSlot);
         CurrentRoundNumber = Mathf.Max(1, PlayerPrefs.GetInt(_hostRoundCountPrefKey, 1));
@@ -105,6 +107,10 @@ public class BackendRoundManager : NetworkBehaviour
         IsRoundRunning = false;
         RoundTimer = TickTimer.None;
 
+        if (_inventorySaveManager != null)
+        {
+            _inventorySaveManager.SaveAllPlayerInventories(_activeHostSlot);
+        }
 
         PlayerPrefs.SetInt(_hostRoundCountPrefKey, CurrentRoundNumber);
         PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(_activeHostSlot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
@@ -141,6 +147,10 @@ public class BackendRoundManager : NetworkBehaviour
                 continue;
             }
 
+            if (_inventorySaveManager != null)
+            {
+                _inventorySaveManager.LoadInventoryForPlayer(playerRef, _activeHostSlot, inventory.Model);
+            }
             _loadedPlayerRefs.Add(rawRef);
         }
     }

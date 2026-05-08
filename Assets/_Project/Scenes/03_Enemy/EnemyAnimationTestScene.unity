@@ -612,9 +612,7 @@ MonoBehaviour:
   noiseData: {fileID: 11400000, guid: 3e9b0d76a34521c40a096e027743e653, type: 2}
   radiusMultiplier: 0.2
   variationRange: 0.05
-  soundObstacleMask:
-    serializedVersion: 2
-    m_Bits: 0
+  maxListenerDetectionRadius: 20
   showGizmos: 1
   displayTime: 2
 --- !u!4 &642361040
@@ -1665,7 +1663,7 @@ MonoBehaviour:
   m_OverrideVoxelSize: 0
   m_VoxelSize: 0.16666667
   m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 23800000, guid: db52c064fecc5d6408dd71c1b441ef4c, type: 2}
+  m_NavMeshData: {fileID: 23800000, guid: 9bab7444dbad76244a0c7d3f22d56241, type: 2}
   m_BuildHeightMesh: 0
 --- !u!1 &1883467961
 GameObject:
@@ -1831,10 +1829,6 @@ PrefabInstance:
     - target: {fileID: 5128881092086213484, guid: 99a391bcaa825f940b51411a96e696d4, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6804007478212921028, guid: 99a391bcaa825f940b51411a96e696d4, type: 3}
-      propertyPath: SortKey
-      value: 2322444587
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

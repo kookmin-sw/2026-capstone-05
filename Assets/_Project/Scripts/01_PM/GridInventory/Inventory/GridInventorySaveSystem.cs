@@ -177,32 +177,18 @@ namespace Systems.GridInventory {
                 {
                     string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
                     ItemData data = UnityEditor.AssetDatabase.LoadAssetAtPath<ItemData>(path);
-                    if (data != null)
+                    if (data != null && !itemDataCache.ContainsKey(data.itemID))
                     {
-                        if (!itemDataCache.ContainsKey(data.itemID))
-                        {
-                            itemDataCache.Add(data.itemID, data);
-                        }
-                        else
-                        {
-                            Debug.LogWarning($"[Inventory] Duplicate itemID found: {data.itemID}. Asset: {data.name}");
-                        }
+                        itemDataCache.Add(data.itemID, data);
                     }
                 }
 #else
                 ItemData[] allItems = Resources.LoadAll<ItemData>("");
                 foreach (var data in allItems)
                 {
-                    if (data != null)
+                    if (data != null && !itemDataCache.ContainsKey(data.itemID))
                     {
-                        if (!itemDataCache.ContainsKey(data.itemID))
-                        {
-                            itemDataCache.Add(data.itemID, data);
-                        }
-                        else
-                        {
-                            Debug.LogWarning($"[Inventory] Duplicate itemID found: {data.itemID}. Asset: {data.name}");
-                        }
+                        itemDataCache.Add(data.itemID, data);
                     }
                 }
 #endif

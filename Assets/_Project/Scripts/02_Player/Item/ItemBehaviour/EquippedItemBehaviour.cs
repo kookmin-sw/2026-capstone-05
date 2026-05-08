@@ -13,6 +13,7 @@ public abstract class EquippedItemBehaviour : MonoBehaviour
 
     protected PlayerController player;
     protected ItemInstance itemInstance;
+    public ItemInstance ItemInstance => itemInstance;
 
     protected float lastUseTime = -999f;
 
