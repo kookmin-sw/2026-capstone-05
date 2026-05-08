@@ -77,7 +77,7 @@ namespace Systems.Shop
 
             if (backgroundDocument != null)
             {
-                backgroundDocument.sortingOrder = 1;
+                backgroundDocument.sortingOrder = 2; // 상점 배경
                 backgroundDocument.gameObject.SetActive(false);
             }
             else

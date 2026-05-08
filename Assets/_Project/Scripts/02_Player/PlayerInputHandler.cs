@@ -21,8 +21,6 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
     public bool IsInteractPressed { get; private set; }
     public bool ActionTriggered { get; private set; }
 
-    public bool IsInputActive { get; private set; } = true;
-
     private bool _useNetworkInputOverride;
     private PlayerInputSnapshot _networkSnapshot;
     private bool _previousNetworkCrouch;
@@ -88,7 +86,6 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
     /// </summary>
     public void SetInputActive(bool isActive)
     {
-        IsInputActive = isActive;
         if (isActive)
         {
             inputActions.Enable();

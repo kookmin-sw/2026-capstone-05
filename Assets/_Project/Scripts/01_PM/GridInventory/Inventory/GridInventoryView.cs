@@ -31,7 +31,7 @@ namespace Systems.GridInventory {
             root = document.rootVisualElement;
             
             if (document != null) {
-                document.sortingOrder = 2;
+                document.sortingOrder = 3; // 인벤토리
             }
 
             container = root.Q<VisualElement>(className: "container");
