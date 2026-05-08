@@ -21,8 +21,8 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     [Header("Scene")]
     [SerializeField] private string startSceneName = "Main_menu";
-    [SerializeField] private string gameScenePath = "Assets/_Project/Scenes/06_Backend/TestMain.unity";
-    [SerializeField] private string gameSceneNameFallback = "TestMain";
+    [SerializeField] private string gameScenePath = "Assets/_Project/Scenes/00_General/SingleDemoScene_StaticMap.unity";
+    [SerializeField] private string gameSceneNameFallback = "SingleDemoScene_StaticMap";
 
     [Header("Network")]
     [SerializeField] private int maxPlayers = 4;
@@ -67,6 +67,8 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     private string _latestRoomCode = string.Empty;
     private Canvas _roomCodeCanvas;
     private TextMeshProUGUI _roomCodeText;
+    private bool _lastKnownLoginState;
+    private string _lastKnownUserId = string.Empty;
 
     private void Awake()
     {
@@ -89,6 +91,29 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         if (TryBindMenuUi(activeScene.name))
         {
             UnlockCursorForMenu();
+        }
+
+        _lastKnownLoginState = AuthSession.IsLoggedIn;
+        _lastKnownUserId = AuthSession.CurrentUserId;
+    }
+
+
+    private void Update()
+    {
+        if (_lastKnownLoginState == AuthSession.IsLoggedIn &&
+            string.Equals(_lastKnownUserId, AuthSession.CurrentUserId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _lastKnownLoginState = AuthSession.IsLoggedIn;
+        _lastKnownUserId = AuthSession.CurrentUserId;
+
+        if (AuthSession.IsLoggedIn)
+        {
+            _loadGameMenuController ??= new LoadGameMenuController(this);
+            _loadGameMenuController.BindAndRefresh();
+            Debug.Log($"{LogPrefix} 로그인 상태 변경 감지. 슬롯 UI를 로그인 사용자 기준으로 즉시 갱신했습니다. userId={AuthSession.CurrentUserId}");
         }
     }
 
@@ -152,10 +177,14 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         _roomCodeInputLegacy = FindRoomCodeInputFieldLegacy();
 
         bool hasAnyMenuControl = _loginButton != null || _startButton != null || _hostButton != null || _joinButton != null || _enterButton != null || _roomCodeInput != null || _roomCodeInputLegacy != null;
-        if (!hasAnyMenuControl)
+
+        _loadGameMenuController ??= new LoadGameMenuController(this);
+        bool hasLoadGameUi = _loadGameMenuController.BindAndRefresh();
+
+        if (!hasAnyMenuControl && !hasLoadGameUi)
             return false;
 
-        Debug.Log($"{LogPrefix} 메뉴 UI 바인딩 시작. scene={sceneName}, configuredStartScene={startSceneName}");
+        Debug.Log($"{LogPrefix} 메뉴 UI 바인딩 시작. scene={sceneName}, configuredStartScene={startSceneName}, hasMenuControl={hasAnyMenuControl}, hasLoadGameUi={hasLoadGameUi}");
 
         if (_loginButton != null)
         {
@@ -188,8 +217,6 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         }
 
         BindHostFlowUi();
-        _loadGameMenuController ??= new LoadGameMenuController(this);
-        _loadGameMenuController.BindAndRefresh();
 
         if (_joinButton != null)
         {
@@ -387,7 +414,7 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     private void OnLoginButtonClicked()
     {
-        Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 로그인 버튼 클릭.");
+        Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 로그인 버튼 클릭. 로그인 성공 시 슬롯 UI 자동 갱신 대기.");
     }
 
     private void OnStartButtonClicked()
@@ -452,17 +479,46 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         SetRoomCodeInputText(normalizedCode);
         RefreshRoomCodeOverlay();
 
-        PlayerPrefs.SetInt(HostSelectedSlotPrefKey, slot);
-        PlayerPrefs.SetString($"HostSlot{slot}_RoomCode", normalizedCode);
-        BackendRoundManager.ResetAllHostSlotRoundsToOne();
-        PlayerPrefs.SetString(BuildHostSaveDatePrefKey(slot), DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-        PlayerPrefs.Save();
-        _loadGameMenuController?.RefreshSlotUi();
+        SyncHostSlotStateForStart(slot, normalizedCode);
 
         Debug.Log($"{LogPrefix} 호스트 방 생성. slot={slot}, 생성된 방 코드(1~1000)={normalizedCode}");
         Debug.Log($"{LogPrefix} 코드 -> 룸 이름 매핑. code={normalizedCode}, session={sessionName}");
 
         _ = StartGameAsync(normalizedCode, sessionName, GameMode.Host);
+    }
+
+
+    private void SyncHostSlotStateForStart(int slot, string roomCode)
+    {
+        int safeSlot = Mathf.Clamp(slot, 1, 3);
+
+        PlayerPrefs.SetInt(HostSelectedSlotPrefKey, safeSlot);
+        PlayerPrefs.SetString($"HostSlot{safeSlot}_RoomCode", roomCode);
+        BackendRoundManager.ResetHostSlotRoundToOne(safeSlot);
+        PlayerPrefs.SetString(BuildHostSaveDatePrefKey(safeSlot), DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        PlayerPrefs.Save();
+
+        SyncAllSlotUi();
+    }
+
+    private void SyncHostSlotStateForLoad(int slot, string roomCode)
+    {
+        int safeSlot = Mathf.Clamp(slot, 1, 3);
+
+        PlayerPrefs.SetInt(HostSelectedSlotPrefKey, safeSlot);
+        PlayerPrefs.SetString($"HostSlot{safeSlot}_RoomCode", roomCode);
+
+        int currentRound = Mathf.Max(1, PlayerPrefs.GetInt(BuildHostRoundCountPrefKey(safeSlot), 1));
+        PlayerPrefs.SetInt(BuildHostRoundCountPrefKey(safeSlot), currentRound);
+        PlayerPrefs.SetString(BuildHostSaveDatePrefKey(safeSlot), DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        PlayerPrefs.Save();
+
+        SyncAllSlotUi();
+    }
+
+    private void SyncAllSlotUi()
+    {
+        _loadGameMenuController?.RefreshSlotUi();
     }
 
     private void OnJoinButtonClicked()
@@ -488,9 +544,7 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         SetRoomCodeInputText(normalizedCode);
         RefreshRoomCodeOverlay();
 
-        PlayerPrefs.SetInt(HostSelectedSlotPrefKey, slot);
-        PlayerPrefs.SetString($"HostSlot{slot}_RoomCode", normalizedCode);
-        PlayerPrefs.Save();
+        SyncHostSlotStateForLoad(slot, normalizedCode);
 
         int round = Mathf.Max(1, PlayerPrefs.GetInt(BuildHostRoundCountPrefKey(slot), 1));
         Debug.Log($"{LogPrefix} 불러오기 시작(Host). slot={slot}, roomCode={normalizedCode}, resumeRound={round}");

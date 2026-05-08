@@ -11,16 +11,21 @@ internal sealed class LoadGameMenuController
     private readonly Dictionary<int, List<TMP_Text>> _loadSlotDayTmpTexts = new();
     private readonly Dictionary<int, List<Text>> _loadSlotDateLegacyTexts = new();
     private readonly Dictionary<int, List<Text>> _loadSlotDayLegacyTexts = new();
+    private readonly Dictionary<int, List<TMP_Text>> _startSlotDateTmpTexts = new();
+    private readonly Dictionary<int, List<TMP_Text>> _startSlotDayTmpTexts = new();
+    private readonly Dictionary<int, List<Text>> _startSlotDateLegacyTexts = new();
+    private readonly Dictionary<int, List<Text>> _startSlotDayLegacyTexts = new();
 
     internal LoadGameMenuController(RoomLauncher roomLauncher)
     {
         _roomLauncher = roomLauncher;
     }
 
-    internal void BindAndRefresh()
+    internal bool BindAndRefresh()
     {
-        BindLoadFlowUi();
+        bool hasLoadUi = BindLoadFlowUi();
         RefreshSlotUi();
+        return hasLoadUi;
     }
 
     internal void RefreshSlotUi()
@@ -37,20 +42,43 @@ internal sealed class LoadGameMenuController
             SetAllText(_loadSlotDayTmpTexts, slot, dayLabel);
             SetAllText(_loadSlotDateLegacyTexts, slot, dateLabel);
             SetAllText(_loadSlotDayLegacyTexts, slot, dayLabel);
+
+            SetAllText(_startSlotDateTmpTexts, slot, dateLabel);
+            SetAllText(_startSlotDayTmpTexts, slot, dayLabel);
+            SetAllText(_startSlotDateLegacyTexts, slot, dateLabel);
+            SetAllText(_startSlotDayLegacyTexts, slot, dayLabel);
         }
     }
 
-    private void BindLoadFlowUi()
+    private bool BindLoadFlowUi()
     {
         _loadSlotButtons.Clear();
         _loadSlotDateTmpTexts.Clear();
         _loadSlotDayTmpTexts.Clear();
         _loadSlotDateLegacyTexts.Clear();
         _loadSlotDayLegacyTexts.Clear();
+        _startSlotDateTmpTexts.Clear();
+        _startSlotDayTmpTexts.Clear();
+        _startSlotDateLegacyTexts.Clear();
+        _startSlotDayLegacyTexts.Clear();
 
-        BindLoadSlotUi(1, "Gmae1 Load Box", "Start Game Box1", "Gmae1 Start Box", "Main_menu1");
-        BindLoadSlotUi(2, "Gmae2 Load Box", "Start Game Box2", "Gmae2 Start Box", "Main_menu2");
-        BindLoadSlotUi(3, "Gmae3 Load Box", "Start Game Box3", "Gmae3 Start Box", "Main_menu3");
+        BindLoadSlotUi(1, "Gmae1 Load Box", "Game1 Load Box", "Main_menu1", "Main_Menu1");
+        BindLoadSlotUi(2, "Gmae2 Load Box", "Game2 Load Box", "Main_menu2", "Main_Menu2");
+        BindLoadSlotUi(3, "Gmae3 Load Box", "Game3 Load Box", "Main_menu3", "Main_Menu3");
+
+        BindDisplaySlotUi(_startSlotDateTmpTexts, _startSlotDayTmpTexts, _startSlotDateLegacyTexts, _startSlotDayLegacyTexts, 1, "Gmae1 Start Box", "Game1 Start Box", "Start Game Box1", "Main_menu1", "Main_Menu1");
+        BindDisplaySlotUi(_startSlotDateTmpTexts, _startSlotDayTmpTexts, _startSlotDateLegacyTexts, _startSlotDayLegacyTexts, 2, "Gmae2 Start Box", "Game2 Start Box", "Start Game Box2", "Main_menu2", "Main_Menu2");
+        BindDisplaySlotUi(_startSlotDateTmpTexts, _startSlotDayTmpTexts, _startSlotDateLegacyTexts, _startSlotDayLegacyTexts, 3, "Gmae3 Start Box", "Game3 Start Box", "Start Game Box3", "Main_menu3", "Main_Menu3");
+
+        return _loadSlotButtons.Count > 0 ||
+               _loadSlotDateTmpTexts.Count > 0 ||
+               _loadSlotDayTmpTexts.Count > 0 ||
+               _loadSlotDateLegacyTexts.Count > 0 ||
+               _loadSlotDayLegacyTexts.Count > 0 ||
+               _startSlotDateTmpTexts.Count > 0 ||
+               _startSlotDayTmpTexts.Count > 0 ||
+               _startSlotDateLegacyTexts.Count > 0 ||
+               _startSlotDayLegacyTexts.Count > 0;
     }
 
     private void BindLoadSlotUi(int slot, params string[] containerCandidates)
@@ -60,7 +88,7 @@ internal sealed class LoadGameMenuController
 
         foreach (Transform container in containers)
         {
-            Button button = container.GetComponentInChildren<Button>(true);
+            Button button = FindLoadButton(container);
             if (button != null && !_loadSlotButtons.ContainsKey(slot))
             {
                 button.onClick.RemoveAllListeners();
@@ -80,6 +108,57 @@ internal sealed class LoadGameMenuController
                 else if (ContainsAny(text.name, new[] { "Day" })) AddText(_loadSlotDayLegacyTexts, slot, text);
             }
         }
+    }
+
+    private static void BindDisplaySlotUi(
+        Dictionary<int, List<TMP_Text>> dateTmpMap,
+        Dictionary<int, List<TMP_Text>> dayTmpMap,
+        Dictionary<int, List<Text>> dateLegacyMap,
+        Dictionary<int, List<Text>> dayLegacyMap,
+        int slot,
+        params string[] containerCandidates)
+    {
+        IReadOnlyList<Transform> containers = FindNamedContainers(containerCandidates);
+        if (containers.Count == 0) return;
+
+        foreach (Transform container in containers)
+        {
+            foreach (TMP_Text text in container.GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (ContainsAny(text.name, new[] { "Date" })) AddText(dateTmpMap, slot, text);
+                else if (ContainsAny(text.name, new[] { "Day" })) AddText(dayTmpMap, slot, text);
+            }
+
+            foreach (Text text in container.GetComponentsInChildren<Text>(true))
+            {
+                if (ContainsAny(text.name, new[] { "Date" })) AddText(dateLegacyMap, slot, text);
+                else if (ContainsAny(text.name, new[] { "Day" })) AddText(dayLegacyMap, slot, text);
+            }
+        }
+    }
+
+
+    private static Button FindLoadButton(Transform container)
+    {
+        if (container == null)
+            return null;
+
+        Button[] buttons = container.GetComponentsInChildren<Button>(true);
+        foreach (Button candidate in buttons)
+        {
+            if (ContainsAny(candidate.name, new[] { "Load", "불러오기" }))
+                return candidate;
+
+            TMP_Text label = candidate.GetComponentInChildren<TMP_Text>(true);
+            if (label != null && ContainsAny(label.text, new[] { "Load", "불러오기" }))
+                return candidate;
+
+            Text legacyLabel = candidate.GetComponentInChildren<Text>(true);
+            if (legacyLabel != null && ContainsAny(legacyLabel.text, new[] { "Load", "불러오기" }))
+                return candidate;
+        }
+
+        return null;
     }
 
     private void OnLoadSlotButtonClicked(int slot)

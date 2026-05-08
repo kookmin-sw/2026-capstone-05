@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Fusion;
 using UnityEngine;
 
@@ -23,6 +24,10 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
     [Networked] private NetworkBool NetworkIsGrounded { get; set; }
     [Networked] private NetworkBool NetworkIsSprinting { get; set; }
     [Networked] private NetworkBool NetworkIsCrouching { get; set; }
+    [Networked] private NetworkString<_64> EquippedItemId { get; set; }
+
+    private string _lastAppliedEquippedItemId = "__unset__";
+    private static readonly Dictionary<string, ItemData> ItemDataCache = new Dictionary<string, ItemData>();
 
     public override void Spawned()
     {
@@ -49,6 +54,7 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
             NetworkIsGrounded = true;
             NetworkIsSprinting = false;
             NetworkIsCrouching = false;
+            EquippedItemId = string.Empty;
         }
     }
 
@@ -85,6 +91,8 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
             NetworkIsCrouching = _playerController != null &&
                                 _playerController.GroundedState != null &&
                                 _playerController.GroundedState.CurrentPosture == PlayerGroundedPosture.Crouching;
+
+            EquippedItemId = ReadEquippedItemId();
         }
     }
 
@@ -144,6 +152,7 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         }
 
         ApplyProxyAnimationState();
+        ApplyProxyEquipmentState();
     }
 
     private void ApplyProxyAnimationState()
@@ -175,5 +184,61 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
             return;
 
         _inputHandler.SetNetworkInputOverride(!Object.HasInputAuthority);
+    }
+
+    private string ReadEquippedItemId()
+    {
+        if (_playerController == null || _playerController.Equipment == null)
+            return string.Empty;
+
+        var equipped = _playerController.Equipment.Item3P;
+        return equipped != null && equipped.ItemInstance != null && equipped.ItemInstance.Data != null
+            ? equipped.ItemInstance.Data.itemID
+            : string.Empty;
+    }
+
+    private void ApplyProxyEquipmentState()
+    {
+        if (_playerController == null || _playerController.Equipment == null)
+            return;
+
+        string equippedId = EquippedItemId.ToString();
+        if (equippedId == _lastAppliedEquippedItemId)
+            return;
+
+        _lastAppliedEquippedItemId = equippedId;
+
+        if (string.IsNullOrWhiteSpace(equippedId))
+        {
+            _playerController.Equipment.UnequipItem();
+            return;
+        }
+
+        ItemData data = ResolveItemData(equippedId);
+        if (data == null)
+        {
+            _playerController.Equipment.UnequipItem();
+            return;
+        }
+
+        _playerController.Equipment.EquipItem(new ItemInstance(data));
+    }
+
+    private static ItemData ResolveItemData(string itemId)
+    {
+        if (ItemDataCache.TryGetValue(itemId, out ItemData cached))
+            return cached;
+
+        ItemData[] allItems = Resources.LoadAll<ItemData>("" );
+        foreach (var data in allItems)
+        {
+            if (data != null && !string.IsNullOrEmpty(data.itemID) && !ItemDataCache.ContainsKey(data.itemID))
+            {
+                ItemDataCache[data.itemID] = data;
+            }
+        }
+
+        ItemDataCache.TryGetValue(itemId, out ItemData found);
+        return found;
     }
 }

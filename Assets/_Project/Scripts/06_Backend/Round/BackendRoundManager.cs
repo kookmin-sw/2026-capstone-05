@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using Fusion;
+using Systems.GridInventory;
 using UnityEngine;
 
 [RequireComponent(typeof(NetworkObject))]
@@ -15,6 +17,7 @@ public class BackendRoundManager : NetworkBehaviour
 
     private string _hostRoundCountPrefKey = RoomLauncher.BuildHostRoundCountPrefKey(1);
     private int _activeHostSlot = 1;
+    private readonly HashSet<int> _loadedPlayerRefs = new HashSet<int>();
 
     public float RoundTimeRemainingSeconds
     {
@@ -51,6 +54,8 @@ public class BackendRoundManager : NetworkBehaviour
         {
             return;
         }
+
+        TryRestoreJoinedPlayerInventories();
 
         if (IsRoundRunning && RoundTimer.Expired(Runner))
         {
@@ -100,6 +105,7 @@ public class BackendRoundManager : NetworkBehaviour
         IsRoundRunning = false;
         RoundTimer = TickTimer.None;
 
+
         PlayerPrefs.SetInt(_hostRoundCountPrefKey, CurrentRoundNumber);
         PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(_activeHostSlot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         PlayerPrefs.Save();
@@ -107,6 +113,36 @@ public class BackendRoundManager : NetworkBehaviour
         RespawnAllPlayersAtSpawner();
 
         Debug.Log($"[BackendRoundManager] 라운드 종료. slot={_activeHostSlot}, round={CurrentRoundNumber}, reason={reason}");
+    }
+
+    private void TryRestoreJoinedPlayerInventories()
+    {
+        if (Runner == null)
+        {
+            return;
+        }
+
+        foreach (PlayerRef playerRef in Runner.ActivePlayers)
+        {
+            int rawRef = playerRef.RawEncoded;
+            if (_loadedPlayerRefs.Contains(rawRef))
+            {
+                continue;
+            }
+
+            if (!Runner.TryGetPlayerObject(playerRef, out NetworkObject playerObject) || playerObject == null)
+            {
+                continue;
+            }
+
+            GridInventory inventory = playerObject.GetComponentInChildren<GridInventory>(true);
+            if (inventory == null || inventory.Model == null)
+            {
+                continue;
+            }
+
+            _loadedPlayerRefs.Add(rawRef);
+        }
     }
 
     private void RespawnAllPlayersAtSpawner()
@@ -140,15 +176,12 @@ public class BackendRoundManager : NetworkBehaviour
         }
     }
 
-    public static void ResetAllHostSlotRoundsToOne()
+    public static void ResetHostSlotRoundToOne(int slot)
     {
-        for (int slot = 1; slot <= 3; slot++)
-        {
-            string key = RoomLauncher.BuildHostRoundCountPrefKey(slot);
-            PlayerPrefs.SetInt(key, 1);
-            PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(slot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-        }
-
+        int safeSlot = Mathf.Clamp(slot, 1, 3);
+        string key = RoomLauncher.BuildHostRoundCountPrefKey(safeSlot);
+        PlayerPrefs.SetInt(key, 1);
+        PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(safeSlot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         PlayerPrefs.Save();
     }
 
