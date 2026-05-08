@@ -10,6 +10,7 @@ public class EnemyChaseState : EnemyState
     public override void Enter()
     {
         enemy.Agent.speed = enemy.Data.chaseSpeed;
+        enemy.NotifyAnimatorState(1);
 
         lastNoisePosition = enemy.DetectedNoisePosition;
         enemy.Agent.SetDestination(lastNoisePosition);

@@ -120,7 +120,7 @@ public class PlayerConditionUI : MonoBehaviour
         }
     }
 
-    // 🌟 핵심: 게이지가 서서히 줄어드는 애니메이션 함수
+    // 핵심: 게이지가 서서히 줄어드는 애니메이션 함수
     private void UpdateCircle(Image img, TextMeshProUGUI txt, float currentVal)
     {
         if (img != null)

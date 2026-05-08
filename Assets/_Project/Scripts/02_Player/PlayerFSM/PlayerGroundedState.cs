@@ -136,6 +136,10 @@ public class PlayerGroundedState : PlayerState
 
         currentLocomotion = newLocomotion;
         player.Animator.SetSprinting(currentLocomotion == PlayerGroundedLocomotion.Sprinting);
+        if (currentLocomotion == PlayerGroundedLocomotion.Sprinting)
+        {
+            player.Equipment.CancelCurrentItemUse();
+        }
     }
 
     private void ExecuteJump()

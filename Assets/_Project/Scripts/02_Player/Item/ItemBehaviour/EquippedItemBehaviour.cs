@@ -87,6 +87,8 @@ public abstract class EquippedItemBehaviour : MonoBehaviour
     /// </summary>
     public virtual void OnAnimationEventTriggered() { }
 
+    public virtual void CancelUse() { }
+
 
     private void SetRenderersShadowCastingMode(UnityEngine.Rendering.ShadowCastingMode mode)
     {

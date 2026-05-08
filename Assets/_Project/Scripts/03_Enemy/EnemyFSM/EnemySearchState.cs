@@ -117,7 +117,9 @@ public class EnemySearchState : EnemyState
         isTurnPlaying = true;
         moveAfterTurn = false;
         isLeftTurn = Random.value > 0.5f;
-        enemy.Animator.SetTrigger(isLeftTurn ? "TurnLeft" : "TurnRight");
+        string turnTrigger = isLeftTurn ? "TurnLeft" : "TurnRight";
+        enemy.Animator.SetTrigger(turnTrigger);
+        enemy.NotifyAnimatorTrigger(turnTrigger);
     }
 
     private void StopWaitTurn()

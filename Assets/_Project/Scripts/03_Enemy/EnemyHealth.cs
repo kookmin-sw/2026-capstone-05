@@ -1,30 +1,38 @@
+using Fusion;
 using UnityEngine;
 
-public class EnemyHealth : MonoBehaviour, IDamageable
+[RequireComponent(typeof(NetworkObject))]
+public class EnemyHealth : NetworkBehaviour, IDamageable
 {
     private EnemyAI enemy;
-    private float currentHealth;
+
+    [Networked] private float NetworkCurrentHealth { get; set; }
+
+    public float CurrentHealth => NetworkCurrentHealth;
 
     private void Awake()
     {
         enemy = GetComponent<EnemyAI>();
     }
 
-    private void Start()
+    public override void Spawned()
     {
-        currentHealth = enemy.Data.maxHealth;
+        if (HasStateAuthority)
+        {
+            NetworkCurrentHealth = enemy.Data.maxHealth;
+        }
     }
 
     public void TakeDamage(float damageAmount)
     {
-        if (currentHealth <= 0f) return;
+        if (!HasStateAuthority || NetworkCurrentHealth <= 0f) return;
 
-        float damage = Mathf.Min(damageAmount, currentHealth);
-        currentHealth -= damage;
+        float damage = Mathf.Min(damageAmount, NetworkCurrentHealth);
+        NetworkCurrentHealth -= damage;
 
-        if (currentHealth <= 0f)
+        if (NetworkCurrentHealth <= 0f)
         {
-            currentHealth = 0f;
+            NetworkCurrentHealth = 0f;
             enemy.StateMachine.ChangeState(enemy.DeadState);
             return;
         }

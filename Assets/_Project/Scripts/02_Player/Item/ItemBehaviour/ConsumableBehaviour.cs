@@ -82,8 +82,10 @@ public class ConsumableBehaviour : EquippedItemBehaviour
         isConsuming = false;
     }
 
-    public void CancelConsume()
+    public override void CancelUse()
     {
+        base.CancelUse();
+
         if (isConsuming)
         {
             if (consumeCoroutine != null)

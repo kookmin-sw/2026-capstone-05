@@ -18,6 +18,7 @@ public class EnemyHitState : EnemyState
 
         enemy.Animator.SetInteger("HitIndex", Random.Range(0, 2));
         enemy.Animator.SetTrigger("Hit");
+        enemy.NotifyAnimatorTrigger("Hit");
     }
 
     public override void Exit()

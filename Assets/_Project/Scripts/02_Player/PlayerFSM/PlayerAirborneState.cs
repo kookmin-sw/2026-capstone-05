@@ -21,6 +21,8 @@ public class PlayerAirborneState : PlayerState
         player.Animator.SetGrounded(false);
 
         player.Condition.stamina.increaseRate = player.airborneRegenRate;
+
+        player.Equipment.CancelCurrentItemUse();
     }
 
     public override void Exit()
