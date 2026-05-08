@@ -80,7 +80,7 @@ namespace Systems.Shop
             // 마우스 커서 표시 및 플레이어 조작 비활성화
             UnityEngine.Cursor.lockState = CursorLockMode.None;
             UnityEngine.Cursor.visible = true;
-            PlayerInputHandler playerInput = FindAnyObjectByType<PlayerInputHandler>();
+            PlayerInputHandler playerInput = FindObjectOfType<PlayerInputHandler>();
             if (playerInput != null)
             {
                 playerInput.SetInputActive(false);
@@ -107,7 +107,7 @@ namespace Systems.Shop
             // 마우스 커서 숨김 및 플레이어 조작 활성화
             UnityEngine.Cursor.lockState = CursorLockMode.Locked;
             UnityEngine.Cursor.visible = false;
-            PlayerInputHandler playerInput = FindAnyObjectByType<PlayerInputHandler>();
+            PlayerInputHandler playerInput = FindObjectOfType<PlayerInputHandler>();
             if (playerInput != null)
             {
                 playerInput.SetInputActive(true);

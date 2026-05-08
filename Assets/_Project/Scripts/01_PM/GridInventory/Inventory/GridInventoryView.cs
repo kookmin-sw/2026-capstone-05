@@ -14,6 +14,10 @@ namespace Systems.GridInventory {
         public event System.Action OnSaveClicked;
         public event System.Action OnLoadClicked;
 
+        // Legacy API compatibility for Shop/Backend scripts
+        public VisualElement Container => container;
+        public StyleSheet GridStyleSheet => styleSheet;
+
         private PlayerInputHandler localPlayerInputHandler;
         private float playerSearchTimer = 0f;
 
