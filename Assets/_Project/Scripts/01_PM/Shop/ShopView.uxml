@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="ShopView.uss" />
+    <ui:VisualElement name="shop-root" class="shop-container">
+        
+        <!-- Top Bar -->
+        <ui:VisualElement class="top-bar">
+            <ui:VisualElement class="title-container">
+                <ui:VisualElement class="title-icon" />
+                <ui:Label name="shop-title" text="POKOPIA SHOP - BUY" class="shop-title" />
+            </ui:VisualElement>
+            <ui:VisualElement class="gold-container">
+                <ui:Label name="gold-label" text="Gold: 500g" class="gold-text" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement class="main-content">
+            <!-- Left Panel (Catalog / Grid) -->
+            <ui:VisualElement name="left-panel" class="left-panel">
+                
+                <!-- Catalog List -->
+                <ui:ScrollView name="catalog-scroll" class="catalog-scroll" mode="Vertical">
+                    <ui:VisualElement name="catalog-container" class="catalog-container" />
+                </ui:ScrollView>
+
+                <!-- Placement Grid -->
+                <ui:VisualElement name="placement-grid-container" class="placement-grid-container" style="display: none;">
+                    <ui:VisualElement name="placement-grid" class="placement-grid" />
+                </ui:VisualElement>
+                
+                <!-- Item Details Popup Overlay -->
+                <ui:VisualElement name="item-detail-popup" class="popup-overlay" style="display: none;">
+                    <ui:VisualElement class="popup-box">
+                        <ui:VisualElement class="popup-header">
+                            <ui:Label text="ITEM DETAILS" class="popup-title" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="popup-body">
+                            <ui:VisualElement class="popup-item-info">
+                                <ui:VisualElement name="popup-item-icon" class="popup-icon" />
+                                <ui:VisualElement class="popup-item-text">
+                                    <ui:Label name="popup-item-name" text="STEEL SWORD" class="popup-item-name" />
+                                    <ui:Label name="popup-item-price" text="150 Gold" class="popup-item-price" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            
+                            <ui:VisualElement class="popup-shape-preview">
+                                <ui:VisualElement name="popup-shape-grid" class="shape-grid" />
+                            </ui:VisualElement>
+                            
+                            <ui:Label name="popup-item-desc" text="Item description goes here." class="popup-desc" />
+                            
+                            <!-- Quantity Selector -->
+                            <ui:VisualElement class="quantity-container" style="flex-direction: row; align-items: center; justify-content: center; margin-top: 10px;">
+                                <ui:Button name="btn-quantity-minus" text="-" class="quantity-btn" style="width: 30px; height: 30px; font-size: 20px;" />
+                                <ui:Label name="label-quantity" text="1" class="quantity-label" style="width: 50px; -unity-text-align: middle-center; font-size: 20px; color: white;" />
+                                <ui:Button name="btn-quantity-plus" text="+" class="quantity-btn" style="width: 30px; height: 30px; font-size: 20px;" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="popup-footer">
+                            <ui:Button name="btn-popup-confirm" text="[BUY]\nConfirm" class="popup-btn popup-btn-confirm" />
+                            <ui:Button name="btn-popup-cancel" text="[CANCEL]" class="popup-btn popup-btn-cancel" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Right Panel (NPC, Dialog, Buttons) -->
+            <ui:VisualElement class="right-panel">
+                <ui:VisualElement class="npc-container">
+                    <!-- Placeholder for Duck Image -->
+                    <ui:VisualElement name="npc-image" class="npc-image" />
+                </ui:VisualElement>
+                
+                <ui:VisualElement class="dialogue-container">
+                    <ui:Label name="dialogue-text" text="* &quot;Welcome to Pokopia, where every item has a tale!&quot;" class="dialogue-text" />
+                </ui:VisualElement>
+                
+                <!-- Main Action Buttons -->
+                <ui:VisualElement name="main-action-buttons" class="action-buttons">
+                    <ui:Button name="btn-tab-buy" text="* Buy" class="action-btn active" />
+                    <ui:Button name="btn-tab-sell" text="* Sell" class="action-btn" />
+                    <ui:Button name="btn-tab-talk" text="* Talk" class="action-btn" />
+                    <ui:Button name="btn-tab-exit" text="* Exit" class="action-btn" />
+                </ui:VisualElement>
+
+                <!-- Placement Action Buttons -->
+                <ui:VisualElement name="placement-action-buttons" class="action-buttons" style="display: none;">
+                    <ui:Button name="btn-place" text="* Place" class="action-btn active" />
+                    <ui:Button name="btn-cancel-place" text="* Cancel" class="action-btn" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+
+    <!-- Template for Item Card in Catalog -->
+    <ui:VisualElement name="item-card-template" class="item-card" style="display: none;">
+        <ui:VisualElement name="card-shape-preview" class="card-shape-preview" />
+        <ui:VisualElement name="card-icon" class="card-icon" />
+        <ui:Label name="card-name" text="HP Pot" class="card-name" />
+        <ui:Label name="card-price" text="10g" class="card-price" />
+    </ui:VisualElement>
+</ui:UXML>

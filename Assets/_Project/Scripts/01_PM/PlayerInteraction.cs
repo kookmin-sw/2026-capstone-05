@@ -7,7 +7,7 @@ public class PlayerInteraction : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private PlayerController player;
-    [SerializeField] private Camera mainCamera;
+    [SerializeField] private Transform cameraTransform;
 
     [Header("Interaction Settings")]
     [SerializeField] private float interactionRange = 3f;
@@ -30,17 +30,17 @@ public class PlayerInteraction : MonoBehaviour
         
         if (player == null)
             player = FindAnyObjectByType<PlayerController>();
-
+        
         ResolveInteractionCamera();
     }
     private void Update()
     {
-        CheckInteractionFocus();
-
         if (player == null || player.InputHandler == null)
         {
             return;
         }
+
+        CheckInteractionFocus();
 
         if (currentInteractable is IHoldInteractable holdInteractable)
         {
@@ -60,10 +60,12 @@ public class PlayerInteraction : MonoBehaviour
     /// </summary>
     private void CheckInteractionFocus()
     {
-        ResolveInteractionCamera();
-        if (mainCamera == null) return;
+        if (cameraTransform == null)
+        {
+            ResolveInteractionCamera();
+        }
 
-        Ray ray = new Ray(mainCamera.transform.position, mainCamera.transform.forward);
+        Ray ray = new Ray(cameraTransform.position, cameraTransform.forward);
         RaycastHit[] hits = Physics.RaycastAll(ray, interactionRange, interactableLayers);
         
         if (hits.Length > 0)
@@ -95,11 +97,17 @@ public class PlayerInteraction : MonoBehaviour
             }
             
             // 유효한 IInteractable을 찾지 못했다면 클리어
-            ClearCurrentInteractable();
+            if (currentLookObject != null)
+            {
+                ClearCurrentInteractable();
+            }
         }
         else
         {
-            ClearCurrentInteractable();
+            if (currentLookObject != null)
+            {
+                ClearCurrentInteractable();
+            }
         }
     }
 
@@ -217,29 +225,34 @@ public class PlayerInteraction : MonoBehaviour
 
     private void ResolveInteractionCamera()
     {
-        if (mainCamera != null && mainCamera.isActiveAndEnabled)
+        cameraTransform = player.CameraTransform;
+        if (cameraTransform != null)
         {
             return;
         }
+        // if (mainCamera != null && mainCamera.isActiveAndEnabled)
+            // {
+            //     return;
+            // }
 
-        // 1) MainCamera 태그 우선
-        mainCamera = Camera.main;
-        if (mainCamera != null && mainCamera.isActiveAndEnabled)
-        {
-            return;
-        }
+            // // 1) MainCamera 태그 우선
+            // mainCamera = Camera.main;
+            // if (mainCamera != null && mainCamera.isActiveAndEnabled)
+            // {
+            //     return;
+            // }
 
-        // 2) 플레이어 하위 카메라(프리팹 구조 변경 대응)
-        if (player != null)
-        {
-            mainCamera = player.GetComponentInChildren<Camera>(true);
-            if (mainCamera != null && mainCamera.isActiveAndEnabled)
+            // 2) 플레이어 하위 카메라(프리팹 구조 변경 대응)
+            if (player != null)
             {
-                return;
+                cameraTransform = player.GetComponentInChildren<Camera>(true).transform;
+                if (cameraTransform != null && !cameraTransform.gameObject.activeInHierarchy)
+                {
+                    return;
+                }
             }
-        }
 
         // 3) 마지막 폴백: 씬의 활성 카메라 아무거나
-        mainCamera = FindAnyObjectByType<Camera>();
+        cameraTransform = FindAnyObjectByType<Camera>().transform;
     }
 }

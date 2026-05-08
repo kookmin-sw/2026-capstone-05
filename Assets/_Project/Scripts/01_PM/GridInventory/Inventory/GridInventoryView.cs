@@ -29,6 +29,10 @@ namespace Systems.GridInventory {
         public override IEnumerator InitializeView(int size = 20) {
             Slots = new GridSlot[size];
             root = document.rootVisualElement;
+            
+            if (document != null) {
+                document.sortingOrder = 3; // 인벤토리
+            }
 
             container = root.Q<VisualElement>(className: "container");
             if (container == null) {
@@ -138,6 +142,11 @@ namespace Systems.GridInventory {
 
             // Tab 키를 누르면 인벤토리 토글 (표시/숨김)
             if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame && container != null) {
+                // 상점이 열려있을 때는 Tab으로 인벤토리를 열지 못하게 막음 (배치 모드에서만 스크립트로 열림)
+                if (Systems.Shop.ShopController.Instance != null && Systems.Shop.ShopController.Instance.IsOpen) {
+                    return;
+                }
+
                 bool isHidden = container.style.display == DisplayStyle.None;
                 container.style.display = isHidden ? DisplayStyle.Flex : DisplayStyle.None;
 

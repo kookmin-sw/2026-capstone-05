@@ -23,22 +23,23 @@ public class InteractionUI : MonoBehaviour
         mainCamera = Camera.main;
     }
 
-    private void OnEnable()
+    private void OnDestroy()
     {
-        if (uiDocument != null && uiDocument.rootVisualElement != null)
+        if (Instance == this)
         {
-            var root = uiDocument.rootVisualElement;
-
-            container = root.Q<VisualElement>(className: "interaction-container");
-            objectNameLabel = root.Q<Label>("ObjectName");
-            interactionPromptLabel = root.Q<Label>("InteractionPrompt");
-
-            Hide(); // 처음에 숨기기
+            Instance = null;
         }
+    }
+
+    private void Start()
+    {
+        EnsureUIInitialized();
     }
 
     private void Update()
     {
+        EnsureUIInitialized();
+
         // 컨테이너가 없거나 숨겨져 있으면 패스
         if (container == null || container.style.display == DisplayStyle.None) return;
 
@@ -57,19 +58,56 @@ public class InteractionUI : MonoBehaviour
         container.style.top = StyleKeyword.Null;
     }
 
+    private void EnsureUIInitialized()
+    {
+        if (uiDocument == null || uiDocument.rootVisualElement == null) return;
+
+        // 이미 캐싱되어 있고 패널이 유효하면 초기화 건너뜀
+        if (container != null && container.panel != null && container.panel == uiDocument.rootVisualElement.panel) return;
+
+        uiDocument.sortingOrder = 1;
+        var root = uiDocument.rootVisualElement;
+
+        // 재초기화 시 이전 상태 보존
+        bool wasShowing = (targetTransform != null);
+        string currentObjName = objectNameLabel != null ? objectNameLabel.text : "";
+        string currentPrompt = interactionPromptLabel != null ? interactionPromptLabel.text : "";
+
+        container = root.Q<VisualElement>(className: "interaction-container");
+        objectNameLabel = root.Q<Label>("ObjectName");
+        interactionPromptLabel = root.Q<Label>("InteractionPrompt");
+
+        if (container != null)
+        {
+            if (wasShowing)
+            {
+                if (objectNameLabel != null) objectNameLabel.text = currentObjName;
+                if (interactionPromptLabel != null) interactionPromptLabel.text = currentPrompt;
+                container.style.display = DisplayStyle.Flex;
+            }
+            else
+            {
+                container.style.display = DisplayStyle.None;
+            }
+        }
+    }
     public void Show(string objectName, string prompt, Transform target)
     {
+        EnsureUIInitialized();
+
         if (container == null) return;
 
         targetTransform = target;
-        objectNameLabel.text = objectName;
-        interactionPromptLabel.text = prompt;
+        if (objectNameLabel != null) objectNameLabel.text = objectName;
+        if (interactionPromptLabel != null) interactionPromptLabel.text = prompt;
 
         container.style.display = DisplayStyle.Flex;
     }
 
     public void Hide()
     {
+        EnsureUIInitialized();
+
         if (container == null) return;
 
         targetTransform = null;
