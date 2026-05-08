@@ -35,12 +35,21 @@ public class PlayerInteraction : MonoBehaviour
     }
     private void Update()
     {
-        CheckInteractionFocus();
-
         if (player == null || player.InputHandler == null)
         {
             return;
         }
+
+        if (!player.InputHandler.IsInputActive)
+        {
+            if (currentLookObject != null)
+            {
+                ClearCurrentInteractable();
+            }
+            return;
+        }
+
+        CheckInteractionFocus();
 
         if (currentInteractable is IHoldInteractable holdInteractable)
         {
@@ -95,11 +104,17 @@ public class PlayerInteraction : MonoBehaviour
             }
             
             // 유효한 IInteractable을 찾지 못했다면 클리어
-            ClearCurrentInteractable();
+            if (currentLookObject != null)
+            {
+                ClearCurrentInteractable();
+            }
         }
         else
         {
-            ClearCurrentInteractable();
+            if (currentLookObject != null)
+            {
+                ClearCurrentInteractable();
+            }
         }
     }
 

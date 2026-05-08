@@ -9,6 +9,8 @@ namespace Systems.Shop
     public class ShopView : MonoBehaviour
     {
         [SerializeField] private UIDocument document;
+        [SerializeField] private UIDocument backgroundDocument;
+        [SerializeField] private Canvas mascotCanvas; // 마스코트 캔버스도 상점을 열고 닫을 때 켜고 끄기 위한 필드
         
         // Expose events for Controller
         public event Action<ShopItemEntry, int> OnBuyItemClicked;
@@ -62,8 +64,35 @@ namespace Systems.Shop
 
         public void Initialize()
         {
+            if (document == null)
+            {
+                Debug.LogError("ShopView: document가 할당되지 않았습니다!");
+                return;
+            }
+
             root = document.rootVisualElement;
             root.style.display = DisplayStyle.None; // Hide initially
+
+            document.sortingOrder = 6;
+
+            if (backgroundDocument != null)
+            {
+                backgroundDocument.sortingOrder = 1;
+                backgroundDocument.gameObject.SetActive(false);
+            }
+            else
+            {
+                Debug.LogWarning("ShopView: backgroundDocument(갈색 배경)가 할당되지 않았습니다! Inspector를 확인해주세요.");
+            }
+
+            if (mascotCanvas != null)
+            {
+                mascotCanvas.gameObject.SetActive(false); // 처음에 마스코트 숨김
+            }
+            else
+            {
+                Debug.LogWarning("ShopView: mascotCanvas가 할당되지 않았습니다! Inspector를 확인해주세요.");
+            }
 
             goldLabel = root.Q<Label>("gold-label");
             dialogueText = root.Q<Label>("dialogue-text");
@@ -159,6 +188,17 @@ namespace Systems.Shop
         public void ShowShop()
         {
             root.style.display = DisplayStyle.Flex;
+            
+            if (backgroundDocument != null)
+            {
+                backgroundDocument.gameObject.SetActive(true);
+            }
+
+            if (mascotCanvas != null)
+            {
+                mascotCanvas.gameObject.SetActive(true); // 상점 열릴 때 마스코트 표시
+            }
+
             SetDialogue("* \"Welcome to Pokopia, where every item has a tale!\"");
             SwitchToCatalogMode();
 
@@ -181,6 +221,16 @@ namespace Systems.Shop
         public void HideShop()
         {
             root.style.display = DisplayStyle.None;
+
+            if (backgroundDocument != null)
+            {
+                backgroundDocument.gameObject.SetActive(false);
+            }
+
+            if (mascotCanvas != null)
+            {
+                mascotCanvas.gameObject.SetActive(false); // 상점 닫힐 때 마스코트 숨김
+            }
 
             // 상점이 닫힐 때 퀵슬롯을 다시 표시합니다.
             if (QuickslotUIController.Instance != null && QuickslotUIController.Instance.GetComponent<UIDocument>() != null)

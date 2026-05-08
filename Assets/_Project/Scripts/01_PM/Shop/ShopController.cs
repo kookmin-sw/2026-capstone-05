@@ -12,6 +12,8 @@ namespace Systems.Shop
         // 전역으로 접근 가능한 싱글톤 인스턴스 (UIManager 등의 하위에 두어도 됩니다)
         public static ShopController Instance { get; private set; }
 
+        public bool IsOpen { get; private set; }
+
         [SerializeField] private ShopView shopView;
         [SerializeField] private int startingGold = 500; // 나중에 실제 플레이어 지갑 시스템과 연동해야 합니다.
         
@@ -22,6 +24,7 @@ namespace Systems.Shop
         private ShopItemEntry currentPlacingItem;
         private ItemInstance ghostItemInstance;
         private bool isPlacing;
+        private float openTime;
         
         private void Awake()
         {
@@ -32,6 +35,14 @@ namespace Systems.Shop
             else
             {
                 Destroy(gameObject);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
             }
         }
 
@@ -59,6 +70,8 @@ namespace Systems.Shop
         /// </summary>
         public void OpenShop(List<ShopItemEntry> shopItems)
         {
+            IsOpen = true;
+            openTime = Time.time;
             model.SetShopItems(shopItems);
             
             shopView.ShowShop();
@@ -82,6 +95,7 @@ namespace Systems.Shop
 
         public void CloseShop()
         {
+            IsOpen = false;
             // 상점 종료 시점에 혹시나 배치 모드 중이었다면 인벤토리를 본래 UI로 돌려놓습니다.
             if (originalInventoryParent != null)
             {
@@ -102,6 +116,15 @@ namespace Systems.Shop
 
         private void Update()
         {
+            if (IsOpen && Time.time - openTime > 0.1f)
+            {
+                if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.eKey.wasPressedThisFrame)
+                {
+                    CloseShop();
+                    return;
+                }
+            }
+
             if (isPlacing && ghostItemInstance != null && GridInventoryView.Instance != null)
             {
                 var ghostIcon = shopView.GetRootVisualElement().Q<UnityEngine.UIElements.VisualElement>(name: "ghostIcon");

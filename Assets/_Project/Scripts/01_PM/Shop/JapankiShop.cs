@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Systems.Shop
 {
-    public class VendingMachineShop : MonoBehaviour, IInteractable
+    public class JapankiShop : MonoBehaviour, IInteractable
     {
         [Header("자판기 판매 아이템 목록")]
         [SerializeField] private List<ShopItemEntry> itemsToSell;

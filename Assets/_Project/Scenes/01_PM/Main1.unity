@@ -1816,6 +1816,63 @@ Mesh:
       - serializedVersion: 1
         m_IndexStart: 0
         m_IndexCount: 0
+--- !u!1001 &161543472
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 7c8c2356404418645b8b84dd4d30a0bb, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -194.74295
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7c8c2356404418645b8b84dd4d30a0bb, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 43.361958
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7c8c2356404418645b8b84dd4d30a0bb, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -361.95
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7c8c2356404418645b8b84dd4d30a0bb, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7c8c2356404418645b8b84dd4d30a0bb, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7c8c2356404418645b8b84dd4d30a0bb, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7c8c2356404418645b8b84dd4d30a0bb, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7c8c2356404418645b8b84dd4d30a0bb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7c8c2356404418645b8b84dd4d30a0bb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7c8c2356404418645b8b84dd4d30a0bb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 7c8c2356404418645b8b84dd4d30a0bb, type: 3}
+      propertyPath: m_Name
+      value: player
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 7c8c2356404418645b8b84dd4d30a0bb, type: 3}
 --- !u!1 &249440904
 GameObject:
   m_ObjectHideFlags: 0
@@ -4500,14 +4557,18 @@ MonoBehaviour:
   itemsToSell:
   - ItemData: {fileID: 11400000, guid: 8c07a2bab85ea894c9d765aae48a0a9b, type: 2}
     BuyPrice: 1000
+    StockCount: 1
   - ItemData: {fileID: 11400000, guid: 54df0fbd0b3b3bc46aee7f3786d94ce7, type: 2}
     BuyPrice: 200
+    StockCount: 1
   - ItemData: {fileID: 11400000, guid: 45d2259d5b7884c4581cecf5cc1c6263, type: 2}
     BuyPrice: 500
+    StockCount: 1
   - ItemData: {fileID: 11400000, guid: 4d3c7d3e161956a4991ec55b73883912, type: 2}
     BuyPrice: 1000
+    StockCount: 1
   interactPrompt: Open Shop
-  objectName: Pokopia Vending Machine
+  objectName: Vending Machine
 --- !u!1 &870866735
 GameObject:
   m_ObjectHideFlags: 0
@@ -36523,3 +36584,4 @@ SceneRoots:
   - {fileID: 597728421112393831}
   - {fileID: 2373703089973904148}
   - {fileID: 2100678675}
+  - {fileID: 161543472}
