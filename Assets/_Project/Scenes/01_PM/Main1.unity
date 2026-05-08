@@ -33398,6 +33398,63 @@ Mesh:
       - serializedVersion: 1
         m_IndexStart: 0
         m_IndexCount: 0
+--- !u!1001 &1591467999
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -20.079662
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 40.00968
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -30.043972
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
+      propertyPath: m_Name
+      value: bunker_scene (1)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
 --- !u!1001 &1605589376
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -33488,7 +33545,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
   player: {fileID: 1630413119}
-  mainCamera: {fileID: 0}
+  cameraTransform: {fileID: 0}
   interactionRange: 3
   interactableLayers:
     serializedVersion: 2
@@ -33540,6 +33597,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Shop.ShopView
   document: {fileID: 1663920668}
+  backgroundDocument: {fileID: 0}
+  mascotCanvas: {fileID: 0}
 --- !u!114 &1663920668
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -36585,3 +36644,4 @@ SceneRoots:
   - {fileID: 2373703089973904148}
   - {fileID: 2100678675}
   - {fileID: 161543472}
+  - {fileID: 1591467999}
