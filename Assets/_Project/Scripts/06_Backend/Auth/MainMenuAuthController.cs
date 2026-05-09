@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -9,6 +10,7 @@ public sealed class MainMenuAuthController : MonoBehaviour
 
     [Header("API")]
     [SerializeField] private string authApiBaseUrl = "http://localhost:8080";
+    [SerializeField] private bool allowRuntimeApiBaseUrlOverride = true;
 
     [Header("Signup UI")]
     [SerializeField] private TMP_InputField signupEmailInput;
@@ -47,7 +49,7 @@ public sealed class MainMenuAuthController : MonoBehaviour
         AuthSession.Clear();
         AutoBindIfNeeded();
 
-        string normalizedApiBaseUrl = NormalizeApiBaseUrl(authApiBaseUrl);
+        string normalizedApiBaseUrl = NormalizeApiBaseUrl(ResolveApiBaseUrl(authApiBaseUrl, allowRuntimeApiBaseUrlOverride));
         _authService = new AuthService(normalizedApiBaseUrl);
 
         if (signupButton != null)
@@ -275,7 +277,7 @@ public sealed class MainMenuAuthController : MonoBehaviour
         int count = unityEvent.GetPersistentEventCount();
         for (int i = 0; i < count; i++)
         {
-            Object target = unityEvent.GetPersistentTarget(i);
+            UnityEngine.Object target = unityEvent.GetPersistentTarget(i);
             string methodName = unityEvent.GetPersistentMethodName(i);
             if (target != null && !string.IsNullOrWhiteSpace(methodName))
                 return true;
@@ -332,5 +334,39 @@ public sealed class MainMenuAuthController : MonoBehaviour
         }
 #endif
         return trimmed;
+    }
+
+    private static string ResolveApiBaseUrl(string configuredBaseUrl, bool allowRuntimeOverride)
+    {
+        if (!allowRuntimeOverride)
+            return configuredBaseUrl;
+
+        string commandLineOverride = GetCommandLineValue("--auth-api-base-url");
+        if (!string.IsNullOrWhiteSpace(commandLineOverride))
+            return commandLineOverride;
+
+        string environmentOverride = Environment.GetEnvironmentVariable("NUNBORA_AUTH_API_BASE_URL");
+        if (!string.IsNullOrWhiteSpace(environmentOverride))
+            return environmentOverride;
+
+        return configuredBaseUrl;
+    }
+
+    private static string GetCommandLineValue(string optionName)
+    {
+        string[] args = Environment.GetCommandLineArgs();
+        string prefix = optionName + "=";
+
+        for (int i = 0; i < args.Length; i++)
+        {
+            string arg = args[i];
+            if (arg.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return arg.Substring(prefix.Length);
+
+            if (string.Equals(arg, optionName, StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+                return args[i + 1];
+        }
+
+        return null;
     }
 }

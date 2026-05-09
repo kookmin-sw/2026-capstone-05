@@ -17,7 +17,7 @@ services:
       Database__Postgres__Username: ${POSTGRES_USER:-postgres}
       Database__Postgres__Password: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - "8080:8080"
+      - "${API_BIND_ADDRESS:-0.0.0.0}:${API_HOST_PORT:-8080}:8080"
     restart: unless-stopped
 
   postgres:
@@ -28,7 +28,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_BIND_ADDRESS:-127.0.0.1}:${POSTGRES_HOST_PORT:-15432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ../../db/001_core_schema.sql:/docker-entrypoint-initdb.d/001_core_schema.sql:ro
@@ -50,7 +50,7 @@ services:
       - PGADMIN_DEFAULT_EMAIL=admin@example.com
       - PGADMIN_DEFAULT_PASSWORD=admin123
     ports:
-      - "5050:80"
+      - "${PGADMIN_BIND_ADDRESS:-127.0.0.1}:${PGADMIN_HOST_PORT:-15050}:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     restart: unless-stopped
