@@ -1,3 +1,5 @@
+using FMOD.Studio;
+using FMODUnity;
 using UnityEngine;
 
 public class PlayerNoiseEmitter : MonoBehaviour
@@ -16,6 +18,11 @@ public class PlayerNoiseEmitter : MonoBehaviour
 
     [Header("Exploit Settings")]
     public float distanceDecayRate = 0.5f;
+
+    [Header("Footstep Settings")]
+    [SerializeField] private EventReference footstepEvent;
+    [SerializeField] private EventReference landingEvent;
+    [SerializeField] private LayerMask groundLayer;
 
     private float accumulatedDistance = 0f;
 
@@ -85,6 +92,8 @@ public class PlayerNoiseEmitter : MonoBehaviour
     {
         // TODO: Adjust noise type based on impact speed and air time
         NoiseManager.Instance.GenerateNoise(transform.position, NoiseData.NoiseType.Fall);
+
+        PlayLandingSound();
     }
 
     private float GetCurrentStride()
@@ -124,10 +133,54 @@ public class PlayerNoiseEmitter : MonoBehaviour
         }
 
         NoiseManager.Instance.GenerateNoise(transform.position, currentNoise);
+
+        int movementType = (currentNoise == NoiseData.NoiseType.Sprint) ? 2 : (currentNoise == NoiseData.NoiseType.Crouch) ? 0 : 1;
+        PlayFootstepSound(movementType);
     }
 
     public void GenerateJumpNoise()
     {
         NoiseManager.Instance.GenerateNoise(transform.position, NoiseData.NoiseType.Jump);
+    }
+
+    private SurfaceType GetFloorSurface()
+    {
+        SurfaceType currentSurface = SurfaceType.Snow;
+
+        if (Physics.Raycast(player.transform.position + Vector3.up * 0.1f, Vector3.down, out RaycastHit hit, 0.5f, groundLayer))
+        {
+            SurfaceMaterial surface = hit.collider.GetComponent<SurfaceMaterial>();
+            if (surface != null)
+            {
+                currentSurface = surface.surfaceType;
+            }
+        }
+
+        return currentSurface;
+    }
+
+    private void PlayFootstepSound(int movementType)    // 0 = Crouch, 1 = Walk, 2 = Sprint
+    {
+        EventInstance footstepInstance = RuntimeManager.CreateInstance(footstepEvent);
+        RuntimeManager.AttachInstanceToGameObject(footstepInstance, player.gameObject);
+
+        SurfaceType surface = GetFloorSurface();
+        footstepInstance.setParameterByName("Surface", (float)surface);
+        footstepInstance.setParameterByName("PlayerMovementType", movementType);
+
+        footstepInstance.start();
+        footstepInstance.release();
+    }
+
+    private void PlayLandingSound()
+    {
+        EventInstance landingInstance = RuntimeManager.CreateInstance(landingEvent);
+        RuntimeManager.AttachInstanceToGameObject(landingInstance, player.gameObject);
+
+        SurfaceType surface = GetFloorSurface();
+        landingInstance.setParameterByName("Surface", (float)surface);
+
+        landingInstance.start();
+        landingInstance.release();
     }
 }
