@@ -12,6 +12,8 @@ GameObject:
   - component: {fileID: 3180661787903591991}
   - component: {fileID: 9150937622660601685}
   - component: {fileID: 8321889137765885054}
+  - component: {fileID: 3326078877459384567}
+  - component: {fileID: 1264881979487014682}
   m_Layer: 0
   m_Name: bunker_door
   m_TagString: Untagged
@@ -112,6 +114,46 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.0012000059, y: 0.017999995, z: 0.020519996}
   m_Center: {x: -0.000000012223609, y: -0.008999999, z: -0.0000000018626451}
+--- !u!114 &3326078877459384567
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3349342886503502221}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 393059331
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 1264881979487014682}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &1264881979487014682
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3349342886503502221}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d965143b0ff4a3f8f2f39dfc14f3c7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BunkerEnterInteractable
+  objectName: "\uB4E4\uC5B4\uAC00\uAE30"
+  interactPrompt: "[E] \uB4E4\uC5B4\uAC00\uAE30"
+  autoCreateInteractionCollider: 1
+  assistColliderRadius: 3.5
+  maxInteractDistance: 4
+  autoConfigureOutline: 1
+  outlineMode: 0
+  outlineColor: {r: 1, g: 1, b: 1, a: 1}
+  outlineWidth: 5
 --- !u!1 &8482929712416400185
 GameObject:
   m_ObjectHideFlags: 0
@@ -121,7 +163,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6760532119851993525}
-  - component: {fileID: 6760532119851993526}
+  - component: {fileID: 5631689700426516783}
   m_Layer: 0
   m_Name: Bunker_door
   m_TagString: Untagged
@@ -137,15 +179,15 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8482929712416400185}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+  m_LocalRotation: {x: -0.7069834, y: 0, z: 0, w: 0.7072302}
   m_LocalPosition: {x: -6.2999997, y: -0.0000000059604655, z: 0}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2431573203775421405}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6760532119851993526
+  m_LocalEulerAnglesHint: {x: -89.98, y: 0, z: 0}
+--- !u!114 &5631689700426516783
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -154,16 +196,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 8482929712416400185}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4cf5cef3a33a46aab0355c47d43a19ec, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::StartTriggerRoundInteractable
-  roundManager: {fileID: 0}
-  holdSeconds: 2
-  toggleDebounceSeconds: 0.75
-  autoCreateInteractionCollider: 1
-  assistColliderRadius: 3.5
-  maxInteractDistance: 4
-  autoConfigureOutline: 1
-  outlineMode: 0
-  outlineColor: {r: 1, g: 1, b: 1, a: 1}
-  outlineWidth: 5
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 2325661618
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects:
+  - {fileID: 3326078877459384567}
+  NetworkedBehaviours: []
+  ForceRemoteRenderTimeframe: 0
