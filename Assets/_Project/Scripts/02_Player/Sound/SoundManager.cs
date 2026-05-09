@@ -112,4 +112,12 @@ public class SoundManager : MonoBehaviour
             currentAmbience.release();
         }
     }
+     
+    public void SetAmbienceParameter(string paramName, float value)
+    {
+        if (currentAmbience.isValid())
+        {
+            currentAmbience.setParameterByName(paramName, value);
+        }
+    }
 }

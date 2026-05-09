@@ -47,7 +47,7 @@ public class PlayerNoiseEmitter : MonoBehaviour
         {
             float absFallSpeed = Mathf.Abs(lastFallSpeed);
 
-            if (currentAirTime >= minAirTimeForLanding || absFallSpeed >= minFallSpeedForLanding)
+            if (currentAirTime >= minAirTimeForLanding && absFallSpeed >= minFallSpeedForLanding)
             {
                 GenerateLandingNoise(absFallSpeed, currentAirTime);
             }
