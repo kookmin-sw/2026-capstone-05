@@ -13,6 +13,10 @@ public class PlayerEquipment : MonoBehaviour
 
     public EquippedItemBehaviour Item1P { get; private set; }
     public EquippedItemBehaviour Item3P { get; private set; }
+    public ItemInstance CurrentItemInstance { get; private set; }
+
+    public event System.Action<ItemInstance> OnEquippedItemChanged;
+    public event System.Action<ItemUseAnimationType> OnUseAnimationRequested;
 
     private GameObject currentObj1P;
     private GameObject currentObj3P;
@@ -38,16 +42,29 @@ public class PlayerEquipment : MonoBehaviour
     /// </summary>
     public void EquipItem(ItemInstance itemInstance)
     {
-        UnequipItem();
+        EquipItem(itemInstance, true);
+    }
+
+    public void EquipItem(ItemInstance itemInstance, bool notifyNetwork)
+    {
+        UnequipItem(false);
 
         if (itemInstance == null || itemInstance.Data == null)
         {
+            CurrentItemInstance = null;
+            if (notifyNetwork)
+                OnEquippedItemChanged?.Invoke(null);
             return;
         }
+
+        CurrentItemInstance = itemInstance;
+        ItemDataRegistry.Register(itemInstance.Data);
 
         GameObject prefab = itemInstance.Data.equipPrefab;
         if (prefab == null)
         {
+            if (notifyNetwork)
+                OnEquippedItemChanged?.Invoke(itemInstance);
             return;
         }
 
@@ -84,12 +101,20 @@ public class PlayerEquipment : MonoBehaviour
         {
             ikManager3P.SetLeftHandWeaponGrip(Item3P.leftHandGrip);
         }
+
+        if (notifyNetwork)
+            OnEquippedItemChanged?.Invoke(itemInstance);
     }
 
     /// <summary>
     /// 무기를 집어넣거나 다른 무기로 스왑할 때 호출됩니다.
     /// </summary>
     public void UnequipItem()
+    {
+        UnequipItem(true);
+    }
+
+    public void UnequipItem(bool notifyNetwork)
     {
         if (currentObj1P != null)
         {
@@ -115,6 +140,7 @@ public class PlayerEquipment : MonoBehaviour
         currentObj3P = null;
         Item1P = null;
         Item3P = null;
+        CurrentItemInstance = null;
 
         if (ikManager1P != null)
         {
@@ -124,6 +150,9 @@ public class PlayerEquipment : MonoBehaviour
         {
             ikManager3P.SetLeftHandWeaponGrip(null);
         }
+
+        if (notifyNetwork)
+            OnEquippedItemChanged?.Invoke(null);
     }
 
     /// <summary>
@@ -138,7 +167,8 @@ public class PlayerEquipment : MonoBehaviour
 
         if (Item1P != null)
         {
-            Item1P.Use();
+            if (Item1P.Use())
+                OnUseAnimationRequested?.Invoke(CurrentItemInstance?.Data?.useAnimationType ?? ItemUseAnimationType.None);
         }
         else
         {
@@ -146,6 +176,7 @@ public class PlayerEquipment : MonoBehaviour
             {
                 lastUnarmedAttackTime = Time.time;
                 player.Animator.PlayUseItemAnimation(ItemUseAnimationType.UnarmedAttack);
+                OnUseAnimationRequested?.Invoke(ItemUseAnimationType.UnarmedAttack);
             }
         }
     }

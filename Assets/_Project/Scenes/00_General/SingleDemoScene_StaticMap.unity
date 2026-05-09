@@ -1186,7 +1186,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c48832dba3814d9f883e6e326e1d3f1b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BackendRoundManager
-  roundDurationSeconds: 20
+  roundDurationSeconds: 300
   _IsRoundRunning:
     _value: 0
   _CurrentRoundNumber: 0
@@ -5261,8 +5261,9 @@ MonoBehaviour:
   baseTransform: {fileID: 0}
   bunkerDoor: {fileID: 0}
   baseObjectName: Base
-  bunkerDoorName: Bunker_door
-  exitLocalOffset: {x: 0, y: 1, z: -1}
+  bunkerDoorPath: Bunker_door
+  exitWorldOffset: {x: 0, y: 0, z: 0}
+  exitGroundClearance: 0.05
   objectName: "\uB098\uAC00\uAE30"
   interactPrompt: "[E] \uB098\uAC00\uAE30"
   autoCreateInteractionCollider: 1
