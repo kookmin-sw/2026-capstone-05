@@ -8,6 +8,7 @@ public class PlayerConditionUI : MonoBehaviour
     private enum StaminaState { Full, Recovering, Using, Idle }
 
     [SerializeField] private PlayerCondition player;
+    [SerializeField] private float playerSearchInterval = 0.5f;
 
     [Header("Circular Gauges (Max 100)")]
     public Image healthFill;
@@ -35,9 +36,12 @@ public class PlayerConditionUI : MonoBehaviour
 
     private float previousStamina;
     private StaminaState currentStaminaState = StaminaState.Idle;
+    private float playerSearchTimer;
 
     private void Start()
     {
+        TryBindLocalPlayer();
+
         if (player != null)
         {
             previousStamina = player.stamina.currentValue;
@@ -46,6 +50,12 @@ public class PlayerConditionUI : MonoBehaviour
 
     private void Update()
     {
+        if (player == null)
+        {
+            TryBindLocalPlayerByInterval();
+            if (player == null) return;
+        }
+
         // 1. 원형 UI 게이지 업데이트 (부드러운 감쇠 적용)
         UpdateCircle(healthFill, healthText, player.health.currentValue);
         UpdateCircle(satietyFill, satietyText, player.satiety.currentValue);
@@ -58,6 +68,23 @@ public class PlayerConditionUI : MonoBehaviour
 
         // 3. 스태미나 게이지 업데이트 및 페이드(투명도) 로직 처리
         UpdateStamina();
+    }
+
+    private void TryBindLocalPlayerByInterval()
+    {
+        playerSearchTimer -= Time.deltaTime;
+        if (playerSearchTimer > 0f) return;
+
+        playerSearchTimer = playerSearchInterval;
+        TryBindLocalPlayer();
+    }
+
+    private void TryBindLocalPlayer()
+    {
+        if (!LocalPlayerReferenceResolver.TryGetLocalCondition(out PlayerCondition localCondition)) return;
+
+        player = localCondition;
+        previousStamina = player.stamina.currentValue;
     }
 
     private void UpdateStamina()

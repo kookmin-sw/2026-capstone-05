@@ -21,8 +21,8 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     [Header("Scene")]
     [SerializeField] private string startSceneName = "Main_menu";
-    [SerializeField] private string gameScenePath = "Assets/_Project/Scenes/06_Backend/TestMain.unity";
-    [SerializeField] private string gameSceneNameFallback = "TestMain";
+    [SerializeField] private string gameScenePath = "Assets/_Project/Scenes/00_General/SingleDemoScene_StaticMap.unity";
+    [SerializeField] private string gameSceneNameFallback = "SingleDemoScene_StaticMap";
 
     [Header("Network")]
     [SerializeField] private int maxPlayers = 4;

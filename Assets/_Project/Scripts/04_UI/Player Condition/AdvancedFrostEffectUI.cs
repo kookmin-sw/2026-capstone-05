@@ -5,6 +5,7 @@ public class AdvancedFrostEffectUI : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private PlayerCondition player;
+    [SerializeField] private float playerSearchInterval = 0.5f;
     
     [Header("UI Layers (Images)")]
     public Image[] frostBaseImages;    
@@ -29,15 +30,23 @@ public class AdvancedFrostEffectUI : MonoBehaviour
     private float scratchProgress = 0f; 
     private int currentScratchIndex = -1; 
     private int previousScratchIndex = -1; 
+    private float playerSearchTimer;
 
     private void Start()
     {
+        TryBindLocalPlayer();
+
         foreach (var img in frostBaseImages) if (img != null) img.color = new Color(1, 1, 1, 0);
         foreach (var img in scratchImages) if (img != null) img.color = new Color(1, 1, 1, 0);
     }
 
     private void Update()
     {
+        if (player == null)
+        {
+            TryBindLocalPlayerByInterval();
+        }
+
         if (player == null) return;
 
         float cold = player.coldness.currentValue;
@@ -124,6 +133,23 @@ public class AdvancedFrostEffectUI : MonoBehaviour
             {
                 if (img != null) img.color = new Color(1, 1, 1, 0);
             }
+        }
+    }
+
+    private void TryBindLocalPlayerByInterval()
+    {
+        playerSearchTimer -= Time.deltaTime;
+        if (playerSearchTimer > 0f) return;
+
+        playerSearchTimer = playerSearchInterval;
+        TryBindLocalPlayer();
+    }
+
+    private void TryBindLocalPlayer()
+    {
+        if (LocalPlayerReferenceResolver.TryGetLocalCondition(out PlayerCondition localCondition))
+        {
+            player = localCondition;
         }
     }
 

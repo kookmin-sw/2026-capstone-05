@@ -76,10 +76,19 @@ public class BackendRoundManager : NetworkBehaviour
             return;
         }
 
-        if (IsRoundRunning)
+        // 라운드는 시간이 만료될 때만 종료된다. 시작 트리거와 다시 상호작용해도 종료 요청은 무시한다.
+        Debug.Log($"[BackendRoundManager] 라운드 종료 요청 무시. requestedBy={requestedBy}, shouldRun={shouldRun}");
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RpcRequestMovePlayerToSpawner(PlayerRef requestedBy)
+    {
+        if (!HasStateAuthority)
         {
-            EndRound($"RequestedBy:{requestedBy}");
+            return;
         }
+
+        MovePlayerToSpawner(requestedBy);
     }
 
     private void StartRound(string reason)
@@ -123,20 +132,58 @@ public class BackendRoundManager : NetworkBehaviour
                 continue;
             }
 
-            PlayerRespawn playerRespawn = playerObject.GetComponent<PlayerRespawn>();
-            if (playerRespawn != null)
-            {
-                playerRespawn.SpawnAtSpawner();
-                continue;
-            }
+            MovePlayerObjectToSpawner(playerObject);
+        }
+    }
 
-            if (Spawner.Instance == null)
-            {
-                continue;
-            }
+    private void MovePlayerToSpawner(PlayerRef playerRef)
+    {
+        if (Runner == null || playerRef == PlayerRef.None)
+        {
+            return;
+        }
 
-            Transform spawnPoint = Spawner.Instance.GetSpawnPoint();
-            playerObject.transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
+        if (!Runner.TryGetPlayerObject(playerRef, out NetworkObject playerObject) || playerObject == null)
+        {
+            return;
+        }
+
+        MovePlayerObjectToSpawner(playerObject);
+    }
+
+    private void MovePlayerObjectToSpawner(NetworkObject playerObject)
+    {
+        PlayerRespawn playerRespawn = playerObject.GetComponent<PlayerRespawn>();
+        if (playerRespawn != null)
+        {
+            playerRespawn.SpawnAtSpawner();
+            return;
+        }
+
+        if (Spawner.Instance == null)
+        {
+            return;
+        }
+
+        Transform spawnPoint = Spawner.Instance.GetSpawnPoint();
+        CharacterController characterController = playerObject.GetComponent<CharacterController>();
+
+        if (characterController != null)
+        {
+            characterController.enabled = false;
+        }
+
+        playerObject.transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
+
+        PlayerController playerController = playerObject.GetComponent<PlayerController>();
+        if (playerController != null)
+        {
+            playerController.currentVelocity = Vector3.zero;
+        }
+
+        if (characterController != null)
+        {
+            characterController.enabled = true;
         }
     }
 
