@@ -615,6 +615,23 @@ MonoBehaviour:
   minAirTimeForLanding: 0.2
   minFallSpeedForLanding: 2
   distanceDecayRate: 0.5
+  footstepEvent:
+    Guid:
+      Data1: 222711173
+      Data2: 1193689532
+      Data3: 464564356
+      Data4: 664275141
+    Path: event:/SFX/PlayerFootstep
+  landingEvent:
+    Guid:
+      Data1: 1838854458
+      Data2: 1293832349
+      Data3: -1460661092
+      Data4: -555200648
+    Path: event:/SFX/PlayerLanding
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 1
 --- !u!114 &1689880926387619475
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -730,7 +747,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
   player: {fileID: 1915611918036273558}
-  mainCamera: {fileID: 0}
+  cameraTransform: {fileID: 0}
   interactionRange: 3
   interactableLayers:
     serializedVersion: 2

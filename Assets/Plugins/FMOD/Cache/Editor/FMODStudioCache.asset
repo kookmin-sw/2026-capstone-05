@@ -1,5 +1,62 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-3408143178875265819
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/SFX/PlayerLanding
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/SFX/PlayerLanding
+  Guid:
+    Data1: 1838854458
+    Data2: 1293832349
+    Data3: -1460661092
+    Data4: -555200648
+  Banks:
+  - {fileID: -1094752039627391627}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 1
+  Parameters:
+  - {fileID: 4149080203984565840}
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 0
+--- !u!114 &-1468687137363618304
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/SFX/PlayerFootstep
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/SFX/PlayerFootstep
+  Guid:
+    Data1: 222711173
+    Data2: 1193689532
+    Data3: 464564356
+    Data4: 664275141
+  Banks:
+  - {fileID: -1094752039627391627}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 1
+  Parameters:
+  - {fileID: 960522536606862602}
+  - {fileID: 1157156375844607030}
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 0
 --- !u!114 &-1094752039627391627
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18,7 +75,7 @@ MonoBehaviour:
   lastModified: 639135061457337987
   FileSizes:
   - Name: Desktop
-    Value: 2027200
+    Value: 2361376
   Exists: 1
 --- !u!114 &11400000
 MonoBehaviour:
@@ -36,7 +93,9 @@ MonoBehaviour:
   - {fileID: 2120258606684106499}
   - {fileID: -1094752039627391627}
   EditorEvents:
-  - {fileID: 1454783420652357023}
+  - {fileID: 1627671583600017175}
+  - {fileID: -1468687137363618304}
+  - {fileID: -3408143178875265819}
   EditorParameters: []
   MasterBanks:
   - {fileID: -1094752039627391627}
@@ -45,9 +104,66 @@ MonoBehaviour:
   cacheVersion: 131858
   cacheTime: 639135061457337987
   SerializableEventsDict:
-  - key: event:/TestAmbience
+  - key: event:/Ambience/Ambience_Base
     index: 0
---- !u!114 &1454783420652357023
+  - key: event:/SFX/PlayerFootstep
+    index: 1
+  - key: event:/SFX/PlayerLanding
+    index: 2
+--- !u!114 &960522536606862602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/PlayerFootstep/Surface
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: Surface
+  StudioPath: 
+  Min: 0
+  Max: 1
+  Default: 0
+  ID:
+    data1: 3804691267
+    data2: 714689195
+  Type: 2
+  IsGlobal: 0
+  Labels:
+  - Snow
+  - Stone
+  Exists: 1
+--- !u!114 &1157156375844607030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/PlayerFootstep/PlayerMovementType
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: PlayerMovementType
+  StudioPath: 
+  Min: 0
+  Max: 2
+  Default: 1
+  ID:
+    data1: 1300067767
+    data2: 510644834
+  Type: 2
+  IsGlobal: 0
+  Labels:
+  - Crouched
+  - Walk
+  - Run
+  Exists: 1
+--- !u!114 &1627671583600017175
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -57,23 +173,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
-  m_Name: event:/TestAmbience
+  m_Name: event:/Ambience/Ambience_Base
   m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
-  Path: event:/TestAmbience
+  Path: event:/Ambience/Ambience_Base
   Guid:
-    Data1: 414267257
-    Data2: 1183318280
-    Data3: 1741834672
-    Data4: -2087058585
+    Data1: 1880413557
+    Data2: 1265482782
+    Data3: 2089564086
+    Data4: -1381991086
   Banks:
   - {fileID: -1094752039627391627}
   IsStream: 1
-  Is3D: 0
+  Is3D: 1
   IsOneShot: 0
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 163005
+  Length: 151875
 --- !u!114 &2120258606684106499
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -92,5 +208,31 @@ MonoBehaviour:
   lastModified: 639135061457337987
   FileSizes:
   - Name: Desktop
-    Value: 972
+    Value: 1302
+  Exists: 1
+--- !u!114 &4149080203984565840
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/PlayerLanding/Surface
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: Surface
+  StudioPath: 
+  Min: 0
+  Max: 1
+  Default: 0
+  ID:
+    data1: 3804691267
+    data2: 714689195
+  Type: 2
+  IsGlobal: 0
+  Labels:
+  - Snow
+  - Stone
   Exists: 1
