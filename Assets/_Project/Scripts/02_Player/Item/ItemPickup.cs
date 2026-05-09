@@ -1,55 +1,237 @@
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
-/// <summary>
-/// 필드에 존재하는 아이템 클래스
-/// </summary>
 public class ItemPickup : MonoBehaviour, IInteractable
 {
+    private static readonly Dictionary<int, ItemPickup> PickupsByKey = new Dictionary<int, ItemPickup>();
+
     public ItemInstance itemInstance;
+
+    private int _pickupKey;
+    private bool _isPickedUp;
+
+    public int PickupKey => _pickupKey;
+    public bool IsPickedUp => _isPickedUp;
+
+    private void Awake()
+    {
+        _pickupKey = BuildStablePickupKey();
+        RegisterPickup();
+        RegisterItemData();
+    }
+
+    private void OnEnable()
+    {
+        RegisterPickup();
+        RegisterItemData();
+    }
+
+    private void OnDisable()
+    {
+        if (_isPickedUp)
+            return;
+
+        if (PickupsByKey.TryGetValue(_pickupKey, out ItemPickup pickup) && pickup == this)
+        {
+            PickupsByKey.Remove(_pickupKey);
+        }
+    }
 
     public bool CanInteract(PlayerController player)
     {
-        // 1. 플레이어가 아이템을 줍는 범위 내에 있는지 체크
-        // 2. 플레이어 인벤토리에 아이템을 추가할 공간이 있는지 체크
-        return true; // 임시로 항상 상호작용 가능하도록 설정
+        return !_isPickedUp;
     }
 
     public void OnInteract(PlayerController player)
     {
-        if (QuickslotUIController.Instance == null)
+        if (_isPickedUp)
+            return;
+
+        if (QuickslotUIController.Instance != null && !QuickslotUIController.Instance.HasEmptySlot())
         {
-            Debug.LogError("QuickslotUIController.Instance 가 없습니다! 씬에 QuickslotUIController가 배치되어 있는지 확인해주세요.");
+            Debug.LogWarning("No empty quickslot is available.");
             return;
         }
 
-        // 1. 플레이어 인벤토리(퀵슬롯)에 아이템 추가 시도
-        bool added = QuickslotUIController.Instance.AddItemToEmptySlot(itemInstance);
-        
-        if (added)
+        BackendPlayerNetworkSync networkSync = player != null ? player.GetComponent<BackendPlayerNetworkSync>() : null;
+        if (networkSync != null && networkSync.IsNetworkReady)
         {
-            // 2. 성공하면 월드에서 이 오브젝트 파괴 (Destroy)
-            Destroy(gameObject);
-            
-            // 3. 줍는 소음(Noise) 발생 등
-            if (player.NoiseEmitter != null)
-            {
-                // 소음 발생 로직 예시
-                // player.NoiseEmitter.EmitNoise(1.5f, transform.position);
-            }
+            networkSync.RequestPickup(this);
+            return;
+        }
+
+        TryGrantLocalPickup(player);
+    }
+
+    public bool TryGrantLocalPickup(PlayerController player)
+    {
+        if (_isPickedUp)
+            return false;
+
+        if (QuickslotUIController.Instance == null)
+        {
+            Debug.LogError("QuickslotUIController.Instance is missing. Item cannot be added to quickslot.");
+            return false;
+        }
+
+        bool added = QuickslotUIController.Instance.AddItemToEmptySlot(itemInstance);
+        if (!added)
+        {
+            Debug.LogWarning("No empty quickslot is available.");
+            return false;
+        }
+
+        MarkPickedUp();
+
+        if (player != null && player.NoiseEmitter != null)
+        {
+            // Hook pickup noise here when the noise system is ready for item pickups.
+        }
+
+        return true;
+    }
+
+    public void MarkPickedUpFromNetwork()
+    {
+        MarkPickedUp();
+    }
+
+    public static bool TryGetPickup(int pickupKey, out ItemPickup pickup)
+    {
+        return PickupsByKey.TryGetValue(pickupKey, out pickup) && pickup != null;
+    }
+
+    public static void ApplyNetworkPickup(
+        int pickupKey,
+        bool shouldGrantToLocalPlayer,
+        PlayerController localPlayer,
+        string itemId,
+        int stackCount)
+    {
+        if (!TryGetPickup(pickupKey, out ItemPickup pickup))
+            return;
+
+        if (shouldGrantToLocalPlayer)
+        {
+            pickup.GrantApprovedLocalPickup(localPlayer, itemId, stackCount);
         }
         else
         {
-            Debug.LogWarning("퀵슬롯에 빈 자리가 없습니다!");
+            pickup.MarkPickedUpFromNetwork();
         }
     }
 
     public string GetInteractPrompt()
     {
-        return "[E] 줍기";
+        return _isPickedUp ? string.Empty : "[E] Pick up";
     }
 
     public string GetObjectName()
     {
-        return itemInstance?.Data?.itemName ?? "알 수 없는 아이템";
+        return itemInstance?.Data?.itemName ?? "Unknown Item";
+    }
+
+    private void MarkPickedUp()
+    {
+        _isPickedUp = true;
+        gameObject.SetActive(false);
+    }
+
+    private void GrantApprovedLocalPickup(PlayerController player, string itemId, int stackCount)
+    {
+        if (QuickslotUIController.Instance == null)
+        {
+            Debug.LogError("QuickslotUIController.Instance is missing. Approved item cannot be added to quickslot.");
+            MarkPickedUp();
+            return;
+        }
+
+        ItemData itemData = itemInstance?.Data != null ? itemInstance.Data : ItemDataRegistry.Find(itemId);
+        if (itemData == null)
+        {
+            Debug.LogWarning($"Approved pickup item data was not found. itemId={itemId}");
+            MarkPickedUp();
+            return;
+        }
+
+        ItemDataRegistry.Register(itemData);
+        ItemInstance grantedItem = new ItemInstance(itemData, Mathf.Max(1, stackCount));
+        bool added = QuickslotUIController.Instance.AddItemToEmptySlot(grantedItem);
+        if (!added)
+        {
+            Debug.LogWarning("No empty quickslot is available for approved pickup.");
+        }
+
+        MarkPickedUp();
+
+        if (player != null && player.NoiseEmitter != null)
+        {
+            // Hook pickup noise here when the noise system is ready for item pickups.
+        }
+    }
+
+    private void RegisterPickup()
+    {
+        if (_pickupKey == 0)
+            _pickupKey = BuildStablePickupKey();
+
+        PickupsByKey[_pickupKey] = this;
+    }
+
+    private void RegisterItemData()
+    {
+        ItemDataRegistry.Register(itemInstance?.Data);
+    }
+
+    private int BuildStablePickupKey()
+    {
+        unchecked
+        {
+            int hash = 17;
+            Scene scene = gameObject.scene;
+            hash = hash * 31 + StableStringHash(scene.path);
+            hash = hash * 31 + StableStringHash(BuildHierarchyPath(transform));
+            hash = hash * 31 + Mathf.RoundToInt(transform.position.x * 100f);
+            hash = hash * 31 + Mathf.RoundToInt(transform.position.y * 100f);
+            hash = hash * 31 + Mathf.RoundToInt(transform.position.z * 100f);
+            string itemId = itemInstance?.Data != null ? itemInstance.Data.itemID : string.Empty;
+            hash = hash * 31 + StableStringHash(itemId);
+            return hash == 0 ? 1 : hash;
+        }
+    }
+
+    private static string BuildHierarchyPath(Transform target)
+    {
+        if (target == null)
+            return string.Empty;
+
+        string path = target.name;
+        Transform parent = target.parent;
+        while (parent != null)
+        {
+            path = parent.name + "/" + path;
+            parent = parent.parent;
+        }
+
+        return path;
+    }
+
+    private static int StableStringHash(string value)
+    {
+        unchecked
+        {
+            int hash = (int)2166136261;
+            if (!string.IsNullOrEmpty(value))
+            {
+                for (int i = 0; i < value.Length; i++)
+                {
+                    hash ^= value[i];
+                    hash *= 16777619;
+                }
+            }
+
+            return hash;
+        }
     }
 }

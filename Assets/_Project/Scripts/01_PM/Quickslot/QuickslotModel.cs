@@ -108,4 +108,15 @@ public class QuickslotModel
         }
         return false;
     }
+
+    public bool HasEmptySlot()
+    {
+        for (int i = 0; i < MaxSlots; i++)
+        {
+            if (slots[i] == null || slots[i].Data == null)
+                return true;
+        }
+
+        return false;
+    }
 }

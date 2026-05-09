@@ -393,6 +393,11 @@ public class QuickslotUIController : MonoBehaviour
         return model.AddToEmpty(item);
     }
 
+    public bool HasEmptySlot()
+    {
+        return model != null && model.HasEmptySlot();
+    }
+
     public int GetSlotIndexAtPosition(Vector2 screenPosition)
     {
         if (!uiReady) return -1;

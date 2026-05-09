@@ -9,12 +9,15 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
     private PlayerController _playerController;
     private PlayerInputHandler _inputHandler;
     private PlayerAnimator _playerAnimator;
+    private PlayerEquipment _playerEquipment;
     private Transform _cameraTransform;
     private Vector3 _authoritativeSpawnPosition;
     private Quaternion _authoritativeSpawnRotation;
     private float _spawnLockRemainingSeconds;
     private bool _spawnGravityWasEnabled;
     private bool _spawnLockInitialized;
+    private string _lastAppliedEquippedItemId = string.Empty;
+    private int _lastAppliedUseAnimationCount;
 
     [Networked] private Vector3 NetworkPosition { get; set; }
     [Networked] private Quaternion NetworkRotation { get; set; }
@@ -23,13 +26,28 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
     [Networked] private NetworkBool NetworkIsGrounded { get; set; }
     [Networked] private NetworkBool NetworkIsSprinting { get; set; }
     [Networked] private NetworkBool NetworkIsCrouching { get; set; }
+    [Networked, Capacity(64)] private NetworkString<_64> NetworkEquippedItemId { get; set; }
+    [Networked] private int NetworkEquippedStackCount { get; set; }
+    [Networked] private int NetworkUseAnimationType { get; set; }
+    [Networked] private int NetworkUseAnimationCount { get; set; }
+
+    private static readonly System.Collections.Generic.HashSet<int> ClaimedPickupKeys = new();
+
+    public bool IsNetworkReady => Runner != null && Object != null;
 
     public override void Spawned()
     {
         _playerController = GetComponent<PlayerController>();
         _inputHandler = GetComponent<PlayerInputHandler>();
         _playerAnimator = GetComponent<PlayerAnimator>();
+        _playerEquipment = GetComponent<PlayerEquipment>();
         _cameraTransform = _playerController != null ? _playerController.CameraTransform : null;
+
+        if (_playerEquipment != null)
+        {
+            _playerEquipment.OnEquippedItemChanged += HandleLocalEquippedItemChanged;
+            _playerEquipment.OnUseAnimationRequested += HandleLocalUseAnimationRequested;
+        }
 
         // 입력 권한이 있는 클라이언트는 로컬에서 즉시 시뮬레이션해 체감 지연을 줄입니다.
         if (_playerController != null && !HasStateAuthority && !Object.HasInputAuthority)
@@ -49,6 +67,16 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
             NetworkIsGrounded = true;
             NetworkIsSprinting = false;
             NetworkIsCrouching = false;
+            ApplyEquippedItemNetworkState(_playerEquipment != null ? _playerEquipment.CurrentItemInstance : null);
+        }
+    }
+
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        if (_playerEquipment != null)
+        {
+            _playerEquipment.OnEquippedItemChanged -= HandleLocalEquippedItemChanged;
+            _playerEquipment.OnUseAnimationRequested -= HandleLocalUseAnimationRequested;
         }
     }
 
@@ -85,6 +113,12 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
             NetworkIsCrouching = _playerController != null &&
                                 _playerController.GroundedState != null &&
                                 _playerController.GroundedState.CurrentPosture == PlayerGroundedPosture.Crouching;
+
+            if (!Object.HasInputAuthority)
+            {
+                ApplyProxyEquipmentState();
+                ApplyProxyUseAnimationState();
+            }
         }
     }
 
@@ -144,6 +178,8 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         }
 
         ApplyProxyAnimationState();
+        ApplyProxyEquipmentState();
+        ApplyProxyUseAnimationState();
     }
 
     private void ApplyProxyAnimationState()
@@ -175,5 +211,201 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
             return;
 
         _inputHandler.SetNetworkInputOverride(!Object.HasInputAuthority);
+    }
+
+    public void RequestPickup(ItemPickup pickup)
+    {
+        if (pickup == null || pickup.IsPickedUp || pickup.itemInstance?.Data == null)
+            return;
+
+        PlayerRef requester = Object != null ? Object.InputAuthority : PlayerRef.None;
+        if (requester == PlayerRef.None && Runner != null)
+            requester = Runner.LocalPlayer;
+
+        if (HasStateAuthority)
+        {
+            TryApprovePickup(requester, pickup.PickupKey);
+            return;
+        }
+
+        RpcRequestPickup(requester, pickup.PickupKey);
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcRequestPickup(PlayerRef requestedBy, int pickupKey)
+    {
+        if (Object != null && requestedBy != Object.InputAuthority)
+            requestedBy = Object.InputAuthority;
+
+        TryApprovePickup(requestedBy, pickupKey);
+    }
+
+    private void TryApprovePickup(PlayerRef requestedBy, int pickupKey)
+    {
+        if (!HasStateAuthority || requestedBy == PlayerRef.None)
+            return;
+
+        if (ClaimedPickupKeys.Contains(pickupKey))
+            return;
+
+        if (!ItemPickup.TryGetPickup(pickupKey, out ItemPickup pickup) ||
+            pickup.IsPickedUp ||
+            pickup.itemInstance?.Data == null)
+        {
+            return;
+        }
+
+        ClaimedPickupKeys.Add(pickupKey);
+        string itemId = pickup.itemInstance.Data.itemID;
+        int stackCount = pickup.itemInstance.currentStackCount;
+        pickup.MarkPickedUpFromNetwork();
+        RpcConfirmPickup(pickupKey, requestedBy, itemId, stackCount);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcConfirmPickup(int pickupKey, PlayerRef approvedPlayer, NetworkString<_64> itemId, int stackCount)
+    {
+        PlayerController localPlayer = FindLocalPlayerController();
+        bool shouldGrantToLocalPlayer = Runner != null && Runner.LocalPlayer == approvedPlayer;
+
+        if (shouldGrantToLocalPlayer && ItemPickup.TryGetPickup(pickupKey, out ItemPickup pickup))
+        {
+            ItemData itemData = pickup.itemInstance?.Data != null
+                ? pickup.itemInstance.Data
+                : ItemDataRegistry.Find(itemId.ToString());
+            ItemDataRegistry.Register(itemData);
+        }
+
+        ItemPickup.ApplyNetworkPickup(
+            pickupKey,
+            shouldGrantToLocalPlayer,
+            localPlayer,
+            itemId.ToString(),
+            stackCount);
+    }
+
+    private void HandleLocalEquippedItemChanged(ItemInstance itemInstance)
+    {
+        if (Object == null || !Object.HasInputAuthority)
+            return;
+
+        string itemId = itemInstance?.Data != null ? itemInstance.Data.itemID : string.Empty;
+        int stackCount = itemInstance != null ? itemInstance.currentStackCount : 0;
+
+        if (HasStateAuthority)
+        {
+            SetNetworkEquippedItem(itemId, stackCount);
+        }
+        else
+        {
+            RpcRequestSetEquippedItem(itemId, stackCount);
+        }
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcRequestSetEquippedItem(NetworkString<_64> itemId, int stackCount)
+    {
+        SetNetworkEquippedItem(itemId.ToString(), stackCount);
+    }
+
+    private void SetNetworkEquippedItem(string itemId, int stackCount)
+    {
+        NetworkEquippedItemId = itemId ?? string.Empty;
+        NetworkEquippedStackCount = stackCount;
+
+        if (!Object.HasInputAuthority)
+            ApplyProxyEquipmentState();
+    }
+
+    private void ApplyEquippedItemNetworkState(ItemInstance itemInstance)
+    {
+        string itemId = itemInstance?.Data != null ? itemInstance.Data.itemID : string.Empty;
+        int stackCount = itemInstance != null ? itemInstance.currentStackCount : 0;
+        SetNetworkEquippedItem(itemId, stackCount);
+    }
+
+    private void ApplyProxyEquipmentState()
+    {
+        if (_playerEquipment == null)
+            return;
+
+        string itemId = NetworkEquippedItemId.ToString();
+        if (_lastAppliedEquippedItemId == itemId)
+            return;
+
+        _lastAppliedEquippedItemId = itemId;
+
+        if (string.IsNullOrEmpty(itemId))
+        {
+            _playerEquipment.UnequipItem(false);
+            return;
+        }
+
+        ItemData itemData = ItemDataRegistry.Find(itemId);
+        if (itemData == null)
+        {
+            Debug.LogWarning($"[BackendPlayerNetworkSync] ItemData not found for equipped item id '{itemId}'.");
+            return;
+        }
+
+        int stackCount = Mathf.Max(1, NetworkEquippedStackCount);
+        _playerEquipment.EquipItem(new ItemInstance(itemData, stackCount), false);
+    }
+
+    private void HandleLocalUseAnimationRequested(ItemUseAnimationType animationType)
+    {
+        if (animationType == ItemUseAnimationType.None || Object == null || !Object.HasInputAuthority)
+            return;
+
+        if (HasStateAuthority)
+        {
+            SetNetworkUseAnimation(animationType);
+        }
+        else
+        {
+            RpcRequestUseAnimation((int)animationType);
+        }
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcRequestUseAnimation(int animationType)
+    {
+        SetNetworkUseAnimation((ItemUseAnimationType)animationType);
+    }
+
+    private void SetNetworkUseAnimation(ItemUseAnimationType animationType)
+    {
+        if (animationType == ItemUseAnimationType.None)
+            return;
+
+        NetworkUseAnimationType = (int)animationType;
+        NetworkUseAnimationCount++;
+
+        if (!Object.HasInputAuthority)
+            ApplyProxyUseAnimationState();
+    }
+
+    private void ApplyProxyUseAnimationState()
+    {
+        if (_playerAnimator == null || Object.HasInputAuthority)
+            return;
+
+        if (_lastAppliedUseAnimationCount == NetworkUseAnimationCount)
+            return;
+
+        _lastAppliedUseAnimationCount = NetworkUseAnimationCount;
+        _playerAnimator.PlayUseItemAnimation((ItemUseAnimationType)NetworkUseAnimationType);
+    }
+
+    private static PlayerController FindLocalPlayerController()
+    {
+        PlayerController[] controllers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+        foreach (PlayerController controller in controllers)
+        {
+            if (controller != null && controller.IsLocalPlayer)
+                return controller;
+        }
+
+        return null;
     }
 }
