@@ -38,6 +38,53 @@ Example:
 http://192.168.0.23:8080
 ```
 
+## Outside the same router
+
+If the client is not on the same router or Wi-Fi, `http://192.168.x.x:8080` will not work.
+Use one of these two options:
+
+### Option A: Router port forwarding
+
+In your router admin page, forward:
+
+```text
+External TCP 8080 -> 192.168.1.8 TCP 8080
+```
+
+Then other people connect to:
+
+```text
+http://YOUR_PUBLIC_IP:8080
+```
+
+Your current public IP can be checked with:
+
+```powershell
+Invoke-RestMethod https://api.ipify.org
+```
+
+If the router WAN IP is different from this public IP, your ISP is likely using CGNAT. In that case, router port forwarding will not work unless the ISP gives you a real public IPv4 address.
+
+### Option B: Cloudflare temporary tunnel
+
+This works even when you cannot configure router port forwarding.
+
+```powershell
+cd GameServer/deploy/docker
+docker compose -f docker-compose.yml -f docker-compose.tunnel.yml up -d --build
+docker compose -f docker-compose.yml -f docker-compose.tunnel.yml logs -f cloudflared
+```
+
+Find the generated `https://...trycloudflare.com` URL in the logs, then set the Unity API URL to that value.
+
+Example:
+
+```powershell
+Nunbora.exe --auth-api-base-url=https://example-random-name.trycloudflare.com
+```
+
+Cloudflare quick tunnel URLs are temporary and may change after restart.
+
 ## 2. Open Windows firewall
 
 Run PowerShell as Administrator and allow TCP port 8080:

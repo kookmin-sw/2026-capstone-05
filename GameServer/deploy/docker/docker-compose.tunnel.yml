@@ -1,0 +1,9 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: gameserver-cloudflared
+    depends_on:
+      api:
+        condition: service_started
+    command: tunnel --no-autoupdate --url http://api:8080
+    restart: unless-stopped
