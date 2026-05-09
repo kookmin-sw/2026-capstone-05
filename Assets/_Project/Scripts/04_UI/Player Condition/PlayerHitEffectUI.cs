@@ -6,6 +6,7 @@ public class PlayerHitEffectUI : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private PlayerCondition player;
+    [SerializeField] private float playerSearchInterval = 0.5f;
 
     [Header("UI Layers (Images)")]
     [Tooltip("피격 베이스 이미지 (화면 테두리 붉은 효과)를 넣어주세요")]
@@ -20,9 +21,12 @@ public class PlayerHitEffectUI : MonoBehaviour
     public float maxSplatterAlpha = 1.0f;   // 핏자국 효과의 최대 투명도
 
     private float lastHealth;
+    private float playerSearchTimer;
 
     private void Start()
     {
+        TryBindLocalPlayer();
+
         if (player != null)
         {
             lastHealth = player.health.currentValue;
@@ -46,6 +50,11 @@ public class PlayerHitEffectUI : MonoBehaviour
 
     private void Update()
     {
+        if (player == null)
+        {
+            TryBindLocalPlayerByInterval();
+        }
+
         if (player == null) return;
 
         float currentHealth = player.health.currentValue;
@@ -57,6 +66,23 @@ public class PlayerHitEffectUI : MonoBehaviour
         }
 
         lastHealth = currentHealth;
+    }
+
+    private void TryBindLocalPlayerByInterval()
+    {
+        playerSearchTimer -= Time.deltaTime;
+        if (playerSearchTimer > 0f) return;
+
+        playerSearchTimer = playerSearchInterval;
+        TryBindLocalPlayer();
+    }
+
+    private void TryBindLocalPlayer()
+    {
+        if (!LocalPlayerReferenceResolver.TryGetLocalCondition(out PlayerCondition localCondition)) return;
+
+        player = localCondition;
+        lastHealth = player.health.currentValue;
     }
 
     public void PlayHitEffect()

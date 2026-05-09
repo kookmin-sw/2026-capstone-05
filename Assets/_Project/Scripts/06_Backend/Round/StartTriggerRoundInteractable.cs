@@ -1,7 +1,7 @@
 using Fusion;
 using UnityEngine;
 
-public class StartTriggerRoundInteractable : NetworkBehaviour, IInteractable, IHoldInteractable
+public class StartTriggerRoundInteractable : MonoBehaviour, IInteractable, IHoldInteractable
 {
     [Header("Round Trigger")]
     [SerializeField] private BackendRoundManager roundManager;
@@ -64,8 +64,11 @@ public class StartTriggerRoundInteractable : NetworkBehaviour, IInteractable, IH
             requester = playerNetworkObject.InputAuthority;
         }
 
-        bool shouldStartRound = !roundManager.IsRoundRunning;
-        roundManager.RpcRequestSetRoundState(requester, shouldStartRound);
+        if (!roundManager.IsRoundRunning)
+        {
+            roundManager.RpcRequestSetRoundState(requester, true);
+        }
+
         lastToggleRequestTime = Time.time;
     }
 
@@ -77,7 +80,7 @@ public class StartTriggerRoundInteractable : NetworkBehaviour, IInteractable, IH
         }
 
         return roundManager.IsRoundRunning
-            ? "[Hold E] 게임 종료"
+            ? "[Hold E] 라운드 진행 중"
             : "[Hold E] 라운드 시작";
     }
 

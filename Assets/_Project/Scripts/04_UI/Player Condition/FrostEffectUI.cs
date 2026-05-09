@@ -5,6 +5,7 @@ public class FrostEffectUI : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private PlayerCondition player;   // 플레이어 상태 스크립트
+    [SerializeField] private float playerSearchInterval = 0.5f;
     [Tooltip("일러스트레이터로 만든 서리 이미지를 넣으세요")]
     public Image frostImage;                           
 
@@ -18,9 +19,12 @@ public class FrostEffectUI : MonoBehaviour
     public float shiverSpeed = 1f;    
     [Tooltip("떨림의 폭 (기본 알파값에서 얼마나 위아래로 흔들릴지)")]
     public float shiverAmount = 0.08f; 
+    private float playerSearchTimer;
 
     private void Start()
     {
+        TryBindLocalPlayer();
+
         // 시작 시 서리 이미지를 완전 투명하게 초기화
         if (frostImage != null)
         {
@@ -30,6 +34,11 @@ public class FrostEffectUI : MonoBehaviour
 
     private void Update()
     {
+        if (player == null)
+        {
+            TryBindLocalPlayerByInterval();
+        }
+
         // 플레이어나 이미지가 연결되지 않았다면 작동 중지
         if (player == null || frostImage == null) return;
 
@@ -57,5 +66,22 @@ public class FrostEffectUI : MonoBehaviour
 
         // 이미지에 색상(알파값) 반영
         frostImage.color = new Color(1f, 1f, 1f, finalAlpha);
+    }
+
+    private void TryBindLocalPlayerByInterval()
+    {
+        playerSearchTimer -= Time.deltaTime;
+        if (playerSearchTimer > 0f) return;
+
+        playerSearchTimer = playerSearchInterval;
+        TryBindLocalPlayer();
+    }
+
+    private void TryBindLocalPlayer()
+    {
+        if (LocalPlayerReferenceResolver.TryGetLocalCondition(out PlayerCondition localCondition))
+        {
+            player = localCondition;
+        }
     }
 }

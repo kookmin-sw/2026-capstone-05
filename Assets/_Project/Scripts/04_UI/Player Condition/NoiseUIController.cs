@@ -5,6 +5,7 @@ public class NoiseUIController : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private PlayerNoiseEmitter noiseEmitter;
+    [SerializeField] private float playerSearchInterval = 0.5f;
     
     [Header("개별 블록 UI 연결 (1~30)")]
     public Image[] noiseBars; 
@@ -27,9 +28,12 @@ public class NoiseUIController : MonoBehaviour
     private CharacterController controller; 
     private float targetFill = 0f;          
     private float currentFill = 0f; 
+    private float playerSearchTimer;
 
     private void Start()
     {
+        TryBindLocalPlayer();
+
         if (noiseEmitter != null)
         {
             controller = noiseEmitter.GetComponent<CharacterController>();
@@ -38,6 +42,11 @@ public class NoiseUIController : MonoBehaviour
 
     private void Update()
     {
+        if (noiseEmitter == null || controller == null)
+        {
+            TryBindLocalPlayerByInterval();
+        }
+
         UpdateNoiseLogic();
         
         // 1. 부드러운 타겟 수치(0.0 ~ 1.0) 계산
@@ -112,5 +121,22 @@ public class NoiseUIController : MonoBehaviour
         {
             targetFill = Mathf.Max(targetFill, 0.7f);
         }
+    }
+
+    private void TryBindLocalPlayerByInterval()
+    {
+        playerSearchTimer -= Time.deltaTime;
+        if (playerSearchTimer > 0f) return;
+
+        playerSearchTimer = playerSearchInterval;
+        TryBindLocalPlayer();
+    }
+
+    private void TryBindLocalPlayer()
+    {
+        if (!LocalPlayerReferenceResolver.TryGetLocalNoiseEmitter(out PlayerNoiseEmitter localEmitter)) return;
+
+        noiseEmitter = localEmitter;
+        controller = noiseEmitter.GetComponent<CharacterController>();
     }
 }
