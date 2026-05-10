@@ -107,9 +107,6 @@ public sealed class MainMenuAuthController : MonoBehaviour
 
     private void AutoBindIfNeeded()
     {
-        signupButton ??= FindButtonByCandidates("Signup Button", "Signup", "SignUp", "회원가입", "Join", "Registration Button");
-        loginButton ??= FindButtonByCandidates("Login Button", "Login", "로그인");
-
         signupEmailInput ??= FindInputByCandidates("Signup Email Input", "SignupEmail", "Email", "ID InputField");
         signupNicknameInput ??= FindInputByCandidates("Signup Nickname Input", "SignupNickname", "Nickname", "Name InputField");
         signupPasswordInput ??= FindInputByCandidates("Signup Password Input", "SignupPassword", "Password", "PW InputField");
@@ -118,9 +115,49 @@ public sealed class MainMenuAuthController : MonoBehaviour
         loginEmailInput ??= FindInputByCandidates("Login Email Input", "LoginEmail", "ID InputField");
         loginPasswordInput ??= FindInputByCandidates("Login Password Input", "LoginPassword", "PW InputField");
 
+        signupButton = ResolveSignupSubmitButton(signupButton, signupEmailInput, signupNicknameInput, signupPasswordInput, signupConfirmPasswordInput);
+        loginButton ??= FindButtonByCandidates("Login Button", "Login", "로그인");
+
         statusText ??= FindTextByCandidates("Status Text", "AuthStatus", "Status", "StatusText", "Notice Text");
         loginMenuRoot ??= FindObjectByCandidates("Login Menu", "LoginMenu");
         mainMenuRoot ??= FindObjectByCandidates("Main Menu", "MainMenu");
+    }
+
+    private static Button ResolveSignupSubmitButton(Button configuredButton, params TMP_InputField[] signupInputs)
+    {
+        Transform signupFormRoot = FindNearestCommonAncestor(signupInputs);
+        if (signupFormRoot != null)
+        {
+            Button formButton = FindButtonUnder(
+                signupFormRoot,
+                "Apply Button",
+                "Submit Button",
+                "Confirm Button",
+                "Signup Submit",
+                "SignUp Submit",
+                "Create Account",
+                "가입 완료",
+                "회원가입 완료",
+                "가입하기",
+                "Registration Button",
+                "Signup Button",
+                "SignUp Button",
+                "Signup",
+                "SignUp",
+                "회원가입");
+
+            if (formButton != null)
+            {
+                if (configuredButton != null && configuredButton != formButton)
+                {
+                    Debug.LogWarning($"{LogPrefix} signupButton reference pointed outside the signup form. Runtime binding changed from '{configuredButton.gameObject.name}' to '{formButton.gameObject.name}'.");
+                }
+
+                return formButton;
+            }
+        }
+
+        return configuredButton ?? FindButtonByCandidates("Registration Button", "Signup Button", "SignUp Button", "Signup", "SignUp", "회원가입");
     }
 
     private static Button FindButtonByCandidates(params string[] candidates)
@@ -133,6 +170,86 @@ public sealed class MainMenuAuthController : MonoBehaviour
         }
 
         return null;
+    }
+
+    private static Button FindButtonUnder(Transform root, params string[] candidates)
+    {
+        if (root == null)
+            return null;
+
+        Button[] buttons = root.GetComponentsInChildren<Button>(true);
+        foreach (Button button in buttons)
+        {
+            if (button == null)
+                continue;
+
+            if (ContainsAny(button.gameObject.name, candidates))
+                return button;
+
+            TMP_Text tmpLabel = button.GetComponentInChildren<TMP_Text>(true);
+            if (tmpLabel != null && ContainsAny(tmpLabel.text, candidates))
+                return button;
+
+            Text legacyLabel = button.GetComponentInChildren<Text>(true);
+            if (legacyLabel != null && ContainsAny(legacyLabel.text, candidates))
+                return button;
+        }
+
+        return null;
+    }
+
+    private static Transform FindNearestCommonAncestor(params TMP_InputField[] inputs)
+    {
+        TMP_InputField first = null;
+        foreach (TMP_InputField input in inputs)
+        {
+            if (input != null)
+            {
+                first = input;
+                break;
+            }
+        }
+
+        if (first == null)
+            return null;
+
+        Transform candidate = first.transform;
+        while (candidate != null)
+        {
+            bool containsAll = true;
+            foreach (TMP_InputField input in inputs)
+            {
+                if (input == null)
+                    continue;
+
+                if (!IsChildOfOrSelf(input.transform, candidate))
+                {
+                    containsAll = false;
+                    break;
+                }
+            }
+
+            if (containsAll)
+                return candidate;
+
+            candidate = candidate.parent;
+        }
+
+        return null;
+    }
+
+    private static bool IsChildOfOrSelf(Transform child, Transform parent)
+    {
+        Transform current = child;
+        while (current != null)
+        {
+            if (current == parent)
+                return true;
+
+            current = current.parent;
+        }
+
+        return false;
     }
 
     private static TMP_InputField FindInputByCandidates(params string[] candidates)
