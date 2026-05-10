@@ -152,10 +152,10 @@ MonoBehaviour:
   Path: FMOD_Project/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639140259003141007
+  lastModified: 639140272972669162
   FileSizes:
   - Name: Desktop
-    Value: 2394112
+    Value: 2429824
   Exists: 1
 --- !u!114 &-531075077676271134
 MonoBehaviour:
@@ -208,13 +208,15 @@ MonoBehaviour:
   - {fileID: -8969122691283574566}
   - {fileID: 2936200470160359246}
   - {fileID: 2361055463994693524}
+  - {fileID: 1323706632045086489}
+  - {fileID: 5388144831513748298}
   EditorParameters: []
   MasterBanks:
   - {fileID: -1094752039627391627}
   StringsBanks:
   - {fileID: 2120258606684106499}
   cacheVersion: 131858
-  cacheTime: 639140259003150999
+  cacheTime: 639140272972678926
   SerializableEventsDict:
   - key: event:/Ambience/Ambience_Base
     index: 0
@@ -228,6 +230,14 @@ MonoBehaviour:
     index: 4
   - key: event:/SFX/Player/Swing_Heavy
     index: 5
+  - key: event:/SFX/Player/Impact_Light
+    index: 6
+  - key: event:/SFX/Player/Impact_Heavy
+    index: 7
+  - key: event:/SFX/Player/StomachGrowl
+    index: 8
+  - key: event:/SFX/Player/Cough
+    index: 9
 --- !u!114 &967054649398643204
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -255,6 +265,33 @@ MonoBehaviour:
   - Walk
   - Run
   Exists: 1
+--- !u!114 &1323706632045086489
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/SFX/Player/StomachGrowl
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/SFX/Player/StomachGrowl
+  Guid:
+    Data1: 1780834297
+    Data2: 1252079316
+    Data3: -361480571
+    Data4: 1812579063
+  Banks:
+  - {fileID: -1094752039627391627}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 0
 --- !u!114 &1627671583600017175
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -298,10 +335,10 @@ MonoBehaviour:
   Path: FMOD_Project/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639140259003150999
+  lastModified: 639140272972678926
   FileSizes:
   - Name: Desktop
-    Value: 1560
+    Value: 1650
   Exists: 1
 --- !u!114 &2229768146378313878
 MonoBehaviour:
@@ -407,3 +444,30 @@ MonoBehaviour:
   - Snow
   - Stone
   Exists: 1
+--- !u!114 &5388144831513748298
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/SFX/Player/Cough
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/SFX/Player/Cough
+  Guid:
+    Data1: -2066114647
+    Data2: 1119591159
+    Data3: -311918966
+    Data4: 1927967037
+  Banks:
+  - {fileID: -1094752039627391627}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 0

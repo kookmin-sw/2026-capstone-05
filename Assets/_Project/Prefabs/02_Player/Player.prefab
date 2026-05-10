@@ -632,6 +632,23 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 1
+  satietyNoiseThreshold: 30
+  coldnessNoiseThreshold: 70
+  noiseIntervalRange: {x: 10, y: 25}
+  hungerEvent:
+    Guid:
+      Data1: 1780834297
+      Data2: 1252079316
+      Data3: -361480571
+      Data4: 1812579063
+    Path: event:/SFX/Player/StomachGrowl
+  shiverEvent:
+    Guid:
+      Data1: -2066114647
+      Data2: 1119591159
+      Data3: -311918966
+      Data4: 1927967037
+    Path: event:/SFX/Player/Cough
 --- !u!114 &1689880926387619475
 MonoBehaviour:
   m_ObjectHideFlags: 0

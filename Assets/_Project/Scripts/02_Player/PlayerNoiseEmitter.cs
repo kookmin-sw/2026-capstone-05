@@ -24,11 +24,22 @@ public class PlayerNoiseEmitter : MonoBehaviour
     [SerializeField] private EventReference landingEvent;
     [SerializeField] private LayerMask groundLayer;
 
+    [Header("Vital Signal Settings")]
+    public float satietyNoiseThreshold = 30f;
+    public float coldnessNoiseThreshold = 70f;
+    public Vector2 noiseIntervalRange = new Vector2(10f, 25f);
+
+    [SerializeField] private EventReference hungerEvent;
+    [SerializeField] private EventReference shiverEvent;
+
     private float accumulatedDistance = 0f;
 
     private bool wasGrounded = true;
     private float lastFallSpeed = 0f;
     private float currentAirTime = 0f;
+
+    private float nextHungerTime = 0f;
+    private float nextShiverTime = 0f;
 
     private void Update()
     {
@@ -61,6 +72,8 @@ public class PlayerNoiseEmitter : MonoBehaviour
         }
 
         wasGrounded = isGrounded;
+
+        HandleConditionNoises();
     }
 
     private void CalculateMovementNoise()
@@ -182,5 +195,46 @@ public class PlayerNoiseEmitter : MonoBehaviour
 
         landingInstance.start();
         landingInstance.release();
+    }
+
+    private void HandleConditionNoises()
+    {
+        if (player.Condition.satiety.currentValue <= satietyNoiseThreshold)
+        {
+            nextHungerTime -= Time.deltaTime;
+            if (nextHungerTime <= 0f)
+            {
+                GenerateConditionNoise(hungerEvent, NoiseData.NoiseType.Hunger);
+                nextHungerTime = Random.Range(noiseIntervalRange.x, noiseIntervalRange.y);
+            }
+        }
+        else
+        {
+            nextHungerTime = Random.Range(noiseIntervalRange.x, noiseIntervalRange.y);
+        }
+
+        if (player.Condition.coldness.currentValue >= coldnessNoiseThreshold)
+        {
+            nextShiverTime -= Time.deltaTime;
+            if (nextShiverTime <= 0f)
+            {
+                GenerateConditionNoise(shiverEvent, NoiseData.NoiseType.Cough);
+                nextShiverTime = Random.Range(noiseIntervalRange.x, noiseIntervalRange.y);
+            }
+        }
+        else
+        {
+            nextShiverTime = Random.Range(noiseIntervalRange.x, noiseIntervalRange.y);
+        }
+    }
+
+    private void GenerateConditionNoise(EventReference fmodEvent, NoiseData.NoiseType noiseType)
+    {
+        NoiseManager.Instance.GenerateNoise(transform.position, noiseType);
+
+        EventInstance instance = RuntimeManager.CreateInstance(fmodEvent);
+        RuntimeManager.AttachInstanceToGameObject(instance, player.gameObject);
+        instance.start();
+        instance.release();
     }
 }
