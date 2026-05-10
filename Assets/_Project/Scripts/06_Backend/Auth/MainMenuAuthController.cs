@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -11,6 +12,7 @@ public sealed class MainMenuAuthController : MonoBehaviour
     [Header("API")]
     [SerializeField] private string authApiBaseUrl = "http://localhost:8080";
     [SerializeField] private bool allowRuntimeApiBaseUrlOverride = true;
+    [SerializeField] private string authApiBaseUrlConfigFileName = "auth-api-base-url.txt";
 
     [Header("Signup UI")]
     [SerializeField] private TMP_InputField signupEmailInput;
@@ -49,7 +51,7 @@ public sealed class MainMenuAuthController : MonoBehaviour
         AuthSession.Clear();
         AutoBindIfNeeded();
 
-        string normalizedApiBaseUrl = NormalizeApiBaseUrl(ResolveApiBaseUrl(authApiBaseUrl, allowRuntimeApiBaseUrlOverride));
+        string normalizedApiBaseUrl = NormalizeApiBaseUrl(ResolveApiBaseUrl(authApiBaseUrl, allowRuntimeApiBaseUrlOverride, authApiBaseUrlConfigFileName));
         _authService = new AuthService(normalizedApiBaseUrl);
 
         if (signupButton != null)
@@ -327,16 +329,22 @@ public sealed class MainMenuAuthController : MonoBehaviour
     {
         string trimmed = string.IsNullOrWhiteSpace(baseUrl) ? "http://localhost:8080" : baseUrl.Trim();
 #if UNITY_ANDROID && !UNITY_EDITOR
-        if (trimmed.Contains("localhost"))
+        if (IsLoopbackApiBaseUrl(trimmed))
         {
-            trimmed = trimmed.Replace("localhost", "10.0.2.2");
+            trimmed = ReplaceUriHost(trimmed, "10.0.2.2");
             Debug.LogWarning($"{LogPrefix} Android 빌드에서 localhost 대신 10.0.2.2 사용: {trimmed}");
+        }
+#endif
+#if !UNITY_EDITOR
+        if (IsLoopbackApiBaseUrl(trimmed))
+        {
+            Debug.LogWarning($"{LogPrefix} Auth API base URL points to this client device ({trimmed}). For remote multiplayer, set --auth-api-base-url, NUNBORA_AUTH_API_BASE_URL, or auth-api-base-url.txt to the Docker host IP/public tunnel URL.");
         }
 #endif
         return trimmed;
     }
 
-    private static string ResolveApiBaseUrl(string configuredBaseUrl, bool allowRuntimeOverride)
+    private static string ResolveApiBaseUrl(string configuredBaseUrl, bool allowRuntimeOverride, string configFileName)
     {
         if (!allowRuntimeOverride)
             return configuredBaseUrl;
@@ -349,7 +357,92 @@ public sealed class MainMenuAuthController : MonoBehaviour
         if (!string.IsNullOrWhiteSpace(environmentOverride))
             return environmentOverride;
 
+        string fileOverride = TryReadApiBaseUrlConfig(configFileName);
+        if (!string.IsNullOrWhiteSpace(fileOverride))
+            return fileOverride;
+
         return configuredBaseUrl;
+    }
+
+    private static string TryReadApiBaseUrlConfig(string configFileName)
+    {
+        if (string.IsNullOrWhiteSpace(configFileName))
+            return null;
+
+        foreach (string path in GetApiBaseUrlConfigPaths(configFileName.Trim()))
+        {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+                continue;
+
+            try
+            {
+                foreach (string line in File.ReadAllLines(path))
+                {
+                    string value = line.Trim();
+                    if (value.Length == 0 || value.StartsWith("#", StringComparison.Ordinal))
+                        continue;
+
+                    Debug.Log($"{LogPrefix} Auth API base URL loaded from config file: {path}");
+                    return value;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"{LogPrefix} Failed to read Auth API base URL config file: {path}, error={ex.Message}");
+            }
+        }
+
+        return null;
+    }
+
+    private static string[] GetApiBaseUrlConfigPaths(string configFileName)
+    {
+        if (Path.IsPathRooted(configFileName))
+            return new[] { configFileName };
+
+        return new[]
+        {
+            Path.Combine(Application.persistentDataPath, configFileName),
+            Path.Combine(Application.streamingAssetsPath, configFileName),
+            Path.Combine(GetPlayerRootDirectory(), configFileName),
+            Path.Combine(Directory.GetCurrentDirectory(), configFileName)
+        };
+    }
+
+    private static string GetPlayerRootDirectory()
+    {
+        string dataPath = Application.dataPath;
+        if (string.IsNullOrWhiteSpace(dataPath))
+            return AppDomain.CurrentDomain.BaseDirectory;
+
+        DirectoryInfo dataDirectory = new(dataPath);
+        if (dataDirectory.Name.EndsWith("_Data", StringComparison.OrdinalIgnoreCase) && dataDirectory.Parent != null)
+            return dataDirectory.Parent.FullName;
+
+        return dataDirectory.Parent?.FullName ?? dataDirectory.FullName;
+    }
+
+    private static bool IsLoopbackApiBaseUrl(string baseUrl)
+    {
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out Uri uri))
+            return false;
+
+        return string.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(uri.Host, "127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(uri.Host, "::1", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string ReplaceUriHost(string baseUrl, string host)
+    {
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out Uri uri))
+            return baseUrl;
+
+        UriBuilder builder = new(uri)
+        {
+            Host = host
+        };
+
+        return builder.Uri.ToString().TrimEnd('/');
     }
 
     private static string GetCommandLineValue(string optionName)
