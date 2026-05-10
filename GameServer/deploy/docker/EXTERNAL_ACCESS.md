@@ -116,6 +116,25 @@ $env:NUNBORA_AUTH_API_BASE_URL = "http://YOUR_PC_IP:8080"
 .\Nunbora.exe
 ```
 
+Or place a text file named `auth-api-base-url.txt` next to the built executable:
+
+```text
+http://YOUR_PC_IP:8080
+```
+
+For a client outside the same router/Wi-Fi, put the public URL or Cloudflare tunnel URL in that file instead:
+
+```text
+https://YOUR-TUNNEL.trycloudflare.com
+```
+
+The client checks these sources in order:
+
+1. `--auth-api-base-url=...`
+2. `NUNBORA_AUTH_API_BASE_URL`
+3. `auth-api-base-url.txt`
+4. The Unity Inspector value
+
 ## 4. Keep PostgreSQL private
 
 PostgreSQL and pgAdmin are bound to `127.0.0.1` by default:
