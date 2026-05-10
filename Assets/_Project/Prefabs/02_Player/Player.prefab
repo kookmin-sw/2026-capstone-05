@@ -655,7 +655,21 @@ MonoBehaviour:
   unarmedHitRadius: 0.3
   hitLayerMask:
     serializedVersion: 2
-    m_Bits: 247
+    m_Bits: 192
+  unarmedSwingEvent:
+    Guid:
+      Data1: -733857622
+      Data2: 1076539590
+      Data3: -1333613638
+      Data4: -341948258
+    Path: event:/SFX/Player/Swing_Light
+  unarmedHitEvent:
+    Guid:
+      Data1: -68686992
+      Data2: 1178472825
+      Data3: -357589619
+      Data4: 665870171
+    Path: event:/SFX/Player/Grab
 --- !u!114 &62612821691926181
 MonoBehaviour:
   m_ObjectHideFlags: 0

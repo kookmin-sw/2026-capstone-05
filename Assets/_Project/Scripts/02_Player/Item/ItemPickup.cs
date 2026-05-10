@@ -1,3 +1,4 @@
+using FMODUnity;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -87,6 +88,7 @@ public class ItemPickup : MonoBehaviour, IInteractable
         if (player != null && player.NoiseEmitter != null)
         {
             // Hook pickup noise here when the noise system is ready for item pickups.
+            RuntimeManager.PlayOneShot("event:/SFX/Player/Grab", player.transform.position);
         }
 
         return true;

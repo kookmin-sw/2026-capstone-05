@@ -1,3 +1,4 @@
+using FMODUnity;
 using UnityEngine;
 
 public class PlayerEquipment : MonoBehaviour
@@ -29,6 +30,9 @@ public class PlayerEquipment : MonoBehaviour
     public float unarmedRange = 1f;
     public float unarmedHitRadius = 0.3f;
     public LayerMask hitLayerMask = ~0;
+
+    public EventReference unarmedSwingEvent;
+    public EventReference unarmedHitEvent;
 
     private float lastUnarmedAttackTime = -999f;
 
@@ -217,6 +221,8 @@ public class PlayerEquipment : MonoBehaviour
         Transform originTransform = player.CameraTransform != null ? player.CameraTransform : Camera.main.transform;
         Vector3 checkCenter = originTransform.position + originTransform.forward * unarmedRange;
 
+        Debug.Log("Performing unarmed hit check at: " + checkCenter + " with radius: " + unarmedHitRadius);
+
         Collider[] hitColliders = Physics.OverlapSphere(checkCenter, unarmedHitRadius, hitLayerMask);
         if (hitColliders.Length > 0)
         {
@@ -228,10 +234,19 @@ public class PlayerEquipment : MonoBehaviour
                 }
             }
             // TODO: 타격 시 소리
+            RuntimeManager.PlayOneShot(unarmedHitEvent, checkCenter);
+            Debug.Log("Unarmed hit! Damage applied to " + hitColliders.Length + " targets.");
+            // log all the hit colliders for debugging
+            foreach (var hit in hitColliders)
+            {
+                Debug.Log("Hit collider: " + hit.name);
+            }
         }
         else
         {
             // TODO: 빗나갔을 때 소리
+            RuntimeManager.PlayOneShot(unarmedSwingEvent, checkCenter);
+            Debug.Log("Unarmed attack missed.");
         }
     }
 }
