@@ -1,3 +1,4 @@
+using FMODUnity;
 using UnityEngine;
 
 public class MeleeWeaponBehaviour : EquippedItemBehaviour
@@ -19,6 +20,8 @@ public class MeleeWeaponBehaviour : EquippedItemBehaviour
         {
             return false;
         }
+
+        RuntimeManager.PlayOneShot(data.swingSound, player.transform.position);
 
         return true;
     }

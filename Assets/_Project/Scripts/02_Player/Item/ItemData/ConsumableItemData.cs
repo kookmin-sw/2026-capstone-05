@@ -1,3 +1,4 @@
+using FMODUnity;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,6 +12,9 @@ public class ConsumableItemData : ItemData
 
     [Header("Noise Settings")]
     public NoiseData.NoiseType consumeNoiseType;
+
+    [Header("Sound Settings")]
+    public EventReference consumeSound;
 
     private void Reset()
     {
