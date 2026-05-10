@@ -252,6 +252,23 @@ public sealed class MainMenuAuthController : MonoBehaviour
         return false;
     }
 
+    private static bool ContainsAny(string source, params string[] candidates)
+    {
+        if (string.IsNullOrWhiteSpace(source))
+            return false;
+
+        foreach (string candidate in candidates)
+        {
+            if (string.IsNullOrWhiteSpace(candidate))
+                continue;
+
+            if (source.IndexOf(candidate, StringComparison.OrdinalIgnoreCase) >= 0)
+                return true;
+        }
+
+        return false;
+    }
+
     private static TMP_InputField FindInputByCandidates(params string[] candidates)
     {
         foreach (string candidate in candidates)
