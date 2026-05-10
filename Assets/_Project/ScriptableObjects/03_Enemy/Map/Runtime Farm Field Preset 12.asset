@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 346b0ef321d1b5a428534d1f2be202b2, type: 3}
+  m_Name: Runtime Farm Field Preset 12
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeFarmFieldPreset
+  prefab: {fileID: 5621033796424000787, guid: 65c4cc43c77283e4fadd07abbd26f4eb, type: 3}
+  flattenBlendWidth: 8
+  randomYaw: 1
+  lockYawWhenLarge: 1
+  largeFootprintYawLockThreshold: 50
+  fixedYawDegrees: 0
+  yawRange: {x: 0, y: 360}
+  randomScaleRange: {x: 1, y: 1}
+  autoSizeFromPrefab: 1
+  preferCollidersForFootprint: 1
+  useTriggerCollidersForFlattenFootprint: 0
+  useTriggerCollidersForGroundLocalY: 0
+  footprintPadding: 2
+  width: 81.09821
+  length: 67.46001
+  footprintCenterOffset: {x: -0.93089676, y: 7.500002}
+  autoGroundLocalYFromPrefab: 1
+  groundLocalY: -1.2017426
+  minWorldHeight: 0
+  maxWorldHeight: 180
+  useSlopeFilter: 0
+  maxSlopeDegrees: 12
+  useHeightDeltaFilter: 0
+  maxHeightDelta: 2
+  sampleGrid: 5
