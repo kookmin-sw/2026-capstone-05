@@ -6,22 +6,24 @@ using UnityEngine;
 [Serializable]
 public class PlannedFarmField
 {
-    public RuntimeFarmFieldPreset preset;
+    public RuntimeFieldPreset preset;
     public Vector3 position;
     public Quaternion rotation;
     public Vector2 footprintSize;
     public Vector2 footprintCenter;
+    public PlannedFieldFootprintPart[] footprintParts;
     public Rect worldRect;
     public float targetWorldHeight;
     public float yawDegrees;
     public float scale;
 
     public PlannedFarmField(
-        RuntimeFarmFieldPreset preset,
+        RuntimeFieldPreset preset,
         Vector3 position,
         Quaternion rotation,
         Vector2 footprintSize,
         Vector2 footprintCenter,
+        PlannedFieldFootprintPart[] footprintParts,
         Rect worldRect,
         float targetWorldHeight,
         float yawDegrees,
@@ -32,6 +34,7 @@ public class PlannedFarmField
         this.rotation = rotation;
         this.footprintSize = footprintSize;
         this.footprintCenter = footprintCenter;
+        this.footprintParts = footprintParts;
         this.worldRect = worldRect;
         this.targetWorldHeight = targetWorldHeight;
         this.yawDegrees = yawDegrees;
@@ -39,17 +42,56 @@ public class PlannedFarmField
     }
 }
 
+[Serializable]
+public struct RuntimeFieldFootprintPartData
+{
+    public Vector2 size;
+    public Vector2 centerOffset;
+    public float yawDegrees;
+    public float groundLocalY;
+
+    public RuntimeFieldFootprintPartData(Vector2 size, Vector2 centerOffset, float yawDegrees, float groundLocalY)
+    {
+        this.size = size;
+        this.centerOffset = centerOffset;
+        this.yawDegrees = yawDegrees;
+        this.groundLocalY = groundLocalY;
+    }
+}
+
+[Serializable]
 public struct RuntimeFarmFieldFootprintData
 {
     public Vector2 size;
     public Vector2 centerOffset;
     public float groundLocalY;
+    public RuntimeFieldFootprintPartData[] parts;
 
-    public RuntimeFarmFieldFootprintData(Vector2 size, Vector2 centerOffset, float groundLocalY)
+    public RuntimeFarmFieldFootprintData(
+        Vector2 size,
+        Vector2 centerOffset,
+        float groundLocalY,
+        RuntimeFieldFootprintPartData[] parts)
     {
         this.size = size;
         this.centerOffset = centerOffset;
         this.groundLocalY = groundLocalY;
+        this.parts = parts;
+    }
+}
+
+[Serializable]
+public struct PlannedFieldFootprintPart
+{
+    public Vector2 center;
+    public Vector2 size;
+    public float yawDegrees;
+
+    public PlannedFieldFootprintPart(Vector2 center, Vector2 size, float yawDegrees)
+    {
+        this.center = center;
+        this.size = size;
+        this.yawDegrees = yawDegrees;
     }
 }
 
@@ -94,7 +136,19 @@ public class RuntimeTerrainReservationMask
             return;
         }
 
-        Add(Pad(field.worldRect, padding));
+        if (field.footprintParts == null || field.footprintParts.Length == 0)
+        {
+            Add(Pad(field.worldRect, padding));
+            return;
+        }
+
+        for (int i = 0; i < field.footprintParts.Length; i++)
+        {
+            Add(Pad(RuntimeTerrainUtility.GetRotatedWorldRect(
+                field.footprintParts[i].center,
+                field.footprintParts[i].size,
+                field.footprintParts[i].yawDegrees), padding));
+        }
     }
 
     public bool Contains(Vector2 point, float extraPadding = 0f)
@@ -359,7 +413,16 @@ public static class RuntimeTerrainUtility
         float radians = degrees * Mathf.Deg2Rad;
         float sin = Mathf.Sin(radians);
         float cos = Mathf.Cos(radians);
-        return new Vector2(value.x * cos - value.y * sin, value.x * sin + value.y * cos);
+        return new Vector2(value.x * cos + value.y * sin, -value.x * sin + value.y * cos);
+    }
+
+    public static Rect GetRotatedWorldRect(Vector2 center, Vector2 size, float yawDegrees)
+    {
+        float radians = yawDegrees * Mathf.Deg2Rad;
+        float sin = Mathf.Abs(Mathf.Sin(radians));
+        float cos = Mathf.Abs(Mathf.Cos(radians));
+        Vector2 bounds = new Vector2(size.x * cos + size.y * sin, size.x * sin + size.y * cos);
+        return new Rect(center.x - bounds.x * 0.5f, center.y - bounds.y * 0.5f, bounds.x, bounds.y);
     }
 
     public static float NextFloat(System.Random random, float min, float max)

@@ -13,23 +13,14 @@ MonoBehaviour:
   m_Name: Runtime Farm Field Preset 2
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeFarmFieldPreset
   prefab: {fileID: 5669151974911451912, guid: 532b3c40bb1d13342b9ac0df595557bd, type: 3}
-  flattenBlendWidth: 8
+  flattenBlendWidth: 15
   randomYaw: 1
   lockYawWhenLarge: 1
-  largeFootprintYawLockThreshold: 50
+  largeFootprintYawLockThreshold: 45
   fixedYawDegrees: 0
   yawRange: {x: 0, y: 360}
   randomScaleRange: {x: 1, y: 1}
-  autoSizeFromPrefab: 1
-  preferCollidersForFootprint: 1
-  useTriggerCollidersForFlattenFootprint: 0
-  useTriggerCollidersForGroundLocalY: 0
   footprintPadding: 2
-  width: 41.216408
-  length: 42.86824
-  footprintCenterOffset: {x: -0.8381996, y: 0.31411743}
-  autoGroundLocalYFromPrefab: 1
-  groundLocalY: -0.58519316
   minWorldHeight: 0
   maxWorldHeight: 180
   useSlopeFilter: 0

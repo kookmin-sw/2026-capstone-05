@@ -5,7 +5,7 @@ using Unity.AI.Navigation;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class RuntimeMapCycleManager : MonoBehaviour
+public class RuntimeMapManager : MonoBehaviour
 {
     [Header("MapMagic")]
     [SerializeField] private MapMagicObject mapMagic;
@@ -27,7 +27,7 @@ public class RuntimeMapCycleManager : MonoBehaviour
     [SerializeField] private bool useDelayedHeightmapLod = true;
 
     [Header("Farm Fields")]
-    [SerializeField] private RuntimeFarmFieldPreset[] farmFieldPresets;
+    [SerializeField] private RuntimeFieldPreset[] farmFieldPresets;
     [SerializeField, Min(0)] private int farmFieldCount = 6;
     [SerializeField, Min(1)] private int fieldPlacementAttempts = 300;
     [SerializeField, Min(0f)] private float fieldReservationPadding = 4f;
@@ -225,7 +225,7 @@ public class RuntimeMapCycleManager : MonoBehaviour
         int maxAttempts = Mathf.Max(fieldPlacementAttempts, farmFieldCount * 200);
         for (int attempt = 0; attempt < maxAttempts && fields.Count < farmFieldCount; attempt++)
         {
-            RuntimeFarmFieldPreset preset = PickFarmFieldPreset(random);
+            RuntimeFieldPreset preset = PickFarmFieldPreset(random);
             Terrain terrain = RuntimeTerrainUtility.ChooseTerrainByArea(terrains, random);
 
             if (preset == null || terrain == null || terrain.terrainData == null)
@@ -273,7 +273,7 @@ public class RuntimeMapCycleManager : MonoBehaviour
         return fields;
     }
 
-    private RuntimeFarmFieldPreset PickFarmFieldPreset(System.Random random)
+    private RuntimeFieldPreset PickFarmFieldPreset(System.Random random)
     {
         if (farmFieldPresets == null || farmFieldPresets.Length == 0)
         {
@@ -282,7 +282,7 @@ public class RuntimeMapCycleManager : MonoBehaviour
 
         for (int i = 0; i < farmFieldPresets.Length; i++)
         {
-            RuntimeFarmFieldPreset preset = farmFieldPresets[random.Next(0, farmFieldPresets.Length)];
+            RuntimeFieldPreset preset = farmFieldPresets[random.Next(0, farmFieldPresets.Length)];
             if (preset != null)
             {
                 return preset;
@@ -294,7 +294,7 @@ public class RuntimeMapCycleManager : MonoBehaviour
 
     private bool TryCreateFieldPlan(
         Terrain[] terrains,
-        RuntimeFarmFieldPreset preset,
+        RuntimeFieldPreset preset,
         RuntimeFarmFieldFootprintData footprintData,
         Vector2 footprintCenter,
         float yaw,
@@ -306,7 +306,7 @@ public class RuntimeMapCycleManager : MonoBehaviour
 
         float safeScale = Mathf.Max(0.01f, scale);
         Vector2 footprint = footprintData.size * safeScale;
-        Vector2 half = footprint * 0.5f;
+        PlannedFieldFootprintPart[] plannedParts = BuildPlannedFootprintParts(footprintData, footprintCenter, yaw, safeScale);
         int grid = Mathf.Max(2, preset.sampleGrid);
         float minHeight = float.MaxValue;
         float maxHeight = float.MinValue;
@@ -314,32 +314,38 @@ public class RuntimeMapCycleManager : MonoBehaviour
         float maxSlope = 0f;
         float slopeSum = 0f;
         int sampleCount = 0;
-        float[] heightSamples = new float[grid * grid];
+        float[] heightSamples = new float[Mathf.Max(1, plannedParts.Length) * grid * grid];
 
-        for (int z = 0; z < grid; z++)
+        for (int partIndex = 0; partIndex < plannedParts.Length; partIndex++)
         {
-            float tz = grid == 1 ? 0.5f : z / (float)(grid - 1);
-            for (int x = 0; x < grid; x++)
+            PlannedFieldFootprintPart part = plannedParts[partIndex];
+            Vector2 half = part.size * 0.5f;
+
+            for (int z = 0; z < grid; z++)
             {
-                float tx = grid == 1 ? 0.5f : x / (float)(grid - 1);
-                Vector2 local = new Vector2(
-                    Mathf.Lerp(-half.x, half.x, tx),
-                    Mathf.Lerp(-half.y, half.y, tz));
-                Vector2 worldXZ = footprintCenter + RuntimeTerrainUtility.Rotate(local, yaw);
-
-                if (!RuntimeTerrainUtility.TrySample(terrains, worldXZ, out RuntimeTerrainSample sample))
+                float tz = grid == 1 ? 0.5f : z / (float)(grid - 1);
+                for (int x = 0; x < grid; x++)
                 {
-                    return false;
-                }
+                    float tx = grid == 1 ? 0.5f : x / (float)(grid - 1);
+                    Vector2 local = new Vector2(
+                        Mathf.Lerp(-half.x, half.x, tx),
+                        Mathf.Lerp(-half.y, half.y, tz));
+                    Vector2 worldXZ = part.center + RuntimeTerrainUtility.Rotate(local, part.yawDegrees);
 
-                float height = sample.position.y;
-                minHeight = Mathf.Min(minHeight, height);
-                maxHeight = Mathf.Max(maxHeight, height);
-                heightSum += height;
-                heightSamples[sampleCount] = height;
-                maxSlope = Mathf.Max(maxSlope, sample.slopeDegrees);
-                slopeSum += sample.slopeDegrees;
-                sampleCount++;
+                    if (!RuntimeTerrainUtility.TrySample(terrains, worldXZ, out RuntimeTerrainSample sample))
+                    {
+                        return false;
+                    }
+
+                    float height = sample.position.y;
+                    minHeight = Mathf.Min(minHeight, height);
+                    maxHeight = Mathf.Max(maxHeight, height);
+                    heightSum += height;
+                    heightSamples[sampleCount] = height;
+                    maxSlope = Mathf.Max(maxSlope, sample.slopeDegrees);
+                    slopeSum += sample.slopeDegrees;
+                    sampleCount++;
+                }
             }
         }
 
@@ -375,12 +381,7 @@ public class RuntimeMapCycleManager : MonoBehaviour
             return false;
         }
 
-        Vector2 rotatedBounds = GetRotatedBounds(footprint, yaw);
-        Rect rect = new Rect(
-            footprintCenter.x - rotatedBounds.x * 0.5f,
-            footprintCenter.y - rotatedBounds.y * 0.5f,
-            rotatedBounds.x,
-            rotatedBounds.y);
+        Rect rect = GetUnionRect(plannedParts);
         Rect paddedRect = RuntimeTerrainReservationMask.Pad(rect, fieldReservationPadding);
 
         if (plannedMask.Overlaps(paddedRect))
@@ -399,12 +400,64 @@ public class RuntimeMapCycleManager : MonoBehaviour
             Quaternion.Euler(0f, yaw, 0f),
             footprint,
             footprintCenter,
+            plannedParts,
             occupiedRect,
             targetHeight,
             yaw,
             scale);
 
         return true;
+    }
+
+    private static PlannedFieldFootprintPart[] BuildPlannedFootprintParts(
+        RuntimeFarmFieldFootprintData footprintData,
+        Vector2 footprintCenter,
+        float yaw,
+        float scale)
+    {
+        RuntimeFieldFootprintPartData[] sourceParts = footprintData.parts;
+        if (sourceParts == null || sourceParts.Length == 0)
+        {
+            sourceParts = new[]
+            {
+                new RuntimeFieldFootprintPartData(footprintData.size, footprintData.centerOffset, 0f, footprintData.groundLocalY)
+            };
+        }
+
+        PlannedFieldFootprintPart[] plannedParts = new PlannedFieldFootprintPart[sourceParts.Length];
+        for (int i = 0; i < sourceParts.Length; i++)
+        {
+            RuntimeFieldFootprintPartData part = sourceParts[i];
+            Vector2 localFromAggregateCenter = (part.centerOffset - footprintData.centerOffset) * scale;
+            Vector2 worldCenter = footprintCenter + RuntimeTerrainUtility.Rotate(localFromAggregateCenter, yaw);
+            plannedParts[i] = new PlannedFieldFootprintPart(
+                worldCenter,
+                part.size * scale,
+                yaw + part.yawDegrees);
+        }
+
+        return plannedParts;
+    }
+
+    private static Rect GetUnionRect(PlannedFieldFootprintPart[] parts)
+    {
+        if (parts == null || parts.Length == 0)
+        {
+            return new Rect();
+        }
+
+        Rect union = RuntimeTerrainUtility.GetRotatedWorldRect(parts[0].center, parts[0].size, parts[0].yawDegrees);
+        for (int i = 1; i < parts.Length; i++)
+        {
+            Rect rect = RuntimeTerrainUtility.GetRotatedWorldRect(parts[i].center, parts[i].size, parts[i].yawDegrees);
+            float xMin = Mathf.Min(union.xMin, rect.xMin);
+            float yMin = Mathf.Min(union.yMin, rect.yMin);
+            float xMax = Mathf.Max(union.xMax, rect.xMax);
+            float yMax = Mathf.Max(union.yMax, rect.yMax);
+            union = Rect.MinMaxRect(xMin, yMin, xMax, yMax);
+        }
+
+        return union;
     }
 
     private IEnumerator ApplyFieldFlatteningRoutine(Terrain[] terrains, IReadOnlyList<PlannedFarmField> fields)
@@ -1066,7 +1119,7 @@ public class RuntimeMapCycleManager : MonoBehaviour
         return new Vector2(size.x * cos + size.y * sin, size.x * sin + size.y * cos);
     }
 
-    private static float GetFarmFieldYaw(RuntimeFarmFieldPreset preset, Vector2 footprintSize, float scale, System.Random random)
+    private static float GetFarmFieldYaw(RuntimeFieldPreset preset, Vector2 footprintSize, float scale, System.Random random)
     {
         if (preset == null)
         {
@@ -1111,10 +1164,25 @@ public class RuntimeMapCycleManager : MonoBehaviour
 
     private static float CalculateFieldFlattenWeight(PlannedFarmField field, Vector2 worldXZ)
     {
-        Vector2 local = RuntimeTerrainUtility.Rotate(worldXZ - field.footprintCenter, -field.yawDegrees);
         float blendWidth = field.preset != null ? field.preset.flattenBlendWidth : 0f;
-        Vector2 half = field.footprintSize * 0.5f;
-        return CalculateRectFlattenWeight(local, half, blendWidth);
+
+        if (field.footprintParts == null || field.footprintParts.Length == 0)
+        {
+            Vector2 local = RuntimeTerrainUtility.Rotate(worldXZ - field.footprintCenter, -field.yawDegrees);
+            Vector2 half = field.footprintSize * 0.5f;
+            return CalculateRectFlattenWeight(local, half, blendWidth);
+        }
+
+        float weight = 0f;
+        for (int i = 0; i < field.footprintParts.Length; i++)
+        {
+            PlannedFieldFootprintPart part = field.footprintParts[i];
+            Vector2 local = RuntimeTerrainUtility.Rotate(worldXZ - part.center, -part.yawDegrees);
+            Vector2 half = part.size * 0.5f;
+            weight = Mathf.Max(weight, CalculateRectFlattenWeight(local, half, blendWidth));
+        }
+
+        return weight;
     }
 
     private static float CalculateRectFlattenWeight(Vector2 local, Vector2 half, float blendWidth)
