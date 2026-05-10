@@ -428,6 +428,7 @@ GameObject:
   - component: {fileID: 6522390680121945302}
   - component: {fileID: 4393483384900828780}
   - component: {fileID: 1736638848086065693}
+  - component: {fileID: 8015392002432158645}
   m_Layer: 0
   m_Name: Rural_WoodenBuilding_2
   m_TagString: Untagged
@@ -21554,6 +21555,28 @@ MonoBehaviour:
   m_SelectedFaces: 
   m_SelectedEdges: []
   m_SelectedVertices: 
+--- !u!64 &8015392002432158645
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3649653068266630366}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 0}
 --- !u!1 &4365110329370196055
 GameObject:
   m_ObjectHideFlags: 0
