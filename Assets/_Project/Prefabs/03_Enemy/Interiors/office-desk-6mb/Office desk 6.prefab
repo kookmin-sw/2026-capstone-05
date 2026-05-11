@@ -12,7 +12,8 @@ GameObject:
   - component: {fileID: 3428003025247087439}
   - component: {fileID: 7613135980204175672}
   - component: {fileID: 6173232653361678404}
-  m_Layer: 0
+  - component: {fileID: 7814389147700319383}
+  m_Layer: 6
   m_Name: Office desk 6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -113,3 +114,16 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 2493130264054845418, guid: 7d819f5d3e9e13343b2efebcd4075b6e, type: 3}
+--- !u!114 &7814389147700319383
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2977099254899166367}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 1

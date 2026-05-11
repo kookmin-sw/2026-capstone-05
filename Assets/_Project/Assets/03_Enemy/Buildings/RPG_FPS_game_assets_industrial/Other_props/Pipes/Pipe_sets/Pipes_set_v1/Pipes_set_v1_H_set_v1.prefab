@@ -12,7 +12,8 @@ GameObject:
   - component: {fileID: 33000011784741550}
   - component: {fileID: 23000012782189962}
   - component: {fileID: 64000010741144892}
-  m_Layer: 0
+  - component: {fileID: 4953353703990649802}
+  m_Layer: 6
   m_Name: Pipes_set_v1_H_set_v1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -113,3 +114,16 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300040, guid: 993e7ae5872aa394c80c399e077992bf, type: 3}
+--- !u!114 &4953353703990649802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000013757953436}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 3

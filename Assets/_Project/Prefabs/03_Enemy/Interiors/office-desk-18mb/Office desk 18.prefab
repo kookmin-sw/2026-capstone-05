@@ -12,7 +12,8 @@ GameObject:
   - component: {fileID: 6401827709015890438}
   - component: {fileID: 4917831803335779967}
   - component: {fileID: 5098393415063971688}
-  m_Layer: 0
+  - component: {fileID: 5727962657738585455}
+  m_Layer: 6
   m_Name: Disc_4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -113,6 +114,19 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -6580237362124339320, guid: 5d9035d6d4b61b046aaccd2cb1b68684, type: 3}
+--- !u!114 &5727962657738585455
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1106827753651690116}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 1
 --- !u!1 &1513561565386231192
 GameObject:
   m_ObjectHideFlags: 0
@@ -122,7 +136,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6243338418659764051}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Office desk 18
   m_TagString: Untagged
   m_Icon: {fileID: 0}

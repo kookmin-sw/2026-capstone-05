@@ -12,7 +12,8 @@ GameObject:
   - component: {fileID: 33000013731957406}
   - component: {fileID: 23000013943122684}
   - component: {fileID: 64000010251917238}
-  m_Layer: 0
+  - component: {fileID: 8945719480200712924}
+  m_Layer: 6
   m_Name: Oil_tank_v2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -113,3 +114,16 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300002, guid: 7e189a73bb9572344b1bf8d0bddfdaeb, type: 3}
+--- !u!114 &8945719480200712924
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000010192389154}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 3
