@@ -169,8 +169,6 @@ public class PlayerNoiseEmitter : MonoBehaviour
             }
         }
 
-        Debug.Log("Detected surface: " + currentSurface);
-
         return currentSurface;
     }
 
