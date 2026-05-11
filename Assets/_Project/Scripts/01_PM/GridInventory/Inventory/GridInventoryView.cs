@@ -99,18 +99,12 @@ namespace Systems.GridInventory {
             
             var btnSave = inventory.Q<Button>(name: "btn-save");
             if (btnSave != null) {
-                // Temporary disabled: inventory persistence now runs in a round-end host batch.
-                // btnSave.clicked += () => OnSaveClicked?.Invoke();
-                btnSave.SetEnabled(false);
-                btnSave.style.display = DisplayStyle.None;
+                btnSave.clicked += () => OnSaveClicked?.Invoke();
             }
 
             var btnLoad = inventory.Q<Button>(name: "btn-load");
             if (btnLoad != null) {
-                // Temporary disabled: saved inventory is restored automatically when a loaded host slot starts.
-                // btnLoad.clicked += () => OnLoadClicked?.Invoke();
-                btnLoad.SetEnabled(false);
-                btnLoad.style.display = DisplayStyle.None;
+                btnLoad.clicked += () => OnLoadClicked?.Invoke();
             }
 
             // 인벤토리 창 게임 시작 시 안 보이도록 숨기기

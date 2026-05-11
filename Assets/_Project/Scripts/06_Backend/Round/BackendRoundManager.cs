@@ -1,6 +1,4 @@
 using Fusion;
-using Systems.GridInventory;
-using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(NetworkObject))]
@@ -17,7 +15,6 @@ public class BackendRoundManager : NetworkBehaviour
 
     private string _hostRoundCountPrefKey = RoomLauncher.BuildHostRoundCountPrefKey(1);
     private int _activeHostSlot = 1;
-    private Coroutine _inventorySaveCoroutine;
 
     public float RoundTimeRemainingSeconds
     {
@@ -112,14 +109,6 @@ public class BackendRoundManager : NetworkBehaviour
         IsRoundRunning = false;
         RoundTimer = TickTimer.None;
 
-        GridInventorySaveSystem.BeginHostRoundSave(_activeHostSlot);
-        RpcCollectRoundEndInventorySnapshots();
-        if (_inventorySaveCoroutine != null)
-        {
-            StopCoroutine(_inventorySaveCoroutine);
-        }
-        _inventorySaveCoroutine = StartCoroutine(CommitRoundInventorySaveAfterDelay());
-
         PlayerPrefs.SetInt(_hostRoundCountPrefKey, CurrentRoundNumber);
         PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(_activeHostSlot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         PlayerPrefs.Save();
@@ -127,19 +116,6 @@ public class BackendRoundManager : NetworkBehaviour
         RespawnAllPlayersAtSpawner();
 
         Debug.Log($"[BackendRoundManager] 라운드 종료. slot={_activeHostSlot}, round={CurrentRoundNumber}, reason={reason}");
-    }
-
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RpcCollectRoundEndInventorySnapshots()
-    {
-        BackendPlayerNetworkSync.SubmitLocalInventorySnapshotForRoundEnd();
-    }
-
-    private IEnumerator CommitRoundInventorySaveAfterDelay()
-    {
-        yield return new WaitForSeconds(3f);
-        GridInventorySaveSystem.CommitHostRoundSave();
-        _inventorySaveCoroutine = null;
     }
 
     private void RespawnAllPlayersAtSpawner()

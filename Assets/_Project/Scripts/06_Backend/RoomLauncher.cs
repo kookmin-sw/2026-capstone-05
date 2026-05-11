@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Fusion;
 using Fusion.Photon.Realtime;
 using Fusion.Sockets;
-using Systems.GridInventory;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -588,7 +587,6 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         PlayerPrefs.SetInt(HostSelectedSlotPrefKey, slot);
         PlayerPrefs.SetString($"HostSlot{slot}_RoomCode", normalizedCode);
         BackendRoundManager.ResetHostSlotRoundToOne(slot);
-        GridInventorySaveSystem.ClearHostSlotSave(slot);
         PlayerPrefs.SetString(BuildHostSaveDatePrefKey(slot), DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         PlayerPrefs.Save();
         RefreshAllSaveSlotMenus();
