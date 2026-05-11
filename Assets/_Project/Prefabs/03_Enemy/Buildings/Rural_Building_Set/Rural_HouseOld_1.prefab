@@ -236,6 +236,7 @@ GameObject:
   - component: {fileID: 6899512008214844896}
   - component: {fileID: 1177535205998290985}
   - component: {fileID: 5798437986502877274}
+  - component: {fileID: 6627748410553928146}
   m_Layer: 0
   m_Name: Rural_HouseOld_1
   m_TagString: Untagged
@@ -28510,6 +28511,28 @@ MonoBehaviour:
   m_SelectedFaces: 
   m_SelectedEdges: []
   m_SelectedVertices: 
+--- !u!64 &6627748410553928146
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2115830005494843116}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 0}
 --- !u!1 &4525624647369052787
 GameObject:
   m_ObjectHideFlags: 0
