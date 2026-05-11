@@ -25,7 +25,8 @@ namespace Systems.GridInventory {
             else Destroy(gameObject);
 
             controller = new GridInventoryController.Builder(view)
-                .WithStartingItems(startingItems)
+                // Disabled for host-slot inventory persistence. Starting items were local-only test data.
+                // .WithStartingItems(startingItems)
                 .WithDimensions(gridWidth, gridHeight)
                 .Build();
         }

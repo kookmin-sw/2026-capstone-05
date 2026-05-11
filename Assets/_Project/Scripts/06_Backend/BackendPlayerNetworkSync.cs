@@ -1,4 +1,7 @@
 using Fusion;
+using Systems.GridInventory;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(NetworkObject))]
@@ -18,6 +21,8 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
     private bool _spawnLockInitialized;
     private string _lastAppliedEquippedItemId = string.Empty;
     private int _lastAppliedUseAnimationCount;
+    private readonly List<InventoryItemSaveData> _incomingInventorySnapshot = new();
+    private readonly List<InventoryItemSaveData> _incomingSavedInventoryLoad = new();
 
     [Networked] private Vector3 NetworkPosition { get; set; }
     [Networked] private Quaternion NetworkRotation { get; set; }
@@ -34,6 +39,21 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
     private static readonly System.Collections.Generic.HashSet<int> ClaimedPickupKeys = new();
 
     public bool IsNetworkReady => Runner != null && Object != null;
+
+    public static void SubmitLocalInventorySnapshotForRoundEnd()
+    {
+        BackendPlayerNetworkSync[] syncs = FindObjectsByType<BackendPlayerNetworkSync>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        foreach (BackendPlayerNetworkSync sync in syncs)
+        {
+            if (sync != null && sync.Object != null && sync.Object.HasInputAuthority)
+            {
+                sync.SubmitLocalInventorySnapshotToHost();
+                return;
+            }
+        }
+
+        Debug.LogWarning("[Inventory] Local network player was not found. Round-end inventory snapshot was not submitted.");
+    }
 
     public override void Spawned()
     {
@@ -68,6 +88,11 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
             NetworkIsSprinting = false;
             NetworkIsCrouching = false;
             ApplyEquippedItemNetworkState(_playerEquipment != null ? _playerEquipment.CurrentItemInstance : null);
+        }
+
+        if (Object != null && Object.HasInputAuthority)
+        {
+            StartCoroutine(RequestSavedInventoryWhenReady());
         }
     }
 
@@ -211,6 +236,188 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
             return;
 
         _inputHandler.SetNetworkInputOverride(!Object.HasInputAuthority);
+    }
+
+    private IEnumerator RequestSavedInventoryWhenReady()
+    {
+        float timeout = 5f;
+        float elapsed = 0f;
+
+        while (elapsed < timeout)
+        {
+            if (GridInventory.Instance?.Controller?.Model != null)
+                break;
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        string userId = GetLocalUserId();
+        if (HasStateAuthority)
+        {
+            ApplySavedInventoryForUser(userId);
+        }
+        else
+        {
+            RpcRequestSavedInventory(userId);
+        }
+    }
+
+    private void SubmitLocalInventorySnapshotToHost()
+    {
+        string userId = GetLocalUserId();
+        List<InventoryItemSaveData> items = GridInventorySaveSystem.CaptureLocalInventoryItems();
+
+        if (HasStateAuthority)
+        {
+            GridInventorySaveSystem.UpsertHostPlayerSnapshot(userId, items, GetPlayerRefLabel(), true);
+            return;
+        }
+
+        RpcBeginInventorySnapshot(userId);
+        foreach (InventoryItemSaveData item in items)
+        {
+            RpcSubmitInventorySnapshotItem(
+                userId,
+                item.item_id,
+                item.quantity,
+                item.slot_x,
+                item.slot_y,
+                item.rotated,
+                item.is_quickslot ? 1 : 0,
+                item.quickslot_index);
+        }
+        RpcEndInventorySnapshot(userId);
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcBeginInventorySnapshot(NetworkString<_64> userId)
+    {
+        _incomingInventorySnapshot.Clear();
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcSubmitInventorySnapshotItem(
+        NetworkString<_64> userId,
+        NetworkString<_64> itemId,
+        int quantity,
+        int slotX,
+        int slotY,
+        int rotated,
+        int isQuickslot,
+        int quickslotIndex)
+    {
+        string timestamp = System.DateTime.UtcNow.ToString("o");
+        _incomingInventorySnapshot.Add(new InventoryItemSaveData
+        {
+            id = System.DateTime.UtcNow.Ticks + _incomingInventorySnapshot.Count,
+            user_id = userId.ToString(),
+            item_id = itemId.ToString(),
+            quantity = quantity,
+            acquired_at = timestamp,
+            updated_at = timestamp,
+            slot_x = slotX,
+            slot_y = slotY,
+            rotated = rotated,
+            is_quickslot = isQuickslot != 0,
+            quickslot_index = quickslotIndex
+        });
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcEndInventorySnapshot(NetworkString<_64> userId)
+    {
+        GridInventorySaveSystem.UpsertHostPlayerSnapshot(
+            userId.ToString(),
+            new List<InventoryItemSaveData>(_incomingInventorySnapshot),
+            GetPlayerRefLabel(),
+            IsHostPlayerObject());
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcRequestSavedInventory(NetworkString<_64> userId)
+    {
+        ApplySavedInventoryForUser(userId.ToString());
+    }
+
+    private void ApplySavedInventoryForUser(string userId)
+    {
+        int slot = Mathf.Clamp(PlayerPrefs.GetInt("HostSaveSlot", 1), 1, 3);
+        if (!GridInventorySaveSystem.TryGetSavedItemsForUser(slot, userId, out List<InventoryItemSaveData> items))
+        {
+            return;
+        }
+
+        if (Object != null && Object.HasInputAuthority)
+        {
+            GridInventorySaveSystem.ApplyItemsToLocalInventory(items);
+            return;
+        }
+
+        RpcBeginSavedInventoryLoad();
+        foreach (InventoryItemSaveData item in items)
+        {
+            RpcApplySavedInventoryItem(
+                item.item_id,
+                item.quantity,
+                item.slot_x,
+                item.slot_y,
+                item.rotated,
+                item.is_quickslot ? 1 : 0,
+                item.quickslot_index);
+        }
+        RpcEndSavedInventoryLoad();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.InputAuthority)]
+    private void RpcBeginSavedInventoryLoad()
+    {
+        _incomingSavedInventoryLoad.Clear();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.InputAuthority)]
+    private void RpcApplySavedInventoryItem(
+        NetworkString<_64> itemId,
+        int quantity,
+        int slotX,
+        int slotY,
+        int rotated,
+        int isQuickslot,
+        int quickslotIndex)
+    {
+        _incomingSavedInventoryLoad.Add(new InventoryItemSaveData
+        {
+            item_id = itemId.ToString(),
+            quantity = quantity,
+            slot_x = slotX,
+            slot_y = slotY,
+            rotated = rotated,
+            is_quickslot = isQuickslot != 0,
+            quickslot_index = quickslotIndex
+        });
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.InputAuthority)]
+    private void RpcEndSavedInventoryLoad()
+    {
+        GridInventorySaveSystem.ApplyItemsToLocalInventory(new List<InventoryItemSaveData>(_incomingSavedInventoryLoad));
+    }
+
+    private static string GetLocalUserId()
+    {
+        return AuthSession.IsLoggedIn && !string.IsNullOrWhiteSpace(AuthSession.CurrentUserId)
+            ? AuthSession.CurrentUserId
+            : "anonymous-user";
+    }
+
+    private string GetPlayerRefLabel()
+    {
+        return Object != null ? Object.InputAuthority.ToString() : string.Empty;
+    }
+
+    private bool IsHostPlayerObject()
+    {
+        return Runner != null && Object != null && Object.InputAuthority == Runner.LocalPlayer;
     }
 
     public void RequestPickup(ItemPickup pickup)
