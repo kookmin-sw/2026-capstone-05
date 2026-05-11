@@ -86,12 +86,16 @@ public struct PlannedFieldFootprintPart
     public Vector2 center;
     public Vector2 size;
     public float yawDegrees;
+    public float groundLocalY;
+    public float targetWorldHeight;
 
-    public PlannedFieldFootprintPart(Vector2 center, Vector2 size, float yawDegrees)
+    public PlannedFieldFootprintPart(Vector2 center, Vector2 size, float yawDegrees, float groundLocalY)
     {
         this.center = center;
         this.size = size;
         this.yawDegrees = yawDegrees;
+        this.groundLocalY = groundLocalY;
+        this.targetWorldHeight = 0f;
     }
 }
 

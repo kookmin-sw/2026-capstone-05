@@ -356,6 +356,7 @@ public class RuntimeMapManager : MonoBehaviour
 
         float averageHeight = heightSum / sampleCount;
         float targetHeight = CalculateMedianHeight(heightSamples, sampleCount);
+        AssignPartTargetHeights(plannedParts, targetHeight, footprintData.groundLocalY, safeScale);
         float averageSlope = slopeSum / sampleCount;
         float heightDelta = maxHeight - minHeight;
         if (averageHeight < preset.minWorldHeight || averageHeight > preset.maxWorldHeight)
@@ -433,10 +434,31 @@ public class RuntimeMapManager : MonoBehaviour
             plannedParts[i] = new PlannedFieldFootprintPart(
                 worldCenter,
                 part.size * scale,
-                yaw + part.yawDegrees);
+                yaw + part.yawDegrees,
+                part.groundLocalY * scale);
         }
 
         return plannedParts;
+    }
+
+    private static void AssignPartTargetHeights(
+        PlannedFieldFootprintPart[] parts,
+        float fieldTargetHeight,
+        float fieldGroundLocalY,
+        float scale)
+    {
+        if (parts == null)
+        {
+            return;
+        }
+
+        float scaledFieldGroundLocalY = fieldGroundLocalY * scale;
+        for (int i = 0; i < parts.Length; i++)
+        {
+            PlannedFieldFootprintPart part = parts[i];
+            part.targetWorldHeight = fieldTargetHeight + part.groundLocalY - scaledFieldGroundLocalY;
+            parts[i] = part;
+        }
     }
 
     private static Rect GetUnionRect(PlannedFieldFootprintPart[] parts)
@@ -512,7 +534,6 @@ public class RuntimeMapManager : MonoBehaviour
                 }
 
                 float[,] heights = data.GetHeights(xMin, zMin, width, height);
-                float targetHeight = Mathf.InverseLerp(terrainPosition.y, terrainPosition.y + size.y, field.targetWorldHeight);
                 bool patchChanged = false;
 
                 for (int z = 0; z < height; z++)
@@ -521,13 +542,14 @@ public class RuntimeMapManager : MonoBehaviour
                     for (int x = 0; x < width; x++)
                     {
                         float worldX = terrainPosition.x + (xMin + x) / (float)(resolution - 1) * size.x;
-                        float weight = CalculateFieldFlattenWeight(field, new Vector2(worldX, worldZ));
+                        float weight = CalculateFieldFlattenWeight(field, new Vector2(worldX, worldZ), out float targetWorldHeight);
 
                         if (weight <= 0f)
                         {
                             continue;
                         }
 
+                        float targetHeight = Mathf.InverseLerp(terrainPosition.y, terrainPosition.y + size.y, targetWorldHeight);
                         heights[z, x] = Mathf.Lerp(heights[z, x], targetHeight, weight);
                         patchChanged = true;
                     }
@@ -1162,9 +1184,10 @@ public class RuntimeMapManager : MonoBehaviour
         return (samples[middle - 1] + samples[middle]) * 0.5f;
     }
 
-    private static float CalculateFieldFlattenWeight(PlannedFarmField field, Vector2 worldXZ)
+    private static float CalculateFieldFlattenWeight(PlannedFarmField field, Vector2 worldXZ, out float targetWorldHeight)
     {
         float blendWidth = field.preset != null ? field.preset.flattenBlendWidth : 0f;
+        targetWorldHeight = field.targetWorldHeight;
 
         if (field.footprintParts == null || field.footprintParts.Length == 0)
         {
@@ -1179,7 +1202,14 @@ public class RuntimeMapManager : MonoBehaviour
             PlannedFieldFootprintPart part = field.footprintParts[i];
             Vector2 local = RuntimeTerrainUtility.Rotate(worldXZ - part.center, -part.yawDegrees);
             Vector2 half = part.size * 0.5f;
-            weight = Mathf.Max(weight, CalculateRectFlattenWeight(local, half, blendWidth));
+            float partWeight = CalculateRectFlattenWeight(local, half, blendWidth);
+            if (partWeight <= weight)
+            {
+                continue;
+            }
+
+            weight = partWeight;
+            targetWorldHeight = part.targetWorldHeight;
         }
 
         return weight;
