@@ -3,10 +3,72 @@ using System.Collections.Generic;
 using MapMagic.Core;
 using UnityEngine;
 
+public enum RuntimeFieldCategory
+{
+    House,
+    Factory,
+    Storage,
+    Ruins,
+    Landmark,
+    Special
+}
+
+public enum RuntimeNaturalScatterKind
+{
+    LiveTree,
+    DeadTree,
+    Rock
+}
+
+public enum RuntimeFieldPlacementDebugStatus
+{
+    Candidate,
+    Placed,
+    RejectedTerrain,
+    RejectedPreset,
+    RejectedReservation,
+    RejectedNaturalFit,
+    RejectedAccess
+}
+
+public enum RuntimeDirectorTuningPreset
+{
+    Forgiving,
+    Balanced,
+    Scenic,
+    Dense
+}
+
+public enum RuntimeFieldDistributionStyle
+{
+    Mixed,
+    Settlements,
+    Industrial,
+    Ruined
+}
+
+[Serializable]
+public class RuntimeNaturalScatterPreset
+{
+    public GameObject prefab;
+    public GameObject[] prefabVariants;
+    public RuntimeNaturalScatterKind kind = RuntimeNaturalScatterKind.LiveTree;
+    [Min(0f)] public float weight = 1f;
+    public bool allowTerrainTreeInstance = true;
+    public bool alignToTerrainNormal;
+    public bool useGlobalScaleRange = true;
+    public Vector2 scaleRange = Vector2.one;
+    [Min(0f)] public float randomTiltDegrees;
+    [Range(0f, 1f)] public float clusterChance;
+    [Min(1)] public int maxClusterCount = 1;
+    [Min(0f)] public float clusterRadius = 6f;
+}
+
 [Serializable]
 public class PlannedFarmField
 {
     public RuntimeFieldPreset preset;
+    public RuntimeFieldCategory category;
     public Vector3 position;
     public Quaternion rotation;
     public Vector2 footprintSize;
@@ -16,9 +78,14 @@ public class PlannedFarmField
     public float targetWorldHeight;
     public float yawDegrees;
     public float scale;
+    public int difficultyTier;
+    public float distanceFromStart;
+    public float normalizedDistanceFromStart;
+    public float flattenCost;
 
     public PlannedFarmField(
         RuntimeFieldPreset preset,
+        RuntimeFieldCategory category,
         Vector3 position,
         Quaternion rotation,
         Vector2 footprintSize,
@@ -27,9 +94,14 @@ public class PlannedFarmField
         Rect worldRect,
         float targetWorldHeight,
         float yawDegrees,
-        float scale)
+        float scale,
+        int difficultyTier,
+        float distanceFromStart,
+        float normalizedDistanceFromStart,
+        float flattenCost)
     {
         this.preset = preset;
+        this.category = category;
         this.position = position;
         this.rotation = rotation;
         this.footprintSize = footprintSize;
@@ -39,6 +111,54 @@ public class PlannedFarmField
         this.targetWorldHeight = targetWorldHeight;
         this.yawDegrees = yawDegrees;
         this.scale = scale;
+        this.difficultyTier = difficultyTier;
+        this.distanceFromStart = distanceFromStart;
+        this.normalizedDistanceFromStart = normalizedDistanceFromStart;
+        this.flattenCost = flattenCost;
+    }
+}
+
+[Serializable]
+public class RuntimeSpawnSafeZone
+{
+    public Vector3 center;
+    public float flatRadius;
+    public float blendWidth;
+    public float targetWorldHeight;
+
+    public RuntimeSpawnSafeZone(Vector3 center, float flatRadius, float blendWidth, float targetWorldHeight)
+    {
+        this.center = center;
+        this.flatRadius = flatRadius;
+        this.blendWidth = blendWidth;
+        this.targetWorldHeight = targetWorldHeight;
+    }
+
+    public Rect GetReservationRect(float padding)
+    {
+        float radius = flatRadius + blendWidth + padding;
+        return new Rect(center.x - radius, center.z - radius, radius * 2f, radius * 2f);
+    }
+}
+
+[Serializable]
+public struct RuntimeFieldPlacementDebugPoint
+{
+    public Vector2 position;
+    public RuntimeFieldCategory category;
+    public RuntimeFieldPlacementDebugStatus status;
+    public float score;
+
+    public RuntimeFieldPlacementDebugPoint(
+        Vector2 position,
+        RuntimeFieldCategory category,
+        RuntimeFieldPlacementDebugStatus status,
+        float score)
+    {
+        this.position = position;
+        this.category = category;
+        this.status = status;
+        this.score = score;
     }
 }
 

@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 346b0ef321d1b5a428534d1f2be202b2, type: 3}
+  m_Name: Factory_Zone_9
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeFarmFieldPreset
+  prefab: {fileID: 8851976301744571544, guid: 8e2c632c32236c64f9c8c038799d44d4, type: 3}
+  category: 1
+  difficultyTier: 3
+  directorWeight: 1
+  preferredDistanceRange01: {x: 0.4, y: 1}
+  maxFlattenCostOverride: 0
+  flattenBlendWidth: 16
+  randomYaw: 1
+  fixedYawDegrees: 0
+  randomScaleRange: {x: 1, y: 1}
+  lockYawWhenLarge: 0
+  largeFootprintYawLockThreshold: 45
+  yawRange: {x: 0, y: 360}
+  footprintPadding: 2
+  minWorldHeight: 0
+  maxWorldHeight: 180
+  useSlopeFilter: 0
+  maxSlopeDegrees: 12
+  useHeightDeltaFilter: 0
+  maxHeightDelta: 2
+  sampleGrid: 5
