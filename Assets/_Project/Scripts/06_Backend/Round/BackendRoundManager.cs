@@ -191,12 +191,27 @@ public class BackendRoundManager : NetworkBehaviour
     {
         for (int slot = 1; slot <= 3; slot++)
         {
-            string key = RoomLauncher.BuildHostRoundCountPrefKey(slot);
-            PlayerPrefs.SetInt(key, 1);
-            PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(slot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+            ResetHostSlotRoundToOne(slot, false);
         }
 
         PlayerPrefs.Save();
+    }
+
+    public static void ResetHostSlotRoundToOne(int slot)
+    {
+        ResetHostSlotRoundToOne(slot, true);
+    }
+
+    private static void ResetHostSlotRoundToOne(int slot, bool save)
+    {
+        string key = RoomLauncher.BuildHostRoundCountPrefKey(slot);
+        PlayerPrefs.SetInt(key, 1);
+        PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(slot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+
+        if (save)
+        {
+            PlayerPrefs.Save();
+        }
     }
 
 }
