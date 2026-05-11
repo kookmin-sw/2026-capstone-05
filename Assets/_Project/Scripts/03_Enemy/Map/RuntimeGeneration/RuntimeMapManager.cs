@@ -99,12 +99,11 @@ public class RuntimeMapManager : MonoBehaviour
         GameObjects
     }
 
-    [Header("Tree Scatter")]
-    [SerializeField] private bool spawnTrees = true;
-    [SerializeField] private TreeSpawnMode treeSpawnMode = TreeSpawnMode.TerrainTreeInstances;
-    [SerializeField] private GameObject[] treePrefabs;
+    [Header("Natural Scatter")]
+    [SerializeField, InspectorName("Spawn Natural Scatter")] private bool spawnTrees = true;
+    [SerializeField, InspectorName("Spawn Mode")] private TreeSpawnMode treeSpawnMode = TreeSpawnMode.TerrainTreeInstances;
     [SerializeField] private RuntimeNaturalScatterPreset[] naturalScatterPresets;
-    [SerializeField, Min(0)] private int targetTreeCount = 300;
+    [SerializeField, Min(0), InspectorName("Target Natural Scatter Count")] private int targetTreeCount = 300;
     [SerializeField, Range(0f, 1f)] private float forestPatchiness = 0.65f;
     [SerializeField, Range(0f, 1f)] private float fieldEdgeClearance = 0.65f;
 
@@ -122,6 +121,10 @@ public class RuntimeMapManager : MonoBehaviour
     [HideInInspector, SerializeField, Min(0.0001f)] private float naturalScatterNoiseScale = 0.0125f;
     [HideInInspector, SerializeField, Range(0f, 1f)] private float naturalScatterNoiseThreshold = 0.3f;
     [HideInInspector, SerializeField, Range(0f, 1f)] private float naturalScatterNoiseStrength = 0.75f;
+    [HideInInspector, SerializeField, Min(0.0001f)] private float naturalScatterDetailNoiseScale = 0.045f;
+    [HideInInspector, SerializeField, Min(0.0001f)] private float naturalScatterCorridorNoiseScale = 0.0035f;
+    [HideInInspector, SerializeField, Range(0f, 1f)] private float naturalScatterCorridorStrength = 0.35f;
+    [HideInInspector, SerializeField, Range(0f, 1f)] private float naturalScatterMinimumDensity = 0.08f;
     [HideInInspector, SerializeField, Range(0f, 1f)] private float rockClusterChance = 0.35f;
     [HideInInspector, SerializeField, Min(1)] private int rockClusterMaxCount = 4;
     [HideInInspector, SerializeField, Min(0f)] private float rockClusterRadius = 8f;
@@ -161,9 +164,12 @@ public class RuntimeMapManager : MonoBehaviour
 
     private struct NaturalScatterChoice
     {
-        public GameObject prefab;
+        public GameObject[] prefabs;
         public RuntimeNaturalScatterKind kind;
+        public bool spawnAsTerrainTreeInstance;
+        public bool alignToTerrainNormal;
         public Vector2 scaleRange;
+        public float randomTiltDegrees;
         public float clusterChance;
         public int maxClusterCount;
         public float clusterRadius;
@@ -445,6 +451,10 @@ public class RuntimeMapManager : MonoBehaviour
         naturalScatterNoiseScale = Mathf.Lerp(0.018f, 0.006f, forestPatchiness);
         naturalScatterNoiseThreshold = Mathf.Lerp(0.18f, 0.45f, forestPatchiness);
         naturalScatterNoiseStrength = Mathf.Lerp(0.35f, 0.9f, forestPatchiness);
+        naturalScatterDetailNoiseScale = Mathf.Lerp(0.052f, 0.026f, forestPatchiness);
+        naturalScatterCorridorNoiseScale = Mathf.Lerp(0.0048f, 0.0024f, forestPatchiness);
+        naturalScatterCorridorStrength = Mathf.Lerp(0.12f, 0.48f, forestPatchiness);
+        naturalScatterMinimumDensity = Mathf.Lerp(0.18f, 0.04f, forestPatchiness);
         rockClusterChance = Mathf.Lerp(0.2f, 0.55f, forestPatchiness);
         rockClusterMaxCount = Mathf.RoundToInt(Mathf.Lerp(2f, 5f, forestPatchiness));
         rockClusterRadius = Mathf.Lerp(5f, 12f, forestPatchiness);
@@ -2143,7 +2153,7 @@ public class RuntimeMapManager : MonoBehaviour
             yield break;
         }
 
-        Transform parent = treeSpawnMode == TreeSpawnMode.GameObjects ? CreateRuntimeGroup("Natural Scatter") : null;
+        Transform parent = RequiresNaturalScatterObjectParent() ? CreateRuntimeGroup("Natural Scatter") : null;
         System.Random random = new System.Random(seed ^ 0x7331AA55);
         RuntimeSpatialHash2D spatialHash = minTreeDistance > 0f
             ? new RuntimeSpatialHash2D(minTreeDistance)
@@ -2179,12 +2189,13 @@ public class RuntimeMapManager : MonoBehaviour
                 RuntimeTerrainUtility.NextFloat(random, terrainRect.xMin, terrainRect.xMax),
                 RuntimeTerrainUtility.NextFloat(random, terrainRect.yMin, terrainRect.yMax));
 
-            if (!PassesNaturalScatterNoise(worldXZ, seed, random))
+            if (!TryGetNaturalScatterDensity(worldXZ, seed, random, out float scatterDensity))
             {
                 continue;
             }
 
             int spawnedBefore = spawnedCount;
+            float densityAdjustedMinDistance = GetDensityAdjustedNaturalScatterDistance(scatterDensity);
             if (!TryPlaceNaturalScatter(
                     terrains,
                     mask,
@@ -2193,7 +2204,7 @@ public class RuntimeMapManager : MonoBehaviour
                     parent,
                     choice,
                     worldXZ,
-                    minTreeDistance,
+                    densityAdjustedMinDistance,
                     random,
                     ref spawnedCount))
             {
@@ -2201,7 +2212,7 @@ public class RuntimeMapManager : MonoBehaviour
             }
 
             int clusterCount = GetNaturalScatterClusterCount(choice, random);
-            float clusterMinDistance = Mathf.Min(minTreeDistance, Mathf.Max(1f, choice.clusterRadius * 0.35f));
+            float clusterMinDistance = Mathf.Min(densityAdjustedMinDistance, Mathf.Max(1f, choice.clusterRadius * 0.35f));
             for (int clusterIndex = 1; clusterIndex < clusterCount && spawnedCount < targetTreeCount; clusterIndex++)
             {
                 float angle = RuntimeTerrainUtility.NextFloat(random, 0f, Mathf.PI * 2f);
@@ -2253,7 +2264,8 @@ public class RuntimeMapManager : MonoBehaviour
         System.Random random,
         ref int spawnedCount)
     {
-        if (choice.prefab == null)
+        GameObject prefab = PickNaturalScatterPrefab(choice, random);
+        if (prefab == null)
         {
             return false;
         }
@@ -2290,20 +2302,21 @@ public class RuntimeMapManager : MonoBehaviour
         Vector2 scaleRange = ValidateScaleRange(choice.scaleRange);
         float scale = RuntimeTerrainUtility.NextFloat(random, scaleRange.x, scaleRange.y);
 
-        if (treeSpawnMode == TreeSpawnMode.TerrainTreeInstances)
+        if (choice.spawnAsTerrainTreeInstance)
         {
-            AddPlannedTerrainTree(terrainTreeAdds, sample.terrain, choice.prefab, sample.position, yaw.eulerAngles.y, scale);
+            AddPlannedTerrainTree(terrainTreeAdds, sample.terrain, prefab, sample.position, yaw.eulerAngles.y, scale);
             return true;
         }
 
         Vector3 position = sample.position + Vector3.up * treeYOffset;
-        Quaternion rotation = alignTreesToTerrainNormal
-            ? Quaternion.FromToRotation(Vector3.up, sample.normal) * yaw
-            : yaw;
+        Quaternion tilt = GetNaturalScatterTilt(choice, random);
+        Quaternion rotation = choice.alignToTerrainNormal
+            ? Quaternion.FromToRotation(Vector3.up, sample.normal) * yaw * tilt
+            : yaw * tilt;
 
-        GameObject instance = Instantiate(choice.prefab, position, rotation, parent);
+        GameObject instance = Instantiate(prefab, position, rotation, parent);
         instance.transform.localScale = instance.transform.localScale * scale;
-        instance.name = $"{choice.prefab.name}_{choice.kind}_{spawnedCount:0000}";
+        instance.name = $"{prefab.name}_{choice.kind}_{spawnedCount:0000}";
         return true;
     }
 
@@ -2348,38 +2361,6 @@ public class RuntimeMapManager : MonoBehaviour
             }
         }
 
-        return TryPickLegacyTreeChoice(random, out choice);
-    }
-
-    private bool TryPickLegacyTreeChoice(System.Random random, out NaturalScatterChoice choice)
-    {
-        choice = default;
-
-        if (treePrefabs == null || treePrefabs.Length == 0)
-        {
-            return false;
-        }
-
-        for (int i = 0; i < treePrefabs.Length; i++)
-        {
-            GameObject prefab = treePrefabs[random.Next(0, treePrefabs.Length)];
-            if (prefab == null)
-            {
-                continue;
-            }
-
-            choice = new NaturalScatterChoice
-            {
-                prefab = prefab,
-                kind = RuntimeNaturalScatterKind.LiveTree,
-                scaleRange = treeScaleRange,
-                clusterChance = 0f,
-                maxClusterCount = 1,
-                clusterRadius = 0f
-            };
-            return true;
-        }
-
         return false;
     }
 
@@ -2398,9 +2379,12 @@ public class RuntimeMapManager : MonoBehaviour
 
         return new NaturalScatterChoice
         {
-            prefab = preset.prefab,
+            prefabs = BuildNaturalScatterPrefabList(preset),
             kind = preset.kind,
+            spawnAsTerrainTreeInstance = CanSpawnPresetAsTerrainTreeInstance(preset),
+            alignToTerrainNormal = alignTreesToTerrainNormal || preset.alignToTerrainNormal,
             scaleRange = preset.useGlobalScaleRange ? treeScaleRange : preset.scaleRange,
+            randomTiltDegrees = GetNaturalScatterTiltDegrees(preset),
             clusterChance = clusterChance,
             maxClusterCount = maxClusterCount,
             clusterRadius = clusterRadius
@@ -2409,12 +2393,7 @@ public class RuntimeMapManager : MonoBehaviour
 
     private bool IsNaturalScatterPresetUsable(RuntimeNaturalScatterPreset preset)
     {
-        if (preset == null || preset.prefab == null || preset.weight <= 0f)
-        {
-            return false;
-        }
-
-        return treeSpawnMode != TreeSpawnMode.TerrainTreeInstances || preset.allowTerrainTreeInstance;
+        return preset != null && preset.weight > 0f && HasAnyNaturalScatterPrefab(preset);
     }
 
     private bool HasAnyNaturalScatterPrefab()
@@ -2430,14 +2409,25 @@ public class RuntimeMapManager : MonoBehaviour
             }
         }
 
-        if (treePrefabs == null)
+        return false;
+    }
+
+    private bool RequiresNaturalScatterObjectParent()
+    {
+        if (treeSpawnMode == TreeSpawnMode.GameObjects)
+        {
+            return true;
+        }
+
+        if (naturalScatterPresets == null)
         {
             return false;
         }
 
-        for (int i = 0; i < treePrefabs.Length; i++)
+        for (int i = 0; i < naturalScatterPresets.Length; i++)
         {
-            if (treePrefabs[i] != null)
+            RuntimeNaturalScatterPreset preset = naturalScatterPresets[i];
+            if (IsNaturalScatterPresetUsable(preset) && !CanSpawnPresetAsTerrainTreeInstance(preset))
             {
                 return true;
             }
@@ -2446,20 +2436,165 @@ public class RuntimeMapManager : MonoBehaviour
         return false;
     }
 
-    private bool PassesNaturalScatterNoise(Vector2 worldXZ, int seed, System.Random random)
+    private static bool HasAnyNaturalScatterPrefab(RuntimeNaturalScatterPreset preset)
     {
+        if (preset == null)
+        {
+            return false;
+        }
+
+        if (preset.prefab != null)
+        {
+            return true;
+        }
+
+        if (preset.prefabVariants == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < preset.prefabVariants.Length; i++)
+        {
+            if (preset.prefabVariants[i] != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static GameObject[] BuildNaturalScatterPrefabList(RuntimeNaturalScatterPreset preset)
+    {
+        if (preset == null)
+        {
+            return System.Array.Empty<GameObject>();
+        }
+
+        List<GameObject> prefabs = new List<GameObject>();
+        if (preset.prefab != null)
+        {
+            prefabs.Add(preset.prefab);
+        }
+
+        if (preset.prefabVariants != null)
+        {
+            for (int i = 0; i < preset.prefabVariants.Length; i++)
+            {
+                GameObject variant = preset.prefabVariants[i];
+                if (variant != null && !prefabs.Contains(variant))
+                {
+                    prefabs.Add(variant);
+                }
+            }
+        }
+
+        return prefabs.ToArray();
+    }
+
+    private GameObject PickNaturalScatterPrefab(NaturalScatterChoice choice, System.Random random)
+    {
+        if (choice.prefabs == null || choice.prefabs.Length == 0)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < choice.prefabs.Length; i++)
+        {
+            GameObject prefab = choice.prefabs[random.Next(0, choice.prefabs.Length)];
+            if (prefab != null)
+            {
+                return prefab;
+            }
+        }
+
+        return null;
+    }
+
+    private bool CanSpawnPresetAsTerrainTreeInstance(RuntimeNaturalScatterPreset preset)
+    {
+        return treeSpawnMode == TreeSpawnMode.TerrainTreeInstances
+            && preset != null
+            && preset.allowTerrainTreeInstance
+            && !preset.alignToTerrainNormal
+            && preset.kind != RuntimeNaturalScatterKind.Rock;
+    }
+
+    private static float GetNaturalScatterTiltDegrees(RuntimeNaturalScatterPreset preset)
+    {
+        if (preset == null)
+        {
+            return 0f;
+        }
+
+        if (preset.randomTiltDegrees > 0f)
+        {
+            return preset.randomTiltDegrees;
+        }
+
+        return preset.kind == RuntimeNaturalScatterKind.Rock ? 10f : 0f;
+    }
+
+    private static Quaternion GetNaturalScatterTilt(NaturalScatterChoice choice, System.Random random)
+    {
+        if (choice.randomTiltDegrees <= 0f)
+        {
+            return Quaternion.identity;
+        }
+
+        float pitch = RuntimeTerrainUtility.NextFloat(random, -choice.randomTiltDegrees, choice.randomTiltDegrees);
+        float roll = RuntimeTerrainUtility.NextFloat(random, -choice.randomTiltDegrees, choice.randomTiltDegrees);
+        return Quaternion.Euler(pitch, 0f, roll);
+    }
+
+    private bool TryGetNaturalScatterDensity(Vector2 worldXZ, int seed, System.Random random, out float density)
+    {
+        density = 1f;
         if (!useNaturalScatterNoise)
         {
             return true;
         }
 
         float seedOffset = (seed & 0xFFFF) * 0.0173f;
-        float noise = Mathf.PerlinNoise(
+        float forestPatch = GetFractalNoise(
             (worldXZ.x + seedOffset) * naturalScatterNoiseScale,
             (worldXZ.y - seedOffset) * naturalScatterNoiseScale);
-        float density = Mathf.InverseLerp(naturalScatterNoiseThreshold, 1f, noise);
-        float acceptChance = Mathf.Lerp(1f - naturalScatterNoiseStrength, 1f, density);
+
+        float localVariation = Mathf.PerlinNoise(
+            (worldXZ.x - seedOffset * 1.7f) * naturalScatterDetailNoiseScale,
+            (worldXZ.y + seedOffset * 1.3f) * naturalScatterDetailNoiseScale);
+
+        float corridorNoise = Mathf.PerlinNoise(
+            (worldXZ.x + seedOffset * 2.1f) * naturalScatterCorridorNoiseScale,
+            (worldXZ.y - seedOffset * 2.4f) * naturalScatterCorridorNoiseScale);
+
+        float patchDensity = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(naturalScatterNoiseThreshold, 1f, forestPatch));
+        float detailMultiplier = Mathf.Lerp(0.72f, 1.18f, localVariation);
+        float corridorCenter = 1f - Mathf.Clamp01(Mathf.Abs(corridorNoise - 0.5f) / 0.18f);
+        float corridorReduction = Mathf.Lerp(1f, 1f - corridorCenter * 0.82f, naturalScatterCorridorStrength);
+
+        density = Mathf.Clamp01(patchDensity * detailMultiplier * corridorReduction);
+        float acceptChance = Mathf.Lerp(naturalScatterMinimumDensity, 1f, density);
+        acceptChance = Mathf.Lerp(1f, acceptChance, naturalScatterNoiseStrength);
         return random.NextDouble() <= acceptChance;
+    }
+
+    private float GetDensityAdjustedNaturalScatterDistance(float density)
+    {
+        if (minTreeDistance <= 0f)
+        {
+            return 0f;
+        }
+
+        return Mathf.Lerp(minTreeDistance * 1.35f, minTreeDistance * 0.55f, Mathf.Clamp01(density));
+    }
+
+    private static float GetFractalNoise(float x, float y)
+    {
+        float baseNoise = Mathf.PerlinNoise(x, y);
+        float broadNoise = Mathf.PerlinNoise(x * 0.43f + 37.1f, y * 0.43f - 19.7f);
+        float fineNoise = Mathf.PerlinNoise(x * 2.15f - 11.3f, y * 2.15f + 5.9f);
+        return Mathf.Clamp01(baseNoise * 0.58f + broadNoise * 0.28f + fineNoise * 0.14f);
     }
 
     private int GetNaturalScatterClusterCount(NaturalScatterChoice choice, System.Random random)
@@ -2497,31 +2632,44 @@ public class RuntimeMapManager : MonoBehaviour
         return scaleRange;
     }
 
-    private bool IsConfiguredNaturalScatterPrefab(GameObject prefab)
+    private bool IsConfiguredNaturalScatterPrefab(GameObject prefab, bool terrainTreeOnly)
     {
         if (prefab == null)
         {
             return false;
         }
 
-        if (treePrefabs != null)
-        {
-            for (int i = 0; i < treePrefabs.Length; i++)
-            {
-                if (treePrefabs[i] == prefab)
-                {
-                    return true;
-                }
-            }
-        }
-
         if (naturalScatterPresets != null)
         {
             for (int i = 0; i < naturalScatterPresets.Length; i++)
             {
-                if (naturalScatterPresets[i] != null && naturalScatterPresets[i].prefab == prefab)
+                RuntimeNaturalScatterPreset preset = naturalScatterPresets[i];
+                if (preset == null)
+                {
+                    continue;
+                }
+
+                if (terrainTreeOnly && !CanSpawnPresetAsTerrainTreeInstance(preset))
+                {
+                    continue;
+                }
+
+                if (preset.prefab == prefab)
                 {
                     return true;
+                }
+
+                if (preset.prefabVariants == null)
+                {
+                    continue;
+                }
+
+                for (int variantIndex = 0; variantIndex < preset.prefabVariants.Length; variantIndex++)
+                {
+                    if (preset.prefabVariants[variantIndex] == prefab)
+                    {
+                        return true;
+                    }
                 }
             }
         }
@@ -2687,7 +2835,7 @@ public class RuntimeMapManager : MonoBehaviour
 
     private bool IsConfiguredTreePrefab(GameObject prefab)
     {
-        return IsConfiguredNaturalScatterPrefab(prefab);
+        return IsConfiguredNaturalScatterPrefab(prefab, terrainTreeOnly: true);
     }
 
     private IEnumerator RebuildNavMeshRoutine()
@@ -3124,6 +3272,10 @@ public class RuntimeMapManager : MonoBehaviour
         naturalScatterNoiseScale = Mathf.Max(0.0001f, naturalScatterNoiseScale);
         naturalScatterNoiseThreshold = Mathf.Clamp01(naturalScatterNoiseThreshold);
         naturalScatterNoiseStrength = Mathf.Clamp01(naturalScatterNoiseStrength);
+        naturalScatterDetailNoiseScale = Mathf.Max(0.0001f, naturalScatterDetailNoiseScale);
+        naturalScatterCorridorNoiseScale = Mathf.Max(0.0001f, naturalScatterCorridorNoiseScale);
+        naturalScatterCorridorStrength = Mathf.Clamp01(naturalScatterCorridorStrength);
+        naturalScatterMinimumDensity = Mathf.Clamp01(naturalScatterMinimumDensity);
         rockClusterChance = Mathf.Clamp01(rockClusterChance);
         rockClusterMaxCount = Mathf.Max(1, rockClusterMaxCount);
         rockClusterRadius = Mathf.Max(0f, rockClusterRadius);
@@ -3157,6 +3309,7 @@ public class RuntimeMapManager : MonoBehaviour
 
                 preset.weight = Mathf.Max(0f, preset.weight);
                 preset.scaleRange = ValidateScaleRange(preset.scaleRange);
+                preset.randomTiltDegrees = Mathf.Max(0f, preset.randomTiltDegrees);
                 preset.clusterChance = Mathf.Clamp01(preset.clusterChance);
                 preset.maxClusterCount = Mathf.Max(1, preset.maxClusterCount);
                 preset.clusterRadius = Mathf.Max(0f, preset.clusterRadius);

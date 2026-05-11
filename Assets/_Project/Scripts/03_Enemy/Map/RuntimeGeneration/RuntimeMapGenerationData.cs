@@ -51,11 +51,14 @@ public enum RuntimeFieldDistributionStyle
 public class RuntimeNaturalScatterPreset
 {
     public GameObject prefab;
+    public GameObject[] prefabVariants;
     public RuntimeNaturalScatterKind kind = RuntimeNaturalScatterKind.LiveTree;
     [Min(0f)] public float weight = 1f;
     public bool allowTerrainTreeInstance = true;
+    public bool alignToTerrainNormal;
     public bool useGlobalScaleRange = true;
     public Vector2 scaleRange = Vector2.one;
+    [Min(0f)] public float randomTiltDegrees;
     [Range(0f, 1f)] public float clusterChance;
     [Min(1)] public int maxClusterCount = 1;
     [Min(0f)] public float clusterRadius = 6f;
