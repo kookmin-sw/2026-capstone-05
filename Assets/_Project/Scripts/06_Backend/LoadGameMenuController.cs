@@ -1,12 +1,14 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 internal sealed class LoadGameMenuController
 {
     private readonly RoomLauncher _roomLauncher;
     private readonly Dictionary<int, Button> _loadSlotButtons = new();
+    private readonly Dictionary<int, UnityAction> _loadSlotButtonActions = new();
     private readonly Dictionary<int, List<TMP_Text>> _loadSlotDateTmpTexts = new();
     private readonly Dictionary<int, List<TMP_Text>> _loadSlotDayTmpTexts = new();
     private readonly Dictionary<int, List<Text>> _loadSlotDateLegacyTexts = new();
@@ -27,11 +29,7 @@ internal sealed class LoadGameMenuController
     {
         for (int slot = 1; slot <= 3; slot++)
         {
-            int round = Mathf.Max(1, PlayerPrefs.GetInt(RoomLauncher.BuildHostRoundCountPrefKey(slot), 1));
-            string date = PlayerPrefs.GetString(RoomLauncher.BuildHostSaveDatePrefKey(slot), "-");
-
-            string dateLabel = date == "-" ? "Date -" : $"Date {date}";
-            string dayLabel = $"Day {round}";
+            RoomLauncher.GetHostSaveSlotLabels(slot, out string dateLabel, out string dayLabel);
 
             SetAllText(_loadSlotDateTmpTexts, slot, dateLabel);
             SetAllText(_loadSlotDayTmpTexts, slot, dayLabel);
@@ -42,15 +40,24 @@ internal sealed class LoadGameMenuController
 
     private void BindLoadFlowUi()
     {
+        foreach (KeyValuePair<int, Button> pair in _loadSlotButtons)
+        {
+            if (pair.Value != null && _loadSlotButtonActions.TryGetValue(pair.Key, out UnityAction action))
+            {
+                pair.Value.onClick.RemoveListener(action);
+            }
+        }
+
         _loadSlotButtons.Clear();
+        _loadSlotButtonActions.Clear();
         _loadSlotDateTmpTexts.Clear();
         _loadSlotDayTmpTexts.Clear();
         _loadSlotDateLegacyTexts.Clear();
         _loadSlotDayLegacyTexts.Clear();
 
-        BindLoadSlotUi(1, "Gmae1 Load Box", "Start Game Box1", "Gmae1 Start Box", "Main_menu1");
-        BindLoadSlotUi(2, "Gmae2 Load Box", "Start Game Box2", "Gmae2 Start Box", "Main_menu2");
-        BindLoadSlotUi(3, "Gmae3 Load Box", "Start Game Box3", "Gmae3 Start Box", "Main_menu3");
+        BindLoadSlotUi(1, "Gmae1 Load Box", "Game1 Load Box", "Load Game Box1", "Load Box1");
+        BindLoadSlotUi(2, "Gmae2 Load Box", "Game2 Load Box", "Load Game Box2", "Load Box2");
+        BindLoadSlotUi(3, "Gmae3 Load Box", "Game3 Load Box", "Load Game Box3", "Load Box3");
     }
 
     private void BindLoadSlotUi(int slot, params string[] containerCandidates)
@@ -63,9 +70,10 @@ internal sealed class LoadGameMenuController
             Button button = container.GetComponentInChildren<Button>(true);
             if (button != null && !_loadSlotButtons.ContainsKey(slot))
             {
-                button.onClick.RemoveAllListeners();
-                button.onClick.AddListener(() => OnLoadSlotButtonClicked(slot));
+                UnityAction action = () => OnLoadSlotButtonClicked(slot);
+                button.onClick.AddListener(action);
                 _loadSlotButtons[slot] = button;
+                _loadSlotButtonActions[slot] = action;
             }
 
             foreach (TMP_Text text in container.GetComponentsInChildren<TMP_Text>(true))
@@ -87,6 +95,13 @@ internal sealed class LoadGameMenuController
         if (!_roomLauncher.CanProceedMenuAction($"불러오기 슬롯 {slot}"))
             return;
 
+        if (!RoomLauncher.HasHostSaveForSlot(slot))
+        {
+            Debug.LogWarning($"[LoadGameMenuController] Load blocked because slot {slot} has no saved host data.");
+            return;
+        }
+
+        _roomLauncher.RefreshAllSaveSlotMenus();
         _roomLauncher.StartLoadedHostGameForSlot(slot);
     }
 
