@@ -10,16 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 346b0ef321d1b5a428534d1f2be202b2, type: 3}
-  m_Name: Runtime Farm Field Preset 16
+  m_Name: house_1
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeFarmFieldPreset
-  prefab: {fileID: 2067260075204365059, guid: 5bf2094801cfa7a4d93cf41cbca1f8a0, type: 3}
-  flattenBlendWidth: 15
+  prefab: {fileID: 3643985964646436352, guid: c12dfa865321cf048bfc195d690b1ece, type: 3}
+  category: 0
+  difficultyTier: 0
+  directorWeight: 1
+  preferredDistanceRange01: {x: 0, y: 0.5}
+  maxFlattenCostOverride: 0
+  flattenBlendWidth: 10
   randomYaw: 1
+  fixedYawDegrees: 0
+  randomScaleRange: {x: 1, y: 1}
   lockYawWhenLarge: 0
   largeFootprintYawLockThreshold: 45
-  fixedYawDegrees: 0
   yawRange: {x: 0, y: 360}
-  randomScaleRange: {x: 1, y: 1}
   footprintPadding: 2
   minWorldHeight: 0
   maxWorldHeight: 180

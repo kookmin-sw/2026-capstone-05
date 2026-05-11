@@ -10,16 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 346b0ef321d1b5a428534d1f2be202b2, type: 3}
-  m_Name: Runtime Farm Field Preset 3
+  m_Name: Factory_Zone_2
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeFarmFieldPreset
-  prefab: {fileID: 8875404885888421859, guid: cab08e802da7abb42b31f9b1c027d701, type: 3}
-  flattenBlendWidth: 15
+  prefab: {fileID: 5669151974911451912, guid: 532b3c40bb1d13342b9ac0df595557bd, type: 3}
+  category: 2
+  difficultyTier: 1
+  directorWeight: 1
+  preferredDistanceRange01: {x: 0.25, y: 0.75}
+  maxFlattenCostOverride: 0
+  flattenBlendWidth: 12
   randomYaw: 1
+  fixedYawDegrees: 0
+  randomScaleRange: {x: 1, y: 1}
   lockYawWhenLarge: 0
   largeFootprintYawLockThreshold: 45
-  fixedYawDegrees: 0
   yawRange: {x: 0, y: 360}
-  randomScaleRange: {x: 1, y: 1}
   footprintPadding: 2
   minWorldHeight: 0
   maxWorldHeight: 180
