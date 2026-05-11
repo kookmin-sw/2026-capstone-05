@@ -12,7 +12,8 @@ GameObject:
   - component: {fileID: 33000013774279922}
   - component: {fileID: 23000012767612130}
   - component: {fileID: 64000011709933028}
-  m_Layer: 0
+  - component: {fileID: 3663406256945339437}
+  m_Layer: 6
   m_Name: UNIConcrete_wall_v1_S_left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -113,3 +114,16 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300080, guid: c6d026d6367d43a438c71a59c9da8290, type: 3}
+--- !u!114 &3663406256945339437
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000010971791210}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 2

@@ -42,7 +42,7 @@ MonoBehaviour:
   Name: Surface
   StudioPath: 
   Min: 0
-  Max: 1
+  Max: 3
   Default: 0
   ID:
     data1: 3804691267
@@ -51,7 +51,9 @@ MonoBehaviour:
   IsGlobal: 0
   Labels:
   - Snow
+  - Wood
   - Stone
+  - Metal
   Exists: 1
 --- !u!114 &-7668354898818924042
 MonoBehaviour:
@@ -152,10 +154,10 @@ MonoBehaviour:
   Path: FMOD_Project/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639140490033403894
+  lastModified: 639141055394806775
   FileSizes:
   - Name: Desktop
-    Value: 2689376
+    Value: 2689408
   Exists: 1
 --- !u!114 &-531075077676271134
 MonoBehaviour:
@@ -218,7 +220,7 @@ MonoBehaviour:
   StringsBanks:
   - {fileID: 2120258606684106499}
   cacheVersion: 131858
-  cacheTime: 639140490033423809
+  cacheTime: 639141055394806775
   SerializableEventsDict:
   - key: event:/Ambience/Ambience_Base
     index: 0
@@ -341,7 +343,7 @@ MonoBehaviour:
   Path: FMOD_Project/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639140490033423809
+  lastModified: 639141055360044810
   FileSizes:
   - Name: Desktop
     Value: 1722
@@ -439,7 +441,7 @@ MonoBehaviour:
   Name: Surface
   StudioPath: 
   Min: 0
-  Max: 1
+  Max: 3
   Default: 0
   ID:
     data1: 3804691267
@@ -448,7 +450,9 @@ MonoBehaviour:
   IsGlobal: 0
   Labels:
   - Snow
+  - Wood
   - Stone
+  - Metal
   Exists: 1
 --- !u!114 &5388144831513748298
 MonoBehaviour:

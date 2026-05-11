@@ -12,7 +12,8 @@ GameObject:
   - component: {fileID: 33000011149123222}
   - component: {fileID: 23000012931840882}
   - component: {fileID: 7024272879194619831}
-  m_Layer: 0
+  - component: {fileID: 9092854336848906104}
+  m_Layer: 6
   m_Name: Hangar_v2_7_gate4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -113,6 +114,19 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300006, guid: e5c35000052d84041aac70751eee328e, type: 3}
+--- !u!114 &9092854336848906104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000010518410334}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 3
 --- !u!1 &1000010812122296
 GameObject:
   m_ObjectHideFlags: 0
@@ -125,7 +139,8 @@ GameObject:
   - component: {fileID: 33000014003885172}
   - component: {fileID: 23000013422727778}
   - component: {fileID: 1802641795686576401}
-  m_Layer: 0
+  - component: {fileID: 1569211345463245672}
+  m_Layer: 6
   m_Name: Hangar_v2_7_gate3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -226,6 +241,19 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300004, guid: e5c35000052d84041aac70751eee328e, type: 3}
+--- !u!114 &1569211345463245672
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000010812122296}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 3
 --- !u!1 &1000012281593870
 GameObject:
   m_ObjectHideFlags: 0
@@ -238,7 +266,8 @@ GameObject:
   - component: {fileID: 33000010857997036}
   - component: {fileID: 23000013882898844}
   - component: {fileID: 1148393690576563227}
-  m_Layer: 0
+  - component: {fileID: 3529484429525045624}
+  m_Layer: 6
   m_Name: Hangar_v2_7_gate2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -339,6 +368,19 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300010, guid: e5c35000052d84041aac70751eee328e, type: 3}
+--- !u!114 &3529484429525045624
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000012281593870}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 3
 --- !u!1 &1000012375230664
 GameObject:
   m_ObjectHideFlags: 0
@@ -351,7 +393,8 @@ GameObject:
   - component: {fileID: 33000012104702622}
   - component: {fileID: 23000011442212792}
   - component: {fileID: 7395939156545245086}
-  m_Layer: 0
+  - component: {fileID: 7247692494442919425}
+  m_Layer: 6
   m_Name: Hangar_v2_7_supports
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -452,6 +495,19 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300002, guid: e5c35000052d84041aac70751eee328e, type: 3}
+--- !u!114 &7247692494442919425
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000012375230664}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 3
 --- !u!1 &1000012401323790
 GameObject:
   m_ObjectHideFlags: 0
@@ -464,7 +520,8 @@ GameObject:
   - component: {fileID: 33000010833825134}
   - component: {fileID: 23000012271803398}
   - component: {fileID: 1357847014502007513}
-  m_Layer: 0
+  - component: {fileID: 4931576924648397512}
+  m_Layer: 6
   m_Name: Hangar_v2_7_inside
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -565,6 +622,19 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300018, guid: e5c35000052d84041aac70751eee328e, type: 3}
+--- !u!114 &4931576924648397512
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000012401323790}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 3
 --- !u!1 &1000012666995862
 GameObject:
   m_ObjectHideFlags: 0
@@ -577,7 +647,8 @@ GameObject:
   - component: {fileID: 33000012613047822}
   - component: {fileID: 23000012151314832}
   - component: {fileID: 2891584457548532752}
-  m_Layer: 0
+  - component: {fileID: 5561891600749259077}
+  m_Layer: 6
   m_Name: Hangar_v2_7_door1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -678,6 +749,19 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300014, guid: e5c35000052d84041aac70751eee328e, type: 3}
+--- !u!114 &5561891600749259077
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000012666995862}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 3
 --- !u!1 &1000013212466252
 GameObject:
   m_ObjectHideFlags: 0
@@ -690,7 +774,8 @@ GameObject:
   - component: {fileID: 33000014039157224}
   - component: {fileID: 23000010884104158}
   - component: {fileID: 299208285182300232}
-  m_Layer: 0
+  - component: {fileID: 8566878133873025446}
+  m_Layer: 6
   m_Name: Hangar_v2_7_gate1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -791,6 +876,19 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300008, guid: e5c35000052d84041aac70751eee328e, type: 3}
+--- !u!114 &8566878133873025446
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000013212466252}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 3
 --- !u!1 &1000013235463752
 GameObject:
   m_ObjectHideFlags: 0
@@ -803,7 +901,8 @@ GameObject:
   - component: {fileID: 33000013096079074}
   - component: {fileID: 23000010947240236}
   - component: {fileID: 786459349272009217}
-  m_Layer: 0
+  - component: {fileID: 2968226565187140543}
+  m_Layer: 6
   m_Name: Hangar_v2_7
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -911,3 +1010,16 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300000, guid: e5c35000052d84041aac70751eee328e, type: 3}
+--- !u!114 &2968226565187140543
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000013235463752}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 3

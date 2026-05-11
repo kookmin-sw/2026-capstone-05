@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 8321889137765885054}
   - component: {fileID: 3326078877459384567}
   - component: {fileID: 1264881979487014682}
+  - component: {fileID: 2872762281268145750}
   m_Layer: 0
   m_Name: bunker_door
   m_TagString: Untagged
@@ -154,6 +155,19 @@ MonoBehaviour:
   outlineMode: 0
   outlineColor: {r: 1, g: 1, b: 1, a: 1}
   outlineWidth: 5
+--- !u!114 &2872762281268145750
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3349342886503502221}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 2
 --- !u!1 &8482929712416400185
 GameObject:
   m_ObjectHideFlags: 0
