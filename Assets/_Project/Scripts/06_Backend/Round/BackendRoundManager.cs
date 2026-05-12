@@ -1,5 +1,4 @@
 using Fusion;
-using Systems.StorageSystem;
 using UnityEngine;
 
 [RequireComponent(typeof(NetworkObject))]
@@ -115,10 +114,6 @@ public class BackendRoundManager : NetworkBehaviour
         PlayerPrefs.Save();
 
         RespawnAllPlayersAtSpawner();
-        if (StorageNetworkSync.Instance != null)
-        {
-            StorageNetworkSync.Instance.SaveAllStorages();
-        }
 
         Debug.Log($"[BackendRoundManager] 라운드 종료. slot={_activeHostSlot}, round={CurrentRoundNumber}, reason={reason}");
     }
@@ -196,27 +191,12 @@ public class BackendRoundManager : NetworkBehaviour
     {
         for (int slot = 1; slot <= 3; slot++)
         {
-            ResetHostSlotRoundToOne(slot, false);
+            string key = RoomLauncher.BuildHostRoundCountPrefKey(slot);
+            PlayerPrefs.SetInt(key, 1);
+            PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(slot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         }
 
         PlayerPrefs.Save();
-    }
-
-    public static void ResetHostSlotRoundToOne(int slot)
-    {
-        ResetHostSlotRoundToOne(slot, true);
-    }
-
-    private static void ResetHostSlotRoundToOne(int slot, bool save)
-    {
-        string key = RoomLauncher.BuildHostRoundCountPrefKey(slot);
-        PlayerPrefs.SetInt(key, 1);
-        PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(slot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-
-        if (save)
-        {
-            PlayerPrefs.Save();
-        }
     }
 
 }

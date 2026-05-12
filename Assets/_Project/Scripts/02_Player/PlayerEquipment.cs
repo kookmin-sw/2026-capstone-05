@@ -222,7 +222,6 @@ public class PlayerEquipment : MonoBehaviour
         Vector3 checkCenter = originTransform.position + originTransform.forward * unarmedRange;
 
         Debug.Log("Performing unarmed hit check at: " + checkCenter + " with radius: " + unarmedHitRadius);
-        Debug.DrawLine(originTransform.position, checkCenter, Color.red, 1f);
 
         Collider[] hitColliders = Physics.OverlapSphere(checkCenter, unarmedHitRadius, hitLayerMask);
         if (hitColliders.Length > 0)

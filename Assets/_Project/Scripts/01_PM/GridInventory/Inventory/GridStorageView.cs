@@ -196,7 +196,7 @@ namespace Systems.GridInventory {
             return closestGridSlot;
         }
 
-        protected virtual void ProcessDrop(Vector2 position) {
+        void ProcessDrop(Vector2 position) {
             if (QuickslotUIController.Instance != null) {
                 int quickslotIndex = QuickslotUIController.Instance.GetSlotIndexAtPosition(position);
                 if (quickslotIndex >= 0) {
@@ -204,14 +204,6 @@ namespace Systems.GridInventory {
                     ResetDragState();
                     return;
                 }
-            }
-
-            if (Systems.StorageSystem.StorageUI.ActiveInstance != null &&
-                Systems.StorageSystem.StorageUI.ActiveInstance != this &&
-                Systems.StorageSystem.StorageUI.ActiveInstance.IsOpen &&
-                Systems.StorageSystem.StorageUI.ActiveInstance.TryAcceptExternalDrop(draggedItem, position)) {
-                ResetDragState();
-                return;
             }
 
             GridSlot closestGridSlot = GetGridSlotAtPosition(position);

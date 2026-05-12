@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6467439394793331910}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Wooden closet 04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -46,8 +46,7 @@ GameObject:
   - component: {fileID: 8008047400261116109}
   - component: {fileID: 3663379571530383786}
   - component: {fileID: 8613168910885939851}
-  - component: {fileID: 3221584979831261941}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: 04_2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -148,19 +147,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -8775730826205690795, guid: 5717945851036f84290f1b7dfc231514, type: 3}
---- !u!114 &3221584979831261941
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3473508696447693931}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
-  surfaceType: 1
 --- !u!1 &6576242229239559317
 GameObject:
   m_ObjectHideFlags: 0
@@ -173,8 +159,7 @@ GameObject:
   - component: {fileID: 3101710462289964883}
   - component: {fileID: 1541327624312476974}
   - component: {fileID: 9191097300278244356}
-  - component: {fileID: 7809519666166503321}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: 04_4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -275,19 +260,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 3567594753009683147, guid: 5717945851036f84290f1b7dfc231514, type: 3}
---- !u!114 &7809519666166503321
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6576242229239559317}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
-  surfaceType: 1
 --- !u!1 &7766361863805085386
 GameObject:
   m_ObjectHideFlags: 0
@@ -300,8 +272,7 @@ GameObject:
   - component: {fileID: 3616839064383254285}
   - component: {fileID: 4149218046368754689}
   - component: {fileID: 4740077364657638351}
-  - component: {fileID: 805764395838749040}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: 04_3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -402,16 +373,3 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 8360352102833049252, guid: 5717945851036f84290f1b7dfc231514, type: 3}
---- !u!114 &805764395838749040
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7766361863805085386}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
-  surfaceType: 1

@@ -12,8 +12,7 @@ GameObject:
   - component: {fileID: 5924104959118966592}
   - component: {fileID: 1329817256484954274}
   - component: {fileID: 3165808151295967439}
-  - component: {fileID: 5163147578428891405}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: 03_3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -114,19 +113,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 536701830129956597, guid: 5717945851036f84290f1b7dfc231514, type: 3}
---- !u!114 &5163147578428891405
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 189827368610791805}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
-  surfaceType: 1
 --- !u!1 &564057700238214769
 GameObject:
   m_ObjectHideFlags: 0
@@ -139,8 +125,7 @@ GameObject:
   - component: {fileID: 2570865986631790772}
   - component: {fileID: 1510974003484863037}
   - component: {fileID: 6318856734264797881}
-  - component: {fileID: 7283993847790014505}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: 03_5
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -241,19 +226,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -1542871289220668729, guid: 5717945851036f84290f1b7dfc231514, type: 3}
---- !u!114 &7283993847790014505
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 564057700238214769}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
-  surfaceType: 1
 --- !u!1 &654434188933141035
 GameObject:
   m_ObjectHideFlags: 0
@@ -265,7 +237,7 @@ GameObject:
   - component: {fileID: 2657497834879964112}
   - component: {fileID: 5076829180993629586}
   - component: {fileID: 4618719197992340003}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: glass
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -356,8 +328,7 @@ GameObject:
   - component: {fileID: 1967153081649551337}
   - component: {fileID: 7544114857092296143}
   - component: {fileID: 2519878506165410172}
-  - component: {fileID: 3868511111652763683}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: 03_4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -458,19 +429,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 380641409980640040, guid: 5717945851036f84290f1b7dfc231514, type: 3}
---- !u!114 &3868511111652763683
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2529131941252211525}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
-  surfaceType: 1
 --- !u!1 &2973277331622841274
 GameObject:
   m_ObjectHideFlags: 0
@@ -480,7 +438,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 26081831192771202}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Wooden closet 03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -519,8 +477,7 @@ GameObject:
   - component: {fileID: 2553285797446538313}
   - component: {fileID: 6434724634337841681}
   - component: {fileID: 6912486867848067982}
-  - component: {fileID: 8612757141369804597}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: 03_2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -621,16 +578,3 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 1226455705427989163, guid: 5717945851036f84290f1b7dfc231514, type: 3}
---- !u!114 &8612757141369804597
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4267746622597909559}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
-  surfaceType: 1

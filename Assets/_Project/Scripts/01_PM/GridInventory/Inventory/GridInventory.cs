@@ -15,7 +15,6 @@ namespace Systems.GridInventory {
         }
 
         [SerializeField] List<StartingItem> startingItems = new List<StartingItem>();
-        [SerializeField] private bool startEmptyOnJoin = true;
 
         GridInventoryController controller;
         public GridInventoryController Controller => controller;
@@ -26,7 +25,7 @@ namespace Systems.GridInventory {
             else Destroy(gameObject);
 
             controller = new GridInventoryController.Builder(view)
-                .WithStartingItems(startEmptyOnJoin ? null : startingItems)
+                .WithStartingItems(startingItems)
                 .WithDimensions(gridWidth, gridHeight)
                 .Build();
         }

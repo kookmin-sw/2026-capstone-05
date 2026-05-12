@@ -12,8 +12,7 @@ GameObject:
   - component: {fileID: 33000010507463410}
   - component: {fileID: 23000014252982834}
   - component: {fileID: 64000012935496406}
-  - component: {fileID: 3127215880882537172}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Road_set_v1_s_tile_2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -114,16 +113,3 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300068, guid: c7f7a9ec09a97d144963b6dd16448dc3, type: 3}
---- !u!114 &3127215880882537172
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1000014219097406}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
-  surfaceType: 2

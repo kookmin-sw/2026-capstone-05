@@ -1,5 +1,3 @@
-using FMOD.Studio;
-using FMODUnity;
 using System.Collections;
 using UnityEngine;
 
@@ -7,8 +5,6 @@ public class ConsumableBehaviour : EquippedItemBehaviour
 {
     private Coroutine consumeCoroutine;
     private bool isConsuming = false;
-
-    private EventInstance consumeSoundInstance;
 
     public override bool Use()
     {
@@ -22,9 +18,6 @@ public class ConsumableBehaviour : EquippedItemBehaviour
         {
             return false;
         }
-
-        consumeSoundInstance = RuntimeManager.CreateInstance(data.consumeSound);
-        RuntimeManager.AttachInstanceToGameObject(consumeSoundInstance, gameObject);
 
         consumeCoroutine = StartCoroutine(ConsumeRoutine(data));
         return true;
@@ -78,14 +71,9 @@ public class ConsumableBehaviour : EquippedItemBehaviour
     {
         isConsuming = true;
 
-        consumeSoundInstance.start();
-
         player.Animator.SetConsuming(true);
 
         yield return new WaitForSeconds(data.actionCooldown);
-
-        consumeSoundInstance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
-        consumeSoundInstance.release();
 
         Consume();
 
@@ -107,12 +95,6 @@ public class ConsumableBehaviour : EquippedItemBehaviour
             }
             player.Animator.SetConsuming(false);
             isConsuming = false;
-
-            if (consumeSoundInstance.isValid())
-            {
-                consumeSoundInstance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
-                consumeSoundInstance.release();
-            }
         }
     }
 }

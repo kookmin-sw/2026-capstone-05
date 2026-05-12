@@ -12,8 +12,7 @@ GameObject:
   - component: {fileID: 1894979288459745085}
   - component: {fileID: 8311627344093406264}
   - component: {fileID: 7596796955215913997}
-  - component: {fileID: 4476206679406936595}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Cube_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -114,19 +113,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -387298209978578080, guid: 0b38360772c20d4448e93436c1dd3dac, type: 3}
---- !u!114 &4476206679406936595
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1087592164936126404}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
-  surfaceType: 1
 --- !u!1 &3285709521705567959
 GameObject:
   m_ObjectHideFlags: 0
@@ -136,7 +122,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6848763972360931156}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Office sofa
   m_TagString: Untagged
   m_Icon: {fileID: 0}

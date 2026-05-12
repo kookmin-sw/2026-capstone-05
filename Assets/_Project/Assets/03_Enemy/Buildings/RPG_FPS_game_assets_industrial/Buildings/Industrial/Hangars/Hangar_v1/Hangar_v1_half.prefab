@@ -12,8 +12,7 @@ GameObject:
   - component: {fileID: 33000013627216676}
   - component: {fileID: 23000010904594376}
   - component: {fileID: 64000012282165808}
-  - component: {fileID: 7825451409339600933}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Hangar_v1_half
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -114,16 +113,3 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300006, guid: 45fb212df42587744bd168b5d46c0910, type: 3}
---- !u!114 &7825451409339600933
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1000010944246702}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
-  surfaceType: 3

@@ -12,8 +12,7 @@ GameObject:
   - component: {fileID: 33000010949567822}
   - component: {fileID: 23000010003348824}
   - component: {fileID: 65000012382584228}
-  - component: {fileID: 5998463473038980533}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Concrete_fence_v1_s2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -113,16 +112,3 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.4622266, y: 2.9944706, z: 4.0297647}
   m_Center: {x: 0.00000008940697, y: 0.000000059604645, z: 0}
---- !u!114 &5998463473038980533
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1000010167359026}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
-  surfaceType: 2

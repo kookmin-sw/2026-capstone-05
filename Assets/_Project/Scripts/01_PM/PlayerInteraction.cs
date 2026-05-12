@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>
 /// 플레이어의 상호작용을 관리하는 클래스 (레거시 코드 기반 새 시스템)
 /// </summary>
-public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
+public class PlayerInteraction : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private PlayerController player;
@@ -22,7 +22,6 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
     private Outline currentOutline;
     private float holdProgressSeconds;
     private bool holdTriggered;
-    private bool networkConfigured;
 
     private void Awake()
     {
@@ -38,12 +37,6 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
     {
         if (player == null || player.InputHandler == null)
         {
-            return;
-        }
-
-        if (networkConfigured && !player.IsLocalPlayer)
-        {
-            ClearCurrentInteractable();
             return;
         }
 
@@ -185,7 +178,7 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
     private void ClearCurrentInteractable()
     {
         // 1. UI 먼저 무조건 숨김 (오브젝트가 방금 파괴되었더라도 UI는 남아있을 수 있으므로)
-        if ((currentLookObject != null || currentInteractable != null) && InteractionUI.Instance != null)
+        if (InteractionUI.Instance != null)
         {
             InteractionUI.Instance.Hide();
         }
@@ -232,11 +225,6 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
 
     private void ResolveInteractionCamera()
     {
-        if (player == null)
-        {
-            return;
-        }
-
         cameraTransform = player.CameraTransform;
         if (cameraTransform != null)
         {
@@ -257,36 +245,14 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
             // 2) 플레이어 하위 카메라(프리팹 구조 변경 대응)
             if (player != null)
             {
-                Camera playerCamera = player.GetComponentInChildren<Camera>(true);
-                cameraTransform = playerCamera != null ? playerCamera.transform : null;
-                if (cameraTransform != null && cameraTransform.gameObject.activeInHierarchy)
+                cameraTransform = player.GetComponentInChildren<Camera>(true).transform;
+                if (cameraTransform != null && !cameraTransform.gameObject.activeInHierarchy)
                 {
                     return;
                 }
             }
 
         // 3) 마지막 폴백: 씬의 활성 카메라 아무거나
-        Camera fallbackCamera = Camera.main != null ? Camera.main : FindAnyObjectByType<Camera>();
-        cameraTransform = fallbackCamera != null ? fallbackCamera.transform : null;
-    }
-
-    public void ConfigureForNetwork(bool isLocalPlayer)
-    {
-        networkConfigured = true;
-
-        if (!isLocalPlayer)
-        {
-            ClearCurrentInteractable();
-            enabled = false;
-            return;
-        }
-
-        enabled = true;
-        if (player == null)
-        {
-            player = GetComponentInParent<PlayerController>();
-        }
-
-        ResolveInteractionCamera();
+        cameraTransform = FindAnyObjectByType<Camera>().transform;
     }
 }

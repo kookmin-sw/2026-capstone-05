@@ -12,8 +12,7 @@ GameObject:
   - component: {fileID: 3358828}
   - component: {fileID: 2362798}
   - component: {fileID: 6487924}
-  - component: {fileID: 3561543385523785166}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: junk_window
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -114,19 +113,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300002, guid: 09f71e761bf789842b8fddb0f7a757f8, type: 3}
---- !u!114 &3561543385523785166
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 130486}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
-  surfaceType: 2
 --- !u!1 &133692
 GameObject:
   m_ObjectHideFlags: 0
@@ -137,7 +123,7 @@ GameObject:
   m_Component:
   - component: {fileID: 458496}
   - component: {fileID: 3372462}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: UCX_junk_window
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -176,7 +162,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 470920}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: junk_window
   m_TagString: Untagged
   m_Icon: {fileID: 0}

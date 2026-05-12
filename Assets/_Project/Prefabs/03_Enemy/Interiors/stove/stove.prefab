@@ -12,8 +12,7 @@ GameObject:
   - component: {fileID: 2540033411397937815}
   - component: {fileID: 1074088009280207247}
   - component: {fileID: 702775544886998835}
-  - component: {fileID: 7997023549556053235}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: stove
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -113,16 +112,3 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.005004776, y: 0.004483624, z: 0.0060499446}
   m_Center: {x: 0.00014360015, y: 0.000000004074536, z: 0.0030249718}
---- !u!114 &7997023549556053235
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 475387861161505778}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
-  surfaceType: 2

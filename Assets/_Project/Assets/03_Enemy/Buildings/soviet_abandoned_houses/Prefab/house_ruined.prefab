@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 453762}
   - component: {fileID: 3342994}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: UCX_house_ruined
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -49,7 +49,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 400338}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: house_ruined
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -85,8 +85,7 @@ GameObject:
   - component: {fileID: 3323224}
   - component: {fileID: 2332976}
   - component: {fileID: 6434380}
-  - component: {fileID: 9000293075227104752}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: house_ruined
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -187,16 +186,3 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300028, guid: dbbe8449a89d88d47a9dab3455c2121d, type: 3}
---- !u!114 &9000293075227104752
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 189916}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
-  surfaceType: 2

@@ -8,7 +8,6 @@ using Fusion.Photon.Realtime;
 using Fusion.Sockets;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -59,12 +58,6 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     private Button _enterButton;
     private readonly Dictionary<int, Button> _hostSlotButtons = new();
     private readonly Dictionary<int, Button> _hostConfirmButtons = new();
-    private readonly Dictionary<int, UnityAction> _hostSlotButtonActions = new();
-    private readonly Dictionary<int, UnityAction> _hostConfirmButtonActions = new();
-    private readonly Dictionary<int, List<TMP_Text>> _hostSlotDateTmpTexts = new();
-    private readonly Dictionary<int, List<TMP_Text>> _hostSlotDayTmpTexts = new();
-    private readonly Dictionary<int, List<Text>> _hostSlotDateLegacyTexts = new();
-    private readonly Dictionary<int, List<Text>> _hostSlotDayLegacyTexts = new();
     private int _pendingHostSlot = -1;
     private bool _hostFlowBound;
     private TMP_InputField _roomCodeInput;
@@ -196,7 +189,7 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
         BindHostFlowUi();
         _loadGameMenuController ??= new LoadGameMenuController(this);
-        RefreshAllSaveSlotMenus();
+        _loadGameMenuController.BindAndRefresh();
 
         if (_joinButton != null)
         {
@@ -235,73 +228,29 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     private void BindHostFlowUi()
     {
-        RemoveHostFlowListeners();
-
         _hostSlotButtons.Clear();
         _hostConfirmButtons.Clear();
-        _hostSlotButtonActions.Clear();
-        _hostConfirmButtonActions.Clear();
-        _hostSlotDateTmpTexts.Clear();
-        _hostSlotDayTmpTexts.Clear();
-        _hostSlotDateLegacyTexts.Clear();
-        _hostSlotDayLegacyTexts.Clear();
         _hostFlowBound = false;
 
-        BindHostSlotUi(1, "Start Game Box1", "Gmae1 Start Box", "Game1 Start Box", "Start Box1");
-        BindHostSlotUi(2, "Start Game Box2", "Gmae2 Start Box", "Game2 Start Box", "Start Box2");
-        BindHostSlotUi(3, "Start Game Box3", "Gmae3 Start Box", "Game3 Start Box", "Start Box3");
+        BindHostSlotButton(1, "Start Game Box1", "Gmae1 Start Box", "Start Box1");
+        BindHostSlotButton(2, "Start Game Box2", "Gmae2 Start Box", "Start Box2");
+        BindHostSlotButton(3, "Start Game Box3", "Gmae3 Start Box", "Start Box3");
 
         BindHostConfirmButton(1, "Start Game Confirm PopUp1");
         BindHostConfirmButton(2, "Start Game Confirm PopUp2");
         BindHostConfirmButton(3, "Start Game Confirm PopUp3");
 
         _hostFlowBound = _hostSlotButtons.Count == 3 && _hostConfirmButtons.Count == 3;
-        RefreshHostSlotUi();
     }
 
-    internal void RefreshAllSaveSlotMenus()
+    private void BindHostSlotButton(int slot, params string[] containerCandidates)
     {
-        if (!_hostFlowBound)
-        {
-            BindHostFlowUi();
-        }
-        else
-        {
-            RefreshHostSlotUi();
-        }
+        Button button = FindButtonInNamedContainer(containerCandidates);
+        if (button == null)
+            return;
 
-        _loadGameMenuController ??= new LoadGameMenuController(this);
-        _loadGameMenuController.BindAndRefresh();
-    }
-
-    private void BindHostSlotUi(int slot, params string[] containerCandidates)
-    {
-        IReadOnlyList<Transform> containers = FindNamedContainers(containerCandidates);
-        if (containers.Count == 0) return;
-
-        foreach (Transform container in containers)
-        {
-            Button button = container.GetComponentInChildren<Button>(true);
-            if (button != null && !_hostSlotButtons.ContainsKey(slot))
-            {
-                UnityAction action = () => OnHostSlotButtonClicked(slot);
-                button.onClick.AddListener(action);
-                _hostSlotButtons[slot] = button;
-                _hostSlotButtonActions[slot] = action;
-            }
-
-            foreach (TMP_Text text in container.GetComponentsInChildren<TMP_Text>(true))
-            {
-                if (ContainsAny(text.name, new[] { "Date" })) AddText(_hostSlotDateTmpTexts, slot, text);
-                else if (ContainsAny(text.name, new[] { "Day" })) AddText(_hostSlotDayTmpTexts, slot, text);
-            }
-
-            foreach (Text text in container.GetComponentsInChildren<Text>(true))
-            {
-                if (ContainsAny(text.name, new[] { "Date" })) AddText(_hostSlotDateLegacyTexts, slot, text);
-                else if (ContainsAny(text.name, new[] { "Day" })) AddText(_hostSlotDayLegacyTexts, slot, text);
-            }
-        }
+        button.onClick.AddListener(() => OnHostSlotButtonClicked(slot));
+        _hostSlotButtons[slot] = button;
     }
 
     private void BindHostConfirmButton(int slot, params string[] containerCandidates)
@@ -310,42 +259,8 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         if (button == null)
             return;
 
-        UnityAction action = () => OnHostConfirmButtonClicked(slot);
-        button.onClick.AddListener(action);
+        button.onClick.AddListener(() => OnHostConfirmButtonClicked(slot));
         _hostConfirmButtons[slot] = button;
-        _hostConfirmButtonActions[slot] = action;
-    }
-
-    private void RemoveHostFlowListeners()
-    {
-        foreach (KeyValuePair<int, Button> pair in _hostSlotButtons)
-        {
-            if (pair.Value != null && _hostSlotButtonActions.TryGetValue(pair.Key, out UnityAction action))
-            {
-                pair.Value.onClick.RemoveListener(action);
-            }
-        }
-
-        foreach (KeyValuePair<int, Button> pair in _hostConfirmButtons)
-        {
-            if (pair.Value != null && _hostConfirmButtonActions.TryGetValue(pair.Key, out UnityAction action))
-            {
-                pair.Value.onClick.RemoveListener(action);
-            }
-        }
-    }
-
-    private void RefreshHostSlotUi()
-    {
-        for (int slot = 1; slot <= 3; slot++)
-        {
-            GetHostSaveSlotLabels(slot, out string dateLabel, out string dayLabel);
-
-            SetAllText(_hostSlotDateTmpTexts, slot, dateLabel);
-            SetAllText(_hostSlotDayTmpTexts, slot, dayLabel);
-            SetAllText(_hostSlotDateLegacyTexts, slot, dateLabel);
-            SetAllText(_hostSlotDayLegacyTexts, slot, dayLabel);
-        }
     }
 
     private static Button FindButtonInNamedContainer(params string[] containerCandidates)
@@ -365,52 +280,6 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         }
 
         return null;
-    }
-
-    private static IReadOnlyList<Transform> FindNamedContainers(params string[] containerCandidates)
-    {
-        List<Transform> results = new();
-        if (containerCandidates == null || containerCandidates.Length == 0)
-            return results;
-
-        Transform[] transforms = FindObjectsOfType<Transform>(true);
-        foreach (Transform target in transforms)
-        {
-            if (ContainsAny(target.name, containerCandidates))
-                results.Add(target);
-        }
-
-        return results;
-    }
-
-    private static void AddText<T>(Dictionary<int, List<T>> map, int slot, T text)
-    {
-        if (!map.TryGetValue(slot, out List<T> list))
-        {
-            list = new List<T>();
-            map[slot] = list;
-        }
-
-        list.Add(text);
-    }
-
-    private static void SetAllText<T>(Dictionary<int, List<T>> map, int slot, string value) where T : Component
-    {
-        if (!map.TryGetValue(slot, out List<T> list))
-            return;
-
-        foreach (T item in list)
-        {
-            switch (item)
-            {
-                case TMP_Text tmp:
-                    tmp.text = value;
-                    break;
-                case Text legacy:
-                    legacy.text = value;
-                    break;
-            }
-        }
     }
 
 
@@ -526,7 +395,7 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         if (!EnsureLoggedInForMenuAction("시작하기"))
             return;
 
-        RefreshAllSaveSlotMenus();
+        _loadGameMenuController?.BindAndRefresh();
         Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 시작하기 버튼 클릭. 슬롯 UI 최신화 완료.");
     }
 
@@ -545,7 +414,6 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
             }
         }
 
-        RefreshAllSaveSlotMenus();
         _pendingHostSlot = -1;
         Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 호스트 버튼 클릭. Start Game Menu에서 저장 슬롯(1/2/3) 선택 대기.");
     }
@@ -586,10 +454,10 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
         PlayerPrefs.SetInt(HostSelectedSlotPrefKey, slot);
         PlayerPrefs.SetString($"HostSlot{slot}_RoomCode", normalizedCode);
-        BackendRoundManager.ResetHostSlotRoundToOne(slot);
+        BackendRoundManager.ResetAllHostSlotRoundsToOne();
         PlayerPrefs.SetString(BuildHostSaveDatePrefKey(slot), DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         PlayerPrefs.Save();
-        RefreshAllSaveSlotMenus();
+        _loadGameMenuController?.RefreshSlotUi();
 
         Debug.Log($"{LogPrefix} 호스트 방 생성. slot={slot}, 생성된 방 코드(1~1000)={normalizedCode}");
         Debug.Log($"{LogPrefix} 코드 -> 룸 이름 매핑. code={normalizedCode}, session={sessionName}");
@@ -689,29 +557,6 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     {
         int safeSlot = Mathf.Clamp(slot, 1, 3);
         return $"HostSlotSavedDate.{GetNormalizedHostIdentity()}.slot{safeSlot}";
-    }
-
-    internal static bool HasHostSaveForSlot(int slot)
-    {
-        int safeSlot = Mathf.Clamp(slot, 1, 3);
-        return PlayerPrefs.HasKey(BuildHostSaveDatePrefKey(safeSlot)) ||
-               PlayerPrefs.HasKey(BuildHostRoundCountPrefKey(safeSlot));
-    }
-
-    internal static void GetHostSaveSlotLabels(int slot, out string dateLabel, out string dayLabel)
-    {
-        bool hasSave = HasHostSaveForSlot(slot);
-        if (!hasSave)
-        {
-            dateLabel = "Date -";
-            dayLabel = "Day -";
-            return;
-        }
-
-        int round = Mathf.Max(1, PlayerPrefs.GetInt(BuildHostRoundCountPrefKey(slot), 1));
-        string date = PlayerPrefs.GetString(BuildHostSaveDatePrefKey(slot), "-");
-        dateLabel = date == "-" ? "Date -" : $"Date {date}";
-        dayLabel = $"Day {round}";
     }
 
     private static string GetNormalizedHostIdentity()

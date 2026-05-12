@@ -12,8 +12,7 @@ GameObject:
   - component: {fileID: 33000011536278338}
   - component: {fileID: 23000011399825770}
   - component: {fileID: 64000012496255942}
-  - component: {fileID: 8563085160723576426}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: UNIConcrete_wall_v1_W_tile_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -114,19 +113,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300056, guid: c6d026d6367d43a438c71a59c9da8290, type: 3}
---- !u!114 &8563085160723576426
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1000010056762816}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
-  surfaceType: 2
 --- !u!1 &1000010720145162
 GameObject:
   m_ObjectHideFlags: 0
@@ -136,7 +122,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4000010940606070}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: UNIConcrete_wall_v1_W_3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -172,8 +158,7 @@ GameObject:
   - component: {fileID: 33000010845941340}
   - component: {fileID: 23000013995215450}
   - component: {fileID: 65000014136442070}
-  - component: {fileID: 6894943277322875613}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: Road_set_v1_s_floor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -273,16 +258,3 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 10, y: 0, z: 10}
   m_Center: {x: 0.0000038146973, y: -0.00005, z: 0}
---- !u!114 &6894943277322875613
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1000012954073910}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
-  surfaceType: 2

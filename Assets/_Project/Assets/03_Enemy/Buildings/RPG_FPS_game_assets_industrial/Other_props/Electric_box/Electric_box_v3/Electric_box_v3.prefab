@@ -12,8 +12,7 @@ GameObject:
   - component: {fileID: 33000010321893964}
   - component: {fileID: 23000012317235730}
   - component: {fileID: 65000011025784502}
-  - component: {fileID: 4811985577374661409}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Electric_box_v3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -113,16 +112,3 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 3.8417222, y: 2.1361256, z: 1.7752707}
   m_Center: {x: 0.00000035762787, y: 0, z: -0.00000023841858}
---- !u!114 &4811985577374661409
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1000013628716364}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
-  surfaceType: 3

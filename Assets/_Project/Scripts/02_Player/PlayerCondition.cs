@@ -1,4 +1,3 @@
-using FMODUnity;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -22,8 +21,6 @@ public class PlayerCondition : MonoBehaviour, IDamageable
 
     private bool hasRaisedDeathEvent;
 
-    [Header("Sound Settings")]
-    [SerializeField] private EventReference damageSound;
 
     private void Start()
     {
@@ -69,8 +66,6 @@ public class PlayerCondition : MonoBehaviour, IDamageable
             health.Subtract(damageAmount);
 
             OnTakeDamageEvent?.Invoke(damageAmount);
-
-            RuntimeManager.PlayOneShot(damageSound, transform.position);
 
             if (!IsAlive)
             {
