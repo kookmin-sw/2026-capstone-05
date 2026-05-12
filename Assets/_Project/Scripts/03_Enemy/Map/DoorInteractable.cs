@@ -1,8 +1,12 @@
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [DisallowMultipleComponent]
 public class DoorInteractable : MonoBehaviour, IInteractable
 {
+    private static readonly Dictionary<int, DoorInteractable> DoorsByKey = new Dictionary<int, DoorInteractable>();
+
     [Header("Door")]
     [SerializeField] private Transform doorTransform;
     [SerializeField] private string objectName = "문";
@@ -18,9 +22,16 @@ public class DoorInteractable : MonoBehaviour, IInteractable
     private Quaternion closedLocalRotation;
     private Quaternion targetLocalRotation;
     private bool isOpen;
+    private int _doorKey;
+
+    public int DoorKey => _doorKey;
+    public bool IsOpen => isOpen;
 
     private void Awake()
     {
+        _doorKey = BuildStableDoorKey();
+        RegisterDoor();
+
         if (doorTransform == null)
         {
             doorTransform = transform;
@@ -29,6 +40,19 @@ public class DoorInteractable : MonoBehaviour, IInteractable
         closedLocalRotation = doorTransform.localRotation;
         targetLocalRotation = closedLocalRotation;
         NormalizePanelDirection();
+    }
+
+    private void OnEnable()
+    {
+        RegisterDoor();
+    }
+
+    private void OnDisable()
+    {
+        if (DoorsByKey.TryGetValue(_doorKey, out DoorInteractable door) && door == this)
+        {
+            DoorsByKey.Remove(_doorKey);
+        }
     }
 
     private void Update()
@@ -62,16 +86,15 @@ public class DoorInteractable : MonoBehaviour, IInteractable
             return;
         }
 
-        if (isOpen)
+        BackendPlayerNetworkSync networkSync = player != null ? player.GetComponent<BackendPlayerNetworkSync>() : null;
+        if (networkSync != null && networkSync.IsNetworkReady)
         {
-            CloseDoor();
+            networkSync.RequestDoorToggle(this, !isOpen, GetOpenDirection(player));
         }
         else
         {
-            OpenDoor(player);
+            ApplyState(!isOpen, GetOpenDirection(player));
         }
-
-        RefreshInteractionPrompt();
     }
 
     public string GetInteractPrompt()
@@ -84,17 +107,21 @@ public class DoorInteractable : MonoBehaviour, IInteractable
         return objectName;
     }
 
-    private void OpenDoor(PlayerController player)
+    public void ApplyState(bool shouldOpen, int openDirection)
     {
-        int direction = GetOpenDirection(player);
-        targetLocalRotation = closedLocalRotation * Quaternion.Euler(0f, 0f, openAngle * direction);
-        isOpen = true;
-    }
+        if (shouldOpen)
+        {
+            int direction = openDirection >= 0 ? 1 : -1;
+            targetLocalRotation = closedLocalRotation * Quaternion.Euler(0f, 0f, openAngle * direction);
+            isOpen = true;
+        }
+        else
+        {
+            targetLocalRotation = closedLocalRotation;
+            isOpen = false;
+        }
 
-    private void CloseDoor()
-    {
-        targetLocalRotation = closedLocalRotation;
-        isOpen = false;
+        RefreshInteractionPrompt();
     }
 
     private int GetOpenDirection(PlayerController player)
@@ -152,5 +179,77 @@ public class DoorInteractable : MonoBehaviour, IInteractable
         openAngle = Mathf.Clamp(openAngle, 0f, 180f);
         rotationSpeed = Mathf.Max(1f, rotationSpeed);
         NormalizePanelDirection();
+    }
+
+    public static bool TryGetDoor(int doorKey, out DoorInteractable door)
+    {
+        return DoorsByKey.TryGetValue(doorKey, out door) && door != null;
+    }
+
+    public static void ApplyNetworkState(int doorKey, bool shouldOpen, int openDirection)
+    {
+        if (TryGetDoor(doorKey, out DoorInteractable door))
+        {
+            door.ApplyState(shouldOpen, openDirection);
+        }
+    }
+
+    private void RegisterDoor()
+    {
+        if (_doorKey == 0)
+        {
+            _doorKey = BuildStableDoorKey();
+        }
+
+        DoorsByKey[_doorKey] = this;
+    }
+
+    private int BuildStableDoorKey()
+    {
+        unchecked
+        {
+            int hash = 17;
+            Scene scene = gameObject.scene;
+            hash = hash * 31 + StableStringHash(scene.path);
+            hash = hash * 31 + StableStringHash(BuildHierarchyPath(transform));
+            hash = hash * 31 + Mathf.RoundToInt(transform.position.x * 100f);
+            hash = hash * 31 + Mathf.RoundToInt(transform.position.y * 100f);
+            hash = hash * 31 + Mathf.RoundToInt(transform.position.z * 100f);
+            return hash == 0 ? 1 : hash;
+        }
+    }
+
+    private static string BuildHierarchyPath(Transform target)
+    {
+        if (target == null)
+            return string.Empty;
+
+        string path = target.name;
+        Transform parent = target.parent;
+        while (parent != null)
+        {
+            path = parent.name + "/" + path;
+            parent = parent.parent;
+        }
+
+        return path;
+    }
+
+    private static int StableStringHash(string value)
+    {
+        unchecked
+        {
+            int hash = (int)2166136261;
+            if (!string.IsNullOrEmpty(value))
+            {
+                for (int i = 0; i < value.Length; i++)
+                {
+                    hash ^= value[i];
+                    hash *= 16777619;
+                }
+            }
+
+            return hash;
+        }
     }
 }
