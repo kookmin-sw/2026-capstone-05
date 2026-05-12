@@ -1,0 +1,235 @@
+/* LootUI.uss */
+.loot-container {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.85); /* Dark background */
+    align-items: center;
+    justify-content: center;
+    color: rgb(220, 220, 220);
+    -unity-font-definition: url("project://database/Assets/_Project/ThirdParty/TextMesh%20Pro/Examples%20&%20Extras/Fonts/Anton.ttf?fileID=12800000&guid=997a43b767814dd0a7642ec9b78cba41&type=3#Anton");
+}
+
+.main-window {
+    width: 1800px;
+    height: 900px;
+    background-color: transparent;
+    flex-direction: column;
+}
+
+.split-container {
+    flex-direction: row;
+    flex-grow: 1;
+    justify-content: space-between;
+}
+
+.left-panel {
+    width: 49%;
+    background-color: rgba(30, 30, 30, 0.9);
+    border-width: 1px;
+    border-color: rgb(80, 80, 80);
+    padding: 16px;
+    flex-direction: column;
+}
+
+.center-panel {
+    display: none;
+}
+
+.right-panel {
+    width: 49%;
+    background-color: rgba(30, 30, 30, 0.9);
+    border-width: 1px;
+    border-color: rgb(80, 80, 80);
+    padding: 16px;
+    flex-direction: column;
+}
+
+.header-container {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 16px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(100, 100, 100);
+    padding-bottom: 8px;
+}
+
+.header-text {
+    font-size: 24px;
+    color: white;
+    letter-spacing: 2px;
+}
+
+.chest-icon {
+    width: 24px;
+    height: 24px;
+    background-color: #8c5b3f; /* Placeholder */
+    margin-right: 8px;
+}
+
+.slots-scroll-view {
+    flex-grow: 1;
+    margin-bottom: 8px;
+}
+
+.slotsContainer {
+    flex-wrap: wrap;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    background-color: transparent;
+    padding: 10px;
+    flex-shrink: 0;
+    width: 820px;
+}
+
+/* Grid Inventory injection target */
+.player-inventory-container {
+    flex-grow: 1;
+    margin-bottom: 8px;
+    /* ensure proper bounds for injected content */
+    overflow: hidden;
+}
+
+.footer-container {
+    align-items: flex-end;
+}
+
+.capacity-text {
+    font-size: 14px;
+    color: rgb(150, 150, 150);
+}
+
+/* Item Detail Panel */
+.item-detail-container {
+    width: 100%;
+    background-color: rgba(20, 20, 20, 0.9);
+    border-width: 1px;
+    border-color: rgb(100, 100, 100);
+    padding: 16px;
+    border-radius: 4px;
+}
+
+.detail-name {
+    font-size: 22px;
+    color: white;
+    -unity-font-style: bold;
+}
+
+.detail-type {
+    font-size: 14px;
+    color: rgb(150, 150, 150);
+    margin-bottom: 8px;
+}
+
+.detail-separator {
+    height: 1px;
+    background-color: rgb(80, 80, 80);
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.detail-desc {
+    font-size: 14px;
+    color: rgb(200, 200, 200);
+    white-space: normal;
+}
+
+/* Bottom Bar */
+.bottom-bar {
+    flex-direction: row;
+    justify-content: flex-end;
+    padding: 16px 0;
+    margin-top: 8px;
+}
+
+.action-btn {
+    background-color: rgb(40, 40, 40);
+    color: white;
+    border-width: 1px;
+    border-color: rgb(100, 100, 100);
+    padding: 8px 16px;
+    margin-left: 12px;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: default;
+}
+
+.action-btn:hover {
+    background-color: rgb(80, 80, 80);
+}
+
+.ghostIcon {
+    visibility: hidden;
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    background-image: none;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* Quantity Split Popup */
+.quantity-popup {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-popup-panel {
+    background-color: rgb(40, 40, 40);
+    border-width: 2px;
+    border-color: rgb(100, 100, 100);
+    border-radius: 8px;
+    padding: 24px;
+    width: 300px;
+    align-items: center;
+}
+
+.quantity-popup-title {
+    font-size: 20px;
+    color: white;
+    margin-bottom: 16px;
+}
+
+.quantity-slider-container {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.qty-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+    background-color: rgb(60, 60, 60);
+    color: white;
+    border-width: 1px;
+    border-color: rgb(120, 120, 120);
+    border-radius: 4px;
+}
+
+.qty-value {
+    width: 60px;
+    font-size: 24px;
+    color: white;
+    -unity-text-align: middle-center;
+}
+
+.qty-slider {
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.quantity-actions {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+}

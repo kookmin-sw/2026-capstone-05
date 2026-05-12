@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Systems.GridInventory {
     public class GridInventoryController {
-        readonly GridInventoryView view;
+        readonly GridStorageView view;
         readonly GridInventoryModel model;
         
         public GridInventoryModel Model => model;
@@ -15,7 +15,7 @@ namespace Systems.GridInventory {
         readonly int height;
         int Capacity => width * height;
 
-        public GridInventoryController(GridInventoryView view, GridInventoryModel model, int width, int height) {
+        public GridInventoryController(GridStorageView view, GridInventoryModel model, int width, int height) {
             Debug.Assert(view != null, "View is null");
             Debug.Assert(model != null, "Model is null");
             Debug.Assert(width > 0 && height > 0, "Dimensions are less than 1");
@@ -32,8 +32,10 @@ namespace Systems.GridInventory {
 
             view.OnDrop += HandleDrop;
             view.OnDropToQuickslot += HandleDropToQuickslot;
-            view.OnSaveClicked += HandleSave;
-            view.OnLoadClicked += HandleLoad;
+            if (view is GridInventoryView invView) {
+                invView.OnSaveClicked += HandleSave;
+                invView.OnLoadClicked += HandleLoad;
+            }
             model.OnModelChanged += HandleModelChanged;
             view.OnDragUpdate += HandleDragUpdate;
             view.OnDragEndEvent += HandleDragEnd;
@@ -48,7 +50,28 @@ namespace Systems.GridInventory {
             QuickslotUIController.OnItemDragEndGlobal -= HandleDragEnd;
             QuickslotUIController.OnItemDragEndGlobal += HandleDragEnd;
 
+            GridItemView.OnCtrlClickGlobal -= HandleCtrlClick;
+            GridItemView.OnCtrlClickGlobal += HandleCtrlClick;
+
+            GridItemView.OnShiftClickGlobal -= HandleShiftClick;
+            GridItemView.OnShiftClickGlobal += HandleShiftClick;
+
             RefreshView();
+        }
+
+        public static event Action<ItemInstance, GridInventoryModel> OnRequestQuickMove;
+        public static event Action<ItemInstance, GridInventoryModel> OnRequestSplitMove;
+
+        void HandleCtrlClick(GridItemView itemView) {
+            if (model.GetItemAnchorPosition(itemView.ItemInst).x != -1) {
+                OnRequestQuickMove?.Invoke(itemView.ItemInst, model);
+            }
+        }
+
+        void HandleShiftClick(GridItemView itemView) {
+            if (model.GetItemAnchorPosition(itemView.ItemInst).x != -1) {
+                OnRequestSplitMove?.Invoke(itemView.ItemInst, model);
+            }
         }
         void HandleQuickslotItemDropped(ItemInstance item, int sourceQuickslotIndex, Vector2 screenPosition) {
             if (GridInventoryView.Instance != null && GridInventoryView.Instance.isActiveAndEnabled) {
@@ -538,12 +561,12 @@ namespace Systems.GridInventory {
         #region Builder
 
         public class Builder {
-            GridInventoryView view;
-            int width = 10;
-            int height = 5;
+            GridStorageView view;
+            int width = 8;
+            int height = 8;
             IEnumerable<GridInventory.StartingItem> startingItems;
 
-            public Builder(GridInventoryView view) {
+            public Builder(GridStorageView view) {
                 this.view = view;
             }
 
