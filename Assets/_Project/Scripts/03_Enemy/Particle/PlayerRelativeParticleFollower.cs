@@ -26,6 +26,9 @@ public class PlayerRelativeParticleFollower : MonoBehaviour, IPlayerNetworkConfi
     [SerializeField] private bool localPlayerOnly = true;
     [SerializeField] private bool forceWorldSimulationSpace = true;
     [SerializeField] private ParticleSystem[] particleSystems;
+    [SerializeField] private bool syncWithWeatherState = true;
+    [SerializeField] private bool useAutomaticWeatherStateInference = true;
+    [SerializeField] private NetworkWeatherState activeWeatherState = NetworkWeatherState.Snow;
 
     [Header("Indoor Occlusion")]
     [SerializeField] private bool useCeilingOcclusion = false;
@@ -40,6 +43,7 @@ public class PlayerRelativeParticleFollower : MonoBehaviour, IPlayerNetworkConfi
     private bool shouldRun = true;
     private bool hasManualFollowTarget;
     private bool isOccluded;
+    private bool isWeatherHidden;
     private bool particlesPlaying;
     private bool playbackStateInitialized;
     private float nextCeilingCheckTime;
@@ -64,7 +68,20 @@ public class PlayerRelativeParticleFollower : MonoBehaviour, IPlayerNetworkConfi
         }
 
         SnapToTarget();
+        ApplyWeatherState(BackendRoundManager.Instance != null
+            ? BackendRoundManager.Instance.CurrentWeatherState
+            : InferWeatherStateFromName());
         RefreshParticlePlayback();
+    }
+
+    private void OnEnable()
+    {
+        BackendRoundManager.WeatherStateChanged += ApplyWeatherState;
+    }
+
+    private void OnDisable()
+    {
+        BackendRoundManager.WeatherStateChanged -= ApplyWeatherState;
     }
 
     private void OnValidate()
@@ -122,6 +139,23 @@ public class PlayerRelativeParticleFollower : MonoBehaviour, IPlayerNetworkConfi
     public void SetIndoorBlocked(bool blocked)
     {
         isOccluded = blocked;
+        RefreshParticlePlayback();
+    }
+
+    public void ApplyWeatherState(NetworkWeatherState weatherState)
+    {
+        if (!syncWithWeatherState)
+        {
+            isWeatherHidden = false;
+            RefreshParticlePlayback();
+            return;
+        }
+
+        NetworkWeatherState expectedState = useAutomaticWeatherStateInference
+            ? InferWeatherStateFromName()
+            : activeWeatherState;
+
+        isWeatherHidden = expectedState != weatherState;
         RefreshParticlePlayback();
     }
 
@@ -294,7 +328,24 @@ public class PlayerRelativeParticleFollower : MonoBehaviour, IPlayerNetworkConfi
 
     private void RefreshParticlePlayback()
     {
-        SetParticlePlayback(shouldRun && !isOccluded);
+        SetParticlePlayback(shouldRun && !isOccluded && !isWeatherHidden);
+    }
+
+    private NetworkWeatherState InferWeatherStateFromName()
+    {
+        string targetName = gameObject.name;
+        if (string.IsNullOrEmpty(targetName))
+        {
+            return activeWeatherState;
+        }
+
+        string normalized = targetName.ToLowerInvariant();
+        if (normalized.Contains("storm") || normalized.Contains("blizzard"))
+        {
+            return NetworkWeatherState.Blizzard;
+        }
+
+        return NetworkWeatherState.Snow;
     }
 
     private void SetParticlePlayback(bool play)

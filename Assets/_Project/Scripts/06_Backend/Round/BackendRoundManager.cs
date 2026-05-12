@@ -6,16 +6,25 @@ using UnityEngine;
 public class BackendRoundManager : NetworkBehaviour
 {
     private const string HostSelectedSlotPrefKey = "HostSaveSlot";
+    public static BackendRoundManager Instance { get; private set; }
+    public static event System.Action<NetworkWeatherState> WeatherStateChanged;
 
     [Header("Round")]
     [SerializeField] private float roundDurationSeconds = 300f;
 
+    [Header("Weather")]
+    [SerializeField] private NetworkWeatherState initialWeatherState = NetworkWeatherState.Snow;
+
     [Networked] public NetworkBool IsRoundRunning { get; private set; }
     [Networked] public TickTimer RoundTimer { get; private set; }
     [Networked] public int CurrentRoundNumber { get; private set; }
+    [Networked] private int NetworkWeatherStateRaw { get; set; }
 
     private string _hostRoundCountPrefKey = RoomLauncher.BuildHostRoundCountPrefKey(1);
     private int _activeHostSlot = 1;
+    private NetworkWeatherState _lastBroadcastWeatherState;
+
+    public NetworkWeatherState CurrentWeatherState => (NetworkWeatherState)NetworkWeatherStateRaw;
 
     public float RoundTimeRemainingSeconds
     {
@@ -32,8 +41,11 @@ public class BackendRoundManager : NetworkBehaviour
 
     public override void Spawned()
     {
+        Instance = this;
+
         if (!HasStateAuthority)
         {
+            BroadcastWeatherState(force: true);
             return;
         }
 
@@ -42,12 +54,16 @@ public class BackendRoundManager : NetworkBehaviour
         CurrentRoundNumber = Mathf.Max(1, PlayerPrefs.GetInt(_hostRoundCountPrefKey, 1));
         IsRoundRunning = false;
         RoundTimer = TickTimer.None;
+        NetworkWeatherStateRaw = (int)initialWeatherState;
+        BroadcastWeatherState(force: true);
 
         Debug.Log($"[BackendRoundManager] 호스트 라운드 저장소 로드. key={_hostRoundCountPrefKey}, userId={AuthSession.CurrentUserId}, round={CurrentRoundNumber}");
     }
 
     public override void FixedUpdateNetwork()
     {
+        BroadcastWeatherState();
+
         if (!HasStateAuthority)
         {
             return;
@@ -92,6 +108,18 @@ public class BackendRoundManager : NetworkBehaviour
         MovePlayerToSpawner(requestedBy);
     }
 
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RpcRequestSetWeatherState(PlayerRef requestedBy, int weatherState)
+    {
+        if (!HasStateAuthority)
+        {
+            return;
+        }
+
+        SetWeatherStateInternal((NetworkWeatherState)weatherState);
+        Debug.Log($"[BackendRoundManager] Weather state changed. requestedBy={requestedBy}, state={(NetworkWeatherState)weatherState}");
+    }
+
     private void StartRound(string reason)
     {
         IsRoundRunning = true;
@@ -121,6 +149,22 @@ public class BackendRoundManager : NetworkBehaviour
         }
 
         Debug.Log($"[BackendRoundManager] 라운드 종료. slot={_activeHostSlot}, round={CurrentRoundNumber}, reason={reason}");
+    }
+
+    public void RequestSetWeatherState(NetworkWeatherState weatherState)
+    {
+        PlayerRef requester = Runner != null ? Runner.LocalPlayer : PlayerRef.None;
+
+        if (HasStateAuthority)
+        {
+            SetWeatherStateInternal(weatherState);
+            return;
+        }
+
+        if (Runner != null)
+        {
+            RpcRequestSetWeatherState(requester, (int)weatherState);
+        }
     }
 
     private void RespawnAllPlayersAtSpawner()
@@ -216,6 +260,32 @@ public class BackendRoundManager : NetworkBehaviour
         if (save)
         {
             PlayerPrefs.Save();
+        }
+    }
+
+    private void SetWeatherStateInternal(NetworkWeatherState weatherState)
+    {
+        NetworkWeatherStateRaw = (int)weatherState;
+        BroadcastWeatherState(force: true);
+    }
+
+    private void BroadcastWeatherState(bool force = false)
+    {
+        NetworkWeatherState weatherState = CurrentWeatherState;
+        if (!force && _lastBroadcastWeatherState == weatherState)
+        {
+            return;
+        }
+
+        _lastBroadcastWeatherState = weatherState;
+        WeatherStateChanged?.Invoke(weatherState);
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
         }
     }
 
