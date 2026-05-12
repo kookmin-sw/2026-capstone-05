@@ -1,4 +1,5 @@
 using Fusion;
+using Systems.StorageSystem;
 using UnityEngine;
 
 [RequireComponent(typeof(NetworkObject))]
@@ -114,6 +115,10 @@ public class BackendRoundManager : NetworkBehaviour
         PlayerPrefs.Save();
 
         RespawnAllPlayersAtSpawner();
+        if (StorageNetworkSync.Instance != null)
+        {
+            StorageNetworkSync.Instance.SaveAllStorages();
+        }
 
         Debug.Log($"[BackendRoundManager] 라운드 종료. slot={_activeHostSlot}, round={CurrentRoundNumber}, reason={reason}");
     }
