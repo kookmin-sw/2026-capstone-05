@@ -13,7 +13,28 @@ namespace Systems.StorageSystem
         [SerializeField] private int storageHeight = 18;
         [SerializeField] private string[] defaultStorageIds = { "Storage_0", "Storage_1" };
 
-        public static StorageNetworkSync Instance { get; private set; }
+        private static StorageNetworkSync _instance;
+        public static StorageNetworkSync Instance 
+        { 
+            get 
+            {
+                if (_instance == null && PlayerNetworkSetup.IsOfflineTestMode)
+                {
+                    _instance = FindFirstObjectByType<StorageNetworkSync>();
+                    if (_instance == null)
+                    {
+                        GameObject go = new GameObject("StorageNetworkSync_Offline");
+                        _instance = go.AddComponent<StorageNetworkSync>();
+                    }
+                    _instance.InitializeOffline();
+                }
+                return _instance;
+            }
+            private set
+            {
+                _instance = value;
+            }
+        }
 
         private readonly Dictionary<string, GridInventoryModel> modelsById = new Dictionary<string, GridInventoryModel>();
         private readonly HashSet<string> dirtyStorageIds = new HashSet<string>();
@@ -25,6 +46,8 @@ namespace Systems.StorageSystem
 
         public override void Spawned()
         {
+            if (PlayerNetworkSetup.IsOfflineTestMode) return; // 오프라인 모드에서는 Start()에서 처리됨
+            
             Instance = this;
             StorageRackRuntimeBinder.BindDefaultRacks(this);
             EnsureSceneStorageModels();
@@ -50,6 +73,25 @@ namespace Systems.StorageSystem
             }
         }
 
+        private bool isOfflineInitialized = false;
+
+        private void Start()
+        {
+            if (PlayerNetworkSetup.IsOfflineTestMode && !isOfflineInitialized)
+            {
+                InitializeOffline();
+            }
+        }
+
+        private void InitializeOffline()
+        {
+            isOfflineInitialized = true;
+            _instance = this;
+            StorageRackRuntimeBinder.BindDefaultRacks(this);
+            EnsureSceneStorageModels();
+            LoadAllStorages();
+        }
+
         public void SubmitStorageSnapshot(string storageId, StorageSaveData snapshot)
         {
             if (snapshot == null)
@@ -60,7 +102,7 @@ namespace Systems.StorageSystem
             snapshot.storageId = NormalizeStorageId(storageId);
             string json = JsonUtility.ToJson(snapshot);
 
-            if (HasStateAuthority)
+            if (HasStateAuthority || PlayerNetworkSetup.IsOfflineTestMode)
             {
                 ApplyStorageSnapshot(json);
                 return;
@@ -107,7 +149,7 @@ namespace Systems.StorageSystem
 
         private void ApplyStorageSnapshot(string json)
         {
-            if (!HasStateAuthority || string.IsNullOrWhiteSpace(json))
+            if ((!HasStateAuthority && !PlayerNetworkSetup.IsOfflineTestMode) || string.IsNullOrWhiteSpace(json))
             {
                 return;
             }

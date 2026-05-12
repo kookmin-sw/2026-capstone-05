@@ -1,0 +1,244 @@
+/* LootUI.uss */
+.loot-container {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.2);
+    align-items: stretch;
+    justify-content: stretch;
+    color: rgb(220, 220, 220);
+}
+
+.split-container {
+    flex-direction: row;
+    flex-grow: 1;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+}
+
+.left-panel {
+    width: 35%;
+    background-color: rgba(20, 25, 30, 0.95);
+    border-width: 0;
+    border-right-width: 2px;
+    border-right-color: rgba(255, 255, 255, 0.1);
+    padding: 40px;
+    flex-direction: column;
+    height: 100%;
+}
+
+.center-panel {
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+}
+
+.right-panel {
+    width: 35%;
+    background-color: rgba(20, 25, 30, 0.95);
+    border-width: 0;
+    border-left-width: 2px;
+    border-left-color: rgba(255, 255, 255, 0.1);
+    padding: 40px;
+    flex-direction: column;
+    height: 100%;
+}
+
+.header-container {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 24px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.2);
+    padding-bottom: 16px;
+}
+
+.header-text {
+    font-size: 28px;
+    color: white;
+    letter-spacing: 1px;
+}
+
+.chest-icon {
+    width: 24px;
+    height: 24px;
+    background-color: #8c5b3f; /* Placeholder */
+    margin-right: 8px;
+}
+
+.slots-scroll-view {
+    flex-grow: 1;
+    margin-bottom: 16px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.slotsContainer {
+    flex-wrap: wrap;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    background-color: transparent;
+    padding: 0px;
+    flex-shrink: 0;
+    width: 100%;
+}
+
+/* Grid Inventory injection target */
+.player-inventory-container {
+    flex-grow: 1;
+    margin-bottom: 16px;
+    /* ensure proper bounds for injected content */
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    padding: 16px;
+    align-items: center;
+}
+
+.footer-container {
+    align-items: flex-end;
+    padding: 8px 16px;
+}
+
+.capacity-text {
+    font-size: 14px;
+    color: rgb(150, 150, 150);
+}
+
+/* Item Detail Panel */
+.item-detail-container {
+    width: 100%;
+    background-color: rgba(20, 20, 20, 0.9);
+    border-width: 1px;
+    border-color: rgb(100, 100, 100);
+    padding: 16px;
+    border-radius: 4px;
+}
+
+.detail-name {
+    font-size: 22px;
+    color: white;
+    -unity-font-style: bold;
+}
+
+.detail-type {
+    font-size: 14px;
+    color: rgb(150, 150, 150);
+    margin-bottom: 8px;
+}
+
+.detail-separator {
+    height: 1px;
+    background-color: rgb(80, 80, 80);
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.detail-desc {
+    font-size: 14px;
+    color: rgb(200, 200, 200);
+    white-space: normal;
+}
+
+/* Bottom Bar */
+.bottom-bar {
+    position: absolute;
+    bottom: 24px;
+    right: 40px;
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.action-btn {
+    background-color: rgb(40, 40, 40);
+    color: white;
+    border-width: 1px;
+    border-color: rgb(100, 100, 100);
+    padding: 8px 16px;
+    margin-left: 12px;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: default;
+}
+
+.action-btn:hover {
+    background-color: rgb(80, 80, 80);
+}
+
+.ghostIcon {
+    visibility: hidden;
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    background-image: none;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* Quantity Split Popup */
+.quantity-popup {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-popup-panel {
+    background-color: rgb(40, 40, 40);
+    border-width: 2px;
+    border-color: rgb(100, 100, 100);
+    border-radius: 8px;
+    padding: 24px;
+    width: 300px;
+    align-items: center;
+}
+
+.quantity-popup-title {
+    font-size: 20px;
+    color: white;
+    margin-bottom: 16px;
+}
+
+.quantity-slider-container {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.qty-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+    background-color: rgb(60, 60, 60);
+    color: white;
+    border-width: 1px;
+    border-color: rgb(120, 120, 120);
+    border-radius: 4px;
+}
+
+.qty-value {
+    width: 60px;
+    font-size: 24px;
+    color: white;
+    -unity-text-align: middle-center;
+}
+
+.qty-slider {
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.quantity-actions {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+}

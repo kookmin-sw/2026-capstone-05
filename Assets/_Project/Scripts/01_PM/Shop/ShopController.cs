@@ -517,6 +517,12 @@ namespace Systems.Shop
                     originalInventoryParent.Add(scrollView);
                 }
 
+                var gridStyleSheet = GridInventoryView.Instance.GridStyleSheet;
+                if (gridStyleSheet != null && shopView.GetRootVisualElement().styleSheets.Contains(gridStyleSheet))
+                {
+                    shopView.GetRootVisualElement().styleSheets.Remove(gridStyleSheet);
+                }
+
                 var ghostIcon = shopView.GetRootVisualElement().Q<UnityEngine.UIElements.VisualElement>(name: "ghostIcon");
                 if (ghostIcon != null && originalGhostParent != null)
                 {
