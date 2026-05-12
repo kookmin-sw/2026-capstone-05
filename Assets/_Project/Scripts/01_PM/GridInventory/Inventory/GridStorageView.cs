@@ -11,6 +11,11 @@ namespace Systems.GridInventory {
         [SerializeField] protected UIDocument document;
         [SerializeField] protected StyleSheet styleSheet;
 
+        public VisualElement GhostIcon {
+            get => ghostIcon;
+            set => ghostIcon = value;
+        }
+
         protected VisualElement ghostIcon;
         protected VisualElement itemsContainer;
 
@@ -132,11 +137,13 @@ namespace Systems.GridInventory {
             currentPointerPos = position;
             GridInventoryDragHelper.UpdateGhostPosition(ghostIcon, position);
             OnDragUpdate?.Invoke(item, position);
+            GridItemView.OnItemDragUpdateGlobal?.Invoke(item, position);
         }
 
         void OnItemDragEnd(GridItemView item) {
             if (!isDragging || draggedItem != item) return;
             ProcessDrop(currentPointerPos);
+            GridItemView.OnItemDroppedGlobal?.Invoke(item, currentPointerPos);
             OnDragEndEvent?.Invoke();
         }
 

@@ -19,6 +19,11 @@ namespace Systems.GridInventory {
         public float VisualAngle { get; set; }
 
         public event Action<Vector2, GridItemView> OnStartDrag = delegate { };
+        
+        public static Action<GridItemView> OnCtrlClickGlobal;
+        public static Action<GridItemView> OnShiftClickGlobal;
+        public static Action<GridItemView, Vector2> OnItemDragUpdateGlobal;
+        public static Action<GridItemView, Vector2> OnItemDroppedGlobal;
 
         public GridItemView(ItemInstance itemInst) {
             ItemInst = itemInst;
@@ -146,6 +151,18 @@ namespace Systems.GridInventory {
 
         void OnPointerDown(PointerDownEvent evt) {
             if (evt.button != 0) return;
+            
+            if (evt.ctrlKey || evt.commandKey) {
+                OnCtrlClickGlobal?.Invoke(this);
+                evt.StopPropagation();
+                return;
+            }
+
+            if (evt.shiftKey) {
+                OnShiftClickGlobal?.Invoke(this);
+                evt.StopPropagation();
+                return;
+            }
             
             isDraggingThis = true;
             this.CapturePointer(evt.pointerId);

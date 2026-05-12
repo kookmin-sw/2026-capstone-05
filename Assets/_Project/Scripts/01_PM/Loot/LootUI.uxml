@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<engine:UXML xmlns:engine="UnityEngine.UIElements" xmlns:Systems="Systems.GridInventory" editor-extension-mode="False">
+    <engine:Style src="LootUI.uss" />
+    <engine:VisualElement name="loot-root" class="loot-container">
+        
+        <engine:VisualElement class="main-window">
+            <engine:VisualElement class="split-container">
+                
+                <!-- Left Panel : Loot / Chest -->
+                <engine:VisualElement class="left-panel">
+                    <engine:VisualElement class="header-container">
+                        <engine:VisualElement class="chest-icon" />
+                        <engine:Label name="loot-header" text="Supply Chest" class="header-text"/>
+                    </engine:VisualElement>
+                    
+                    <engine:ScrollView class="slots-scroll-view" name="loot-scroll-view">
+                        <engine:VisualElement name="lootSlotsContainer" class="slotsContainer" />
+                    </engine:ScrollView>
+                    
+                    <engine:VisualElement class="footer-container">
+                        <engine:Label name="loot-capacity" text="0 / 50" class="capacity-text"/>
+                    </engine:VisualElement>
+                </engine:VisualElement>
+
+                <!-- Center Panel : Item Description -->
+                <engine:VisualElement class="center-panel">
+                    <engine:VisualElement name="item-detail-container" class="item-detail-container" style="display: none;">
+                        <engine:Label name="detail-name" text="Item Name" class="detail-name"/>
+                        <engine:Label name="detail-type" text="Type" class="detail-type"/>
+                        <engine:VisualElement class="detail-separator" />
+                        <engine:Label name="detail-desc" text="Item description goes here." class="detail-desc"/>
+                    </engine:VisualElement>
+                </engine:VisualElement>
+
+                <!-- Right Panel : Player Inventory -->
+                <engine:VisualElement class="right-panel">
+                    <engine:VisualElement class="header-container">
+                        <engine:Label name="inventory-header" text="Inventory" class="header-text"/>
+                    </engine:VisualElement>
+
+                    <!-- The player inventory grid will be injected here via code -->
+                    <engine:VisualElement name="player-inventory-container" class="player-inventory-container" />
+                    
+                    <engine:VisualElement class="footer-container">
+                        <engine:Label name="inventory-capacity" text="0 / 100" class="capacity-text"/>
+                    </engine:VisualElement>
+                </engine:VisualElement>
+                
+            </engine:VisualElement>
+
+            <!-- Bottom Bar for controls -->
+            <engine:VisualElement class="bottom-bar">
+                <engine:Button name="btn-take-all" text="* Take All" class="action-btn" />
+                <engine:Button name="btn-close" text="* Close" class="action-btn" />
+            </engine:VisualElement>
+
+        </engine:VisualElement>
+        
+        <!-- Drag & Drop Ghost Icon -->
+        <engine:VisualElement name="ghostIcon" class="ghostIcon"/>
+
+        <!-- Quantity Split Popup -->
+        <engine:VisualElement name="quantity-popup" class="quantity-popup" style="display: none;">
+            <engine:VisualElement class="quantity-popup-panel">
+                <engine:Label text="Split Quantity" class="quantity-popup-title" />
+                <engine:VisualElement class="quantity-slider-container">
+                    <engine:Button name="btn-qty-minus" text="-" class="qty-btn" />
+                    <engine:Label name="lbl-qty-value" text="1" class="qty-value" />
+                    <engine:Button name="btn-qty-plus" text="+" class="qty-btn" />
+                </engine:VisualElement>
+                <engine:SliderInt name="slider-qty" low-value="1" high-value="99" class="qty-slider" />
+                <engine:VisualElement class="quantity-actions">
+                    <engine:Button name="btn-qty-confirm" text="Confirm" class="action-btn" />
+                    <engine:Button name="btn-qty-cancel" text="Cancel" class="action-btn" />
+                </engine:VisualElement>
+            </engine:VisualElement>
+        </engine:VisualElement>
+        
+    </engine:VisualElement>
+</engine:UXML>
