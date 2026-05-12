@@ -472,7 +472,7 @@ public sealed class MainMenuAuthController : MonoBehaviour
 #if !UNITY_EDITOR
         if (IsLoopbackApiBaseUrl(trimmed))
         {
-            Debug.LogWarning($"{LogPrefix} Auth API base URL points to this client device ({trimmed}). For remote multiplayer, set --auth-api-base-url, NUNBORA_AUTH_API_BASE_URL, or auth-api-base-url.txt to the Docker host IP/public tunnel URL.");
+            Debug.LogWarning($"{LogPrefix} Auth API base URL points to this client device ({trimmed}). For remote multiplayer, set auth-api-base-url.txt next to the executable to the Docker host IP/public tunnel URL.");
         }
 #endif
         return trimmed;
@@ -482,14 +482,6 @@ public sealed class MainMenuAuthController : MonoBehaviour
     {
         if (!allowRuntimeOverride)
             return configuredBaseUrl;
-
-        string commandLineOverride = GetCommandLineValue("--auth-api-base-url");
-        if (!string.IsNullOrWhiteSpace(commandLineOverride))
-            return commandLineOverride;
-
-        string environmentOverride = Environment.GetEnvironmentVariable("NUNBORA_AUTH_API_BASE_URL");
-        if (!string.IsNullOrWhiteSpace(environmentOverride))
-            return environmentOverride;
 
         string fileOverride = TryReadApiBaseUrlConfig(configFileName);
         if (!string.IsNullOrWhiteSpace(fileOverride))
@@ -503,44 +495,36 @@ public sealed class MainMenuAuthController : MonoBehaviour
         if (string.IsNullOrWhiteSpace(configFileName))
             return null;
 
-        foreach (string path in GetApiBaseUrlConfigPaths(configFileName.Trim()))
+        string path = GetApiBaseUrlConfigPath(configFileName.Trim());
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+            return null;
+
+        try
         {
-            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
-                continue;
-
-            try
+            foreach (string line in File.ReadAllLines(path))
             {
-                foreach (string line in File.ReadAllLines(path))
-                {
-                    string value = line.Trim();
-                    if (value.Length == 0 || value.StartsWith("#", StringComparison.Ordinal))
-                        continue;
+                string value = line.Trim();
+                if (value.Length == 0 || value.StartsWith("#", StringComparison.Ordinal))
+                    continue;
 
-                    Debug.Log($"{LogPrefix} Auth API base URL loaded from config file: {path}");
-                    return value;
-                }
+                Debug.Log($"{LogPrefix} Auth API base URL loaded from config file: {path}");
+                return value;
             }
-            catch (Exception ex)
-            {
-                Debug.LogWarning($"{LogPrefix} Failed to read Auth API base URL config file: {path}, error={ex.Message}");
-            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"{LogPrefix} Failed to read Auth API base URL config file: {path}, error={ex.Message}");
         }
 
         return null;
     }
 
-    private static string[] GetApiBaseUrlConfigPaths(string configFileName)
+    private static string GetApiBaseUrlConfigPath(string configFileName)
     {
         if (Path.IsPathRooted(configFileName))
-            return new[] { configFileName };
+            return configFileName;
 
-        return new[]
-        {
-            Path.Combine(Application.persistentDataPath, configFileName),
-            Path.Combine(Application.streamingAssetsPath, configFileName),
-            Path.Combine(GetPlayerRootDirectory(), configFileName),
-            Path.Combine(Directory.GetCurrentDirectory(), configFileName)
-        };
+        return Path.Combine(GetPlayerRootDirectory(), configFileName);
     }
 
     private static string GetPlayerRootDirectory()
@@ -579,21 +563,4 @@ public sealed class MainMenuAuthController : MonoBehaviour
         return builder.Uri.ToString().TrimEnd('/');
     }
 
-    private static string GetCommandLineValue(string optionName)
-    {
-        string[] args = Environment.GetCommandLineArgs();
-        string prefix = optionName + "=";
-
-        for (int i = 0; i < args.Length; i++)
-        {
-            string arg = args[i];
-            if (arg.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                return arg.Substring(prefix.Length);
-
-            if (string.Equals(arg, optionName, StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
-                return args[i + 1];
-        }
-
-        return null;
-    }
 }
