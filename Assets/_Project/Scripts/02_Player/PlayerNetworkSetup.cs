@@ -13,9 +13,16 @@ public class PlayerNetworkSetup : MonoBehaviour
     [Header("Network Test")]
     public bool isLocalPlayerTest = true;
 
-    private void Start()
+    public static bool IsOfflineTestMode { get; private set; } = false;
+
+    private void Awake()
     {
         // 테스트 코드
+        //IsOfflineTestMode = true;
+    }
+
+    private void Start()
+    {
         //InitializeNetworkState(true);
     }
 

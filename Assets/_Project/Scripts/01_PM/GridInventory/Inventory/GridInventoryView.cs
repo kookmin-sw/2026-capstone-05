@@ -20,6 +20,14 @@ namespace Systems.GridInventory {
 
         public bool IsOpen => container != null && container.style.display != DisplayStyle.None;
 
+        private void HandleSaveClicked() {
+            OnSaveClicked?.Invoke();
+        }
+
+        private void HandleLoadClicked() {
+            OnLoadClicked?.Invoke();
+        }
+
         private void Awake() {
             if (Instance == null) Instance = this;
             else if (Instance != this) Destroy(gameObject);
@@ -101,13 +109,18 @@ namespace Systems.GridInventory {
             ghostIcon.pickingMode = PickingMode.Ignore;
             
             var btnSave = inventory.Q<Button>(name: "btn-save");
+            var btnLoad = inventory.Q<Button>(name: "btn-load");
+
+            UpdateSaveLoadButtonsVisibility();
+
             if (btnSave != null) {
-                btnSave.clicked += () => OnSaveClicked?.Invoke();
+                btnSave.clicked -= HandleSaveClicked;
+                btnSave.clicked += HandleSaveClicked;
             }
 
-            var btnLoad = inventory.Q<Button>(name: "btn-load");
             if (btnLoad != null) {
-                btnLoad.clicked += () => OnLoadClicked?.Invoke();
+                btnLoad.clicked -= HandleLoadClicked;
+                btnLoad.clicked += HandleLoadClicked;
             }
 
             // 인벤토리 창 게임 시작 시 안 보이도록 숨기기
@@ -134,6 +147,8 @@ namespace Systems.GridInventory {
             container.style.display = DisplayStyle.Flex;
             IsAnyInventoryOpen = true;
             ApplyStorageLayout();
+            
+            UpdateSaveLoadButtonsVisibility();
 
             UnityEngine.Cursor.lockState = CursorLockMode.None;
             UnityEngine.Cursor.visible = true;
@@ -198,6 +213,7 @@ namespace Systems.GridInventory {
                 if (isHidden) {
                     UnityEngine.Cursor.lockState = CursorLockMode.None;
                     UnityEngine.Cursor.visible = true;
+                    UpdateSaveLoadButtonsVisibility();
                 } else {
                     UnityEngine.Cursor.lockState = CursorLockMode.Locked;
                     UnityEngine.Cursor.visible = false;
@@ -251,6 +267,36 @@ namespace Systems.GridInventory {
                 inventory.style.marginLeft = StyleKeyword.Null;
                 inventory.style.marginRight = StyleKeyword.Null;
                 inventory.style.maxWidth = StyleKeyword.Null;
+            }
+        }
+        
+        private void UpdateSaveLoadButtonsVisibility()
+        {
+            if (container == null) return;
+            var inventory = container.Q<VisualElement>(name: "inventory-window");
+            if (inventory == null) return;
+            
+            var btnSave = inventory.Q<Button>(name: "btn-save");
+            var btnLoad = inventory.Q<Button>(name: "btn-load");
+            
+            if (PlayerNetworkSetup.IsOfflineTestMode)
+            {
+                if (btnSave != null) btnSave.style.display = DisplayStyle.Flex;
+                if (btnLoad != null) btnLoad.style.display = DisplayStyle.Flex;
+            }
+            else
+            {
+                bool isHost = StorageSystem.StorageNetworkSync.Instance != null && StorageSystem.StorageNetworkSync.Instance.HasStateAuthority;
+                if (isHost)
+                {
+                    if (btnSave != null) btnSave.style.display = DisplayStyle.Flex;
+                    if (btnLoad != null) btnLoad.style.display = DisplayStyle.Flex;
+                }
+                else
+                {
+                    if (btnSave != null) btnSave.style.display = DisplayStyle.None;
+                    if (btnLoad != null) btnLoad.style.display = DisplayStyle.None;
+                }
             }
         }
     }

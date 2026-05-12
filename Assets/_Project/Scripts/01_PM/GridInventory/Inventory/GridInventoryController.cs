@@ -393,11 +393,23 @@ namespace Systems.GridInventory {
         }
 
         void HandleSave() {
-            GridInventorySaveSystem.SaveInventory(model);
+            if (PlayerNetworkSetup.IsOfflineTestMode) {
+                // 싱글플레이어 오프라인 모드에서는 로컬 저장
+                GridInventorySaveSystem.SaveInventory(model);
+            } else if (BackendPlayerNetworkSync.LocalInstance != null) {
+                // 멀티플레이어 모드에서는 호스트가 전체 저장
+                BackendPlayerNetworkSync.LocalInstance.HostInitiateSaveAll();
+            }
         }
 
         void HandleLoad() {
-            GridInventorySaveSystem.LoadInventory(model);
+            if (PlayerNetworkSetup.IsOfflineTestMode) {
+                // 싱글플레이어 오프라인 모드에서는 로컬 불러오기
+                GridInventorySaveSystem.LoadInventory(model);
+            } else if (BackendPlayerNetworkSync.LocalInstance != null) {
+                // 멀티플레이어 모드에서는 호스트가 전체 불러오기
+                BackendPlayerNetworkSync.LocalInstance.HostInitiateLoadAll();
+            }
             RefreshView();
         }
 
@@ -565,6 +577,7 @@ namespace Systems.GridInventory {
             int width = 8;
             int height = 8;
             IEnumerable<GridInventory.StartingItem> startingItems;
+            GridInventoryModel existingModel;
 
             public Builder(GridStorageView view) {
                 this.view = view;
@@ -580,11 +593,16 @@ namespace Systems.GridInventory {
                 this.height = height;
                 return this;
             }
+            
+            public Builder WithExistingModel(GridInventoryModel model) {
+                this.existingModel = model;
+                return this;
+            }
 
             public GridInventoryController Build() {
-                GridInventoryModel model = new GridInventoryModel(width, height);
-                // Add initial items if provided
-                if (startingItems != null) {
+                GridInventoryModel model = existingModel ?? new GridInventoryModel(width, height);
+                // Add initial items if provided and we created a new model
+                if (existingModel == null && startingItems != null) {
                     foreach (var item in startingItems) {
                         int amount = item.quantity;
                         while (amount > 0) {

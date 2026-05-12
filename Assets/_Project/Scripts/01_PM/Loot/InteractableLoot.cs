@@ -13,32 +13,59 @@ namespace Systems.Loot
 
     public class InteractableLoot : MonoBehaviour, IInteractable
     {
+        [Header("Loot Configuration")]
+        [SerializeField] private string storageId = "Loot_0";
         [SerializeField] private string lootTitle = "Supply Chest";
-        [SerializeField] private int gridCols = 8;
-        [SerializeField] private int gridRows = 8;
         
+        [Header("Initial Items (Only spawned if storage is empty)")]
         [SerializeField] private List<LootItemSetup> initialItems;
+        
+        public string StorageId => storageId;
         
         private void Awake()
         {
-            // 레퍼런스에 맞춰 양쪽 8x8 고정
-            gridCols = 8;
-            gridRows = 8;
         }
         
-        private List<ItemInstance> currentItems = new List<ItemInstance>();
         private bool isInitialized = false;
 
-        private void InitializeItems()
+        private void InitializeItemsIfNeeded()
         {
             if (isInitialized) return;
             isInitialized = true;
             
-            foreach (var setup in initialItems)
+            if (StorageSystem.StorageNetworkSync.Instance == null) return;
+            
+            var model = StorageSystem.StorageNetworkSync.Instance.GetOrCreateModel(storageId);
+            
+            // Only seed items if the storage is completely empty (could check if first time initialization)
+            // But since model could be loaded empty, let's check if there are no items.
+            bool isEmpty = true;
+            for (int i = 0; i < model.Items.Length; i++)
             {
-                if (setup.itemData != null)
+                if (model.Items[i] != null)
                 {
-                    currentItems.Add(new ItemInstance(setup.itemData, setup.quantity));
+                    isEmpty = false;
+                    break;
+                }
+            }
+            
+            if (isEmpty && initialItems != null && initialItems.Count > 0)
+            {
+                // This will only work correctly if the server has authority, 
+                // but for now we just seed locally to the model if empty. 
+                // A true multiplayer setup would have the host seed it.
+                if (StorageSystem.StorageNetworkSync.Instance.HasStateAuthority || PlayerNetworkSetup.IsOfflineTestMode)
+                {
+                    foreach (var setup in initialItems)
+                    {
+                        if (setup.itemData != null)
+                        {
+                            var item = new ItemInstance(setup.itemData, setup.quantity);
+                            model.TryAdd(item);
+                        }
+                    }
+                    StorageSystem.StorageNetworkSync.Instance.SubmitStorageSnapshot(storageId, 
+                        StorageSystem.StorageGridSerializer.ToSaveData(storageId, model));
                 }
             }
         }
@@ -61,19 +88,23 @@ namespace Systems.Loot
 
         public void OnInteract(PlayerController player)
         {
-            InitializeItems();
+            if (StorageSystem.StorageNetworkSync.Instance == null)
+            {
+                Debug.LogWarning("[InteractableLoot] StorageNetworkSync is missing.");
+                return;
+            }
+            
+            InitializeItemsIfNeeded();
             
             if (LootController.Instance != null)
             {
-                LootController.Instance.OpenLoot(this, lootTitle, gridCols, gridRows, currentItems);
+                LootController.Instance.OpenLoot(this, storageId, lootTitle, StorageSystem.StorageNetworkSync.Instance);
             }
         }
 
-        public void SaveRemainingItems(List<ItemInstance> remaining)
+        public void SaveRemainingItems()
         {
-            currentItems = new List<ItemInstance>(remaining);
-            
-            // 만약 상자가 비었다면 애니메이션을 처리하거나 파괴하는 로직을 추가할 수 있습니다.
+            // Now handled by StorageNetworkSync
         }
     }
 }

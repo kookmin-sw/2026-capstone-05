@@ -54,6 +54,17 @@ namespace Systems.GridInventory {
 
         public static void SaveInventory(GridInventoryModel model)
         {
+            InventorySaveData saveData = GetSaveData(model);
+            string json = JsonUtility.ToJson(saveData, true);
+            string savePath = GetSavePath();
+            
+            Directory.CreateDirectory(Path.GetDirectoryName(savePath));
+            File.WriteAllText(savePath, json);
+            Debug.Log($"[Inventory] Saved to: {savePath}");
+        }
+
+        public static InventorySaveData GetSaveData(GridInventoryModel model)
+        {
             InventorySaveData saveData = new InventorySaveData();
 
             var processedItems = new HashSet<ItemInstance>();
@@ -109,14 +120,25 @@ namespace Systems.GridInventory {
                     }
                 }
             }
+            return saveData;
+        }
 
-            string json = JsonUtility.ToJson(saveData, true);
-            string savePath = GetSavePath();
-            
-            // Create directory if it doesn't exist
+        public static void SaveInventoryDataToDisk(string playerId, string json)
+        {
+            string savePath = Path.Combine(Application.persistentDataPath, "GridInventory", $"player_inventory_{playerId}.json");
             Directory.CreateDirectory(Path.GetDirectoryName(savePath));
             File.WriteAllText(savePath, json);
-            Debug.Log($"[Inventory] Saved to: {savePath}");
+            Debug.Log($"[Inventory] Saved player {playerId} to: {savePath}");
+        }
+
+        public static string LoadInventoryDataFromDisk(string playerId)
+        {
+            string savePath = Path.Combine(Application.persistentDataPath, "GridInventory", $"player_inventory_{playerId}.json");
+            if (File.Exists(savePath))
+            {
+                return File.ReadAllText(savePath);
+            }
+            return null;
         }
 
         public static void LoadInventory(GridInventoryModel model)
@@ -131,6 +153,11 @@ namespace Systems.GridInventory {
             string json = File.ReadAllText(savePath);
             InventorySaveData saveData = JsonUtility.FromJson<InventorySaveData>(json);
 
+            ApplySaveData(model, saveData);
+        }
+
+        public static void ApplySaveData(GridInventoryModel model, InventorySaveData saveData)
+        {
             if (saveData == null || saveData.items == null) return;
 
             model.Clear();
@@ -176,6 +203,7 @@ namespace Systems.GridInventory {
             }
 
             Debug.Log("[Inventory] Loaded successfully.");
+            model.Items.Invoke();
         }
 
         // Runtime 환경에서 ItemData를 찾기 위한 최적화된 헬퍼

@@ -31,12 +31,19 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
     [Networked] private int NetworkUseAnimationType { get; set; }
     [Networked] private int NetworkUseAnimationCount { get; set; }
 
+    public static BackendPlayerNetworkSync LocalInstance { get; private set; }
+
     private static readonly System.Collections.Generic.HashSet<int> ClaimedPickupKeys = new();
 
     public bool IsNetworkReady => Runner != null && Object != null;
 
     public override void Spawned()
     {
+        if (HasInputAuthority)
+        {
+            LocalInstance = this;
+        }
+
         _playerController = GetComponent<PlayerController>();
         _inputHandler = GetComponent<PlayerInputHandler>();
         _playerAnimator = GetComponent<PlayerAnimator>();
@@ -73,6 +80,11 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
 
     public override void Despawned(NetworkRunner runner, bool hasState)
     {
+        if (LocalInstance == this)
+        {
+            LocalInstance = null;
+        }
+
         if (_playerEquipment != null)
         {
             _playerEquipment.OnEquippedItemChanged -= HandleLocalEquippedItemChanged;
@@ -407,5 +419,73 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         }
 
         return null;
+    }
+
+    // --- HOST to CLIENTS ---
+        
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RpcRequestInventorySave()
+    {
+        if (!HasInputAuthority) return; // Only the local player responds
+        
+        // Client collects its inventory data
+        if (Systems.GridInventory.GridInventory.Instance != null && Systems.GridInventory.GridInventory.Instance.Controller != null)
+        {
+            Systems.GridInventory.InventorySaveData data = Systems.GridInventory.GridInventorySaveSystem.GetSaveData(Systems.GridInventory.GridInventory.Instance.Controller.Model);
+            string json = JsonUtility.ToJson(data);
+            
+            // Send back to Host
+            RpcSendInventoryDataToHost(json);
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RpcReceiveInventoryLoad(string json)
+    {
+        if (!HasInputAuthority) return; // Only the local player applies
+        
+        if (Systems.GridInventory.GridInventory.Instance != null && Systems.GridInventory.GridInventory.Instance.Controller != null)
+        {
+            Systems.GridInventory.InventorySaveData data = JsonUtility.FromJson<Systems.GridInventory.InventorySaveData>(json);
+            Systems.GridInventory.GridInventorySaveSystem.ApplySaveData(Systems.GridInventory.GridInventory.Instance.Controller.Model, data);
+        }
+    }
+
+    // --- CLIENT to HOST ---
+    
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RpcSendInventoryDataToHost(string json)
+    {
+        // Host saves it to disk per player
+        string playerId = Object.InputAuthority.PlayerId.ToString();
+        Systems.GridInventory.GridInventorySaveSystem.SaveInventoryDataToDisk(playerId, json);
+    }
+
+    // --- HOST ACTIONS ---
+    
+    public void HostInitiateSaveAll()
+    {
+        if (!HasStateAuthority) return;
+        
+        foreach (var sync in FindObjectsByType<BackendPlayerNetworkSync>(FindObjectsSortMode.None))
+        {
+            sync.RpcRequestInventorySave();
+        }
+    }
+
+    public void HostInitiateLoadAll()
+    {
+        if (!HasStateAuthority) return;
+
+        foreach (var sync in FindObjectsByType<BackendPlayerNetworkSync>(FindObjectsSortMode.None))
+        {
+            string playerId = sync.Object.InputAuthority.PlayerId.ToString();
+            string json = Systems.GridInventory.GridInventorySaveSystem.LoadInventoryDataFromDisk(playerId);
+            
+            if (!string.IsNullOrEmpty(json))
+            {
+                sync.RpcReceiveInventoryLoad(json);
+            }
+        }
     }
 }

@@ -18,6 +18,8 @@ namespace Systems.Loot
         private DummyLootGridView dummyLootGridView;
         private GridInventoryController lootInventoryController;
         private InteractableLoot currentLootSource;
+        private string currentStorageId;
+        private StorageSystem.StorageNetworkSync currentNetworkSync;
 
         private UnityEngine.UIElements.VisualElement originalInventoryParent;
         private GridItemView currentActionItemView;
@@ -46,11 +48,13 @@ namespace Systems.Loot
             GridItemView.OnItemDroppedGlobal += HandleItemDroppedGlobal;
         }
 
-        public void OpenLoot(InteractableLoot source, string title, int cols, int rows, List<ItemInstance> items)
+        public void OpenLoot(InteractableLoot source, string storageId, string title, StorageSystem.StorageNetworkSync networkSync)
         {
             if (IsOpen) return;
             IsOpen = true;
             currentLootSource = source;
+            currentStorageId = storageId;
+            currentNetworkSync = networkSync;
 
             // Share ghost icon
             if (GridInventoryView.Instance != null)
@@ -61,21 +65,14 @@ namespace Systems.Loot
 
             // 1. Create a dummy view to run the grid logic for the loot box
             dummyLootGridView = gameObject.AddComponent<DummyLootGridView>();
-            dummyLootGridView.Init(lootView.GetLootScrollView(), cols, lootView.GhostIcon);
+            dummyLootGridView.Init(lootView.GetLootScrollView(), networkSync.StorageWidth, lootView.GhostIcon);
 
             // 2. Build the Loot Inventory Controller
-            var startingItems = new List<GridInventoryClass.StartingItem>();
-            if (items != null)
-            {
-                foreach (var item in items)
-                {
-                    startingItems.Add(new GridInventoryClass.StartingItem { itemData = item.Data, quantity = item.currentStackCount });
-                }
-            }
+            var model = networkSync.GetOrCreateModel(storageId);
 
             lootInventoryController = new GridInventoryController.Builder(dummyLootGridView)
-                .WithDimensions(cols, rows)
-                .WithStartingItems(startingItems)
+                .WithDimensions(networkSync.StorageWidth, networkSync.StorageHeight)
+                .WithExistingModel(model)
                 .Build();
 
             lootView.SetLootHeader(title);
@@ -98,20 +95,7 @@ namespace Systems.Loot
             if (!IsOpen) return;
             IsOpen = false;
 
-            // Save back to source
-            if (currentLootSource != null && lootInventoryController != null)
-            {
-                List<ItemInstance> remainingItems = new List<ItemInstance>();
-                for (int i = 0; i < lootInventoryController.Model.Items.Length; i++)
-                {
-                    var item = lootInventoryController.Model.Items[i];
-                    if (item != null && !remainingItems.Contains(item))
-                    {
-                        remainingItems.Add(item);
-                    }
-                }
-                currentLootSource.SaveRemainingItems(remainingItems);
-            }
+            SubmitSnapshot();
 
             // Restore ghost icon
             if (GridInventoryView.Instance != null && originalInventoryGhostIcon != null)
@@ -129,6 +113,8 @@ namespace Systems.Loot
             }
             lootInventoryController = null;
             currentLootSource = null;
+            currentStorageId = null;
+            currentNetworkSync = null;
 
             UnityEngine.Cursor.lockState = CursorLockMode.Locked;
             UnityEngine.Cursor.visible = false;
@@ -364,6 +350,16 @@ namespace Systems.Loot
         {
             if (lootInventoryController == null || GridInventoryClass.Instance == null) return;
             // Optional: calculate actual used slots and max slots
+            SubmitSnapshot();
+        }
+
+        private void SubmitSnapshot()
+        {
+            if (currentNetworkSync != null && currentStorageId != null && lootInventoryController != null)
+            {
+                currentNetworkSync.SubmitStorageSnapshot(currentStorageId, 
+                    StorageSystem.StorageGridSerializer.ToSaveData(currentStorageId, lootInventoryController.Model));
+            }
         }
     }
 

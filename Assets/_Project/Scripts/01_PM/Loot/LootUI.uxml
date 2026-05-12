@@ -3,8 +3,7 @@
     <engine:Style src="LootUI.uss" />
     <engine:VisualElement name="loot-root" class="loot-container">
         
-        <engine:VisualElement class="main-window">
-            <engine:VisualElement class="split-container">
+        <engine:VisualElement class="split-container">
                 
                 <!-- Left Panel : Loot / Chest -->
                 <engine:VisualElement class="left-panel">
@@ -53,8 +52,6 @@
                 <engine:Button name="btn-take-all" text="* Take All" class="action-btn" />
                 <engine:Button name="btn-close" text="* Close" class="action-btn" />
             </engine:VisualElement>
-
-        </engine:VisualElement>
         
         <!-- Drag & Drop Ghost Icon -->
         <engine:VisualElement name="ghostIcon" class="ghostIcon"/>
