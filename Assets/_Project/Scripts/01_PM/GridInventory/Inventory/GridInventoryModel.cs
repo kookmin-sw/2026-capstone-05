@@ -97,15 +97,6 @@ namespace Systems.GridInventory {
         public bool PlaceItem(ItemInstance item, int startX, int startY) {
             if (!CanPlaceItem(item, startX, startY)) return false;
 
-            bool wasAlreadyPlaced = itemAnchors.ContainsKey(item);
-            if (wasAlreadyPlaced) {
-                for (int i = 0; i < Width * Height; i++) {
-                    if (Items[i] == item) {
-                        Items.SetSilent(i, null);
-                    }
-                }
-            }
-
             var positions = item.Data.gridShape.GetRotatedPositions(item.currentRotation);
 
             foreach (var pos in positions) {

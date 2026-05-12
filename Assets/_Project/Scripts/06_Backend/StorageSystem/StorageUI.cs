@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Fusion;
 using Systems.GridInventory;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -27,27 +26,6 @@ namespace Systems.StorageSystem
         private PlayerInputHandler localPlayerInputHandler;
         private bool eventsBound;
         private bool openedInventoryForStorage;
-        private bool inventoryDragEventsBound;
-        private bool inventoryDragInProgress;
-        private bool pendingRefreshAfterDrag;
-        private readonly Dictionary<int, PendingStorageOperation> pendingOperations = new Dictionary<int, PendingStorageOperation>();
-
-        private enum PendingStorageOperationType
-        {
-            RemoveInventorySource,
-            AddToInventory,
-            AddToQuickslot,
-            RemoveQuickslotSource
-        }
-
-        private struct PendingStorageOperation
-        {
-            public PendingStorageOperationType Type;
-            public ItemInstance SourceItem;
-            public int TargetIndex;
-            public int SourceSlotIndex;
-            public bool OptimisticDestinationApplied;
-        }
 
         private void Awake()
         {
@@ -62,15 +40,11 @@ namespace Systems.StorageSystem
             }
 
             UnbindModel();
-            UnbindInventoryDragEvents();
-            UnbindNetworkSyncEvents();
             OnDrop -= HandleStorageDrop;
             OnDropToQuickslot -= HandleDropToQuickslot;
-            OnDragUpdate -= HandleStorageDragUpdate;
-            OnDragEndEvent -= HandleAnyDragEnd;
             QuickslotUIController.OnItemDroppedGlobal -= HandleQuickslotItemDropped;
             QuickslotUIController.OnItemDragUpdateGlobal -= HandleQuickslotDragUpdate;
-            QuickslotUIController.OnItemDragEndGlobal -= HandleAnyDragEnd;
+            QuickslotUIController.OnItemDragEndGlobal -= ResetAllSlotColors;
         }
 
         private void Start()
@@ -96,9 +70,7 @@ namespace Systems.StorageSystem
             }
 
             BindModel(storageId, networkSync.GetOrCreateModel(storageId));
-            BindNetworkSyncEvents();
             OpenPlayerInventoryBesideStorage();
-            BindInventoryDragEvents();
             ApplyStorageLayout();
             container.style.display = DisplayStyle.Flex;
             GridInventoryView.IsAnyInventoryOpen = true;
@@ -115,7 +87,6 @@ namespace Systems.StorageSystem
             }
 
             ResetAllSlotColors();
-            UnbindInventoryDragEvents();
             ClosePlayerInventoryOpenedByStorage();
             GridInventoryView.IsAnyInventoryOpen = GridInventoryView.Instance != null && GridInventoryView.Instance.IsOpen;
             SetLocalInputActive(true);
@@ -224,11 +195,9 @@ namespace Systems.StorageSystem
             {
                 OnDrop += HandleStorageDrop;
                 OnDropToQuickslot += HandleDropToQuickslot;
-                OnDragUpdate += HandleStorageDragUpdate;
-                OnDragEndEvent += HandleAnyDragEnd;
                 QuickslotUIController.OnItemDroppedGlobal += HandleQuickslotItemDropped;
                 QuickslotUIController.OnItemDragUpdateGlobal += HandleQuickslotDragUpdate;
-                QuickslotUIController.OnItemDragEndGlobal += HandleAnyDragEnd;
+                QuickslotUIController.OnItemDragEndGlobal += ResetAllSlotColors;
                 eventsBound = true;
             }
 
@@ -289,37 +258,13 @@ namespace Systems.StorageSystem
             }
 
             ItemInstance sourceItem = externalItemView.ItemInst;
-            (int oldX, int oldY) = inventoryModel.GetItemAnchorPosition(sourceItem);
-            if (oldX < 0 || oldY < 0)
+            if (!TryPlaceIncomingItem(sourceItem, targetSlot.Index))
             {
                 return false;
-            }
-
-            (int targetX, int targetY) = model.GetCoordinates(targetSlot.Index);
-            if (!CanPlaceOrStackInModel(model, sourceItem, targetX, targetY))
-            {
-                return false;
-            }
-
-            int requestId = SubmitPut(targetSlot.Index, sourceItem);
-            if (requestId == 0)
-            {
-                return false;
-            }
-
-            if (!IsAuthoritativeStorage())
-            {
-                pendingOperations[requestId] = new PendingStorageOperation
-                {
-                    Type = PendingStorageOperationType.RemoveInventorySource,
-                    SourceItem = sourceItem,
-                    SourceSlotIndex = inventoryModel.GetIndex(oldX, oldY),
-                    TargetIndex = targetSlot.Index
-                };
-                return true;
             }
 
             inventoryModel.TryRemove(sourceItem);
+            SubmitSnapshot();
             return true;
         }
 
@@ -350,27 +295,11 @@ namespace Systems.StorageSystem
             }
 
             model = null;
-            ClearItemViews();
-        }
-
-        private void ClearItemViews()
-        {
-            foreach (GridItemView itemView in itemViews.Values.ToList())
-            {
-                RemoveItem(itemView);
-            }
-
             itemViews.Clear();
         }
 
         private void HandleModelChanged(IList<ItemInstance> items)
         {
-            if (isDragging || inventoryDragInProgress)
-            {
-                pendingRefreshAfterDrag = true;
-                return;
-            }
-
             RefreshView();
         }
 
@@ -430,28 +359,6 @@ namespace Systems.StorageSystem
                 itemView.RefreshVisuals();
                 UpdateItemPosition(itemView, anchorIndex);
                 itemView.style.visibility = Visibility.Visible;
-                itemView.style.opacity = 1f;
-            }
-
-            PruneOrphanItemViews();
-        }
-
-        private void PruneOrphanItemViews()
-        {
-            if (itemsContainer == null)
-            {
-                return;
-            }
-
-            HashSet<GridItemView> trackedViews = new HashSet<GridItemView>(itemViews.Values);
-            List<GridItemView> orphanViews = itemsContainer.Children()
-                .OfType<GridItemView>()
-                .Where(view => !trackedViews.Contains(view))
-                .ToList();
-
-            foreach (GridItemView orphanView in orphanViews)
-            {
-                RemoveItem(orphanView);
             }
         }
 
@@ -469,25 +376,17 @@ namespace Systems.StorageSystem
                 return;
             }
 
-            int oldSlotIndex = model.GetIndex(oldX, oldY);
             (int newX, int newY) = model.GetCoordinates(targetSlot.Index);
-            if (!CanPlaceOrStackInModel(model, sourceItem, newX, newY))
+            model.TryRemove(sourceItem);
+
+            if (!PlaceOrStackInModel(model, sourceItem, newX, newY))
             {
                 itemView.RevertRotation(itemView.OriginalRotation);
+                model.PlaceItem(sourceItem, oldX, oldY);
                 return;
             }
 
-            int requestId = SubmitMove(oldSlotIndex, targetSlot.Index, sourceItem.currentRotation);
-            if (requestId == 0)
-            {
-                itemView.RevertRotation(itemView.OriginalRotation);
-                return;
-            }
-
-            if (!IsAuthoritativeStorage())
-            {
-                MoveItemLocally(model, sourceItem, oldX, oldY, newX, newY, itemView.OriginalRotation);
-            }
+            SubmitSnapshot();
         }
 
         private void HandleDropToQuickslot(GridItemView itemView, int quickslotIndex)
@@ -499,70 +398,24 @@ namespace Systems.StorageSystem
 
             ItemInstance sourceItem = itemView.ItemInst;
             (int oldX, int oldY) = model.GetItemAnchorPosition(sourceItem);
-            if (oldX < 0 || oldY < 0)
-            {
-                return;
-            }
-
-            int oldSlotIndex = model.GetIndex(oldX, oldY);
             ItemInstance targetItem = QuickslotUIController.Instance.GetItem(quickslotIndex);
 
-            if (!IsAuthoritativeStorage())
-            {
-                if (targetItem != null)
-                {
-                    bool canStackIntoQuickslot = targetItem.Data == sourceItem.Data &&
-                        targetItem.Data.maxStackSize > 1 &&
-                        targetItem.currentStackCount + sourceItem.currentStackCount <= targetItem.Data.maxStackSize;
-                    if (!canStackIntoQuickslot)
-                    {
-                        return;
-                    }
-                }
-
-                int requestId = SubmitRemove(oldSlotIndex, ItemRotation.Deg0);
-                if (requestId == 0)
-                {
-                    return;
-                }
-
-                pendingOperations[requestId] = new PendingStorageOperation
-                {
-                    Type = PendingStorageOperationType.AddToQuickslot,
-                    SourceItem = sourceItem,
-                    TargetIndex = quickslotIndex,
-                    SourceSlotIndex = oldSlotIndex
-                };
-                return;
-            }
-
-            ItemRotation sourceRotation = sourceItem.currentRotation;
+            model.TryRemove(sourceItem);
             sourceItem.currentRotation = ItemRotation.Deg0;
 
             if (targetItem != null)
             {
-                if (SubmitRemove(oldSlotIndex, ItemRotation.Deg0) == 0)
-                {
-                    sourceItem.currentRotation = sourceRotation;
-                    return;
-                }
-
                 QuickslotUIController.Instance.RemoveItemFromSlot(quickslotIndex);
-                if (SubmitPut(oldSlotIndex, targetItem) == 0)
+                if (!model.PlaceItem(targetItem, oldX, oldY))
                 {
-                    sourceItem.currentRotation = sourceRotation;
-                    SubmitPut(oldSlotIndex, sourceItem);
+                    model.PlaceItem(sourceItem, oldX, oldY);
                     QuickslotUIController.Instance.SetItemInSlot(quickslotIndex, targetItem);
                     return;
                 }
             }
-            else if (SubmitRemove(oldSlotIndex, ItemRotation.Deg0) == 0)
-            {
-                sourceItem.currentRotation = sourceRotation;
-                return;
-            }
 
             QuickslotUIController.Instance.SetItemInSlot(quickslotIndex, sourceItem);
+            SubmitSnapshot();
         }
 
         private void HandleQuickslotItemDropped(ItemInstance item, int sourceQuickslotIndex, Vector2 screenPosition)
@@ -578,48 +431,14 @@ namespace Systems.StorageSystem
                 return;
             }
 
-            GridSlot inventorySlot = GridInventoryView.Instance != null
-                ? GridInventoryView.Instance.GetGridSlotAtPosition(screenPosition)
-                : null;
-            if (inventorySlot != null)
-            {
-                return;
-            }
-
-            (int targetX, int targetY) = model.GetCoordinates(targetSlot.Index);
-            if (!CanPlaceOrStackInModel(model, item, targetX, targetY))
-            {
-                QuickslotUIController.Instance.RefreshSlotVisual(sourceQuickslotIndex);
-                return;
-            }
-
-            if (!IsAuthoritativeStorage())
-            {
-                int requestId = SubmitPut(targetSlot.Index, item);
-                if (requestId == 0)
-                {
-                    QuickslotUIController.Instance.RefreshSlotVisual(sourceQuickslotIndex);
-                    return;
-                }
-
-                pendingOperations[requestId] = new PendingStorageOperation
-                {
-                    Type = PendingStorageOperationType.RemoveQuickslotSource,
-                    SourceItem = item,
-                    TargetIndex = sourceQuickslotIndex,
-                    SourceSlotIndex = targetSlot.Index
-                };
-                return;
-            }
-
-            int putRequestId = SubmitPut(targetSlot.Index, item);
-            if (putRequestId == 0)
+            if (!TryPlaceIncomingItem(item, targetSlot.Index))
             {
                 QuickslotUIController.Instance.RefreshSlotVisual(sourceQuickslotIndex);
                 return;
             }
 
             QuickslotUIController.Instance.RemoveItemFromSlot(sourceQuickslotIndex);
+            SubmitSnapshot();
         }
 
         private void HandleQuickslotDragUpdate(ItemInstance item, Vector2 screenPosition)
@@ -629,57 +448,7 @@ namespace Systems.StorageSystem
                 return;
             }
 
-            GridSlot targetSlot = GetGridSlotAtPosition(screenPosition);
-            if (targetSlot == null)
-            {
-                ResetAllSlotColors();
-                return;
-            }
-
-            inventoryDragInProgress = true;
             HighlightIncomingDrop(item, screenPosition);
-        }
-
-        private void HandleStorageDragUpdate(GridItemView itemView, Vector2 screenPosition)
-        {
-            if (!IsOpen || itemView?.ItemInst == null)
-            {
-                return;
-            }
-
-            HighlightIncomingDrop(itemView.ItemInst, screenPosition);
-        }
-
-        private void HandleInventoryDragUpdate(GridItemView itemView, Vector2 screenPosition)
-        {
-            if (!IsOpen || itemView?.ItemInst == null)
-            {
-                return;
-            }
-
-            GridSlot targetSlot = GetGridSlotAtPosition(screenPosition);
-            if (targetSlot == null)
-            {
-                ResetAllSlotColors();
-                return;
-            }
-
-            inventoryDragInProgress = true;
-            HighlightIncomingDrop(itemView.ItemInst, screenPosition);
-        }
-
-        private void HandleAnyDragEnd()
-        {
-            inventoryDragInProgress = false;
-            ResetAllSlotColors();
-
-            if (!pendingRefreshAfterDrag)
-            {
-                return;
-            }
-
-            pendingRefreshAfterDrag = false;
-            RefreshView();
         }
 
         private bool TryMoveDraggedStorageItemToQuickslot(Vector2 screenPosition)
@@ -720,68 +489,17 @@ namespace Systems.StorageSystem
 
             ItemInstance sourceItem = draggedItem.ItemInst;
             (int oldX, int oldY) = model.GetItemAnchorPosition(sourceItem);
-            if (oldX < 0 || oldY < 0)
-            {
-                return false;
-            }
-
-            int oldSlotIndex = model.GetIndex(oldX, oldY);
             (int targetX, int targetY) = inventoryModel.GetCoordinates(inventorySlot.Index);
-            if (!CanPlaceOrStackInModel(inventoryModel, sourceItem, targetX, targetY))
-            {
-                draggedItem.RevertRotation(draggedItem.OriginalRotation);
-                return false;
-            }
 
-            if (!IsAuthoritativeStorage())
-            {
-                int requestId = SubmitRemove(oldSlotIndex, sourceItem.currentRotation);
-                if (requestId == 0)
-                {
-                    return false;
-                }
-
-                pendingOperations[requestId] = new PendingStorageOperation
-                {
-                    Type = PendingStorageOperationType.AddToInventory,
-                    SourceItem = sourceItem,
-                    TargetIndex = inventorySlot.Index,
-                    SourceSlotIndex = oldSlotIndex
-                };
-                return true;
-            }
-
-            if (SubmitRemove(oldSlotIndex, sourceItem.currentRotation) == 0)
-            {
-                draggedItem.RevertRotation(draggedItem.OriginalRotation);
-                return false;
-            }
-
+            model.TryRemove(sourceItem);
             if (!PlaceOrStackInModel(inventoryModel, sourceItem, targetX, targetY))
             {
-                SubmitPut(oldSlotIndex, sourceItem);
+                model.PlaceItem(sourceItem, oldX, oldY);
                 return false;
             }
 
+            SubmitSnapshot();
             return true;
-        }
-
-        private static bool MoveItemLocally(GridInventoryModel targetModel, ItemInstance item, int oldX, int oldY, int newX, int newY, ItemRotation fallbackRotation)
-        {
-            if (targetModel == null || item == null)
-            {
-                return false;
-            }
-
-            targetModel.TryRemove(item);
-            if (PlaceOrStackInModel(targetModel, item, newX, newY))
-            {
-                return true;
-            }
-
-            item.currentRotation = fallbackRotation;
-            targetModel.PlaceItem(item, oldX, oldY);
-            return false;
         }
 
         private bool TryPlaceIncomingItem(ItemInstance sourceItem, int targetSlotIndex)
@@ -798,7 +516,7 @@ namespace Systems.StorageSystem
         private static bool PlaceOrStackInModel(GridInventoryModel targetModel, ItemInstance sourceItem, int x, int y)
         {
             ItemInstance targetItem = targetModel.Get(x, y);
-            if (targetItem != null && targetItem != sourceItem && targetItem.Data == sourceItem.Data && targetItem.Data.maxStackSize > 1)
+            if (targetItem != null && targetItem.Data == sourceItem.Data && targetItem.Data.maxStackSize > 1)
             {
                 int total = targetItem.currentStackCount + sourceItem.currentStackCount;
                 if (total <= targetItem.Data.maxStackSize)
@@ -824,7 +542,7 @@ namespace Systems.StorageSystem
             }
 
             (int x, int y) = model.GetCoordinates(targetSlot.Index);
-            bool canPlace = CanPlaceOrStackInModel(model, item, x, y);
+            bool canPlace = model.CanPlaceItem(item, x, y);
             Color color = canPlace ? new Color(0f, 1f, 0f, 0.3f) : new Color(1f, 0f, 0f, 0.3f);
             foreach (Vector2Int pos in item.Data.gridShape.GetRotatedPositions(item.currentRotation))
             {
@@ -837,223 +555,14 @@ namespace Systems.StorageSystem
             }
         }
 
-        private static bool CanPlaceOrStackInModel(GridInventoryModel targetModel, ItemInstance sourceItem, int x, int y)
+        private void SubmitSnapshot()
         {
-            ItemInstance targetItem = targetModel.Get(x, y);
-            if (targetItem != null && targetItem != sourceItem && targetItem.Data == sourceItem.Data && targetItem.Data.maxStackSize > 1)
-            {
-                return targetItem.currentStackCount + sourceItem.currentStackCount <= targetItem.Data.maxStackSize;
-            }
-
-            return targetModel.CanPlaceItem(sourceItem, x, y);
-        }
-
-        private int SubmitMove(int fromSlotIndex, int toSlotIndex, ItemRotation rotation)
-        {
-            if (networkSync == null || string.IsNullOrWhiteSpace(currentStorageId))
-            {
-                return 0;
-            }
-
-            return networkSync.SubmitMoveItem(currentStorageId, fromSlotIndex, toSlotIndex, (int)rotation);
-        }
-
-        private int SubmitPut(int targetSlotIndex, ItemInstance item)
-        {
-            if (networkSync == null || string.IsNullOrWhiteSpace(currentStorageId))
-            {
-                return 0;
-            }
-
-            return networkSync.SubmitPutItem(currentStorageId, targetSlotIndex, item);
-        }
-
-        private int SubmitRemove(int sourceSlotIndex, ItemRotation? rotation = null)
-        {
-            if (networkSync == null || string.IsNullOrWhiteSpace(currentStorageId))
-            {
-                return 0;
-            }
-
-            int rotationValue = rotation.HasValue ? (int)rotation.Value : -1;
-            return networkSync.SubmitRemoveItem(currentStorageId, sourceSlotIndex, rotationValue);
-        }
-
-        private bool IsAuthoritativeStorage()
-        {
-            return networkSync == null || networkSync.IsAuthoritative;
-        }
-
-        private void BindNetworkSyncEvents()
-        {
-            if (networkSync == null)
+            if (networkSync == null || model == null || string.IsNullOrWhiteSpace(currentStorageId))
             {
                 return;
             }
 
-            networkSync.OnStorageOperationConfirmed -= HandleStorageOperationConfirmed;
-            networkSync.OnStorageOperationConfirmed += HandleStorageOperationConfirmed;
-        }
-
-        private void UnbindNetworkSyncEvents()
-        {
-            if (networkSync == null)
-            {
-                return;
-            }
-
-            networkSync.OnStorageOperationConfirmed -= HandleStorageOperationConfirmed;
-        }
-
-        private void HandleStorageOperationConfirmed(int requestId, bool success, string itemId, int count, int rotation)
-        {
-            if (!pendingOperations.TryGetValue(requestId, out PendingStorageOperation operation))
-            {
-                return;
-            }
-
-            pendingOperations.Remove(requestId);
-            if (!success)
-            {
-                RollbackOptimisticOperation(operation);
-                return;
-            }
-
-            switch (operation.Type)
-            {
-                case PendingStorageOperationType.RemoveInventorySource:
-                    if (!operation.OptimisticDestinationApplied)
-                    {
-                        global::Systems.GridInventory.GridInventory.Instance?.Controller?.Model?.TryRemove(operation.SourceItem);
-                    }
-                    break;
-                case PendingStorageOperationType.RemoveQuickslotSource:
-                    if (QuickslotUIController.Instance != null)
-                    {
-                        QuickslotUIController.Instance.RemoveItemInstance(operation.SourceItem);
-                    }
-                    break;
-                case PendingStorageOperationType.AddToInventory:
-                    if (operation.OptimisticDestinationApplied)
-                    {
-                        break;
-                    }
-
-                    if (!AddConfirmedItemToInventory(operation.TargetIndex, itemId, count, rotation))
-                    {
-                        RestoreConfirmedItemToStorage(operation.SourceSlotIndex, itemId, count, rotation);
-                    }
-                    break;
-                case PendingStorageOperationType.AddToQuickslot:
-                    if (operation.OptimisticDestinationApplied)
-                    {
-                        break;
-                    }
-
-                    if (!AddConfirmedItemToQuickslot(operation.TargetIndex, itemId, count, rotation))
-                    {
-                        RestoreConfirmedItemToStorage(operation.SourceSlotIndex, itemId, count, rotation);
-                    }
-                    break;
-            }
-        }
-
-        private void RollbackOptimisticOperation(PendingStorageOperation operation)
-        {
-            if (!operation.OptimisticDestinationApplied || operation.SourceItem == null)
-            {
-                return;
-            }
-
-            switch (operation.Type)
-            {
-                case PendingStorageOperationType.RemoveInventorySource:
-                    model?.TryRemove(operation.SourceItem);
-                    global::Systems.GridInventory.GridInventory.Instance?.Controller?.Model?.TryAdd(operation.SourceItem);
-                    break;
-                case PendingStorageOperationType.AddToInventory:
-                    global::Systems.GridInventory.GridInventory.Instance?.Controller?.Model?.TryRemove(operation.SourceItem);
-                    model?.TryAdd(operation.SourceItem);
-                    break;
-                case PendingStorageOperationType.AddToQuickslot:
-                    QuickslotUIController.Instance?.RemoveItemInstance(operation.SourceItem);
-                    model?.TryAdd(operation.SourceItem);
-                    break;
-            }
-        }
-
-        private bool AddConfirmedItemToInventory(int targetSlotIndex, string itemId, int count, int rotation)
-        {
-            GridInventoryModel inventoryModel = global::Systems.GridInventory.GridInventory.Instance?.Controller?.Model;
-            ItemInstance item = CreateConfirmedItem(itemId, count, rotation);
-            if (inventoryModel == null || item == null)
-            {
-                return false;
-            }
-
-            (int x, int y) = inventoryModel.GetCoordinates(targetSlotIndex);
-            if (!PlaceOrStackInModel(inventoryModel, item, x, y))
-            {
-                return inventoryModel.TryAdd(item);
-            }
-
-            return true;
-        }
-
-        private bool AddConfirmedItemToQuickslot(int quickslotIndex, string itemId, int count, int rotation)
-        {
-            if (QuickslotUIController.Instance == null)
-            {
-                return false;
-            }
-
-            ItemInstance item = CreateConfirmedItem(itemId, count, rotation);
-            if (item == null)
-            {
-                return false;
-            }
-
-            ItemInstance existing = QuickslotUIController.Instance.GetItem(quickslotIndex);
-            if (existing != null)
-            {
-                if (existing.Data == item.Data && existing.Data.maxStackSize > 1 &&
-                    existing.currentStackCount + item.currentStackCount <= existing.Data.maxStackSize)
-                {
-                    existing.currentStackCount += item.currentStackCount;
-                    QuickslotUIController.Instance.RefreshSlotVisual(quickslotIndex);
-                    return true;
-                }
-
-                return false;
-            }
-
-            item.currentRotation = ItemRotation.Deg0;
-            QuickslotUIController.Instance.SetItemInSlot(quickslotIndex, item);
-            return true;
-        }
-
-        private void RestoreConfirmedItemToStorage(int sourceSlotIndex, string itemId, int count, int rotation)
-        {
-            ItemInstance item = CreateConfirmedItem(itemId, count, rotation);
-            if (item == null)
-            {
-                return;
-            }
-
-            SubmitPut(sourceSlotIndex, item);
-        }
-
-        private static ItemInstance CreateConfirmedItem(string itemId, int count, int rotation)
-        {
-            ItemData itemData = ItemDataRegistry.Find(itemId);
-            if (itemData == null)
-            {
-                return null;
-            }
-
-            ItemInstance item = new ItemInstance(itemData, Mathf.Max(1, count));
-            item.currentRotation = (ItemRotation)Mathf.Clamp(rotation, 0, 3);
-            return item;
+            networkSync.SubmitStorageSnapshot(currentStorageId, StorageGridSerializer.ToSaveData(currentStorageId, model));
         }
 
         private void OpenPlayerInventoryBesideStorage()
@@ -1078,31 +587,6 @@ namespace Systems.StorageSystem
 
             GridInventoryView.Instance.CloseForStorage();
             openedInventoryForStorage = false;
-        }
-
-        private void BindInventoryDragEvents()
-        {
-            if (inventoryDragEventsBound || GridInventoryView.Instance == null)
-            {
-                return;
-            }
-
-            GridInventoryView.Instance.OnDragUpdate += HandleInventoryDragUpdate;
-            GridInventoryView.Instance.OnDragEndEvent += HandleAnyDragEnd;
-            inventoryDragEventsBound = true;
-        }
-
-        private void UnbindInventoryDragEvents()
-        {
-            if (!inventoryDragEventsBound || GridInventoryView.Instance == null)
-            {
-                inventoryDragEventsBound = false;
-                return;
-            }
-
-            GridInventoryView.Instance.OnDragUpdate -= HandleInventoryDragUpdate;
-            GridInventoryView.Instance.OnDragEndEvent -= HandleAnyDragEnd;
-            inventoryDragEventsBound = false;
         }
 
         private void ApplyStorageLayout()
@@ -1201,26 +685,17 @@ namespace Systems.StorageSystem
 
         private void SetLocalInputActive(bool active)
         {
-            localPlayerInputHandler = null;
-
-            PlayerController[] controllers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
-            foreach (PlayerController controller in controllers)
+            if (localPlayerInputHandler == null)
             {
-                if (controller == null)
+                PlayerController[] controllers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+                foreach (PlayerController controller in controllers)
                 {
-                    continue;
+                    if (controller != null && controller.IsLocalPlayer)
+                    {
+                        localPlayerInputHandler = controller.InputHandler;
+                        break;
+                    }
                 }
-
-                NetworkObject networkObject = controller.GetComponent<NetworkObject>();
-                bool isLocalPlayer = controller.IsLocalPlayer ||
-                    (networkObject != null && networkObject.HasInputAuthority);
-                if (!isLocalPlayer)
-                {
-                    continue;
-                }
-
-                localPlayerInputHandler = controller.InputHandler;
-                break;
             }
 
             if (localPlayerInputHandler != null)

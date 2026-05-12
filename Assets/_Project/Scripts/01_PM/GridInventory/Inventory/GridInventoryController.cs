@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace Systems.GridInventory {
     public class GridInventoryController {
@@ -531,25 +530,8 @@ namespace Systems.GridInventory {
                         itemView.SetQuantity(item.currentStackCount);
                         view.UpdateItemPosition(itemView, anchorIndex);
                         itemView.style.visibility = UnityEngine.UIElements.Visibility.Visible;
-                        itemView.style.opacity = 1f;
                     }
                 }
-            }
-
-            PruneOrphanItemViews();
-        }
-
-        void PruneOrphanItemViews() {
-            var trackedViews = new HashSet<GridItemView>(itemViews.Values);
-            var orphanViews = view.Container?.Q<VisualElement>("itemsContainer")?.Children()
-                .OfType<GridItemView>()
-                .Where(itemView => !trackedViews.Contains(itemView))
-                .ToList();
-
-            if (orphanViews == null) return;
-
-            foreach (var orphanView in orphanViews) {
-                view.RemoveItem(orphanView);
             }
         }
 

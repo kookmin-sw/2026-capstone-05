@@ -34,15 +34,8 @@ namespace Systems.StorageSystem
                 storageId = newStorageId;
             }
 
-            if (newStorageUI != null)
-            {
-                storageUI = newStorageUI;
-            }
-
-            if (newStorageNetworkSync != null)
-            {
-                storageNetworkSync = newStorageNetworkSync;
-            }
+            storageUI = newStorageUI;
+            storageNetworkSync = newStorageNetworkSync;
         }
 
         public bool CanInteract(PlayerController player)

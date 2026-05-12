@@ -1,4 +1,3 @@
-using Fusion;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -167,12 +166,6 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
 
     public void ConfigureForNetwork(bool isLocalPlayer)
     {
-        NetworkObject networkObject = GetComponentInParent<NetworkObject>();
-        if (!isLocalPlayer && networkObject != null && networkObject.HasInputAuthority)
-        {
-            isLocalPlayer = true;
-        }
-
         if (isLocalPlayer)
         {
             SetInputActive(true);
