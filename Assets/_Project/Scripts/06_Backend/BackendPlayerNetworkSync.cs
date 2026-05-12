@@ -32,6 +32,7 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
     [Networked] private int NetworkUseAnimationCount { get; set; }
 
     private static readonly System.Collections.Generic.HashSet<int> ClaimedPickupKeys = new();
+    private static readonly System.Collections.Generic.HashSet<int> ClaimedDoorKeys = new();
 
     public bool IsNetworkReady => Runner != null && Object != null;
 
@@ -231,6 +232,26 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         RpcRequestPickup(requester, pickup.PickupKey);
     }
 
+    public void RequestDoorToggle(DoorInteractable door, bool shouldOpen, int openDirection)
+    {
+        if (door == null)
+            return;
+
+        PlayerRef requester = Object != null ? Object.InputAuthority : PlayerRef.None;
+        if (requester == PlayerRef.None && Runner != null)
+            requester = Runner.LocalPlayer;
+
+        int normalizedDirection = openDirection >= 0 ? 1 : -1;
+
+        if (HasStateAuthority)
+        {
+            ApproveDoorToggle(requester, door.DoorKey, shouldOpen, normalizedDirection);
+            return;
+        }
+
+        RpcRequestDoorToggle(requester, door.DoorKey, shouldOpen, normalizedDirection);
+    }
+
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     private void RpcRequestPickup(PlayerRef requestedBy, int pickupKey)
     {
@@ -238,6 +259,15 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
             requestedBy = Object.InputAuthority;
 
         TryApprovePickup(requestedBy, pickupKey);
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcRequestDoorToggle(PlayerRef requestedBy, int doorKey, NetworkBool shouldOpen, int openDirection)
+    {
+        if (Object != null && requestedBy != Object.InputAuthority)
+            requestedBy = Object.InputAuthority;
+
+        ApproveDoorToggle(requestedBy, doorKey, shouldOpen, openDirection);
     }
 
     private void TryApprovePickup(PlayerRef requestedBy, int pickupKey)
@@ -262,6 +292,25 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         RpcConfirmPickup(pickupKey, requestedBy, itemId, stackCount);
     }
 
+    private void ApproveDoorToggle(PlayerRef requestedBy, int doorKey, bool shouldOpen, int openDirection)
+    {
+        if (!HasStateAuthority || requestedBy == PlayerRef.None)
+            return;
+
+        if (!DoorInteractable.TryGetDoor(doorKey, out DoorInteractable door))
+            return;
+
+        int normalizedDirection = openDirection >= 0 ? 1 : -1;
+
+        if (ClaimedDoorKeys.Add(doorKey))
+        {
+            // Keep track of replicated door keys seen by the authority side.
+        }
+
+        door.ApplyState(shouldOpen, normalizedDirection);
+        RpcConfirmDoorToggle(doorKey, shouldOpen, normalizedDirection);
+    }
+
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RpcConfirmPickup(int pickupKey, PlayerRef approvedPlayer, NetworkString<_64> itemId, int stackCount)
     {
@@ -282,6 +331,13 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
             localPlayer,
             itemId.ToString(),
             stackCount);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcConfirmDoorToggle(int doorKey, NetworkBool shouldOpen, int openDirection)
+    {
+        ClaimedDoorKeys.Add(doorKey);
+        DoorInteractable.ApplyNetworkState(doorKey, shouldOpen, openDirection);
     }
 
     private void HandleLocalEquippedItemChanged(ItemInstance itemInstance)
