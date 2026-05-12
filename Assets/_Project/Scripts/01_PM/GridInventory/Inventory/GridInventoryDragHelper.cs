@@ -49,5 +49,13 @@ namespace Systems.GridInventory {
             ghost.style.left = localPos.x - pivotX;
             ghost.style.top = localPos.y - pivotY;
         }
+
+        public static void UpdateGhostPosition(VisualElement ghost, Vector2 screenPosition, Vector2 pointerOffset) {
+            if (ghost == null || ghost.parent == null) return;
+
+            Vector2 localPos = ghost.parent.WorldToLocal(screenPosition);
+            ghost.style.left = localPos.x - pointerOffset.x;
+            ghost.style.top = localPos.y - pointerOffset.y;
+        }
     }
 }

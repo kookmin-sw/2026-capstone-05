@@ -59,6 +59,18 @@ namespace Systems.StorageSystem
             File.Move(tempPath, path);
         }
 
+        public static void ClearSlot(int slot)
+        {
+            int safeSlot = Mathf.Clamp(slot, 1, 3);
+            string directory = GetSlotDirectory(safeSlot);
+            if (!Directory.Exists(directory))
+            {
+                return;
+            }
+
+            Directory.Delete(directory, true);
+        }
+
         public static StorageSaveData CreateEmpty(string storageId, int width, int height)
         {
             return new StorageSaveData
@@ -74,7 +86,12 @@ namespace Systems.StorageSystem
         {
             int slot = Mathf.Clamp(PlayerPrefs.GetInt(HostSelectedSlotPrefKey, 1), 1, 3);
             string safeId = MakeSafeFileName(storageId);
-            return Path.Combine(Application.persistentDataPath, "StorageSystem", $"slot_{slot}", $"{safeId}.json");
+            return Path.Combine(GetSlotDirectory(slot), $"{safeId}.json");
+        }
+
+        private static string GetSlotDirectory(int slot)
+        {
+            return Path.Combine(Application.persistentDataPath, "StorageSystem", $"slot_{slot}");
         }
 
         private static string MakeSafeFileName(string value)

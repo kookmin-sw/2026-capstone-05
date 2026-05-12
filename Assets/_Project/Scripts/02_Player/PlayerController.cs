@@ -1,3 +1,4 @@
+using Fusion;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
@@ -243,15 +244,34 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
     /// </summary>
     public bool CanStandUp()
     {
-        float radius = Controller.radius;
-        Vector3 point1 = transform.position + Vector3.up * radius;
-        Vector3 point2 = transform.position + Vector3.up * (StandingHeight - radius);
+        float radius = Controller.radius * 0.95f;
+        Vector3 currentCenter = transform.TransformPoint(Controller.center);
+        Vector3 standingCenter = transform.TransformPoint(defaultCenter);
 
-        return !Physics.CheckCapsule(point1, point2, radius, obstacleLayer);
+        Vector3 currentHead = currentCenter + Vector3.up * Mathf.Max(0f, (Controller.height * 0.5f) - radius);
+        Vector3 standingHead = standingCenter + Vector3.up * Mathf.Max(0f, (StandingHeight * 0.5f) - radius);
+
+        if (standingHead.y <= currentHead.y)
+        {
+            return true;
+        }
+
+        return !Physics.CheckCapsule(
+            currentHead,
+            standingHead,
+            radius,
+            obstacleLayer,
+            QueryTriggerInteraction.Ignore);
     }
 
     public void ConfigureForNetwork(bool isLocalPlayer)
     {
+        NetworkObject networkObject = GetComponentInParent<NetworkObject>();
+        if (!isLocalPlayer && networkObject != null && networkObject.HasInputAuthority)
+        {
+            isLocalPlayer = true;
+        }
+
         IsLocalPlayer = isLocalPlayer;
     }
 }

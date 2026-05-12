@@ -31,6 +31,7 @@ public class QuickslotUIController : MonoBehaviour
     private bool isDragging = false;
     private bool uiReady = false;
     private Vector2 lastPointerPos;
+    private Vector2 dragPointerOffset;
     private ItemRotation originalDragRotation;
 
     private PlayerEquipment localPlayerEquipment;
@@ -221,6 +222,7 @@ public class QuickslotUIController : MonoBehaviour
         originalDragRotation = itemInstance.currentRotation;
 
         var slotElement = slotViews[slotIndex].Root;
+        dragPointerOffset = (Vector2)evt.position - slotElement.worldBound.position;
         slotElement.CapturePointer(evt.pointerId);
 
         GridInventoryDragHelper.GetGhostSizeAndPivot(itemInstance, out float baseW, out float baseH, out float baseAnchorXRatio, out float baseAnchorYRatio);
@@ -240,7 +242,7 @@ public class QuickslotUIController : MonoBehaviour
         dragGhostIcon.BringToFront();
         dragGhostIcon.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Contain));
 
-        GridInventoryDragHelper.UpdateGhostPosition(dragGhostIcon, evt.position);
+        GridInventoryDragHelper.UpdateGhostPosition(dragGhostIcon, evt.position, dragPointerOffset);
 
         evt.StopPropagation();
         
@@ -252,7 +254,7 @@ public class QuickslotUIController : MonoBehaviour
         if (!isDragging || dragGhostIcon == null) return;
 
         lastPointerPos = evt.position;
-        GridInventoryDragHelper.UpdateGhostPosition(dragGhostIcon, evt.position);
+        GridInventoryDragHelper.UpdateGhostPosition(dragGhostIcon, evt.position, dragPointerOffset);
         evt.StopPropagation();
 
         var itemInstance = draggingSlotIndex >= 0 ? model.Get(draggingSlotIndex) : null;
@@ -295,12 +297,21 @@ public class QuickslotUIController : MonoBehaviour
                     }
                 }
 
+                bool droppedOnStorage = false;
+                if (Systems.StorageSystem.StorageUI.ActiveInstance != null &&
+                    Systems.StorageSystem.StorageUI.ActiveInstance.IsOpen) {
+                    var storageSlot = Systems.StorageSystem.StorageUI.ActiveInstance.GetGridSlotAtPosition(evt.position);
+                    if (storageSlot != null) {
+                        droppedOnStorage = true;
+                    }
+                }
+
                 if (targetQuickslot >= 0 && targetQuickslot != draggingSlotIndex)
                 {
                     model.MergeOrSwap(draggingSlotIndex, targetQuickslot);
                     item.currentRotation = originalDragRotation; // 퀵슬롯으로 드롭된 경우 회전 원복
                 }
-                else if (droppedOnInventory)
+                else if (droppedOnInventory || droppedOnStorage)
                 {
                     OnItemDroppedGlobal?.Invoke(item, draggingSlotIndex, evt.position);
                 }
@@ -321,6 +332,8 @@ public class QuickslotUIController : MonoBehaviour
     {
         if (isDragging && dragGhostIcon != null && draggingSlotIndex >= 0)
         {
+            UpdateDragPositionFromMouse();
+
             if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.rKey.wasPressedThisFrame)
             {
                 var itemInstance = model.Get(draggingSlotIndex);
@@ -341,7 +354,7 @@ public class QuickslotUIController : MonoBehaviour
                     float visualAngle = (int)itemInstance.currentRotation * 90f;
                     dragGhostIcon.style.rotate = new Rotate(new Angle(visualAngle));
                     
-                    GridInventoryDragHelper.UpdateGhostPosition(dragGhostIcon, lastPointerPos);
+                    GridInventoryDragHelper.UpdateGhostPosition(dragGhostIcon, lastPointerPos, dragPointerOffset);
                     OnItemDragUpdateGlobal?.Invoke(itemInstance, lastPointerPos);
                 }
             }
@@ -353,15 +366,7 @@ public class QuickslotUIController : MonoBehaviour
             if (playerSearchTimer <= 0f)
             {
                 playerSearchTimer = 1f; // 1초 간격으로 플레이어 탐색 (성능 최적화)
-                PlayerController[] controllers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
-                foreach (var controller in controllers)
-                {
-                    if (controller.IsLocalPlayer)
-                    {
-                        localPlayerEquipment = controller.Equipment;
-                        break;
-                    }
-                }
+                EnsureLocalPlayerEquipment();
             }
         }
 
@@ -373,8 +378,32 @@ public class QuickslotUIController : MonoBehaviour
         else if (Keyboard.current.digit4Key.wasPressedThisFrame) EquipFromQuickslot(3);
     }
 
+    private void UpdateDragPositionFromMouse()
+    {
+        if (Mouse.current == null)
+        {
+            return;
+        }
+
+        Vector2 mousePosition = Mouse.current.position.ReadValue();
+        lastPointerPos = new Vector2(mousePosition.x, Screen.height - mousePosition.y);
+        GridInventoryDragHelper.UpdateGhostPosition(dragGhostIcon, lastPointerPos, dragPointerOffset);
+
+        ItemInstance itemInstance = model.Get(draggingSlotIndex);
+        if (itemInstance != null)
+        {
+            OnItemDragUpdateGlobal?.Invoke(itemInstance, lastPointerPos);
+        }
+    }
+
     private void EquipFromQuickslot(int index)
     {
+        EnsureLocalPlayerEquipment();
+        if (localPlayerEquipment == null)
+        {
+            return;
+        }
+
         SelectSlot(index);
         ItemInstance item = GetItem(index);
 
@@ -425,6 +454,22 @@ public class QuickslotUIController : MonoBehaviour
         model.Set(index, null);
     }
 
+    public bool RemoveItemInstance(ItemInstance item)
+    {
+        if (item == null) return false;
+
+        for (int i = 0; i < MaxSlots; i++)
+        {
+            if (model.Get(i) == item)
+            {
+                model.Set(i, null);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public ItemInstance GetItem(int index)
     {
         return model.Get(index);
@@ -472,6 +517,11 @@ public class QuickslotUIController : MonoBehaviour
             view.StackLabel.visible = false;
         }
 
+        if (index == selectedSlotIndex)
+        {
+            EnsureLocalPlayerEquipment();
+        }
+
         if (index == selectedSlotIndex && localPlayerEquipment != null)
         {
             if (item == null)
@@ -481,6 +531,24 @@ public class QuickslotUIController : MonoBehaviour
             else 
             {
                 localPlayerEquipment.EquipItem(item);
+            }
+        }
+    }
+
+    private void EnsureLocalPlayerEquipment()
+    {
+        if (localPlayerEquipment != null)
+        {
+            return;
+        }
+
+        PlayerController[] controllers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+        foreach (PlayerController controller in controllers)
+        {
+            if (controller != null && controller.IsLocalPlayer)
+            {
+                localPlayerEquipment = controller.Equipment;
+                break;
             }
         }
     }

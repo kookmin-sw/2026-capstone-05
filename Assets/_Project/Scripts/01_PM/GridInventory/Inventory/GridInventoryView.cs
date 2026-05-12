@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Linq;
+using Fusion;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
@@ -138,6 +139,7 @@ namespace Systems.GridInventory {
             UnityEngine.Cursor.lockState = CursorLockMode.None;
             UnityEngine.Cursor.visible = true;
 
+            ResolveLocalInputHandler();
             if (localPlayerInputHandler != null)
             {
                 localPlayerInputHandler.SetInputActive(false);
@@ -166,15 +168,7 @@ namespace Systems.GridInventory {
                 if (playerSearchTimer <= 0f)
                 {
                     playerSearchTimer = 1f; // 1초 간격으로 플레이어 탐색 (성능 최적화)
-                    PlayerController[] controllers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
-                    foreach (var controller in controllers)
-                    {
-                        if (controller.IsLocalPlayer)
-                        {
-                            localPlayerInputHandler = controller.InputHandler;
-                            break;
-                        }
-                    }
+                    ResolveLocalInputHandler();
                 }
             }
 
@@ -204,9 +198,34 @@ namespace Systems.GridInventory {
                 }
 
                 // 플레이어 조작 활성/비활성화 (열렸을 때 조작 끄기)
+                ResolveLocalInputHandler();
                 if (localPlayerInputHandler != null) {
                     localPlayerInputHandler.SetInputActive(!isHidden);
                 }
+            }
+        }
+
+        private void ResolveLocalInputHandler()
+        {
+            localPlayerInputHandler = null;
+            PlayerController[] controllers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+            foreach (PlayerController controller in controllers)
+            {
+                if (controller == null)
+                {
+                    continue;
+                }
+
+                NetworkObject networkObject = controller.GetComponent<NetworkObject>();
+                bool isLocalPlayer = controller.IsLocalPlayer ||
+                    (networkObject != null && networkObject.HasInputAuthority);
+                if (!isLocalPlayer)
+                {
+                    continue;
+                }
+
+                localPlayerInputHandler = controller.InputHandler;
+                break;
             }
         }
 

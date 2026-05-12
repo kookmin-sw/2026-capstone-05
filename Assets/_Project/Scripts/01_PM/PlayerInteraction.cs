@@ -1,3 +1,4 @@
+using Fusion;
 using UnityEngine;
 
 /// <summary>
@@ -272,6 +273,12 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
 
     public void ConfigureForNetwork(bool isLocalPlayer)
     {
+        NetworkObject networkObject = GetComponentInParent<NetworkObject>();
+        if (!isLocalPlayer && networkObject != null && networkObject.HasInputAuthority)
+        {
+            isLocalPlayer = true;
+        }
+
         networkConfigured = true;
 
         if (!isLocalPlayer)

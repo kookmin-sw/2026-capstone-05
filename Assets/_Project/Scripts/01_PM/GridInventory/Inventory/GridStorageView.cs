@@ -16,6 +16,7 @@ namespace Systems.GridInventory {
 
         protected bool isDragging;
         protected Vector2 currentPointerPos;
+        protected Vector2 dragPointerOffset;
         protected GridItemView draggedItem;
 
         protected VisualElement root;
@@ -73,6 +74,7 @@ namespace Systems.GridInventory {
             if (itemsContainer == null) return;
 
             itemsContainer.Add(itemView);
+            itemView.BringToFront();
 
             itemView.OnStartDrag += OnPointerDown;
             itemView.SetDragCallbacks(OnItemDragMove, OnItemDragEnd);
@@ -111,16 +113,16 @@ namespace Systems.GridInventory {
             currentPointerPos = position;
             draggedItem = item;
             draggedItem.OriginalRotation = item.ItemInst.currentRotation;
-
-            GridInventoryDragHelper.UpdateGhostPosition(ghostIcon, position);
+            dragPointerOffset = position - item.worldBound.position;
 
             ghostIcon.style.backgroundImage = new StyleBackground(item.ItemInst.Data.itemIcon);
             ghostIcon.style.transformOrigin = item.Icon.style.transformOrigin;
             ghostIcon.style.rotate = new Rotate(new Angle(item.VisualAngle));
             ghostIcon.style.width = item.Icon.style.width;
             ghostIcon.style.height = item.Icon.style.height;
+            GridInventoryDragHelper.UpdateGhostPosition(ghostIcon, position, dragPointerOffset);
 
-            item.style.visibility = Visibility.Hidden;
+            item.style.opacity = 0f;
             ghostIcon.style.visibility = Visibility.Visible;
             ghostIcon.BringToFront();
             
@@ -130,7 +132,7 @@ namespace Systems.GridInventory {
         void OnItemDragMove(GridItemView item, Vector2 position) {
             if (!isDragging || draggedItem != item || ghostIcon == null) return;
             currentPointerPos = position;
-            GridInventoryDragHelper.UpdateGhostPosition(ghostIcon, position);
+            GridInventoryDragHelper.UpdateGhostPosition(ghostIcon, position, dragPointerOffset);
             OnDragUpdate?.Invoke(item, position);
         }
 
@@ -142,6 +144,8 @@ namespace Systems.GridInventory {
 
         protected virtual void Update() {
             if (isDragging && draggedItem != null && ghostIcon != null) {
+                UpdateDragPositionFromMouse();
+
                 if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.rKey.wasPressedThisFrame) {
                     draggedItem.RotateClockwise();
 
@@ -156,10 +160,19 @@ namespace Systems.GridInventory {
                     draggedItem.style.width = newWidth;
                     draggedItem.style.height = newHeight;
 
-                    GridInventoryDragHelper.UpdateGhostPosition(ghostIcon, currentPointerPos);
+                    GridInventoryDragHelper.UpdateGhostPosition(ghostIcon, currentPointerPos, dragPointerOffset);
                     OnDragUpdate?.Invoke(draggedItem, currentPointerPos);
                 }
             }
+        }
+
+        private void UpdateDragPositionFromMouse() {
+            if (UnityEngine.InputSystem.Mouse.current == null) return;
+
+            Vector2 mousePosition = UnityEngine.InputSystem.Mouse.current.position.ReadValue();
+            currentPointerPos = new Vector2(mousePosition.x, Screen.height - mousePosition.y);
+            GridInventoryDragHelper.UpdateGhostPosition(ghostIcon, currentPointerPos, dragPointerOffset);
+            OnDragUpdate?.Invoke(draggedItem, currentPointerPos);
         }
 
         public GridSlot GetGridSlotAtPosition(Vector2 position) {
@@ -214,6 +227,7 @@ namespace Systems.GridInventory {
             } else {
                 if (draggedItem != null) {
                     draggedItem.style.visibility = Visibility.Visible;
+                    draggedItem.style.opacity = 1f;
                 }
             }
 
@@ -222,6 +236,10 @@ namespace Systems.GridInventory {
 
         protected void ResetDragState() {
             isDragging = false;
+            if (draggedItem != null) {
+                draggedItem.style.visibility = Visibility.Visible;
+                draggedItem.style.opacity = 1f;
+            }
             draggedItem = null;
             if (ghostIcon != null) {
                 ghostIcon.style.visibility = Visibility.Hidden;
