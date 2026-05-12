@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4000014133883218}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Concrete_fence_v2_Gate
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -45,7 +45,8 @@ GameObject:
   - component: {fileID: 33000012010456290}
   - component: {fileID: 23000013636385150}
   - component: {fileID: 64000014045595570}
-  m_Layer: 0
+  - component: {fileID: 6230698265005036648}
+  m_Layer: 6
   m_Name: Concrete_fence_v2_Gate_lattice
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -146,6 +147,19 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300026, guid: ed9ec036e5afbd34dae4f1602a3d77b8, type: 3}
+--- !u!114 &6230698265005036648
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000013948420292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 3
 --- !u!1 &1000014215199998
 GameObject:
   m_ObjectHideFlags: 0
@@ -158,7 +172,8 @@ GameObject:
   - component: {fileID: 33000012124036682}
   - component: {fileID: 23000010400686510}
   - component: {fileID: 64000010960438940}
-  m_Layer: 0
+  - component: {fileID: 2202526275178921868}
+  m_Layer: 6
   m_Name: Concrete_fence_v2_Gate
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -259,3 +274,16 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300016, guid: ed9ec036e5afbd34dae4f1602a3d77b8, type: 3}
+--- !u!114 &2202526275178921868
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000014215199998}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 3

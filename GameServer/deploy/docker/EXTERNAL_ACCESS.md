@@ -75,12 +75,16 @@ docker compose -f docker-compose.yml -f docker-compose.tunnel.yml up -d --build
 docker compose -f docker-compose.yml -f docker-compose.tunnel.yml logs -f cloudflared
 ```
 
-Find the generated `https://...trycloudflare.com` URL in the logs, then set the Unity API URL to that value.
+Find the generated `https://...trycloudflare.com` URL in the logs, then write it to `auth-api-base-url.txt`.
 
-Example:
+From the project root, this command starts Docker, extracts the newest Cloudflare URL, writes it to the editor/runtime config file, and prints the URL:
 
 ```powershell
-Nunbora.exe --auth-api-base-url=https://example-random-name.trycloudflare.com
+docker compose -f GameServer\deploy\docker\docker-compose.yml -f GameServer\deploy\docker\docker-compose.tunnel.yml up -d --build
+Start-Sleep -Seconds 8
+$url = docker compose -f GameServer\deploy\docker\docker-compose.yml -f GameServer\deploy\docker\docker-compose.tunnel.yml logs --tail 200 cloudflared | Select-String -Pattern 'https://[a-z0-9-]+\.trycloudflare\.com' | Select-Object -Last 1 | ForEach-Object { $_.Matches.Value }
+Set-Content -NoNewline -Path auth-api-base-url.txt -Value $url
+$url
 ```
 
 Cloudflare quick tunnel URLs are temporary and may change after restart.
@@ -103,37 +107,25 @@ In the Unity Inspector, set `MainMenuAuthController.authApiBaseUrl` to:
 http://YOUR_PC_IP:8080
 ```
 
-For a built client, you can also override the URL at launch without changing the scene:
-
-```powershell
-Nunbora.exe --auth-api-base-url=http://YOUR_PC_IP:8080
-```
-
-Or set an environment variable before running the client:
-
-```powershell
-$env:NUNBORA_AUTH_API_BASE_URL = "http://YOUR_PC_IP:8080"
-.\Nunbora.exe
-```
-
-Or place a text file named `auth-api-base-url.txt` next to the built executable:
-
-```text
-http://YOUR_PC_IP:8080
-```
-
-For a client outside the same router/Wi-Fi, put the public URL or Cloudflare tunnel URL in that file instead:
+For a built client, place a text file named `auth-api-base-url.txt` next to the built executable:
 
 ```text
 https://YOUR-TUNNEL.trycloudflare.com
 ```
 
-The client checks these sources in order:
+To copy the current project-root config file next to a built executable:
 
-1. `--auth-api-base-url=...`
-2. `NUNBORA_AUTH_API_BASE_URL`
-3. `auth-api-base-url.txt`
-4. The Unity Inspector value
+```powershell
+Copy-Item -Force .\auth-api-base-url.txt "C:\Path\To\Build\auth-api-base-url.txt"
+```
+
+For a same-network-only test, use your PC IP instead of the Cloudflare URL:
+
+```text
+http://YOUR_PC_IP:8080
+```
+
+The client reads one address file: `auth-api-base-url.txt` next to the executable. In the Unity editor, the same file is read from the project root. If the file is missing, the Unity Inspector value is used as a fallback.
 
 ## 4. Keep PostgreSQL private
 

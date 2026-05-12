@@ -9,13 +9,16 @@ namespace Systems.GridInventory {
         [SerializeField] string panelName = "GridInventory";
 
         public static GridInventoryView Instance { get; private set; }
-        public static bool IsAnyInventoryOpen { get; private set; }
+        public static bool IsAnyInventoryOpen { get; set; }
 
         public event System.Action OnSaveClicked;
         public event System.Action OnLoadClicked;
 
         private PlayerInputHandler localPlayerInputHandler;
         private float playerSearchTimer = 0f;
+        private bool openedByStorage;
+
+        public bool IsOpen => container != null && container.style.display != DisplayStyle.None;
 
         private void Awake() {
             if (Instance == null) Instance = this;
@@ -110,6 +113,7 @@ namespace Systems.GridInventory {
             // 인벤토리 창 게임 시작 시 안 보이도록 숨기기
             container.style.display = DisplayStyle.None;
             IsAnyInventoryOpen = false;
+            ResetStorageLayout();
             
             yield return null; 
         }
@@ -117,6 +121,40 @@ namespace Systems.GridInventory {
 
         void OnDisable() {
             IsAnyInventoryOpen = false;
+        }
+
+        public void OpenForStorage(bool closeWithStorage = true)
+        {
+            if (container == null)
+            {
+                return;
+            }
+
+            openedByStorage = closeWithStorage;
+            container.style.display = DisplayStyle.Flex;
+            IsAnyInventoryOpen = true;
+            ApplyStorageLayout();
+
+            UnityEngine.Cursor.lockState = CursorLockMode.None;
+            UnityEngine.Cursor.visible = true;
+
+            if (localPlayerInputHandler != null)
+            {
+                localPlayerInputHandler.SetInputActive(false);
+            }
+        }
+
+        public void CloseForStorage()
+        {
+            if (!openedByStorage || container == null)
+            {
+                return;
+            }
+
+            openedByStorage = false;
+            container.style.display = DisplayStyle.None;
+            IsAnyInventoryOpen = false;
+            ResetStorageLayout();
         }
 
         protected override void Update() {
@@ -142,6 +180,10 @@ namespace Systems.GridInventory {
 
             // Tab 키를 누르면 인벤토리 토글 (표시/숨김)
             if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame && container != null) {
+                if (Systems.StorageSystem.StorageUI.ActiveInstance != null && Systems.StorageSystem.StorageUI.ActiveInstance.IsOpen) {
+                    return;
+                }
+
                 // 상점이 열려있을 때는 Tab으로 인벤토리를 열지 못하게 막음 (배치 모드에서만 스크립트로 열림)
                 if (Systems.Shop.ShopController.Instance != null && Systems.Shop.ShopController.Instance.IsOpen) {
                     return;
@@ -165,6 +207,50 @@ namespace Systems.GridInventory {
                 if (localPlayerInputHandler != null) {
                     localPlayerInputHandler.SetInputActive(!isHidden);
                 }
+            }
+        }
+
+        private void ApplyStorageLayout()
+        {
+            if (container == null)
+            {
+                return;
+            }
+
+            container.pickingMode = PickingMode.Ignore;
+            container.style.backgroundColor = new StyleColor(new Color(0f, 0f, 0f, 0f));
+            container.style.alignItems = Align.FlexStart;
+            container.style.justifyContent = Justify.Center;
+
+            VisualElement inventory = container.Q<VisualElement>(name: "inventory-window");
+            if (inventory != null)
+            {
+                inventory.pickingMode = PickingMode.Position;
+                inventory.style.marginLeft = 24;
+                inventory.style.marginRight = 0;
+                inventory.style.maxWidth = 900;
+            }
+        }
+
+        private void ResetStorageLayout()
+        {
+            if (container == null)
+            {
+                return;
+            }
+
+            container.pickingMode = PickingMode.Position;
+            container.style.backgroundColor = new StyleColor(new Color(0f, 0f, 0f, 0.75f));
+            container.style.alignItems = Align.Center;
+            container.style.justifyContent = Justify.Center;
+
+            VisualElement inventory = container.Q<VisualElement>(name: "inventory-window");
+            if (inventory != null)
+            {
+                inventory.pickingMode = PickingMode.Position;
+                inventory.style.marginLeft = StyleKeyword.Null;
+                inventory.style.marginRight = StyleKeyword.Null;
+                inventory.style.maxWidth = StyleKeyword.Null;
             }
         }
     }

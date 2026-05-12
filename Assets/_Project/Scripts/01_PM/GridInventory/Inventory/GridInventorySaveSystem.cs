@@ -34,7 +34,22 @@ namespace Systems.GridInventory {
     {
         private static string GetSavePath()
         {
+            return Path.Combine(Application.persistentDataPath, "GridInventory", "player_inventory_items.json");
+        }
+
+        private static string GetLegacySavePath()
+        {
             return Path.Combine(Application.dataPath, "_Project", "Json", "01_PM", "GridInventory", "player_inventory_items.json");
+        }
+
+        private static string GetReadableSavePath()
+        {
+            string savePath = GetSavePath();
+            if (File.Exists(savePath))
+                return savePath;
+
+            string legacySavePath = GetLegacySavePath();
+            return File.Exists(legacySavePath) ? legacySavePath : savePath;
         }
 
         public static void SaveInventory(GridInventoryModel model)
@@ -106,7 +121,7 @@ namespace Systems.GridInventory {
 
         public static void LoadInventory(GridInventoryModel model)
         {
-            string savePath = GetSavePath();
+            string savePath = GetReadableSavePath();
             if (!File.Exists(savePath))
             {
                 Debug.LogWarning("[Inventory] Save file not found.");
@@ -168,6 +183,12 @@ namespace Systems.GridInventory {
 
         private static ItemData FindItemDataByID(string id)
         {
+            ItemData registeredData = ItemDataRegistry.Find(id);
+            if (registeredData != null)
+            {
+                return registeredData;
+            }
+
             if (itemDataCache == null)
             {
                 itemDataCache = new Dictionary<string, ItemData>();

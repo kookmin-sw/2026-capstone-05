@@ -12,16 +12,24 @@ public class RuntimeFieldPreset : ScriptableObject
     [Header("Prefab")]
     public GameObject prefab;
 
+    [Header("Director")]
+    public RuntimeFieldCategory category = RuntimeFieldCategory.House;
+    [Range(0, 3)] public int difficultyTier;
+    [HideInInspector, Min(0f)] public float directorWeight = 1f;
+    [HideInInspector]
+    public Vector2 preferredDistanceRange01 = new Vector2(0f, 1f);
+    [HideInInspector, Min(0f)] public float maxFlattenCostOverride;
+
     [Header("Flattening")]
     [Min(0f)] public float flattenBlendWidth = 8f;
 
     [Header("Variation")]
     public bool randomYaw = true;
-    public bool lockYawWhenLarge = true;
-    [Min(1f)] public float largeFootprintYawLockThreshold = 50f;
     public float fixedYawDegrees;
-    public Vector2 yawRange = new Vector2(0f, 360f);
     public Vector2 randomScaleRange = Vector2.one;
+    [HideInInspector] public bool lockYawWhenLarge = true;
+    [HideInInspector, Min(1f)] public float largeFootprintYawLockThreshold = 50f;
+    [HideInInspector] public Vector2 yawRange = new Vector2(0f, 360f);
 
     [HideInInspector, Min(0f)] public float footprintPadding = 2f;
 
@@ -41,6 +49,16 @@ public class RuntimeFieldPreset : ScriptableObject
     private void OnValidate()
     {
         footprintPadding = Mathf.Max(0f, footprintPadding);
+        directorWeight = Mathf.Max(0f, directorWeight);
+        difficultyTier = Mathf.Clamp(difficultyTier, 0, 3);
+        preferredDistanceRange01.x = Mathf.Clamp01(preferredDistanceRange01.x);
+        preferredDistanceRange01.y = Mathf.Clamp01(preferredDistanceRange01.y);
+        if (preferredDistanceRange01.y < preferredDistanceRange01.x)
+        {
+            preferredDistanceRange01.y = preferredDistanceRange01.x;
+        }
+
+        maxFlattenCostOverride = Mathf.Max(0f, maxFlattenCostOverride);
         maxWorldHeight = Mathf.Max(minWorldHeight, maxWorldHeight);
         maxHeightDelta = Mathf.Max(0f, maxHeightDelta);
         flattenBlendWidth = Mathf.Max(0f, flattenBlendWidth);
