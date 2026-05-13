@@ -10,6 +10,11 @@ public class ConsumableBehaviour : EquippedItemBehaviour
 
     private EventInstance consumeSoundInstance;
 
+    private void OnDestroy()
+    {
+        CancelUse();
+    }
+
     public override bool Use()
     {
         ConsumableItemData data = itemInstance.Data as ConsumableItemData;
