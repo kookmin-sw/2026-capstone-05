@@ -74,7 +74,7 @@ public class EnemyAlertState : EnemyState
             }
         }
 
-        if (enemy.IsPlayerInAttackRadius())
+        if (enemy.CanStartAttack())
         {
             stateMachine.ChangeState(enemy.AttackState);
             return;

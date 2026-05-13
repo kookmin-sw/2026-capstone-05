@@ -187,6 +187,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7263378446141510871}
     m_Modifications:
+    - target: {fileID: 395166027313802986, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 395166027313802986, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2399479262003399573, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 2399479262003399573, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3417274790482185124, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
       propertyPath: m_Enabled
       value: 0
@@ -235,14 +251,86 @@ PrefabInstance:
       propertyPath: m_Name
       value: OtherSideBeast1_1
       objectReference: {fileID: 0}
+    - target: {fileID: 6289753918035343266, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
+      propertyPath: m_Radius
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6315745689424171080, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
+      propertyPath: m_Radius
+      value: 0.3
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 3417274790482185124, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
+    - {fileID: 6289753918035343266, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
+    - {fileID: 6315745689424171080, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1393631510040427827, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3920259941584319587}
+    - targetCorrespondingSourceObject: {fileID: 3445029195383878320, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7723090154666633934}
   m_SourcePrefab: {fileID: 100100000, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
 --- !u!4 &52959090049741060 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4764799934287172908, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
   m_PrefabInstance: {fileID: 4801926030991762472}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &5905611307636693275 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1393631510040427827, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
+  m_PrefabInstance: {fileID: 4801926030991762472}
+  m_PrefabAsset: {fileID: 0}
+--- !u!136 &3920259941584319587
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5905611307636693275}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.25
+  m_Height: 1.25
+  m_Direction: 1
+  m_Center: {x: 0, y: -0.25, z: 0}
+--- !u!1 &7884938200509290136 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3445029195383878320, guid: aa164734d4cd7d9409f6fe0576ab7765, type: 3}
+  m_PrefabInstance: {fileID: 4801926030991762472}
+  m_PrefabAsset: {fileID: 0}
+--- !u!136 &7723090154666633934
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7884938200509290136}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.25
+  m_Height: 1.25
+  m_Direction: 1
+  m_Center: {x: 0, y: -0.25, z: 0}

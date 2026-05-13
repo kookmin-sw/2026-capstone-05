@@ -3,8 +3,8 @@ using UnityEngine;
 public class EnemyAttackState : EnemyState
 {
     private EnemyAnimationEventHandler animationEventHandler;
-    private bool isCoolingDown;
-    private float cooldownTimer;
+    private bool isRecovering;
+    private float recoveryTimer;
     private float attackFailSafeTimer;
     private Quaternion lockedAttackRotation;
     private bool hasLockedAttackRotation;
@@ -25,9 +25,16 @@ public class EnemyAttackState : EnemyState
         lockedAttackRotation = enemy.transform.rotation;
         hasLockedAttackRotation = true;
 
-        if (!isCoolingDown)
+        if (!isRecovering)
         {
-            StartAttackAnimation();
+            if (enemy.CanStartAttack())
+            {
+                StartAttackAnimation();
+            }
+            else
+            {
+                ChangeToResponsiveState();
+            }
         }
     }
 
@@ -39,6 +46,8 @@ public class EnemyAttackState : EnemyState
 
         foreach (var col in enemy.AttackColliders)
             col.DisableAttackCollider();
+
+        isRecovering = false;
 
         enemy.Agent.isStopped = false;
         enemy.Agent.updateRotation = true;
@@ -57,26 +66,16 @@ public class EnemyAttackState : EnemyState
             enemy.transform.rotation = lockedAttackRotation;
         }
 
-        if (isCoolingDown)
+        if (isRecovering)
         {
-            cooldownTimer -= Time.deltaTime;
-            if (cooldownTimer <= 0f)
-            {
-                isCoolingDown = false;
-                if (enemy.IsPlayerInAttackRadius())
-                {
-                    StartAttackAnimation();
-                }
-                else
-                    stateMachine.ChangeState(enemy.SearchState);
-            }
+            UpdateRecovery();
         }
         else
         {
             attackFailSafeTimer -= Time.deltaTime;
             if (attackFailSafeTimer <= 0f)
             {
-                HandleAttackFinish();
+                FinishAttackExecution();
             }
         }
     }
@@ -89,8 +88,18 @@ public class EnemyAttackState : EnemyState
 
     private void StartAttackAnimation()
     {
-        lockedAttackRotation = enemy.transform.rotation;
+        if (enemy.TryGetAttackTargetRotation(out Quaternion attackRotation))
+        {
+            lockedAttackRotation = attackRotation;
+            enemy.transform.rotation = lockedAttackRotation;
+        }
+        else
+        {
+            lockedAttackRotation = enemy.transform.rotation;
+        }
+
         hasLockedAttackRotation = true;
+        enemy.RegisterAttackStarted();
 
         enemy.Animator.SetInteger("WaitIndex", Random.Range(0, 2));
         enemy.Animator.SetTrigger("Attack");
@@ -106,13 +115,61 @@ public class EnemyAttackState : EnemyState
 
     private void HandleAttackFinish()
     {
-        if (isCoolingDown)
+        FinishAttackExecution();
+    }
+
+    private void FinishAttackExecution()
+    {
+        foreach (var col in enemy.AttackColliders)
+            col.DisableAttackCollider();
+
+        BeginRecovery();
+    }
+
+    private void BeginRecovery()
+    {
+        if (isRecovering)
             return;
 
-        isCoolingDown = true;
-        cooldownTimer = enemy.Data.attackCooldown;
+        isRecovering = true;
+        float minTime = Mathf.Max(0.1f, enemy.Data.attackRecoveryMinTime);
+        float maxTime = Mathf.Max(minTime, enemy.Data.attackRecoveryMaxTime);
+        recoveryTimer = Random.Range(minTime, maxTime);
+
         bool useWait1 = Random.value > 0.5f;
         enemy.Animator.CrossFade(useWait1 ? "Wait1" : "Wait2", 0.2f);
         enemy.NotifyAnimatorState(useWait1 ? (byte)2 : (byte)3);
+    }
+
+    private void UpdateRecovery()
+    {
+        recoveryTimer -= Time.deltaTime;
+        if (recoveryTimer > 0f)
+            return;
+
+        isRecovering = false;
+        if (enemy.CanStartAttack())
+        {
+            StartAttackAnimation();
+            return;
+        }
+
+        ChangeToResponsiveState();
+    }
+
+    private void ChangeToResponsiveState()
+    {
+        isRecovering = false;
+
+        if (enemy.TryChangeStateBySuspicion())
+            return;
+
+        if (enemy.HasDetectedNoise)
+        {
+            stateMachine.ChangeState(enemy.SearchState);
+            return;
+        }
+
+        stateMachine.ChangeState(enemy.AlertState);
     }
 }

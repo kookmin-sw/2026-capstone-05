@@ -51,7 +51,7 @@ public class EnemyHitState : EnemyState
 
         hasFinished = true;
 
-        if (enemy.IsPlayerInAttackRadius())
+        if (enemy.CanStartAttack())
         {
             stateMachine.ChangeState(enemy.AttackState);
             return;

@@ -50,6 +50,7 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
     private int activeNoiseMemoryIndex = -1;
     private float nextNoiseRetargetTime;
     private float noiseRetargetLockedUntil;
+    private float nextAttackAllowedTime;
 
     [Networked] private Vector3 NetworkPosition { get; set; }
     [Networked] private Quaternion NetworkRotation { get; set; }
@@ -169,6 +170,7 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
             NetworkLastNoiseTime = 0f;
             NetworkLastConfirmedNoisePosition = Vector3.zero;
             NetworkCurrentInvestigationPosition = Vector3.zero;
+            nextAttackAllowedTime = 0f;
             ResetNoiseMemory();
         }
     }
@@ -196,6 +198,7 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         localLastNoiseTime = 0f;
         localLastConfirmedNoisePosition = Vector3.zero;
         localCurrentInvestigationPosition = Vector3.zero;
+        nextAttackAllowedTime = 0f;
         ResetNoiseMemory();
         StateMachine.Initialize(IdleState);
     }
@@ -468,16 +471,60 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
 
     public bool IsPlayerInAttackRadius()
     {
-        int count = Physics.OverlapSphereNonAlloc(transform.position, data.attackRadius, attackCheckBuffer);
+        return TryGetAttackTargetDirection(out _, true, data.attackRadius);
+    }
+
+    public bool CanStartAttack()
+    {
+        return Time.time >= nextAttackAllowedTime && IsPlayerInAttackRadius();
+    }
+
+    public void RegisterAttackStarted()
+    {
+        nextAttackAllowedTime = Time.time + Mathf.Max(0f, data.attackCooldown);
+    }
+
+    public bool TryGetAttackTargetRotation(out Quaternion targetRotation)
+    {
+        targetRotation = transform.rotation;
+
+        if (!TryGetAttackTargetDirection(out Vector3 targetDirection, true, data.attackRadius) &&
+            !TryGetAttackTargetDirection(out targetDirection, false, data.attackRadius))
+        {
+            return false;
+        }
+
+        targetRotation = Quaternion.LookRotation(targetDirection);
+        return true;
+    }
+
+    private bool TryGetAttackTargetDirection(out Vector3 targetDirection, bool requireAttackAngle, float radius)
+    {
+        targetDirection = Vector3.zero;
+        int count = Physics.OverlapSphereNonAlloc(transform.position, radius, attackCheckBuffer);
+        float bestSqrDistance = float.PositiveInfinity;
+
         for (int i = 0; i < count; i++)
         {
             if (!attackCheckBuffer[i].CompareTag("Player")) continue;
+
             Vector3 dir = attackCheckBuffer[i].transform.position - transform.position;
             dir.y = 0f;
-            if (Vector3.Angle(transform.forward, dir) <= data.attackAngle * 0.5f)
-                return true;
+            float sqrDistance = dir.sqrMagnitude;
+            if (sqrDistance <= 0.0001f)
+                continue;
+
+            if (requireAttackAngle && Vector3.Angle(transform.forward, dir) > data.attackAngle * 0.5f)
+                continue;
+
+            if (sqrDistance >= bestSqrDistance)
+                continue;
+
+            bestSqrDistance = sqrDistance;
+            targetDirection = dir.normalized;
         }
-        return false;
+
+        return bestSqrDistance < float.PositiveInfinity;
     }
 
     private void UpdateSuspicion(float deltaTime)

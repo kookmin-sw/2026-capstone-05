@@ -48,7 +48,7 @@ public class EnemySearchState : EnemyState
         enemy.Animator.SetFloat("Speed", enemy.Agent.velocity.magnitude / enemy.Data.searchSpeed, 0.2f, Time.deltaTime);
         enemy.Animator.SetFloat("Angle", 0f, 0.2f, Time.deltaTime);
 
-        if (enemy.IsPlayerInAttackRadius())
+        if (enemy.CanStartAttack())
         {
             stateMachine.ChangeState(enemy.AttackState);
             return;
