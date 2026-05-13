@@ -25,6 +25,7 @@ public class NoiseManager : MonoBehaviour
     // Private Fields
     private readonly Dictionary<NoiseData.NoiseType, float> noiseDict = new Dictionary<NoiseData.NoiseType, float>();
     private readonly Collider[] overlapBuffer = new Collider[64];
+    private readonly HashSet<INoiseListener> notifiedListeners = new HashSet<INoiseListener>();
 
 #if UNITY_EDITOR
     private List<ActiveNoise> activeNoises = new List<ActiveNoise>();
@@ -99,13 +100,13 @@ public class NoiseManager : MonoBehaviour
 
     private void NotifyEnemies(Vector3 position, float radius)
     {
-        HashSet<INoiseListener> notified = new HashSet<INoiseListener>();
+        notifiedListeners.Clear();
 
         int count = Physics.OverlapSphereNonAlloc(position, radius, overlapBuffer);
         for (int i = 0; i < count; i++)
         {
             INoiseListener listener = overlapBuffer[i].GetComponentInParent<INoiseListener>();
-            if (listener == null || !notified.Add(listener)) continue;
+            if (listener == null || !notifiedListeners.Add(listener)) continue;
 
             Vector3 listenerPosition = overlapBuffer[i].bounds.center;
             if (Physics.Linecast(position, listenerPosition, soundObstacleMask))

@@ -20,6 +20,9 @@ public class QuickslotUIController : MonoBehaviour
         public VisualElement Root;
         public VisualElement Icon;
         public Label StackLabel;
+        public ItemInstance Item;
+        public Sprite IconSprite;
+        public int StackCount = -1;
     }
 
     private List<QuickslotViewElement> slotViews = new List<QuickslotViewElement>();
@@ -353,14 +356,9 @@ public class QuickslotUIController : MonoBehaviour
             if (playerSearchTimer <= 0f)
             {
                 playerSearchTimer = 1f; // 1초 간격으로 플레이어 탐색 (성능 최적화)
-                PlayerController[] controllers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
-                foreach (var controller in controllers)
+                if (LocalPlayerReferenceResolver.TryGetLocalPlayer(out PlayerController controller))
                 {
-                    if (controller.IsLocalPlayer)
-                    {
-                        localPlayerEquipment = controller.Equipment;
-                        break;
-                    }
+                    localPlayerEquipment = controller.Equipment;
                 }
             }
         }
@@ -460,16 +458,32 @@ public class QuickslotUIController : MonoBehaviour
 
         if (item != null && item.Data != null && item.Data.itemIcon != null)
         {
-            view.Icon.style.backgroundImage = new StyleBackground(item.Data.itemIcon);
-            view.Icon.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Contain));
+            if (view.Item != item || view.IconSprite != item.Data.itemIcon)
+            {
+                view.Item = item;
+                view.IconSprite = item.Data.itemIcon;
+                view.Icon.style.backgroundImage = new StyleBackground(item.Data.itemIcon);
+                view.Icon.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Contain));
+            }
 
-            view.StackLabel.text = item.currentStackCount > 1 ? item.currentStackCount.ToString() : string.Empty;
-            view.StackLabel.visible = item.currentStackCount > 1;
+            if (view.StackCount != item.currentStackCount)
+            {
+                view.StackCount = item.currentStackCount;
+                view.StackLabel.text = item.currentStackCount > 1 ? item.currentStackCount.ToString() : string.Empty;
+                view.StackLabel.visible = item.currentStackCount > 1;
+            }
         }
         else
         {
-            view.Icon.style.backgroundImage = null;
-            view.StackLabel.visible = false;
+            if (view.Item != null || view.IconSprite != null)
+            {
+                view.Item = null;
+                view.IconSprite = null;
+                view.StackCount = -1;
+                view.Icon.style.backgroundImage = null;
+                view.StackLabel.text = string.Empty;
+                view.StackLabel.visible = false;
+            }
         }
 
         if (index == selectedSlotIndex && localPlayerEquipment != null)

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Systems.GridInventory {
@@ -14,6 +13,10 @@ namespace Systems.GridInventory {
         readonly int width;
         readonly int height;
         int Capacity => width * height;
+        readonly HashSet<ItemInstance> overlappingItems = new HashSet<ItemInstance>();
+        readonly HashSet<ItemInstance> currentItemsInModel = new HashSet<ItemInstance>();
+        readonly HashSet<ItemInstance> processedItems = new HashSet<ItemInstance>();
+        readonly List<ItemInstance> itemsToRemove = new List<ItemInstance>();
 
         public GridInventoryController(GridStorageView view, GridInventoryModel model, int width, int height) {
             Debug.Assert(view != null, "View is null");
@@ -214,7 +217,7 @@ namespace Systems.GridInventory {
             var targetCoords = model.GetCoordinates(closestGridSlot.Index);
             var aNew = new Vector2Int(targetCoords.x, targetCoords.y);
             
-            HashSet<ItemInstance> overlappingItems = new HashSet<ItemInstance>();
+            overlappingItems.Clear();
             var positions = sourceItem.Data.gridShape.GetRotatedPositions(sourceItem.currentRotation);
             bool outOfBounds = false;
 
@@ -247,7 +250,7 @@ namespace Systems.GridInventory {
                 if (overlappingItems.Count == 0) {
                     isValid = true;
                 } else if (overlappingItems.Count == 1) {
-                    var targetItem = overlappingItems.First();
+                    var targetItem = GetSingleItem(overlappingItems);
                     if (sourceItem.Data == targetItem.Data && targetItem.Data.maxStackSize > 1) {
                         isValid = true; 
                     } else {
@@ -289,7 +292,7 @@ namespace Systems.GridInventory {
             var aOld = sourcePos;
             var aNew = new Vector2Int(targetCoords.x, targetCoords.y);
 
-            HashSet<ItemInstance> overlappingItems = new HashSet<ItemInstance>();
+            overlappingItems.Clear();
             var positions = sourceItem.Data.gridShape.GetRotatedPositions(sourceItem.currentRotation);
             bool outOfBounds = false;
 
@@ -325,7 +328,7 @@ namespace Systems.GridInventory {
                     // 빈 공간
                     isValid = true;
                 } else if (overlappingItems.Count == 1) {
-                    var targetItem = overlappingItems.First();
+                    var targetItem = GetSingleItem(overlappingItems);
                     // 스택 확인
                     if (sourceItem.Data == targetItem.Data && targetItem.Data.maxStackSize > 1) {
                         isValid = true; // 스택 가능
@@ -430,7 +433,7 @@ namespace Systems.GridInventory {
             model.TryRemove(sourceItem);
 
             // 2. Discover all overlapping items at the new position
-            HashSet<ItemInstance> overlappingItems = new HashSet<ItemInstance>();
+            overlappingItems.Clear();
             var positions = sourceItem.Data.gridShape.GetRotatedPositions(sourceItem.currentRotation);
             bool outOfBounds = false;
             
@@ -462,7 +465,7 @@ namespace Systems.GridInventory {
             }
 
             if (overlappingItems.Count == 1) {
-                var targetItem = overlappingItems.First();
+                var targetItem = GetSingleItem(overlappingItems);
                 
                 // Stack Combine logic
                 if (sourceItem.Data == targetItem.Data && targetItem.Data.maxStackSize > 1) {
@@ -525,8 +528,16 @@ namespace Systems.GridInventory {
 
         void HandleModelChanged(IList<ItemInstance> items) => RefreshView();
 
+        static ItemInstance GetSingleItem(HashSet<ItemInstance> items) {
+            foreach (var item in items) {
+                return item;
+            }
+
+            return null;
+        }
+
         void RefreshView() {
-            var currentItemsInModel = new HashSet<ItemInstance>();
+            currentItemsInModel.Clear();
 
             for (int i = 0; i < Capacity; i++) {
                 var item = model.Get(i);
@@ -535,18 +546,18 @@ namespace Systems.GridInventory {
                 }
             }
 
-            var toRemove = new List<ItemInstance>();
+            itemsToRemove.Clear();
             foreach (var kvp in itemViews) {
                 if (!currentItemsInModel.Contains(kvp.Key)) {
                     view.RemoveItem(kvp.Value);
-                    toRemove.Add(kvp.Key);
+                    itemsToRemove.Add(kvp.Key);
                 }
             }
-            foreach (var r in toRemove) {
+            foreach (var r in itemsToRemove) {
                 itemViews.Remove(r);
             }
 
-            var processedItems = new HashSet<ItemInstance>();
+            processedItems.Clear();
             for (int i = 0; i < Capacity; i++) {
                 var item = model.Get(i);
                 if (item == null) continue;

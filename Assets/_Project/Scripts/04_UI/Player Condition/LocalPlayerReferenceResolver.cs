@@ -3,9 +3,20 @@ using UnityEngine;
 
 public static class LocalPlayerReferenceResolver
 {
+    private static PlayerController cachedPlayer;
+    private static NetworkRunner cachedRunner;
+
     public static bool TryGetLocalPlayer(out PlayerController player)
     {
         player = null;
+
+        if (IsCachedPlayerValid())
+        {
+            player = cachedPlayer;
+            return true;
+        }
+
+        cachedPlayer = null;
 
         PlayerController[] controllers = Object.FindObjectsByType<PlayerController>(
             FindObjectsInactive.Exclude,
@@ -14,7 +25,7 @@ public static class LocalPlayerReferenceResolver
         if (controllers == null || controllers.Length == 0)
             return false;
 
-        NetworkRunner runner = Object.FindAnyObjectByType<NetworkRunner>();
+        NetworkRunner runner = GetRunner();
         bool hasNetworkPlayer = false;
         if (runner != null)
         {
@@ -27,7 +38,8 @@ public static class LocalPlayerReferenceResolver
                 hasNetworkPlayer |= networkObject != null;
                 if (networkObject != null && networkObject.InputAuthority == runner.LocalPlayer)
                 {
-                    player = controller;
+                    cachedPlayer = controller;
+                    player = cachedPlayer;
                     return true;
                 }
             }
@@ -40,14 +52,16 @@ public static class LocalPlayerReferenceResolver
         {
             if (controller != null && controller.IsLocalPlayer)
             {
-                player = controller;
+                cachedPlayer = controller;
+                player = cachedPlayer;
                 return true;
             }
         }
 
         if (controllers.Length == 1)
         {
-            player = controllers[0];
+            cachedPlayer = controllers[0];
+            player = cachedPlayer;
             return player != null;
         }
 
@@ -74,5 +88,30 @@ public static class LocalPlayerReferenceResolver
 
         noiseEmitter = player.NoiseEmitter != null ? player.NoiseEmitter : player.GetComponent<PlayerNoiseEmitter>();
         return noiseEmitter != null;
+    }
+
+    private static bool IsCachedPlayerValid()
+    {
+        if (cachedPlayer == null)
+            return false;
+
+        NetworkObject networkObject = cachedPlayer.GetComponent<NetworkObject>();
+        if (networkObject != null)
+        {
+            NetworkRunner runner = GetRunner();
+            return runner != null && networkObject.InputAuthority == runner.LocalPlayer;
+        }
+
+        return cachedPlayer.IsLocalPlayer || (GetRunner() == null && cachedPlayer.gameObject.scene.IsValid());
+    }
+
+    private static NetworkRunner GetRunner()
+    {
+        if (cachedRunner == null)
+        {
+            cachedRunner = Object.FindFirstObjectByType<NetworkRunner>();
+        }
+
+        return cachedRunner;
     }
 }

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerCondition : MonoBehaviour, IDamageable
+public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigurable
 {
     [Header("Stats")]
     public ConditionStat health;
@@ -24,6 +24,13 @@ public class PlayerCondition : MonoBehaviour, IDamageable
 
     [Header("Sound Settings")]
     [SerializeField] private EventReference damageSound;
+
+    private PlayerController controller;
+
+    private void Awake()
+    {
+        controller = GetComponent<PlayerController>();
+    }
 
     private void Start()
     {
@@ -102,8 +109,6 @@ public class PlayerCondition : MonoBehaviour, IDamageable
         if (stamina.currentValue >= amount)
         {
             stamina.Subtract(amount);
-
-            var controller = GetComponent<PlayerController>();
             if (controller != null)
             {
                 staminaRegenTimer = controller.staminaRegenDelay;
@@ -121,7 +126,6 @@ public class PlayerCondition : MonoBehaviour, IDamageable
     {
         stamina.Subtract(amount);
 
-        var controller = GetComponent<PlayerController>();
         if (controller != null)
         {
             staminaRegenTimer = controller.staminaRegenDelay;
@@ -146,6 +150,12 @@ public class PlayerCondition : MonoBehaviour, IDamageable
 
             // TODO: 나중에 UI 매니저에게 "새 버프 아이콘 띄워라" 라고 이벤트 쏠 수 있음
         }
+    }
+
+    public void ConfigureForNetwork(bool isLocalPlayer)
+    {
+        BackendPlayerNetworkSync networkSync = GetComponent<BackendPlayerNetworkSync>();
+        enabled = isLocalPlayer || networkSync == null || networkSync.HasStateAuthority;
     }
 
 }

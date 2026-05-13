@@ -2,7 +2,7 @@ using FMOD.Studio;
 using FMODUnity;
 using UnityEngine;
 
-public class PlayerNoiseEmitter : MonoBehaviour
+public class PlayerNoiseEmitter : MonoBehaviour, IPlayerNetworkConfigurable
 {
     [Header("References")]
     [SerializeField] private PlayerController player;
@@ -236,5 +236,11 @@ public class PlayerNoiseEmitter : MonoBehaviour
         RuntimeManager.AttachInstanceToGameObject(instance, player.gameObject);
         instance.start();
         instance.release();
+    }
+
+    public void ConfigureForNetwork(bool isLocalPlayer)
+    {
+        BackendPlayerNetworkSync networkSync = GetComponent<BackendPlayerNetworkSync>();
+        enabled = isLocalPlayer || networkSync == null || networkSync.HasStateAuthority;
     }
 }

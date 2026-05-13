@@ -37,6 +37,9 @@ public class PlayerConditionUI : MonoBehaviour
     private float previousStamina;
     private StaminaState currentStaminaState = StaminaState.Idle;
     private float playerSearchTimer;
+    private int displayedHealth = -1;
+    private int displayedSatiety = -1;
+    private int displayedColdness = -1;
 
     private void Start()
     {
@@ -57,9 +60,9 @@ public class PlayerConditionUI : MonoBehaviour
         }
 
         // 1. 원형 UI 게이지 업데이트 (부드러운 감쇠 적용)
-        UpdateCircle(healthFill, healthText, player.health.currentValue);
-        UpdateCircle(satietyFill, satietyText, player.satiety.currentValue);
-        UpdateCircle(coldnessFill, coldnessText, player.coldness.currentValue);
+        UpdateCircle(healthFill, healthText, player.health.currentValue, ref displayedHealth);
+        UpdateCircle(satietyFill, satietyText, player.satiety.currentValue, ref displayedSatiety);
+        UpdateCircle(coldnessFill, coldnessText, player.coldness.currentValue, ref displayedColdness);
 
         // 2. 위험 수치 경고 이펙트 업데이트
         if(healthWarning != null) healthWarning.UpdateStatWarning(player.health.currentValue);
@@ -148,7 +151,7 @@ public class PlayerConditionUI : MonoBehaviour
     }
 
     // 핵심: 게이지가 서서히 줄어드는 애니메이션 함수
-    private void UpdateCircle(Image img, TextMeshProUGUI txt, float currentVal)
+    private void UpdateCircle(Image img, TextMeshProUGUI txt, float currentVal, ref int displayedValue)
     {
         if (img != null)
         {
@@ -162,7 +165,12 @@ public class PlayerConditionUI : MonoBehaviour
             {
                 // 텍스트 숫자도 실제 데이터(currentVal)가 아니라 '시각적인 게이지의 비율(img.fillAmount)'을 따라가도록 설정
                 // 이렇게 하면 게이지가 내려가는 동안 숫자도 다라라락~ 하고 자연스럽게 내려갑니다.
-                txt.text = $"{Mathf.CeilToInt(img.fillAmount * 100f)}%"; 
+                int nextValue = Mathf.CeilToInt(img.fillAmount * 100f);
+                if (nextValue != displayedValue)
+                {
+                    displayedValue = nextValue;
+                    txt.SetText("{0}%", displayedValue);
+                }
             }
         }
     }
