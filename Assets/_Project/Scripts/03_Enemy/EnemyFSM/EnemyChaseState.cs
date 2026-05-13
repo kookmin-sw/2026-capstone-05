@@ -13,7 +13,10 @@ public class EnemyChaseState : EnemyState
         enemy.NotifyAnimatorState(1);
 
         lastNoisePosition = enemy.DetectedNoisePosition;
-        enemy.Agent.SetDestination(lastNoisePosition);
+        if (enemy.TrySetDestination(lastNoisePosition, out Vector3 destination))
+        {
+            enemy.SetCurrentInvestigationPosition(destination);
+        }
     }
 
     public override void Exit() { }
@@ -29,10 +32,13 @@ public class EnemyChaseState : EnemyState
             return;
         }
 
-        if (enemy.DetectedNoisePosition != lastNoisePosition)
+        if (enemy.HasMeaningfullyNewNoise(lastNoisePosition))
         {
             lastNoisePosition = enemy.DetectedNoisePosition;
-            enemy.Agent.SetDestination(lastNoisePosition);
+            if (enemy.TrySetDestination(lastNoisePosition, out Vector3 destination))
+            {
+                enemy.SetCurrentInvestigationPosition(destination);
+            }
         }
 
         if (!enemy.Agent.pathPending && enemy.Agent.remainingDistance <= enemy.Agent.stoppingDistance)

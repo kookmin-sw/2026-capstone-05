@@ -13,6 +13,7 @@ public class EnemySearchState : EnemyState
     private bool isLeftTurn;
     private bool isTurnPlaying;
     private bool moveAfterTurn;
+    private float turnFailSafeTimer;
 
     public EnemySearchState(EnemyAI enemy, EnemyStateMachine stateMachine)
         : base(enemy, stateMachine) { }
@@ -21,6 +22,7 @@ public class EnemySearchState : EnemyState
     {
         searchCenter = enemy.DetectedNoisePosition;
         lastNoisePosition = searchCenter;
+        enemy.SetCurrentInvestigationPosition(searchCenter);
         enemy.SetPatrolCenter(searchCenter);
 
         enemy.Agent.speed = enemy.Data.searchSpeed;
@@ -52,7 +54,7 @@ public class EnemySearchState : EnemyState
             return;
         }
 
-        if (enemy.DetectedNoisePosition != lastNoisePosition)
+        if (enemy.HasMeaningfullyNewNoise(lastNoisePosition))
         {
             stateMachine.ChangeState(enemy.ChaseState);
             return;
@@ -84,6 +86,15 @@ public class EnemySearchState : EnemyState
         if (isWaiting)
         {
             waitTimer -= Time.deltaTime;
+            if (isTurnPlaying)
+            {
+                turnFailSafeTimer -= Time.deltaTime;
+                if (turnFailSafeTimer <= 0f)
+                {
+                    HandleTurnEnd();
+                }
+            }
+
             if (waitTimer <= 0f && !moveAfterTurn)
             {
                 if (isTurnPlaying)
@@ -116,6 +127,7 @@ public class EnemySearchState : EnemyState
         enemy.AnimationEventHandler.OnTurnEnd += HandleTurnEnd;
         isTurnPlaying = true;
         moveAfterTurn = false;
+        turnFailSafeTimer = enemy.Data.turnAnimationFailSafeTime;
         isLeftTurn = Random.value > 0.5f;
         string turnTrigger = isLeftTurn ? "TurnLeft" : "TurnRight";
         enemy.Animator.SetTrigger(turnTrigger);
@@ -140,10 +152,9 @@ public class EnemySearchState : EnemyState
         float approachDist = Mathf.Max(0f, targetDirection.magnitude - approachOffset);
         Vector3 approachPos = enemy.transform.position + targetDirection.normalized * approachDist;
 
-        const float navMeshSampleRange = 2f;
-        if (NavMesh.SamplePosition(approachPos, out NavMeshHit hit, navMeshSampleRange, NavMesh.AllAreas))
+        if (enemy.TrySetDestination(approachPos, out Vector3 destination))
         {
-            enemy.Agent.SetDestination(hit.position);
+            enemy.SetCurrentInvestigationPosition(destination);
         }
         else
         {
@@ -155,23 +166,22 @@ public class EnemySearchState : EnemyState
     private void SetSearchDestination()
     {
         const int maxAttempts = 5;
-        const float navMeshSampleRange = 2f;
 
         for (int i = 0; i < maxAttempts; i++)
         {
             Vector2 randomCircle = Random.insideUnitCircle * enemy.Data.searchRadius;
             Vector3 targetPos = searchCenter + new Vector3(randomCircle.x, 0f, randomCircle.y);
 
-            if (NavMesh.SamplePosition(targetPos, out NavMeshHit hit, navMeshSampleRange, NavMesh.AllAreas))
+            if (enemy.TrySetDestination(targetPos, out Vector3 destination))
             {
-                enemy.Agent.SetDestination(hit.position);
+                enemy.SetCurrentInvestigationPosition(destination);
                 return;
             }
         }
 
-        if (NavMesh.SamplePosition(searchCenter, out NavMeshHit fallback, navMeshSampleRange, NavMesh.AllAreas))
+        if (enemy.TrySetDestination(searchCenter, out Vector3 fallback))
         {
-            enemy.Agent.SetDestination(fallback.position);
+            enemy.SetCurrentInvestigationPosition(fallback);
         }
     }
 

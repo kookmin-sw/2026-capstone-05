@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 8524155529575229384}
   - component: {fileID: 1295530464003885314}
   - component: {fileID: 6141188037711129945}
+  - component: {fileID: -2596923422346867576}
   m_Layer: 7
   m_Name: Enemy1_1
   m_TagString: Enemy
@@ -163,6 +164,21 @@ MonoBehaviour:
   - {fileID: 6145595453461541907}
   - {fileID: 7475947378720659353}
   ForceRemoteRenderTimeframe: 0
+--- !u!114 &-2596923422346867576
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6947545585843501229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2407cfc50cbef9a499dce2774288c124, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyLocalDriver
+  startOnEnable: 1
+  disableWhenNetworked: 1
+  enemy: {fileID: 0}
 --- !u!1001 &4801926030991762472
 PrefabInstance:
   m_ObjectHideFlags: 0

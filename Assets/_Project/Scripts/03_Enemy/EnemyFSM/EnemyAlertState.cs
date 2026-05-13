@@ -113,11 +113,10 @@ public class EnemyAlertState : EnemyState
             + enemy.transform.forward * arcRadius
             + enemy.transform.right * side;
 
-        const float navMeshSampleRange = 2f;
-        if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, navMeshSampleRange, NavMesh.AllAreas))
-            enemy.Agent.SetDestination(hit.position);
-        else
+        if (!enemy.TrySetDestination(candidate))
+        {
             enemy.Agent.isStopped = true;
+        }
     }
 
     private float GetDirectionAngle()

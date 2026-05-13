@@ -15,6 +15,9 @@ public class EnemyStateMachine
 
     public void ChangeState(EnemyState newState)
     {
+        if (CurrentState == newState)
+            return;
+
         if (CurrentState != null)
         {
             CurrentState.Exit();
