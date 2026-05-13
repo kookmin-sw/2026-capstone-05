@@ -3,6 +3,8 @@ using UnityEngine;
 public class EnemyHitState : EnemyState
 {
     private EnemyAnimationEventHandler animationEventHandler;
+    private float failSafeTimer;
+    private bool hasFinished;
 
 
     public EnemyHitState(EnemyAI enemy, EnemyStateMachine stateMachine)
@@ -12,13 +14,12 @@ public class EnemyHitState : EnemyState
     {
         animationEventHandler = enemy.AnimationEventHandler;
         animationEventHandler.OnHitEnd += HandleHitEnd;
+        hasFinished = false;
 
         enemy.Agent.isStopped = true;
         enemy.Agent.updateRotation = false;
 
-        enemy.Animator.SetInteger("HitIndex", Random.Range(0, 2));
-        enemy.Animator.SetTrigger("Hit");
-        enemy.NotifyAnimatorTrigger("Hit");
+        PlayHitAnimation();
     }
 
     public override void Exit()
@@ -35,28 +36,55 @@ public class EnemyHitState : EnemyState
     {
         enemy.Animator.SetFloat("Speed", 0f, 0.2f, Time.deltaTime);
         enemy.Animator.SetFloat("Angle", 0f, 0.2f, Time.deltaTime);
+
+        failSafeTimer -= Time.deltaTime;
+        if (failSafeTimer <= 0f)
+        {
+            HandleHitEnd();
+        }
     }
 
     private void HandleHitEnd()
     {
-        if (enemy.Suspicion >= enemy.Data.chaseThreshold)
+        if (hasFinished)
+            return;
+
+        hasFinished = true;
+
+        if (enemy.CanStartAttack())
         {
-            stateMachine.ChangeState(enemy.ChaseState);
+            stateMachine.ChangeState(enemy.AttackState);
             return;
         }
 
-        if (enemy.Suspicion >= enemy.Data.searchThreshold)
-        {
-            stateMachine.ChangeState(enemy.SearchState);
+        if (enemy.TryChangeStateBySuspicion())
             return;
-        }
 
-        if (enemy.Suspicion >= enemy.Data.alertThreshold)
+        EnemyState interruptedState = enemy.ConsumeInterruptedStateBeforeHit();
+        if (interruptedState != null &&
+            interruptedState != enemy.HitState &&
+            interruptedState != enemy.DeadState &&
+            interruptedState != enemy.AttackState)
         {
-            stateMachine.ChangeState(enemy.AlertState);
+            stateMachine.ChangeState(interruptedState);
             return;
         }
 
         stateMachine.ChangeState(enemy.PatrolState);
+    }
+
+    public void RestartReaction()
+    {
+        hasFinished = false;
+        PlayHitAnimation();
+    }
+
+    private void PlayHitAnimation()
+    {
+        enemy.Animator.SetInteger("HitIndex", Random.Range(0, 2));
+        enemy.Animator.ResetTrigger("Hit");
+        enemy.Animator.SetTrigger("Hit");
+        enemy.NotifyAnimatorTrigger("Hit");
+        failSafeTimer = enemy.Data.hitAnimationFailSafeTime;
     }
 }

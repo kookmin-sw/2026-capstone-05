@@ -13,7 +13,10 @@ public class EnemyChaseState : EnemyState
         enemy.NotifyAnimatorState(1);
 
         lastNoisePosition = enemy.DetectedNoisePosition;
-        enemy.Agent.SetDestination(lastNoisePosition);
+        if (enemy.TrySetDestination(lastNoisePosition, out Vector3 destination))
+        {
+            enemy.SetCurrentInvestigationPosition(destination);
+        }
     }
 
     public override void Exit() { }
@@ -23,16 +26,19 @@ public class EnemyChaseState : EnemyState
         enemy.Animator.SetFloat("Speed", enemy.Agent.velocity.magnitude / enemy.Data.chaseSpeed, 0.2f, Time.deltaTime);
         enemy.Animator.SetFloat("Angle", 0f, 0.2f, Time.deltaTime);
 
-        if (enemy.IsPlayerInAttackRadius())
+        if (enemy.CanStartAttack())
         {
             stateMachine.ChangeState(enemy.AttackState);
             return;
         }
 
-        if (enemy.DetectedNoisePosition != lastNoisePosition)
+        if (enemy.HasMeaningfullyNewNoise(lastNoisePosition))
         {
             lastNoisePosition = enemy.DetectedNoisePosition;
-            enemy.Agent.SetDestination(lastNoisePosition);
+            if (enemy.TrySetDestination(lastNoisePosition, out Vector3 destination))
+            {
+                enemy.SetCurrentInvestigationPosition(destination);
+            }
         }
 
         if (!enemy.Agent.pathPending && enemy.Agent.remainingDistance <= enemy.Agent.stoppingDistance)

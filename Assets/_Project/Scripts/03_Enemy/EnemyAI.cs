@@ -8,6 +8,21 @@ using UnityEditor;
 [RequireComponent(typeof(NetworkObject))]
 public class EnemyAI : NetworkBehaviour, INoiseListener
 {
+    private const int MaxNoiseMemorySlots = 8;
+
+    private struct NoiseMemorySlot
+    {
+        public bool isActive;
+        public Vector3 sourcePosition;
+        public Vector3 estimatedPosition;
+        public NoiseData.NoiseType noiseType;
+        public float intensity;
+        public float score;
+        public float lastHeardTime;
+        public bool isObstructed;
+        public int repeatCount;
+    }
+
     // Serialized Fields
     [SerializeField] private EnemyData data;
 
@@ -20,18 +35,44 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
     private int lastDeadTriggerCount;
     private int lastTurnLeftTriggerCount;
     private int lastTurnRightTriggerCount;
+    private bool isLocalSimulationActive;
+    private bool isNetworkSpawned;
+    private bool isRuntimeInitialized;
+    private Vector3 localDetectedNoisePosition;
+    private float localSuspicion;
+    private bool localHasDetectedNoise;
+    private int localLastNoiseTypeRaw;
+    private float localLastNoiseIntensity;
+    private float localLastNoiseTime;
+    private Vector3 localLastConfirmedNoisePosition;
+    private Vector3 localCurrentInvestigationPosition;
+    private readonly NoiseMemorySlot[] noiseMemorySlots = new NoiseMemorySlot[MaxNoiseMemorySlots];
+    private int activeNoiseMemoryIndex = -1;
+    private float nextNoiseRetargetTime;
+    private float noiseRetargetLockedUntil;
+    private float nextAttackAllowedTime;
+    private float nextJumpAttackDecisionTime;
+    private bool hasPreparedJumpAttack;
+    private Vector3 preparedJumpAttackLandingPosition;
+    private Quaternion preparedJumpAttackRotation;
 
     [Networked] private Vector3 NetworkPosition { get; set; }
     [Networked] private Quaternion NetworkRotation { get; set; }
     [Networked] private Vector3 NetworkDetectedNoisePosition { get; set; }
     [Networked] private float NetworkSuspicion { get; set; }
     [Networked] private NetworkBool NetworkHasDetectedNoise { get; set; }
+    [Networked] private int NetworkLastNoiseTypeRaw { get; set; }
+    [Networked] private float NetworkLastNoiseIntensity { get; set; }
+    [Networked] private float NetworkLastNoiseTime { get; set; }
+    [Networked] private Vector3 NetworkLastConfirmedNoisePosition { get; set; }
+    [Networked] private Vector3 NetworkCurrentInvestigationPosition { get; set; }
 
     [Networked] private float NetworkAnimSpeed { get; set; }
     [Networked] private float NetworkAnimAngle { get; set; }
     [Networked] private NetworkBool NetworkAnimIsAlert { get; set; }
     [Networked] private int NetworkAnimWaitIndex { get; set; }
     [Networked] private int NetworkAnimHitIndex { get; set; }
+    [Networked] private int NetworkAnimAttackIndex { get; set; }
     [Networked] private int NetworkAttackTriggerCount { get; set; }
     [Networked] private int NetworkHitTriggerCount { get; set; }
     [Networked] private int NetworkDeadTriggerCount { get; set; }
@@ -59,20 +100,42 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
     public EnemyAttackState AttackState { get; private set; }
     public EnemyHitState HitState { get; private set; }
     public EnemyDeadState DeadState { get; private set; }
+    public EnemyState InterruptedStateBeforeHit { get; private set; }
 
     // Properties: Gameplay
     public Vector3 PatrolCenter { get; private set; }
-    public Vector3 DetectedNoisePosition => NetworkDetectedNoisePosition;
-    public float Suspicion => NetworkSuspicion;
-    public bool HasDetectedNoise => NetworkHasDetectedNoise;
+    public Vector3 DetectedNoisePosition => UsesLocalState ? localDetectedNoisePosition : NetworkDetectedNoisePosition;
+    public float Suspicion => UsesLocalState ? localSuspicion : NetworkSuspicion;
+    public bool HasDetectedNoise => UsesLocalState ? localHasDetectedNoise : NetworkHasDetectedNoise;
+    public NoiseData.NoiseType LastNoiseType => (NoiseData.NoiseType)(UsesLocalState ? localLastNoiseTypeRaw : NetworkLastNoiseTypeRaw);
+    public float LastNoiseIntensity => UsesLocalState ? localLastNoiseIntensity : NetworkLastNoiseIntensity;
+    public float LastNoiseTime => UsesLocalState ? localLastNoiseTime : NetworkLastNoiseTime;
+    public Vector3 LastConfirmedNoisePosition => UsesLocalState ? localLastConfirmedNoisePosition : NetworkLastConfirmedNoisePosition;
+    public Vector3 CurrentInvestigationPosition => UsesLocalState ? localCurrentInvestigationPosition : NetworkCurrentInvestigationPosition;
+    public bool IsLocalSimulationActive => isLocalSimulationActive;
+    private bool UsesLocalState => isLocalSimulationActive || !isNetworkSpawned;
 
     private void Awake()
     {
+        EnsureRuntimeInitialized();
+    }
+
+    public bool EnsureRuntimeInitialized()
+    {
+        if (isRuntimeInitialized)
+            return true;
+
         Animator = GetComponent<Animator>();
         Agent = GetComponent<NavMeshAgent>();
         Health = GetComponent<EnemyHealth>();
         AnimationEventHandler = GetComponentInChildren<EnemyAnimationEventHandler>();
         AttackColliders = GetComponentsInChildren<EnemyAttackCollider>();
+
+        if (data == null || Animator == null || Agent == null || Health == null || AnimationEventHandler == null)
+        {
+            Debug.LogError("[EnemyAI] Local simulation requires EnemyData, Animator, NavMeshAgent, EnemyHealth, and EnemyAnimationEventHandler.", this);
+            return false;
+        }
 
         PatrolCenter = transform.position;
 
@@ -85,10 +148,18 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         AttackState = new EnemyAttackState(this, StateMachine);
         HitState = new EnemyHitState(this, StateMachine);
         DeadState = new EnemyDeadState(this, StateMachine);
+
+        isRuntimeInitialized = true;
+        return true;
     }
 
     public override void Spawned()
     {
+        if (!EnsureRuntimeInitialized())
+            return;
+
+        isNetworkSpawned = true;
+        isLocalSimulationActive = false;
         StateMachine.Initialize(IdleState);
 
         if (HasStateAuthority)
@@ -99,7 +170,62 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
             NetworkDetectedNoisePosition = Vector3.zero;
             NetworkSuspicion = 0f;
             NetworkHasDetectedNoise = false;
+            NetworkLastNoiseTypeRaw = (int)NoiseData.NoiseType.Idle;
+            NetworkLastNoiseIntensity = 0f;
+            NetworkLastNoiseTime = 0f;
+            NetworkLastConfirmedNoisePosition = Vector3.zero;
+            NetworkCurrentInvestigationPosition = Vector3.zero;
+            nextAttackAllowedTime = 0f;
+            nextJumpAttackDecisionTime = 0f;
+            hasPreparedJumpAttack = false;
+            ResetNoiseMemory();
         }
+    }
+
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        isNetworkSpawned = false;
+    }
+
+    public void StartLocalSimulation()
+    {
+        if (!EnsureRuntimeInitialized())
+            return;
+
+        if (isLocalSimulationActive)
+            return;
+
+        isLocalSimulationActive = true;
+        PatrolCenter = transform.position;
+        localDetectedNoisePosition = Vector3.zero;
+        localSuspicion = 0f;
+        localHasDetectedNoise = false;
+        localLastNoiseTypeRaw = (int)NoiseData.NoiseType.Idle;
+        localLastNoiseIntensity = 0f;
+        localLastNoiseTime = 0f;
+        localLastConfirmedNoisePosition = Vector3.zero;
+        localCurrentInvestigationPosition = Vector3.zero;
+        nextAttackAllowedTime = 0f;
+        nextJumpAttackDecisionTime = 0f;
+        hasPreparedJumpAttack = false;
+        ResetNoiseMemory();
+        StateMachine.Initialize(IdleState);
+    }
+
+    public void StopLocalSimulation()
+    {
+        isLocalSimulationActive = false;
+    }
+
+    public void TickLocalSimulation(float deltaTime)
+    {
+        if (!isLocalSimulationActive || StateMachine?.CurrentState == null)
+            return;
+
+        StateMachine.CurrentState.LogicUpdate();
+        StateMachine.CurrentState.PhysicsUpdate();
+        UpdateNoiseMemory(deltaTime);
+        UpdateSuspicion(deltaTime);
     }
 
     public override void FixedUpdateNetwork()
@@ -109,7 +235,9 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
 
         StateMachine.CurrentState.LogicUpdate();
         StateMachine.CurrentState.PhysicsUpdate();
-        UpdateSuspicion();
+        float deltaTime = Runner != null ? Runner.DeltaTime : Time.deltaTime;
+        UpdateNoiseMemory(deltaTime);
+        UpdateSuspicion(deltaTime);
 
         NetworkPosition = transform.position;
         NetworkRotation = transform.rotation;
@@ -118,7 +246,7 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
 
     public override void Render()
     {
-        if (HasStateAuthority)
+        if (HasStateAuthority || isLocalSimulationActive || !isNetworkSpawned)
             return;
 
         transform.SetPositionAndRotation(NetworkPosition, NetworkRotation);
@@ -127,6 +255,7 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         Animator.SetBool("IsAlert", NetworkAnimIsAlert);
         Animator.SetInteger("WaitIndex", NetworkAnimWaitIndex);
         Animator.SetInteger("HitIndex", NetworkAnimHitIndex);
+        Animator.SetInteger("AttackIndex", NetworkAnimAttackIndex);
 
         if (lastAttackTriggerCount != NetworkAttackTriggerCount) { Animator.SetTrigger("Attack"); lastAttackTriggerCount = NetworkAttackTriggerCount; }
         if (lastHitTriggerCount != NetworkHitTriggerCount) { Animator.SetTrigger("Hit"); lastHitTriggerCount = NetworkHitTriggerCount; }
@@ -148,12 +277,16 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         NetworkAnimIsAlert = Animator.GetBool("IsAlert");
         NetworkAnimWaitIndex = Animator.GetInteger("WaitIndex");
         NetworkAnimHitIndex = Animator.GetInteger("HitIndex");
+        NetworkAnimAttackIndex = Animator.GetInteger("AttackIndex");
 
     }
 
     public void NotifyAnimatorTrigger(string triggerName)
     {
-        if (!HasStateAuthority)
+        if (isLocalSimulationActive)
+            return;
+
+        if (!isNetworkSpawned || !HasStateAuthority)
             return;
 
         switch (triggerName)
@@ -168,7 +301,10 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
 
     public void NotifyAnimatorState(byte stateId)
     {
-        if (!HasStateAuthority)
+        if (isLocalSimulationActive)
+            return;
+
+        if (!isNetworkSpawned || !HasStateAuthority)
             return;
 
         NetworkAnimStateId = stateId;
@@ -196,14 +332,139 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         PatrolCenter = newCenter;
     }
 
+    public void SetCurrentInvestigationPosition(Vector3 position)
+    {
+        if (UsesLocalState)
+        {
+            localCurrentInvestigationPosition = position;
+            return;
+        }
+
+        NetworkCurrentInvestigationPosition = position;
+    }
+
+    public bool TrySetDestination(Vector3 targetPosition)
+    {
+        return TrySetDestination(targetPosition, out _);
+    }
+
+    public bool TrySetDestination(Vector3 targetPosition, out Vector3 resolvedDestination)
+    {
+        resolvedDestination = targetPosition;
+
+        if (Agent == null || !Agent.enabled || !Agent.isOnNavMesh)
+            return false;
+
+        float sampleRange = data != null ? data.navMeshSampleRange : 2f;
+        if (!NavMesh.SamplePosition(targetPosition, out NavMeshHit hit, sampleRange, NavMesh.AllAreas))
+            return false;
+
+        resolvedDestination = hit.position;
+        Agent.SetDestination(resolvedDestination);
+        return true;
+    }
+
+    public bool TryChangeStateBySuspicion()
+    {
+        if (Suspicion >= data.chaseThreshold)
+        {
+            StateMachine.ChangeState(ChaseState);
+            return true;
+        }
+
+        if (Suspicion >= data.searchThreshold)
+        {
+            StateMachine.ChangeState(SearchState);
+            return true;
+        }
+
+        if (Suspicion >= data.alertThreshold)
+        {
+            StateMachine.ChangeState(AlertState);
+            return true;
+        }
+
+        return false;
+    }
+
+    public void RegisterHitReaction()
+    {
+        if (StateMachine?.CurrentState == DeadState)
+            return;
+
+        ApplyHitAwareness();
+
+        if (StateMachine.CurrentState == HitState)
+        {
+            HitState.RestartReaction();
+            return;
+        }
+
+        InterruptedStateBeforeHit = StateMachine.CurrentState;
+        StateMachine.ChangeState(HitState);
+    }
+
+    public EnemyState ConsumeInterruptedStateBeforeHit()
+    {
+        EnemyState interruptedState = InterruptedStateBeforeHit;
+        InterruptedStateBeforeHit = null;
+        return interruptedState;
+    }
+
+    public bool HasMeaningfullyNewNoise(Vector3 previousNoisePosition)
+    {
+        return HasDetectedNoise &&
+               Vector3.Distance(DetectedNoisePosition, previousNoisePosition) > data.newNoisePositionThreshold;
+    }
+
+    private void ApplyHitAwareness()
+    {
+        bool hadKnownNoise = HasDetectedNoise;
+        float gain = data.hitSuspicionGain;
+        float nextSuspicion = Mathf.Max(data.hitMinimumSuspicion, Suspicion + gain);
+        if (!hadKnownNoise)
+        {
+            nextSuspicion = Mathf.Min(nextSuspicion, data.searchThreshold);
+        }
+
+        nextSuspicion = Mathf.Clamp(nextSuspicion, 0f, 100f);
+
+        Vector3 reactionPosition = hadKnownNoise ? DetectedNoisePosition : transform.position;
+        int memoryIndex = AddOrMergeNoiseMemory(
+            reactionPosition,
+            reactionPosition,
+            Mathf.Clamp01(gain / 100f),
+            NoiseData.NoiseType.Pain,
+            false,
+            gain);
+        ActivateNoiseMemory(memoryIndex, forceLock: true);
+        lastNoiseTime = Time.time;
+        SetSuspicion(nextSuspicion);
+    }
+
     public void OnNoiseDetected(Vector3 noisePosition, float noiseIntensity)
     {
-        NetworkDetectedNoisePosition = noisePosition;
-        NetworkHasDetectedNoise = true;
-        lastNoiseTime = Time.time;
+        OnNoiseDetected(noisePosition, noiseIntensity, NoiseData.NoiseType.Idle, false);
+    }
+
+    public void OnNoiseDetected(Vector3 noisePosition, float noiseIntensity, NoiseData.NoiseType noiseType, bool isObstructed)
+    {
+        if (!isLocalSimulationActive && (!isNetworkSpawned || !HasStateAuthority))
+            return;
 
         float gain = noiseIntensity * data.suspicionGainAmount * data.suspicionSensitivity;
-        NetworkSuspicion = Mathf.Clamp(NetworkSuspicion + gain, 0f, 100f);
+        Vector3 estimatedPosition = EstimateNoisePosition(noisePosition, noiseIntensity, isObstructed);
+        SetSuspicion(Mathf.Clamp(Suspicion + gain, 0f, 100f));
+        lastNoiseTime = Time.time;
+
+        int memoryIndex = AddOrMergeNoiseMemory(noisePosition, estimatedPosition, noiseIntensity, noiseType, isObstructed, gain);
+        if (memoryIndex == activeNoiseMemoryIndex)
+        {
+            ActivateNoiseMemory(memoryIndex, forceLock: false);
+            return;
+        }
+
+        TryRetargetNoiseMemory(!HasDetectedNoise);
     }
 
     public void LookDetectedNoisePosition()
@@ -221,21 +482,198 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
 
     public bool IsPlayerInAttackRadius()
     {
-        if (!HasDetectedNoise) return false;
+        return TryGetAttackTargetDirection(out _, true, data.attackRadius);
+    }
 
-        int count = Physics.OverlapSphereNonAlloc(transform.position, data.attackRadius, attackCheckBuffer);
+    public bool CanStartAttack()
+    {
+        if (Time.time < nextAttackAllowedTime)
+            return false;
+
+        if (IsPlayerInAttackRadius())
+            return true;
+
+        return TryPrepareJumpAttack();
+    }
+
+    public void RegisterAttackStarted()
+    {
+        nextAttackAllowedTime = Time.time + Mathf.Max(0f, data.attackCooldown);
+    }
+
+    public bool TryGetAttackTargetRotation(out Quaternion targetRotation)
+    {
+        targetRotation = transform.rotation;
+
+        if (!TryGetAttackTargetDirection(out Vector3 targetDirection, true, data.attackRadius) &&
+            !TryGetAttackTargetDirection(out targetDirection, false, data.attackRadius))
+        {
+            return false;
+        }
+
+        targetRotation = Quaternion.LookRotation(targetDirection);
+        return true;
+    }
+
+    public bool TryConsumePreparedJumpAttack(out Quaternion attackRotation, out Vector3 landingPosition)
+    {
+        attackRotation = preparedJumpAttackRotation;
+        landingPosition = preparedJumpAttackLandingPosition;
+
+        if (!hasPreparedJumpAttack)
+            return false;
+
+        hasPreparedJumpAttack = false;
+        return true;
+    }
+
+    public bool TrySnapAgentToNearestNavMesh(float sampleRange)
+    {
+        if (Agent == null)
+            return false;
+
+        if (!NavMesh.SamplePosition(transform.position, out NavMeshHit hit, sampleRange, NavMesh.AllAreas))
+            return false;
+
+        if (!Agent.enabled)
+        {
+            transform.position = hit.position;
+            Agent.enabled = true;
+        }
+
+        Agent.Warp(hit.position);
+        transform.position = hit.position;
+        return true;
+    }
+
+    private bool TryPrepareJumpAttack()
+    {
+        if (hasPreparedJumpAttack)
+            return true;
+
+        float now = Time.time;
+        if (now < nextJumpAttackDecisionTime)
+            return false;
+
+        nextJumpAttackDecisionTime = now + Mathf.Max(0.1f, data.jumpAttackDecisionInterval);
+        if (Random.value > data.jumpAttackChance)
+            return false;
+
+        if (!TryGetAttackTargetInfo(
+                Mathf.Max(data.jumpAttackMaxDistance, data.attackRadius),
+                true,
+                data.jumpAttackAngle,
+                out Vector3 targetPosition,
+                out Vector3 targetDirection,
+                out float targetDistance))
+        {
+            return false;
+        }
+
+        if (targetDistance < data.jumpAttackMinDistance || targetDistance > data.jumpAttackMaxDistance)
+            return false;
+
+        if (!TryResolveJumpAttackLanding(targetPosition, out Vector3 landingPosition))
+            return false;
+
+        preparedJumpAttackRotation = Quaternion.LookRotation(targetDirection);
+        preparedJumpAttackLandingPosition = landingPosition;
+        hasPreparedJumpAttack = true;
+        return true;
+    }
+
+    private bool TryResolveJumpAttackLanding(Vector3 targetPosition, out Vector3 landingPosition)
+    {
+        landingPosition = targetPosition;
+        float sampleRange = Mathf.Max(0.1f, data.jumpAttackLandingSampleRange);
+        if (!NavMesh.SamplePosition(targetPosition, out NavMeshHit landingHit, sampleRange, NavMesh.AllAreas))
+            return false;
+
+        Vector3 start = transform.position;
+        Vector3 end = landingHit.position;
+        if (NavMesh.Raycast(start, end, out _, NavMesh.AllAreas))
+            return false;
+
+        if (data.jumpAttackObstacleMask.value != 0)
+        {
+            Vector3 castStart = start + Vector3.up * Mathf.Max(0f, data.jumpAttackObstacleHeight);
+            Vector3 castEnd = end + Vector3.up * Mathf.Max(0f, data.jumpAttackObstacleHeight);
+            Vector3 castDirection = castEnd - castStart;
+            float castDistance = castDirection.magnitude;
+            if (castDistance > 0.01f &&
+                Physics.SphereCast(
+                    castStart,
+                    Mathf.Max(0.01f, data.jumpAttackObstacleRadius),
+                    castDirection.normalized,
+                    out _,
+                    castDistance,
+                    data.jumpAttackObstacleMask,
+                    QueryTriggerInteraction.Ignore))
+            {
+                return false;
+            }
+        }
+
+        landingPosition = landingHit.position;
+        return true;
+    }
+
+    private bool TryGetAttackTargetDirection(out Vector3 targetDirection, bool requireAttackAngle, float radius)
+    {
+        bool foundTarget = TryGetAttackTargetInfo(
+            radius,
+            requireAttackAngle,
+            data.attackAngle,
+            out _,
+            out targetDirection,
+            out _);
+
+        return foundTarget;
+    }
+
+    private bool TryGetAttackTargetInfo(
+        float radius,
+        bool requireAttackAngle,
+        float angle,
+        out Vector3 targetPosition,
+        out Vector3 targetDirection,
+        out float targetDistance)
+    {
+        targetPosition = Vector3.zero;
+        targetDirection = Vector3.zero;
+        targetDistance = 0f;
+        int count = Physics.OverlapSphereNonAlloc(transform.position, radius, attackCheckBuffer);
+        float bestSqrDistance = float.PositiveInfinity;
+
         for (int i = 0; i < count; i++)
         {
             if (!attackCheckBuffer[i].CompareTag("Player")) continue;
+
             Vector3 dir = attackCheckBuffer[i].transform.position - transform.position;
             dir.y = 0f;
-            if (Vector3.Angle(transform.forward, dir) <= data.attackAngle * 0.5f)
-                return true;
+            float sqrDistance = dir.sqrMagnitude;
+            if (sqrDistance <= 0.0001f)
+                continue;
+
+            if (requireAttackAngle && Vector3.Angle(transform.forward, dir) > angle * 0.5f)
+                continue;
+
+            if (sqrDistance >= bestSqrDistance)
+                continue;
+
+            bestSqrDistance = sqrDistance;
+            targetPosition = attackCheckBuffer[i].transform.position;
+            targetDirection = dir.normalized;
         }
-        return false;
+
+        if (bestSqrDistance >= float.PositiveInfinity)
+            return false;
+
+        targetDistance = Mathf.Sqrt(bestSqrDistance);
+        return true;
     }
 
-    private void UpdateSuspicion()
+    private void UpdateSuspicion(float deltaTime)
     {
         if (StateMachine.CurrentState == ChaseState
             || StateMachine.CurrentState == AttackState
@@ -245,16 +683,283 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         if (Time.time < lastNoiseTime + data.suspicionReduceDelay)
             return;
 
-        if (NetworkSuspicion > 0f)
+        if (Suspicion > 0f)
         {
-            NetworkSuspicion = Mathf.Max(0f, NetworkSuspicion - data.suspicionReduceRate * Runner.DeltaTime);
-            if (NetworkSuspicion <= 0f)
+            SetSuspicion(Mathf.Max(0f, Suspicion - data.suspicionReduceRate * deltaTime));
+            if (Suspicion <= 0f)
             {
-                NetworkSuspicion = 0f;
-                NetworkHasDetectedNoise = false;
-                NetworkDetectedNoisePosition = Vector3.zero;
+                SetSuspicion(0f);
+                SetDetectedNoise(Vector3.zero, false);
+                ResetNoiseMemory();
             }
         }
+    }
+
+    private void UpdateNoiseMemory(float deltaTime)
+    {
+        float now = Time.time;
+        float duration = data != null ? data.noiseMemoryDuration : 0f;
+        int capacity = GetNoiseMemoryCapacity();
+
+        for (int i = 0; i < capacity; i++)
+        {
+            if (!noiseMemorySlots[i].isActive)
+                continue;
+
+            if (duration > 0f && now - noiseMemorySlots[i].lastHeardTime > duration)
+            {
+                noiseMemorySlots[i].isActive = false;
+                if (activeNoiseMemoryIndex == i)
+                {
+                    activeNoiseMemoryIndex = -1;
+                }
+            }
+        }
+
+        TryRetargetNoiseMemory(activeNoiseMemoryIndex < 0);
+    }
+
+    private int AddOrMergeNoiseMemory(
+        Vector3 sourcePosition,
+        Vector3 estimatedPosition,
+        float intensity,
+        NoiseData.NoiseType noiseType,
+        bool isObstructed,
+        float gain)
+    {
+        int capacity = GetNoiseMemoryCapacity();
+        int bestMergeIndex = -1;
+        float mergeRadius = data != null ? Mathf.Max(0f, data.repeatedNoiseMergeRadius) : 0f;
+
+        if (mergeRadius > 0f)
+        {
+            for (int i = 0; i < capacity; i++)
+            {
+                if (!noiseMemorySlots[i].isActive)
+                    continue;
+
+                float sourceDistance = Vector3.Distance(noiseMemorySlots[i].sourcePosition, sourcePosition);
+                float estimatedDistance = Vector3.Distance(noiseMemorySlots[i].estimatedPosition, estimatedPosition);
+                if (sourceDistance <= mergeRadius || estimatedDistance <= mergeRadius)
+                {
+                    bestMergeIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if (bestMergeIndex < 0)
+        {
+            bestMergeIndex = FindNoiseMemoryWriteIndex(capacity);
+        }
+
+        NoiseMemorySlot slot = noiseMemorySlots[bestMergeIndex];
+        bool wasActive = slot.isActive;
+        float repeatedBonus = wasActive && data != null ? data.repeatedNoiseBonus : 0f;
+
+        slot.isActive = true;
+        slot.sourcePosition = sourcePosition;
+        slot.estimatedPosition = estimatedPosition;
+        slot.noiseType = noiseType;
+        slot.intensity = Mathf.Max(slot.intensity, intensity);
+        slot.score = Mathf.Max(slot.score, gain) + repeatedBonus;
+        slot.lastHeardTime = Time.time;
+        slot.isObstructed = isObstructed;
+        slot.repeatCount = wasActive ? slot.repeatCount + 1 : 1;
+        noiseMemorySlots[bestMergeIndex] = slot;
+
+        return bestMergeIndex;
+    }
+
+    private int FindNoiseMemoryWriteIndex(int capacity)
+    {
+        int lowestScoreIndex = 0;
+        float lowestScore = float.PositiveInfinity;
+
+        for (int i = 0; i < capacity; i++)
+        {
+            if (!noiseMemorySlots[i].isActive)
+                return i;
+
+            float score = CalculateNoiseMemoryScore(i);
+            if (score < lowestScore)
+            {
+                lowestScore = score;
+                lowestScoreIndex = i;
+            }
+        }
+
+        if (activeNoiseMemoryIndex == lowestScoreIndex)
+        {
+            activeNoiseMemoryIndex = -1;
+        }
+
+        return lowestScoreIndex;
+    }
+
+    private void TryRetargetNoiseMemory(bool force)
+    {
+        float now = Time.time;
+        if (!force && now < nextNoiseRetargetTime)
+            return;
+
+        nextNoiseRetargetTime = now + Mathf.Max(0.05f, data.noiseRetargetInterval);
+
+        int bestIndex = FindBestNoiseMemoryIndex();
+        if (bestIndex < 0)
+            return;
+
+        if (force || activeNoiseMemoryIndex < 0 || !noiseMemorySlots[activeNoiseMemoryIndex].isActive)
+        {
+            ActivateNoiseMemory(bestIndex, forceLock: true);
+            return;
+        }
+
+        if (bestIndex == activeNoiseMemoryIndex)
+        {
+            ActivateNoiseMemory(bestIndex, forceLock: false);
+            return;
+        }
+
+        if (now < noiseRetargetLockedUntil)
+            return;
+
+        float currentScore = CalculateNoiseMemoryScore(activeNoiseMemoryIndex);
+        float bestScore = CalculateNoiseMemoryScore(bestIndex);
+        if (bestScore >= currentScore + data.noiseRetargetScoreMargin)
+        {
+            ActivateNoiseMemory(bestIndex, forceLock: true);
+        }
+    }
+
+    private int FindBestNoiseMemoryIndex()
+    {
+        int capacity = GetNoiseMemoryCapacity();
+        int bestIndex = -1;
+        float bestScore = float.NegativeInfinity;
+
+        for (int i = 0; i < capacity; i++)
+        {
+            if (!noiseMemorySlots[i].isActive)
+                continue;
+
+            float score = CalculateNoiseMemoryScore(i);
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestIndex = i;
+            }
+        }
+
+        return bestIndex;
+    }
+
+    private float CalculateNoiseMemoryScore(int index)
+    {
+        if (index < 0 || index >= noiseMemorySlots.Length || !noiseMemorySlots[index].isActive)
+            return float.NegativeInfinity;
+
+        NoiseMemorySlot slot = noiseMemorySlots[index];
+        float age = Mathf.Max(0f, Time.time - slot.lastHeardTime);
+        float score = slot.score - age * data.noiseMemoryScoreDecayRate;
+        if (slot.isObstructed)
+        {
+            score -= data.obstructedNoiseScorePenalty;
+        }
+
+        return score;
+    }
+
+    private void ActivateNoiseMemory(int index, bool forceLock)
+    {
+        if (index < 0 || index >= noiseMemorySlots.Length || !noiseMemorySlots[index].isActive)
+            return;
+
+        NoiseMemorySlot slot = noiseMemorySlots[index];
+        activeNoiseMemoryIndex = index;
+        SetDetectedNoise(slot.estimatedPosition, true);
+        SetNoiseMemory(slot.sourcePosition, slot.estimatedPosition, slot.intensity, slot.noiseType);
+
+        if (forceLock)
+        {
+            noiseRetargetLockedUntil = Time.time + Mathf.Max(0f, data.noiseRetargetMinStickTime);
+        }
+    }
+
+    private void ResetNoiseMemory()
+    {
+        for (int i = 0; i < noiseMemorySlots.Length; i++)
+        {
+            noiseMemorySlots[i] = default;
+        }
+
+        activeNoiseMemoryIndex = -1;
+        nextNoiseRetargetTime = 0f;
+        noiseRetargetLockedUntil = 0f;
+    }
+
+    private int GetNoiseMemoryCapacity()
+    {
+        return data != null ? Mathf.Clamp(data.noiseMemoryCapacity, 1, MaxNoiseMemorySlots) : MaxNoiseMemorySlots;
+    }
+
+    private Vector3 EstimateNoisePosition(Vector3 sourcePosition, float noiseIntensity, bool isObstructed)
+    {
+        float uncertainty = Mathf.Pow(1f - Mathf.Clamp01(noiseIntensity), data.noisePositionErrorPower);
+        float errorRadius = data.maxNoisePositionError * uncertainty;
+        if (isObstructed)
+        {
+            errorRadius += data.obstructedNoisePositionErrorBonus;
+        }
+
+        if (errorRadius <= 0.01f)
+            return sourcePosition;
+
+        Vector2 offset = Random.insideUnitCircle * errorRadius;
+        return sourcePosition + new Vector3(offset.x, 0f, offset.y);
+    }
+
+    private void SetNoiseMemory(Vector3 sourcePosition, Vector3 estimatedPosition, float intensity, NoiseData.NoiseType noiseType)
+    {
+        if (isLocalSimulationActive)
+        {
+            localLastNoiseTypeRaw = (int)noiseType;
+            localLastNoiseIntensity = intensity;
+            localLastNoiseTime = Time.time;
+            localLastConfirmedNoisePosition = sourcePosition;
+            localCurrentInvestigationPosition = estimatedPosition;
+            return;
+        }
+
+        NetworkLastNoiseTypeRaw = (int)noiseType;
+        NetworkLastNoiseIntensity = intensity;
+        NetworkLastNoiseTime = Time.time;
+        NetworkLastConfirmedNoisePosition = sourcePosition;
+        NetworkCurrentInvestigationPosition = estimatedPosition;
+    }
+
+    private void SetDetectedNoise(Vector3 position, bool hasDetectedNoise)
+    {
+        if (isLocalSimulationActive)
+        {
+            localDetectedNoisePosition = position;
+            localHasDetectedNoise = hasDetectedNoise;
+            return;
+        }
+
+        NetworkDetectedNoisePosition = position;
+        NetworkHasDetectedNoise = hasDetectedNoise;
+    }
+
+    private void SetSuspicion(float suspicion)
+    {
+        if (isLocalSimulationActive)
+        {
+            localSuspicion = suspicion;
+            return;
+        }
+
+        NetworkSuspicion = suspicion;
     }
 
     private void OnDrawGizmos()
