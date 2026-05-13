@@ -247,7 +247,7 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
         Vector3 point1 = transform.position + Vector3.up * radius;
         Vector3 point2 = transform.position + Vector3.up * (StandingHeight - radius);
 
-        return !Physics.CheckCapsule(point1, point2, radius, obstacleLayer);
+        return !Physics.CheckCapsule(point1, point2, radius, obstacleLayer, QueryTriggerInteraction.Ignore);
     }
 
     public void ConfigureForNetwork(bool isLocalPlayer)
