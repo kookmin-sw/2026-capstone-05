@@ -81,6 +81,22 @@ public class EnemyData : ScriptableObject
     public float attackRecoveryMaxTime = 1.25f;
     public float attackRadius = 2f;
     public float attackAngle = 60f;
+    [Range(0f, 1f)] public float attackVariant1Chance = 0.35f;
+
+    [Header("Jump Attack")]
+    [Range(0f, 1f)] public float jumpAttackChance = 0.12f;
+    public float jumpAttackDecisionInterval = 1f;
+    public float jumpAttackMinDistance = 3f;
+    public float jumpAttackMaxDistance = 7f;
+    [Range(1f, 3f)]
+    public float jumpAttackDistanceMultiplier = 1.5f;
+    public float jumpAttackAngle = 70f;
+    public float jumpAttackMoveDuration = 0.65f;
+    public float jumpAttackArcHeight = 0.8f;
+    public float jumpAttackLandingSampleRange = 1.5f;
+    public float jumpAttackObstacleHeight = 1f;
+    public float jumpAttackObstacleRadius = 0.35f;
+    public LayerMask jumpAttackObstacleMask;
 
     [Header("Animation Fail-safe")]
     public float attackAnimationFailSafeTime = 3f;

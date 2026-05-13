@@ -8,7 +8,16 @@ public class EnemyAttackState : EnemyState
     private float attackFailSafeTimer;
     private Quaternion lockedAttackRotation;
     private bool hasLockedAttackRotation;
-
+    private bool isJumpAttackMoving;
+    private bool originalAgentEnabled;
+    private bool originalAgentUpdatePosition;
+    private bool originalAgentUpdateRotation;
+    private int currentAttackIndex;
+    private bool hasPendingJumpAttackMovement;
+    private Vector3 jumpStartPosition;
+    private Vector3 jumpLandingPosition;
+    private float jumpMoveTimer;
+    private float jumpMoveDuration;
 
     public EnemyAttackState(EnemyAI enemy, EnemyStateMachine stateMachine)
         : base(enemy, stateMachine) { }
@@ -19,6 +28,13 @@ public class EnemyAttackState : EnemyState
         animationEventHandler.OnAttackStart += HandleAttackStart;
         animationEventHandler.OnAttackEnd += HandleAttackEnd;
         animationEventHandler.OnAttackFinish += HandleAttackFinish;
+
+        originalAgentEnabled = enemy.Agent.enabled;
+        originalAgentUpdatePosition = enemy.Agent.updatePosition;
+        originalAgentUpdateRotation = enemy.Agent.updateRotation;
+        currentAttackIndex = -1;
+        hasPendingJumpAttackMovement = false;
+        isJumpAttackMoving = false;
 
         enemy.Agent.isStopped = true;
         enemy.Agent.updateRotation = false;
@@ -47,7 +63,14 @@ public class EnemyAttackState : EnemyState
         foreach (var col in enemy.AttackColliders)
             col.DisableAttackCollider();
 
+        EndJumpAttackMovement(true);
+        hasPendingJumpAttackMovement = false;
         isRecovering = false;
+
+        if (!enemy.Agent.enabled)
+        {
+            enemy.Agent.enabled = true;
+        }
 
         enemy.Agent.isStopped = false;
         enemy.Agent.updateRotation = true;
@@ -64,6 +87,11 @@ public class EnemyAttackState : EnemyState
         if (hasLockedAttackRotation)
         {
             enemy.transform.rotation = lockedAttackRotation;
+        }
+
+        if (isJumpAttackMoving)
+        {
+            UpdateJumpAttackMovement();
         }
 
         if (isRecovering)
@@ -84,23 +112,23 @@ public class EnemyAttackState : EnemyState
     {
         foreach (var col in enemy.AttackColliders)
             if (col.ColliderIndex == index) col.EnableAttackCollider();
+
+        if (currentAttackIndex == 2 && hasPendingJumpAttackMovement && !isJumpAttackMoving)
+        {
+            BeginJumpAttackMovement(jumpLandingPosition);
+        }
     }
 
     private void StartAttackAnimation()
     {
-        if (enemy.TryGetAttackTargetRotation(out Quaternion attackRotation))
-        {
-            lockedAttackRotation = attackRotation;
-            enemy.transform.rotation = lockedAttackRotation;
-        }
-        else
-        {
-            lockedAttackRotation = enemy.transform.rotation;
-        }
+        int attackIndex = SelectAttackIndex(out Quaternion attackRotation);
+        lockedAttackRotation = attackRotation;
+        enemy.transform.rotation = lockedAttackRotation;
 
         hasLockedAttackRotation = true;
         enemy.RegisterAttackStarted();
 
+        enemy.Animator.SetInteger("AttackIndex", attackIndex);
         enemy.Animator.SetInteger("WaitIndex", Random.Range(0, 2));
         enemy.Animator.SetTrigger("Attack");
         enemy.NotifyAnimatorTrigger("Attack");
@@ -111,6 +139,11 @@ public class EnemyAttackState : EnemyState
     {
         foreach (var col in enemy.AttackColliders)
             if (col.ColliderIndex == index) col.DisableAttackCollider();
+
+        if (currentAttackIndex == 2)
+        {
+            EndJumpAttackMovement(true);
+        }
     }
 
     private void HandleAttackFinish()
@@ -123,7 +156,86 @@ public class EnemyAttackState : EnemyState
         foreach (var col in enemy.AttackColliders)
             col.DisableAttackCollider();
 
+        EndJumpAttackMovement(true);
+        hasPendingJumpAttackMovement = false;
         BeginRecovery();
+    }
+
+    private int SelectAttackIndex(out Quaternion attackRotation)
+    {
+        if (enemy.TryConsumePreparedJumpAttack(out attackRotation, out Vector3 landingPosition))
+        {
+            currentAttackIndex = 2;
+            hasPendingJumpAttackMovement = true;
+            jumpLandingPosition = landingPosition;
+            return 2;
+        }
+
+        currentAttackIndex = Random.value < enemy.Data.attackVariant1Chance ? 1 : 0;
+        hasPendingJumpAttackMovement = false;
+        isJumpAttackMoving = false;
+        if (!enemy.TryGetAttackTargetRotation(out attackRotation))
+        {
+            attackRotation = enemy.transform.rotation;
+        }
+
+        return currentAttackIndex;
+    }
+
+    private void BeginJumpAttackMovement(Vector3 landingPosition)
+    {
+        hasPendingJumpAttackMovement = false;
+        isJumpAttackMoving = true;
+        jumpStartPosition = enemy.transform.position;
+
+        Vector3 direction = landingPosition - enemy.transform.position;
+        float originalDistance = direction.magnitude;
+        float extendedDistance = originalDistance * enemy.Data.jumpAttackDistanceMultiplier;
+        jumpLandingPosition = enemy.transform.position + direction.normalized * extendedDistance;
+        jumpMoveTimer = 0f;
+        jumpMoveDuration = Mathf.Max(0.05f, enemy.Data.jumpAttackMoveDuration);
+
+        if (enemy.Agent.enabled)
+        {
+            enemy.Agent.ResetPath();
+            enemy.Agent.isStopped = true;
+            enemy.Agent.updatePosition = false;
+            enemy.Agent.updateRotation = false;
+            enemy.Agent.enabled = false;
+        }
+    }
+
+    private void UpdateJumpAttackMovement()
+    {
+        jumpMoveTimer += Time.deltaTime;
+        float progress = Mathf.Clamp(jumpMoveTimer / jumpMoveDuration, 0f, 0.98f);
+        Vector3 position = Vector3.Lerp(jumpStartPosition, jumpLandingPosition, progress);
+        position.y += Mathf.Sin(progress * Mathf.PI) * Mathf.Max(0f, enemy.Data.jumpAttackArcHeight);
+        enemy.transform.position = position;
+    }
+
+    private void EndJumpAttackMovement(bool snapToLanding)
+    {
+        if (!isJumpAttackMoving)
+            return;
+
+        isJumpAttackMoving = false;
+        if (snapToLanding)
+        {
+            enemy.transform.position = jumpLandingPosition;
+        }
+
+        if (!enemy.Agent.enabled && originalAgentEnabled)
+        {
+            enemy.Agent.enabled = true;
+        }
+
+        enemy.TrySnapAgentToNearestNavMesh(enemy.Data.jumpAttackLandingSampleRange);
+        if (enemy.Agent.enabled)
+        {
+            enemy.Agent.updatePosition = originalAgentUpdatePosition;
+            enemy.Agent.updateRotation = originalAgentUpdateRotation;
+        }
     }
 
     private void BeginRecovery()

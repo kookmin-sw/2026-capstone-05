@@ -51,6 +51,10 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
     private float nextNoiseRetargetTime;
     private float noiseRetargetLockedUntil;
     private float nextAttackAllowedTime;
+    private float nextJumpAttackDecisionTime;
+    private bool hasPreparedJumpAttack;
+    private Vector3 preparedJumpAttackLandingPosition;
+    private Quaternion preparedJumpAttackRotation;
 
     [Networked] private Vector3 NetworkPosition { get; set; }
     [Networked] private Quaternion NetworkRotation { get; set; }
@@ -68,6 +72,7 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
     [Networked] private NetworkBool NetworkAnimIsAlert { get; set; }
     [Networked] private int NetworkAnimWaitIndex { get; set; }
     [Networked] private int NetworkAnimHitIndex { get; set; }
+    [Networked] private int NetworkAnimAttackIndex { get; set; }
     [Networked] private int NetworkAttackTriggerCount { get; set; }
     [Networked] private int NetworkHitTriggerCount { get; set; }
     [Networked] private int NetworkDeadTriggerCount { get; set; }
@@ -171,6 +176,8 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
             NetworkLastConfirmedNoisePosition = Vector3.zero;
             NetworkCurrentInvestigationPosition = Vector3.zero;
             nextAttackAllowedTime = 0f;
+            nextJumpAttackDecisionTime = 0f;
+            hasPreparedJumpAttack = false;
             ResetNoiseMemory();
         }
     }
@@ -199,6 +206,8 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         localLastConfirmedNoisePosition = Vector3.zero;
         localCurrentInvestigationPosition = Vector3.zero;
         nextAttackAllowedTime = 0f;
+        nextJumpAttackDecisionTime = 0f;
+        hasPreparedJumpAttack = false;
         ResetNoiseMemory();
         StateMachine.Initialize(IdleState);
     }
@@ -246,6 +255,7 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         Animator.SetBool("IsAlert", NetworkAnimIsAlert);
         Animator.SetInteger("WaitIndex", NetworkAnimWaitIndex);
         Animator.SetInteger("HitIndex", NetworkAnimHitIndex);
+        Animator.SetInteger("AttackIndex", NetworkAnimAttackIndex);
 
         if (lastAttackTriggerCount != NetworkAttackTriggerCount) { Animator.SetTrigger("Attack"); lastAttackTriggerCount = NetworkAttackTriggerCount; }
         if (lastHitTriggerCount != NetworkHitTriggerCount) { Animator.SetTrigger("Hit"); lastHitTriggerCount = NetworkHitTriggerCount; }
@@ -267,6 +277,7 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         NetworkAnimIsAlert = Animator.GetBool("IsAlert");
         NetworkAnimWaitIndex = Animator.GetInteger("WaitIndex");
         NetworkAnimHitIndex = Animator.GetInteger("HitIndex");
+        NetworkAnimAttackIndex = Animator.GetInteger("AttackIndex");
 
     }
 
@@ -476,7 +487,13 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
 
     public bool CanStartAttack()
     {
-        return Time.time >= nextAttackAllowedTime && IsPlayerInAttackRadius();
+        if (Time.time < nextAttackAllowedTime)
+            return false;
+
+        if (IsPlayerInAttackRadius())
+            return true;
+
+        return TryPrepareJumpAttack();
     }
 
     public void RegisterAttackStarted()
@@ -498,9 +515,133 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         return true;
     }
 
+    public bool TryConsumePreparedJumpAttack(out Quaternion attackRotation, out Vector3 landingPosition)
+    {
+        attackRotation = preparedJumpAttackRotation;
+        landingPosition = preparedJumpAttackLandingPosition;
+
+        if (!hasPreparedJumpAttack)
+            return false;
+
+        hasPreparedJumpAttack = false;
+        return true;
+    }
+
+    public bool TrySnapAgentToNearestNavMesh(float sampleRange)
+    {
+        if (Agent == null)
+            return false;
+
+        if (!NavMesh.SamplePosition(transform.position, out NavMeshHit hit, sampleRange, NavMesh.AllAreas))
+            return false;
+
+        if (!Agent.enabled)
+        {
+            transform.position = hit.position;
+            Agent.enabled = true;
+        }
+
+        Agent.Warp(hit.position);
+        transform.position = hit.position;
+        return true;
+    }
+
+    private bool TryPrepareJumpAttack()
+    {
+        if (hasPreparedJumpAttack)
+            return true;
+
+        float now = Time.time;
+        if (now < nextJumpAttackDecisionTime)
+            return false;
+
+        nextJumpAttackDecisionTime = now + Mathf.Max(0.1f, data.jumpAttackDecisionInterval);
+        if (Random.value > data.jumpAttackChance)
+            return false;
+
+        if (!TryGetAttackTargetInfo(
+                Mathf.Max(data.jumpAttackMaxDistance, data.attackRadius),
+                true,
+                data.jumpAttackAngle,
+                out Vector3 targetPosition,
+                out Vector3 targetDirection,
+                out float targetDistance))
+        {
+            return false;
+        }
+
+        if (targetDistance < data.jumpAttackMinDistance || targetDistance > data.jumpAttackMaxDistance)
+            return false;
+
+        if (!TryResolveJumpAttackLanding(targetPosition, out Vector3 landingPosition))
+            return false;
+
+        preparedJumpAttackRotation = Quaternion.LookRotation(targetDirection);
+        preparedJumpAttackLandingPosition = landingPosition;
+        hasPreparedJumpAttack = true;
+        return true;
+    }
+
+    private bool TryResolveJumpAttackLanding(Vector3 targetPosition, out Vector3 landingPosition)
+    {
+        landingPosition = targetPosition;
+        float sampleRange = Mathf.Max(0.1f, data.jumpAttackLandingSampleRange);
+        if (!NavMesh.SamplePosition(targetPosition, out NavMeshHit landingHit, sampleRange, NavMesh.AllAreas))
+            return false;
+
+        Vector3 start = transform.position;
+        Vector3 end = landingHit.position;
+        if (NavMesh.Raycast(start, end, out _, NavMesh.AllAreas))
+            return false;
+
+        if (data.jumpAttackObstacleMask.value != 0)
+        {
+            Vector3 castStart = start + Vector3.up * Mathf.Max(0f, data.jumpAttackObstacleHeight);
+            Vector3 castEnd = end + Vector3.up * Mathf.Max(0f, data.jumpAttackObstacleHeight);
+            Vector3 castDirection = castEnd - castStart;
+            float castDistance = castDirection.magnitude;
+            if (castDistance > 0.01f &&
+                Physics.SphereCast(
+                    castStart,
+                    Mathf.Max(0.01f, data.jumpAttackObstacleRadius),
+                    castDirection.normalized,
+                    out _,
+                    castDistance,
+                    data.jumpAttackObstacleMask,
+                    QueryTriggerInteraction.Ignore))
+            {
+                return false;
+            }
+        }
+
+        landingPosition = landingHit.position;
+        return true;
+    }
+
     private bool TryGetAttackTargetDirection(out Vector3 targetDirection, bool requireAttackAngle, float radius)
     {
+        bool foundTarget = TryGetAttackTargetInfo(
+            radius,
+            requireAttackAngle,
+            data.attackAngle,
+            out _,
+            out targetDirection,
+            out _);
+
+        return foundTarget;
+    }
+
+    private bool TryGetAttackTargetInfo(
+        float radius,
+        bool requireAttackAngle,
+        float angle,
+        out Vector3 targetPosition,
+        out Vector3 targetDirection,
+        out float targetDistance)
+    {
+        targetPosition = Vector3.zero;
         targetDirection = Vector3.zero;
+        targetDistance = 0f;
         int count = Physics.OverlapSphereNonAlloc(transform.position, radius, attackCheckBuffer);
         float bestSqrDistance = float.PositiveInfinity;
 
@@ -514,17 +655,22 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
             if (sqrDistance <= 0.0001f)
                 continue;
 
-            if (requireAttackAngle && Vector3.Angle(transform.forward, dir) > data.attackAngle * 0.5f)
+            if (requireAttackAngle && Vector3.Angle(transform.forward, dir) > angle * 0.5f)
                 continue;
 
             if (sqrDistance >= bestSqrDistance)
                 continue;
 
             bestSqrDistance = sqrDistance;
+            targetPosition = attackCheckBuffer[i].transform.position;
             targetDirection = dir.normalized;
         }
 
-        return bestSqrDistance < float.PositiveInfinity;
+        if (bestSqrDistance >= float.PositiveInfinity)
+            return false;
+
+        targetDistance = Mathf.Sqrt(bestSqrDistance);
+        return true;
     }
 
     private void UpdateSuspicion(float deltaTime)
