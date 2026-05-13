@@ -1,6 +1,6 @@
 using System;
 using System.Collections;
-using System.Linq;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -34,6 +34,8 @@ namespace Systems.GridInventory {
         protected float SlotTotalSize => slotSize + slotSpacing;
 
         protected int currentColumns = 8;
+        private readonly List<int> coloredSlotIndexes = new List<int>();
+        private readonly HashSet<int> coloredSlotSet = new HashSet<int>();
 
         public event Action<GridItemView, GridSlot> OnDrop;
         public event Action<GridItemView, int> OnDropToQuickslot;
@@ -42,16 +44,23 @@ namespace Systems.GridInventory {
 
         public void ResetAllSlotColors() {
             if (Slots == null) return;
-            foreach (var slot in Slots) {
-                if (slot != null && slot.style != null) {
-                    slot.style.backgroundColor = new StyleColor(StyleKeyword.Null);
+            for (int i = 0; i < coloredSlotIndexes.Count; i++) {
+                int index = coloredSlotIndexes[i];
+                if (index >= 0 && index < Slots.Length && Slots[index] != null) {
+                    Slots[index].style.backgroundColor = new StyleColor(StyleKeyword.Null);
                 }
             }
+
+            coloredSlotIndexes.Clear();
+            coloredSlotSet.Clear();
         }
 
         public void SetSlotColor(int index, Color color) {
             if (index >= 0 && index < Slots.Length && Slots[index] != null) {
                 Slots[index].style.backgroundColor = new StyleColor(color);
+                if (coloredSlotSet.Add(index)) {
+                    coloredSlotIndexes.Add(index);
+                }
             }
         }
 
@@ -174,7 +183,8 @@ namespace Systems.GridInventory {
             Vector2 localPos = itemsContainer.WorldToLocal(position);
 
             GridSlot closestGridSlot = null;
-            float closestDistance = float.MaxValue;
+            float closestDistanceSqr = float.MaxValue;
+            float maxDistanceSqr = slotSize * slotSize;
 
             for (int i = 0; i < Slots.Length; i++) {
                 if (Slots[i] == null) continue;
@@ -186,11 +196,11 @@ namespace Systems.GridInventory {
                 float slotCenterY = paddingLeftTop + row * SlotTotalSize + (slotSize / 2f);
 
                 Vector2 slotCenter = new Vector2(slotCenterX, slotCenterY);
-                float distance = Vector2.Distance(localPos, slotCenter);
+                float distanceSqr = (localPos - slotCenter).sqrMagnitude;
 
-                if (distance < slotSize && distance < closestDistance) {
+                if (distanceSqr < maxDistanceSqr && distanceSqr < closestDistanceSqr) {
                     closestGridSlot = Slots[i];
-                    closestDistance = distance;
+                    closestDistanceSqr = distanceSqr;
                 }
             }
             return closestGridSlot;

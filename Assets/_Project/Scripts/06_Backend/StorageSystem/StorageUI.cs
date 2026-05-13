@@ -23,6 +23,9 @@ namespace Systems.StorageSystem
         private GridInventoryModel model;
         private string currentStorageId;
         private readonly Dictionary<ItemInstance, GridItemView> itemViews = new Dictionary<ItemInstance, GridItemView>();
+        private readonly HashSet<ItemInstance> currentRefreshItems = new HashSet<ItemInstance>();
+        private readonly HashSet<ItemInstance> processedRefreshItems = new HashSet<ItemInstance>();
+        private readonly List<ItemInstance> itemsPendingRemoval = new List<ItemInstance>();
         private PlayerInputHandler localPlayerInputHandler;
         private bool eventsBound;
         private bool openedInventoryForStorage;
@@ -310,41 +313,41 @@ namespace Systems.StorageSystem
                 return;
             }
 
-            HashSet<ItemInstance> currentItems = new HashSet<ItemInstance>();
+            currentRefreshItems.Clear();
             for (int i = 0; i < model.Items.Length; i++)
             {
                 ItemInstance item = model.Get(i);
                 if (item != null)
                 {
-                    currentItems.Add(item);
+                    currentRefreshItems.Add(item);
                 }
             }
 
-            List<ItemInstance> toRemove = new List<ItemInstance>();
+            itemsPendingRemoval.Clear();
             foreach (KeyValuePair<ItemInstance, GridItemView> pair in itemViews)
             {
-                if (!currentItems.Contains(pair.Key))
+                if (!currentRefreshItems.Contains(pair.Key))
                 {
                     RemoveItem(pair.Value);
-                    toRemove.Add(pair.Key);
+                    itemsPendingRemoval.Add(pair.Key);
                 }
             }
 
-            foreach (ItemInstance item in toRemove)
+            foreach (ItemInstance item in itemsPendingRemoval)
             {
                 itemViews.Remove(item);
             }
 
-            HashSet<ItemInstance> processed = new HashSet<ItemInstance>();
+            processedRefreshItems.Clear();
             for (int i = 0; i < model.Items.Length; i++)
             {
                 ItemInstance item = model.Get(i);
-                if (item == null || processed.Contains(item))
+                if (item == null || processedRefreshItems.Contains(item))
                 {
                     continue;
                 }
 
-                processed.Add(item);
+                processedRefreshItems.Add(item);
                 (int x, int y) = model.GetItemAnchorPosition(item);
                 int anchorIndex = model.GetIndex(x, y);
                 if (!itemViews.TryGetValue(item, out GridItemView itemView))
@@ -687,14 +690,9 @@ namespace Systems.StorageSystem
         {
             if (localPlayerInputHandler == null)
             {
-                PlayerController[] controllers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
-                foreach (PlayerController controller in controllers)
+                if (LocalPlayerReferenceResolver.TryGetLocalPlayer(out PlayerController controller))
                 {
-                    if (controller != null && controller.IsLocalPlayer)
-                    {
-                        localPlayerInputHandler = controller.InputHandler;
-                        break;
-                    }
+                    localPlayerInputHandler = controller.InputHandler;
                 }
             }
 

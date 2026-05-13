@@ -23,6 +23,7 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
     private float holdProgressSeconds;
     private bool holdTriggered;
     private bool networkConfigured;
+    private readonly RaycastHit[] interactionHits = new RaycastHit[64];
 
     private void Awake()
     {
@@ -72,16 +73,24 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
             ResolveInteractionCamera();
         }
 
+        if (cameraTransform == null)
+        {
+            ClearCurrentInteractable();
+            return;
+        }
+
         Ray ray = new Ray(cameraTransform.position, cameraTransform.forward);
-        RaycastHit[] hits = Physics.RaycastAll(ray, interactionRange, interactableLayers);
+        int hitCount = Physics.RaycastNonAlloc(ray, interactionHits, interactionRange, interactableLayers);
         
-        if (hits.Length > 0)
+        if (hitCount > 0)
         {
             // 거리순 정렬 (람다 사용 없이 간단히)
-            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+            SortHitsByDistance(hitCount);
 
-            foreach (var h in hits)
+            for (int i = 0; i < hitCount; i++)
             {
+                RaycastHit h = interactionHits[i];
+
                 // 플레이어 자신의 콜라이더는 완전히 무시
                 if (player != null && h.collider.transform.root == player.transform.root)
                     continue;
@@ -115,6 +124,22 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
             {
                 ClearCurrentInteractable();
             }
+        }
+    }
+
+    private void SortHitsByDistance(int hitCount)
+    {
+        for (int i = 1; i < hitCount; i++)
+        {
+            RaycastHit key = interactionHits[i];
+            int j = i - 1;
+            while (j >= 0 && interactionHits[j].distance > key.distance)
+            {
+                interactionHits[j + 1] = interactionHits[j];
+                j--;
+            }
+
+            interactionHits[j + 1] = key;
         }
     }
 

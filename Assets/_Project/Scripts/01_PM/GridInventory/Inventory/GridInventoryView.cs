@@ -181,14 +181,9 @@ namespace Systems.GridInventory {
                 if (playerSearchTimer <= 0f)
                 {
                     playerSearchTimer = 1f; // 1초 간격으로 플레이어 탐색 (성능 최적화)
-                    PlayerController[] controllers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
-                    foreach (var controller in controllers)
+                    if (LocalPlayerReferenceResolver.TryGetLocalPlayer(out PlayerController controller))
                     {
-                        if (controller.IsLocalPlayer)
-                        {
-                            localPlayerInputHandler = controller.InputHandler;
-                            break;
-                        }
+                        localPlayerInputHandler = controller.InputHandler;
                     }
                 }
             }

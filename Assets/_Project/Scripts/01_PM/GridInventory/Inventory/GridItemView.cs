@@ -24,6 +24,7 @@ namespace Systems.GridInventory {
         public static Action<GridItemView> OnShiftClickGlobal;
         public static Action<GridItemView, Vector2> OnItemDragUpdateGlobal;
         public static Action<GridItemView, Vector2> OnItemDroppedGlobal;
+        private int displayedQuantity = -1;
 
         public GridItemView(ItemInstance itemInst) {
             ItemInst = itemInst;
@@ -145,6 +146,11 @@ namespace Systems.GridInventory {
         }
 
         public void SetQuantity(int qty) {
+            if (displayedQuantity == qty) {
+                return;
+            }
+
+            displayedQuantity = qty;
             StackLabel.text = qty > 1 ? qty.ToString() : string.Empty;
             StackLabel.visible = qty > 1;
         }
