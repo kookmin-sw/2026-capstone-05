@@ -179,13 +179,6 @@
 | **Version Control** | Git, GitHub |
 | **Project Management** | Notion |
 
-## 실행 가이드
-
-
-
-## 폴더 구조
-
-
 
 ## 출품 및 퍼블리싱 계획
 
