@@ -82,9 +82,7 @@ From the project root, this command starts Docker, extracts the newest Cloudflar
 ```powershell
 docker compose -f GameServer\deploy\docker\docker-compose.yml -f GameServer\deploy\docker\docker-compose.tunnel.yml up -d --build
 Start-Sleep -Seconds 8
-$url = docker compose -f GameServer\deploy\docker\docker-compose.yml -f GameServer\deploy\docker\docker-compose.tunnel.yml logs --tail 200 cloudflared | Select-String -Pattern 'https://[a-z0-9-]+\.trycloudflare\.com' | Select-Object -Last 1 | ForEach-Object { $_.Matches.Value }
-Set-Content -NoNewline -Path auth-api-base-url.txt -Value $url
-$url
+.\GameServer\deploy\docker\update-auth-api-base-url.ps1
 ```
 
 Cloudflare quick tunnel URLs are temporary and may change after restart.
