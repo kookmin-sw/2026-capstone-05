@@ -1,4 +1,5 @@
 using UnityEngine.InputSystem;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -31,6 +32,7 @@ public class QuickslotUIController : MonoBehaviour
 
     private VisualElement dragGhostIcon;
     private int draggingSlotIndex = -1;
+    private int activeQuickslotPointerId = -1;
     private bool isDragging = false;
     private bool uiReady = false;
     private Vector2 lastPointerPos;
@@ -104,6 +106,7 @@ public class QuickslotUIController : MonoBehaviour
             model?.Dispose();
             Instance = null;
             OnItemDroppedGlobal = null;
+            OnQuickslotSplitRequested = null;
             OnInitialized = null;
         }
     }
@@ -212,6 +215,8 @@ public class QuickslotUIController : MonoBehaviour
 
     public static event System.Action<ItemInstance, Vector2> OnItemDragUpdateGlobal;
     public static event System.Action OnItemDragEndGlobal;
+    /// <summary>Emitted after cancelling quickslot drag (right-click quantity split).</summary>
+    public static event Action<ItemInstance, int, Vector2> OnQuickslotSplitRequested;
 
     private void OnPointerDown(PointerDownEvent evt, int slotIndex)
     {
@@ -220,6 +225,7 @@ public class QuickslotUIController : MonoBehaviour
 
         isDragging = true;
         draggingSlotIndex = slotIndex;
+        activeQuickslotPointerId = evt.pointerId;
         lastPointerPos = evt.position;
         originalDragRotation = itemInstance.currentRotation;
 
@@ -289,33 +295,54 @@ public class QuickslotUIController : MonoBehaviour
             if (item != null)
             {
                 int targetQuickslot = GetSlotIndexAtPosition(evt.position);
-                bool droppedOnInventory = false;
-
-                if (GridInventoryView.Instance != null && GridInventoryView.Instance.isActiveAndEnabled) {
-                    var slot = GridInventoryView.Instance.GetGridSlotAtPosition(evt.position);
-                    if (slot != null) {
-                        droppedOnInventory = true;
-                    }
-                }
 
                 if (targetQuickslot >= 0 && targetQuickslot != draggingSlotIndex)
                 {
                     model.MergeOrSwap(draggingSlotIndex, targetQuickslot);
                     item.currentRotation = originalDragRotation; // 퀵슬롯으로 드롭된 경우 회전 원복
                 }
-                else if (droppedOnInventory)
+                else
                 {
                     OnItemDroppedGlobal?.Invoke(item, draggingSlotIndex, evt.position);
-                }
-                else 
-                {
-                    item.currentRotation = originalDragRotation; // 허공에 버리거나 드롭 실패 시 회전 무효화
+                    
+                    // 이벤트 발생 후에도 아이템이 퀵슬롯에 그대로 남아있다면(아무도 처리하지 않았다면) 회전 상태를 원래대로 복구
+                    if (model.Get(draggingSlotIndex) == item)
+                    {
+                        item.currentRotation = originalDragRotation;
+                    }
                 }
             }
         }
 
         draggingSlotIndex = -1;
+        activeQuickslotPointerId = -1;
         evt.StopPropagation();
+    }
+
+    void FinishQuickslotDragForSplitRequest()
+    {
+        if (!isDragging || draggingSlotIndex < 0) return;
+
+        int idx = draggingSlotIndex;
+        Vector2 pos = lastPointerPos;
+        var item = model.Get(idx);
+
+        isDragging = false;
+        if (activeQuickslotPointerId >= 0 && idx >= 0 && idx < slotViews.Count)
+        {
+            slotViews[idx].Root.ReleasePointer(activeQuickslotPointerId);
+        }
+
+        activeQuickslotPointerId = -1;
+        draggingSlotIndex = -1;
+
+        if (dragGhostIcon != null)
+            dragGhostIcon.style.visibility = Visibility.Hidden;
+
+        OnItemDragEndGlobal?.Invoke();
+
+        if (item != null && item.currentStackCount > 1)
+            OnQuickslotSplitRequested?.Invoke(item, idx, pos);
     }
 
     private float playerSearchTimer = 0f;
@@ -324,6 +351,12 @@ public class QuickslotUIController : MonoBehaviour
     {
         if (isDragging && dragGhostIcon != null && draggingSlotIndex >= 0)
         {
+            if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
+            {
+                FinishQuickslotDragForSplitRequest();
+                return;
+            }
+
             if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.rKey.wasPressedThisFrame)
             {
                 var itemInstance = model.Get(draggingSlotIndex);

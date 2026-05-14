@@ -55,23 +55,6 @@
         
         <!-- Drag & Drop Ghost Icon -->
         <engine:VisualElement name="ghostIcon" class="ghostIcon"/>
-
-        <!-- Quantity Split Popup -->
-        <engine:VisualElement name="quantity-popup" class="quantity-popup" style="display: none;">
-            <engine:VisualElement class="quantity-popup-panel">
-                <engine:Label text="Split Quantity" class="quantity-popup-title" />
-                <engine:VisualElement class="quantity-slider-container">
-                    <engine:Button name="btn-qty-minus" text="-" class="qty-btn" />
-                    <engine:Label name="lbl-qty-value" text="1" class="qty-value" />
-                    <engine:Button name="btn-qty-plus" text="+" class="qty-btn" />
-                </engine:VisualElement>
-                <engine:SliderInt name="slider-qty" low-value="1" high-value="99" class="qty-slider" />
-                <engine:VisualElement class="quantity-actions">
-                    <engine:Button name="btn-qty-confirm" text="Confirm" class="action-btn" />
-                    <engine:Button name="btn-qty-cancel" text="Cancel" class="action-btn" />
-                </engine:VisualElement>
-            </engine:VisualElement>
-        </engine:VisualElement>
         
     </engine:VisualElement>
 </engine:UXML>

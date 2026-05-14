@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<engine:UXML xmlns:engine="UnityEngine.UIElements" editor-extension-mode="False">
+    <engine:Style src="../QuantityPopup.uss" />
+    <engine:VisualElement name="quantity-popup-overlay" class="quantity-popup" picking-mode="Position" style="display: none;">
+        <engine:VisualElement class="quantity-popup-panel" picking-mode="Position">
+            <engine:Label text="Split Quantity" class="quantity-popup-title" picking-mode="Ignore" />
+            <engine:VisualElement class="quantity-slider-container" picking-mode="Ignore">
+                <engine:Button name="btn-qty-minus" text="-" class="qty-btn" />
+                <engine:Label name="lbl-qty-value" text="1" class="qty-value" picking-mode="Ignore" />
+                <engine:Button name="btn-qty-plus" text="+" class="qty-btn" />
+            </engine:VisualElement>
+            <engine:SliderInt name="slider-qty" low-value="1" high-value="99" class="qty-slider" />
+            <engine:VisualElement class="quantity-actions" picking-mode="Ignore">
+                <engine:Button name="btn-qty-confirm" text="Confirm" class="action-btn" />
+                <engine:Button name="btn-qty-cancel" text="Cancel" class="action-btn" />
+            </engine:VisualElement>
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

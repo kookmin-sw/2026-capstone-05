@@ -18,12 +18,12 @@ public class PlayerNetworkSetup : MonoBehaviour
     private void Awake()
     {
         // 테스트 코드
-        //IsOfflineTestMode = true;
+        IsOfflineTestMode = true;
     }
 
     private void Start()
     {
-        //InitializeNetworkState(true);
+        InitializeNetworkState(true);
     }
 
     public void InitializeNetworkState(bool isLocalPlayer)

@@ -16,11 +16,15 @@ namespace Systems.Loot
         [Header("Loot Configuration")]
         [SerializeField] private string storageId = "Loot_0";
         [SerializeField] private string lootTitle = "Supply Chest";
+        [SerializeField] private int lootWidth = 9;
+        [SerializeField] private int lootHeight = 18;
         
         [Header("Initial Items (Only spawned if storage is empty)")]
         [SerializeField] private List<LootItemSetup> initialItems;
         
         public string StorageId => storageId;
+        public int Width => lootWidth;
+        public int Height => lootHeight;
         
         private void Awake()
         {
@@ -33,9 +37,20 @@ namespace Systems.Loot
             if (isInitialized) return;
             isInitialized = true;
             
-            if (StorageSystem.StorageNetworkSync.Instance == null) return;
+            if (LootNetworkSync.Instance == null)
+            {
+                if (PlayerNetworkSetup.IsOfflineTestMode)
+                {
+                    var instance = LootNetworkSync.Instance; // Property getter handles creation
+                    if (instance == null) return;
+                }
+                else
+                {
+                    return;
+                }
+            }
             
-            var model = StorageSystem.StorageNetworkSync.Instance.GetOrCreateModel(storageId);
+            var model = LootNetworkSync.Instance.GetOrCreateModel(storageId, lootWidth, lootHeight);
             
             // Only seed items if the storage is completely empty (could check if first time initialization)
             // But since model could be loaded empty, let's check if there are no items.
@@ -54,7 +69,7 @@ namespace Systems.Loot
                 // This will only work correctly if the server has authority, 
                 // but for now we just seed locally to the model if empty. 
                 // A true multiplayer setup would have the host seed it.
-                if (StorageSystem.StorageNetworkSync.Instance.HasStateAuthority || PlayerNetworkSetup.IsOfflineTestMode)
+                if (LootNetworkSync.Instance.HasStateAuthority || PlayerNetworkSetup.IsOfflineTestMode)
                 {
                     foreach (var setup in initialItems)
                     {
@@ -64,16 +79,31 @@ namespace Systems.Loot
                             model.TryAdd(item);
                         }
                     }
-                    StorageSystem.StorageNetworkSync.Instance.SubmitStorageSnapshot(storageId, 
-                        StorageSystem.StorageGridSerializer.ToSaveData(storageId, model));
+                    LootNetworkSync.Instance.SubmitLootSnapshot(storageId, 
+                        LootGridSerializer.ToSaveData(storageId, model));
                 }
             }
         }
 
         public bool CanInteract(PlayerController player)
         {
-            // 루팅 창이 이미 열려있지 않다면 상호작용 가능
-            return LootController.Instance != null && !LootController.Instance.IsOpen;
+            if (LootController.Instance != null && LootController.Instance.IsOpen)
+            {
+                return false;
+            }
+
+            if (LootNetworkSync.Instance != null && !PlayerNetworkSetup.IsOfflineTestMode)
+            {
+                if (LootNetworkSync.Instance.ActiveLootUsers.TryGet(storageId, out Fusion.PlayerRef currentUser))
+                {
+                    if (LootNetworkSync.Instance.Runner != null && currentUser != LootNetworkSync.Instance.Runner.LocalPlayer)
+                    {
+                        return false; // 누군가 사용 중이면 상호작용 불가
+                    }
+                }
+            }
+
+            return true;
         }
 
         public string GetInteractPrompt()
@@ -88,23 +118,36 @@ namespace Systems.Loot
 
         public void OnInteract(PlayerController player)
         {
-            if (StorageSystem.StorageNetworkSync.Instance == null)
+            if (LootNetworkSync.Instance == null)
             {
-                Debug.LogWarning("[InteractableLoot] StorageNetworkSync is missing.");
-                return;
+                Debug.LogWarning("[InteractableLoot] LootNetworkSync is missing.");
+                // 오프라인 모드일 때 인스턴스 강제 생성 시도
+                if (PlayerNetworkSetup.IsOfflineTestMode)
+                {
+                    var instance = LootNetworkSync.Instance; // Property getter handles creation
+                    if (instance == null) return;
+                }
+                else
+                {
+                    return;
+                }
             }
             
             InitializeItemsIfNeeded();
             
             if (LootController.Instance != null)
             {
-                LootController.Instance.OpenLoot(this, storageId, lootTitle, StorageSystem.StorageNetworkSync.Instance);
+                LootController.Instance.RequestOpenLoot(this, storageId, lootTitle, LootNetworkSync.Instance);
+            }
+            else
+            {
+                Debug.LogWarning("[InteractableLoot] LootController.Instance is missing. Cannot open loot.");
             }
         }
 
         public void SaveRemainingItems()
         {
-            // Now handled by StorageNetworkSync
+            // Now handled by LootNetworkSync
         }
     }
 }

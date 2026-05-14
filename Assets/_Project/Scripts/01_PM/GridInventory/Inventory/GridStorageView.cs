@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 namespace Systems.GridInventory {
@@ -158,6 +159,11 @@ namespace Systems.GridInventory {
 
         protected virtual void Update() {
             if (isDragging && draggedItem != null && ghostIcon != null) {
+                if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame) {
+                    FinishDragForSplitRequest();
+                    return;
+                }
+
                 if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.rKey.wasPressedThisFrame) {
                     draggedItem.RotateClockwise();
 
@@ -216,12 +222,10 @@ namespace Systems.GridInventory {
                 }
             }
 
-            if (Systems.StorageSystem.StorageUI.ActiveInstance != null &&
-                Systems.StorageSystem.StorageUI.ActiveInstance != this &&
-                Systems.StorageSystem.StorageUI.ActiveInstance.IsOpen &&
-                Systems.StorageSystem.StorageUI.ActiveInstance.TryAcceptExternalDrop(draggedItem, position)) {
-                ResetDragState();
-                return;
+            if (Systems.Loot.LootController.Instance != null &&
+                Systems.Loot.LootController.Instance.IsOpen) {
+                // Loot UI에 드롭을 전달하는 로직이 필요하다면 여기에 추가
+                // 현재 LootController는 GridInventoryController 이벤트를 통해 전역으로 처리됨
             }
 
             GridSlot closestGridSlot = GetGridSlotAtPosition(position);
@@ -235,6 +239,31 @@ namespace Systems.GridInventory {
             }
 
             ResetDragState();
+        }
+
+        public void ForceResetDrag()
+        {
+            if (!isDragging || draggedItem == null) return;
+
+            var item = draggedItem;
+            item.CancelDragState();
+            ResetDragState();
+            item.style.visibility = Visibility.Visible;
+        }
+
+        /// <summary>Cancels drag without ProcessDrop; raises OnItemSplitDroppedGlobal for quantity split flow.</summary>
+        protected void FinishDragForSplitRequest() {
+            if (!isDragging || draggedItem == null) return;
+
+            var item = draggedItem;
+            var pos = currentPointerPos;
+            item.CancelDragState();
+            item.style.visibility = Visibility.Visible;
+            if (ghostIcon != null) ghostIcon.style.visibility = Visibility.Hidden;
+
+            ResetDragState();
+            OnDragEndEvent?.Invoke();
+            GridItemView.OnItemSplitDroppedGlobal?.Invoke(item, pos);
         }
 
         protected void ResetDragState() {

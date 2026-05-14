@@ -1,5 +1,4 @@
 using Fusion;
-using Systems.StorageSystem;
 using UnityEngine;
 
 [RequireComponent(typeof(NetworkObject))]
@@ -19,6 +18,23 @@ public class BackendRoundManager : NetworkBehaviour
     [Networked] public TickTimer RoundTimer { get; private set; }
     [Networked] public int CurrentRoundNumber { get; private set; }
     [Networked] private int NetworkWeatherStateRaw { get; set; }
+    [Networked, OnChangedRender(nameof(OnSharedGoldChanged))] public int SharedGold { get; set; }
+
+    public static event System.Action<int> SharedGoldUpdated;
+
+    private void OnSharedGoldChanged()
+    {
+        SharedGoldUpdated?.Invoke(SharedGold);
+        
+        if (HasStateAuthority && global::Systems.GridInventory.GridInventory.Instance != null && global::Systems.GridInventory.GridInventory.Instance.Controller != null)
+        {
+            var invModel = global::Systems.GridInventory.GridInventory.Instance.Controller.Model;
+            if (invModel != null && invModel.Gold != SharedGold)
+            {
+                invModel.SetGold(SharedGold);
+            }
+        }
+    }
 
     private string _hostRoundCountPrefKey = RoomLauncher.BuildHostRoundCountPrefKey(1);
     private int _activeHostSlot = 1;
@@ -55,6 +71,16 @@ public class BackendRoundManager : NetworkBehaviour
         IsRoundRunning = false;
         RoundTimer = TickTimer.None;
         NetworkWeatherStateRaw = (int)initialWeatherState;
+        
+        if (global::Systems.GridInventory.GridInventory.Instance != null && global::Systems.GridInventory.GridInventory.Instance.Controller != null)
+        {
+            var invModel = global::Systems.GridInventory.GridInventory.Instance.Controller.Model;
+            if (invModel != null)
+            {
+                SharedGold = invModel.Gold;
+            }
+        }
+        
         BroadcastWeatherState(force: true);
 
         Debug.Log($"[BackendRoundManager] 호스트 라운드 저장소 로드. key={_hostRoundCountPrefKey}, userId={AuthSession.CurrentUserId}, round={CurrentRoundNumber}");
@@ -143,9 +169,9 @@ public class BackendRoundManager : NetworkBehaviour
         PlayerPrefs.Save();
 
         RespawnAllPlayersAtSpawner();
-        if (StorageNetworkSync.Instance != null)
+        if (Systems.Loot.LootNetworkSync.Instance != null)
         {
-            StorageNetworkSync.Instance.SaveAllStorages();
+            Systems.Loot.LootNetworkSync.Instance.SaveAllLoots();
         }
 
         Debug.Log($"[BackendRoundManager] 라운드 종료. slot={_activeHostSlot}, round={CurrentRoundNumber}, reason={reason}");

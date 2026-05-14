@@ -517,6 +517,44 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         Systems.GridInventory.GridInventorySaveSystem.SaveInventoryDataToDisk(playerId, json);
     }
 
+    // --- GOLD SYNC ---
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    public void RpcRequestSpendGold(int amount)
+    {
+        if (!HasStateAuthority) return;
+
+        if (BackendRoundManager.Instance != null && BackendRoundManager.Instance.SharedGold >= amount)
+        {
+            BackendRoundManager.Instance.SharedGold -= amount;
+            RpcSpendGoldResult(true);
+        }
+        else
+        {
+            RpcSpendGoldResult(false);
+        }
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    public void RpcRequestAddGold(int amount)
+    {
+        if (!HasStateAuthority) return;
+
+        if (BackendRoundManager.Instance != null)
+        {
+            BackendRoundManager.Instance.SharedGold += amount;
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.InputAuthority)]
+    public void RpcSpendGoldResult(NetworkBool success)
+    {
+        if (Systems.Shop.ShopController.Instance != null)
+        {
+            Systems.Shop.ShopController.Instance.OnSpendGoldResult(success);
+        }
+    }
+
     // --- HOST ACTIONS ---
     
     public void HostInitiateSaveAll()
@@ -526,6 +564,11 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         foreach (var sync in FindObjectsByType<BackendPlayerNetworkSync>(FindObjectsSortMode.None))
         {
             sync.RpcRequestInventorySave();
+        }
+
+        if (Systems.Loot.LootNetworkSync.Instance != null)
+        {
+            Systems.Loot.LootNetworkSync.Instance.SaveAllLoots();
         }
     }
 

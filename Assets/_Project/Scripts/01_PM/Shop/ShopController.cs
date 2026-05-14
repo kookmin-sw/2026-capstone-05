@@ -15,7 +15,6 @@ namespace Systems.Shop
         public bool IsOpen { get; private set; }
 
         [SerializeField] private ShopView shopView;
-        [SerializeField] private int startingGold = 500; // 나중에 실제 플레이어 지갑 시스템과 연동해야 합니다.
         
         private ShopModel model;
         private UnityEngine.UIElements.VisualElement originalInventoryParent;
@@ -25,6 +24,10 @@ namespace Systems.Shop
         private ItemInstance ghostItemInstance;
         private bool isPlacing;
         private float openTime;
+        
+        private bool isWaitingForPurchaseApproval;
+        private (int x, int y) pendingPlacementCoords;
+        private ItemInstance pendingStackTargetItem;
         
         private void Awake()
         {
@@ -44,16 +47,54 @@ namespace Systems.Shop
             {
                 Instance = null;
             }
+            
+            if (shopView != null)
+            {
+                if (PlayerNetworkSetup.IsOfflineTestMode)
+                {
+                    if (global::Systems.GridInventory.GridInventory.Instance != null && global::Systems.GridInventory.GridInventory.Instance.Controller != null)
+                    {
+                        var invModel = global::Systems.GridInventory.GridInventory.Instance.Controller.Model;
+                        if (invModel != null)
+                        {
+                            invModel.OnGoldChanged -= shopView.UpdateGold;
+                        }
+                    }
+                }
+                else
+                {
+                    BackendRoundManager.SharedGoldUpdated -= shopView.UpdateGold;
+                }
+            }
         }
 
         private void Start()
         {
             // 초기화 시 빈 아이템 리스트로 모델 생성 (실제 아이템은 OpenShop 할 때 주입)
-            model = new ShopModel(startingGold, new List<ShopItemEntry>());
-            model.OnGoldChanged += shopView.UpdateGold;
+            int initialGold = 0;
+            
+            if (PlayerNetworkSetup.IsOfflineTestMode)
+            {
+                if (global::Systems.GridInventory.GridInventory.Instance != null && global::Systems.GridInventory.GridInventory.Instance.Controller != null)
+                {
+                    var invModel = global::Systems.GridInventory.GridInventory.Instance.Controller.Model;
+                    initialGold = invModel.Gold;
+                    invModel.OnGoldChanged += shopView.UpdateGold;
+                }
+            }
+            else
+            {
+                if (BackendRoundManager.Instance != null)
+                {
+                    initialGold = BackendRoundManager.Instance.SharedGold;
+                }
+                BackendRoundManager.SharedGoldUpdated += shopView.UpdateGold;
+            }
+
+            model = new ShopModel(new List<ShopItemEntry>());
             
             shopView.Initialize();
-            shopView.UpdateGold(model.PlayerGold);
+            shopView.UpdateGold(initialGold);
             
             // 이벤트 연결
             shopView.OnBuyItemClicked += HandleBuyItemClicked;
@@ -210,33 +251,69 @@ namespace Systems.Shop
                     // 좌클릭 시 배치 시도
                     if (UnityEngine.InputSystem.Mouse.current.leftButton.wasPressedThisFrame)
                     {
-                        if (closestSlot != null && canPlace)
+                        if (closestSlot != null && canPlace && !isWaitingForPurchaseApproval)
                         {
                             var invModel = global::Systems.GridInventory.GridInventory.Instance.Controller.Model;
                             var targetCoords = invModel.GetCoordinates(closestSlot.Index);
                             
-                            // 골드 차감
                             int totalCost = currentPlacingItem.BuyPrice * ghostItemInstance.currentStackCount;
-                            if (model.TrySpendGold(totalCost))
+                            
+                            isWaitingForPurchaseApproval = true;
+                            pendingPlacementCoords = targetCoords;
+                            pendingStackTargetItem = stackTargetItem;
+                            
+                            if (PlayerNetworkSetup.IsOfflineTestMode)
                             {
-                                if (stackTargetItem != null) {
-                                    stackTargetItem.currentStackCount += ghostItemInstance.currentStackCount;
-                                    invModel.Items.Invoke(); // UI 갱신
-                                } else {
-                                    invModel.PlaceItem(ghostItemInstance, targetCoords.x, targetCoords.y);
+                                // Offline fallback
+                                if (invModel.TrySpendGold(totalCost))
+                                {
+                                    OnSpendGoldResult(true);
                                 }
-                                
-                                shopView.SetDialogue("* \"탁월한 선택이야!\"");
-                                HandleCancelPlacement(); // 배치 모드 종료 (돌아가기)
+                                else
+                                {
+                                    OnSpendGoldResult(false);
+                                }
                             }
                             else
                             {
-                                shopView.SetDialogue("* \"앗! 골드가 부족하잖아!\"");
+                                if (BackendPlayerNetworkSync.LocalInstance != null)
+                                {
+                                    BackendPlayerNetworkSync.LocalInstance.RpcRequestSpendGold(totalCost);
+                                }
                             }
                         }
                     }
                 }
             }
+        }
+
+        public void OnSpendGoldResult(bool success)
+        {
+            if (!isWaitingForPurchaseApproval) return;
+            isWaitingForPurchaseApproval = false;
+
+            if (success)
+            {
+                if (global::Systems.GridInventory.GridInventory.Instance != null && global::Systems.GridInventory.GridInventory.Instance.Controller != null)
+                {
+                    var invModel = global::Systems.GridInventory.GridInventory.Instance.Controller.Model;
+                    if (pendingStackTargetItem != null) {
+                        pendingStackTargetItem.currentStackCount += ghostItemInstance.currentStackCount;
+                        invModel.Items.Invoke(); // UI 갱신
+                    } else {
+                        invModel.PlaceItem(ghostItemInstance, pendingPlacementCoords.x, pendingPlacementCoords.y);
+                    }
+                }
+                
+                shopView.SetDialogue("* \"탁월한 선택이야!\"");
+                HandleCancelPlacement(); // 배치 모드 종료 (돌아가기)
+            }
+            else
+            {
+                shopView.SetDialogue("* \"앗! 골드가 부족하잖아!\"");
+            }
+            
+            pendingStackTargetItem = null;
         }
 
         private void HandleBuyTabClicked()
@@ -308,7 +385,23 @@ namespace Systems.Shop
 
         private void HandleBuyItemClicked(ShopItemEntry itemToBuy, int quantity)
         {
-            if (model.PlayerGold < itemToBuy.BuyPrice * quantity)
+            int currentGold = 0;
+            if (PlayerNetworkSetup.IsOfflineTestMode)
+            {
+                if (global::Systems.GridInventory.GridInventory.Instance != null && global::Systems.GridInventory.GridInventory.Instance.Controller != null)
+                {
+                    currentGold = global::Systems.GridInventory.GridInventory.Instance.Controller.Model.Gold;
+                }
+            }
+            else
+            {
+                if (BackendRoundManager.Instance != null)
+                {
+                    currentGold = BackendRoundManager.Instance.SharedGold;
+                }
+            }
+
+            if (currentGold < itemToBuy.BuyPrice * quantity)
             {
                 shopView.SetDialogue("* \"장난해? 돈이 모자라잖아.\"");
                 return;
@@ -434,6 +527,9 @@ namespace Systems.Shop
         
         private void HandleCancelPlacement()
         {
+            isWaitingForPurchaseApproval = false;
+            pendingStackTargetItem = null;
+            
             shopView.SwitchToCatalogMode();
             shopView.SetDialogue("* \"마음이 바뀌었어? 천천히 골라.\"");
             
@@ -537,12 +633,25 @@ namespace Systems.Shop
 
         private void HandleSellItemClicked(ShopItemEntry itemToSell, int quantity)
         {
-            if (global::Systems.GridInventory.GridInventory.Instance != null)
+            if (global::Systems.GridInventory.GridInventory.Instance != null && global::Systems.GridInventory.GridInventory.Instance.Controller != null)
             {
                 bool success = global::Systems.GridInventory.GridInventory.Instance.ConsumeItem(itemToSell.ItemData, quantity);
                 if (success)
                 {
-                    model.AddGold(itemToSell.BuyPrice * quantity); 
+                    if (PlayerNetworkSetup.IsOfflineTestMode)
+                    {
+                        // Offline fallback
+                        var invModel = global::Systems.GridInventory.GridInventory.Instance.Controller.Model;
+                        invModel.AddGold(itemToSell.BuyPrice * quantity); 
+                    }
+                    else
+                    {
+                        if (BackendPlayerNetworkSync.LocalInstance != null)
+                        {
+                            BackendPlayerNetworkSync.LocalInstance.RpcRequestAddGold(itemToSell.BuyPrice * quantity);
+                        }
+                    }
+                    
                     shopView.SetDialogue("* \"탁월한 거래였어!\"");
                     RefreshSellCatalog(); // 판매 후 카탈로그 갱신
                 }
@@ -556,14 +665,36 @@ namespace Systems.Shop
         // 아이템 배치 성공 시 호출하는 시뮬레이션 메서드
         private void SimulatePlacement(ShopItemEntry itemToBuy)
         {
-            if (model.TrySpendGold(itemToBuy.BuyPrice))
+            if (PlayerNetworkSetup.IsOfflineTestMode)
             {
-                shopView.SwitchToCatalogMode();
-                shopView.SetDialogue("* \"구매 고마워!\"");
+                if (global::Systems.GridInventory.GridInventory.Instance != null && global::Systems.GridInventory.GridInventory.Instance.Controller != null)
+                {
+                    var invModel = global::Systems.GridInventory.GridInventory.Instance.Controller.Model;
+                    if (invModel.TrySpendGold(itemToBuy.BuyPrice))
+                    {
+                        shopView.SwitchToCatalogMode();
+                        shopView.SetDialogue("* \"구매 고마워!\"");
+                    }
+                    else
+                    {
+                        shopView.SetDialogue("* \"돈이 부족한걸!\"");
+                    }
+                }
             }
             else
             {
-                shopView.SetDialogue("* \"돈이 부족한걸!\"");
+                if (BackendRoundManager.Instance != null)
+                {
+                    if (BackendRoundManager.Instance.SharedGold >= itemToBuy.BuyPrice)
+                    {
+                        shopView.SwitchToCatalogMode();
+                        shopView.SetDialogue("* \"구매 고마워!\"");
+                    }
+                    else
+                    {
+                        shopView.SetDialogue("* \"돈이 부족한걸!\"");
+                    }
+                }
             }
         }
     }

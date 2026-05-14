@@ -2,42 +2,42 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-namespace Systems.StorageSystem
+namespace Systems.Loot
 {
-    public static class StorageSaveManager
+    public static class LootSaveManager
     {
         private const string HostSelectedSlotPrefKey = "HostSaveSlot";
 
-        public static StorageSaveData LoadStorage(string storageId, int width, int height)
+        public static LootSaveData LoadLoot(string lootId, int width, int height)
         {
-            string path = GetStoragePath(storageId);
+            string path = GetLootPath(lootId);
             if (!File.Exists(path))
             {
-                return CreateEmpty(storageId, width, height);
+                return CreateEmpty(lootId, width, height);
             }
 
             string json = File.ReadAllText(path);
-            StorageSaveData data = JsonUtility.FromJson<StorageSaveData>(json);
+            LootSaveData data = JsonUtility.FromJson<LootSaveData>(json);
             if (data == null)
             {
-                return CreateEmpty(storageId, width, height);
+                return CreateEmpty(lootId, width, height);
             }
 
-            data.storageId = string.IsNullOrWhiteSpace(data.storageId) ? storageId : data.storageId;
+            data.lootId = string.IsNullOrWhiteSpace(data.lootId) ? lootId : data.lootId;
             data.width = data.width > 0 ? data.width : width;
             data.height = data.height > 0 ? data.height : height;
-            data.items ??= new List<StorageItemData>();
+            data.items ??= new List<LootItemData>();
             return data;
         }
 
-        public static void SaveStorage(StorageSaveData data)
+        public static void SaveLoot(LootSaveData data)
         {
-            if (data == null || string.IsNullOrWhiteSpace(data.storageId))
+            if (data == null || string.IsNullOrWhiteSpace(data.lootId))
             {
                 return;
             }
 
-            string path = GetStoragePath(data.storageId);
+            string path = GetLootPath(data.lootId);
             string directory = Path.GetDirectoryName(path);
             Directory.CreateDirectory(directory);
 
@@ -59,27 +59,27 @@ namespace Systems.StorageSystem
             File.Move(tempPath, path);
         }
 
-        public static StorageSaveData CreateEmpty(string storageId, int width, int height)
+        public static LootSaveData CreateEmpty(string lootId, int width, int height)
         {
-            return new StorageSaveData
+            return new LootSaveData
             {
-                storageId = storageId,
+                lootId = lootId,
                 width = width,
                 height = height,
-                items = new List<StorageItemData>()
+                items = new List<LootItemData>()
             };
         }
 
-        private static string GetStoragePath(string storageId)
+        private static string GetLootPath(string lootId)
         {
             int slot = Mathf.Clamp(PlayerPrefs.GetInt(HostSelectedSlotPrefKey, 1), 1, 3);
-            string safeId = MakeSafeFileName(storageId);
-            return Path.Combine(Application.persistentDataPath, "StorageSystem", $"slot_{slot}", $"{safeId}.json");
+            string safeId = MakeSafeFileName(lootId);
+            return Path.Combine(Application.persistentDataPath, "LootSystem", $"slot_{slot}", $"{safeId}.json");
         }
 
         private static string MakeSafeFileName(string value)
         {
-            string result = string.IsNullOrWhiteSpace(value) ? "storage" : value;
+            string result = string.IsNullOrWhiteSpace(value) ? "loot" : value;
             foreach (char invalid in Path.GetInvalidFileNameChars())
             {
                 result = result.Replace(invalid, '_');
