@@ -36,13 +36,13 @@ MonoBehaviour:
   newNoisePositionThreshold: 0.25
   locomotionSoundInitialDelayMin: 0.25
   locomotionSoundInitialDelayMax: 0.75
-  locomotionSoundIntervalMin: 2
+  locomotionSoundIntervalMin: 3
   locomotionSoundIntervalMax: 4.5
   alertLookSoundIntervalMin: 1.5
   alertLookSoundIntervalMax: 3
   chaseSoundInitialDelayMin: 0.25
   chaseSoundInitialDelayMax: 0.75
-  chaseSoundIntervalMin: 2.5
+  chaseSoundIntervalMin: 3.5
   chaseSoundIntervalMax: 5
   movingSoundVelocityThreshold: 0.05
   alertThreshold: 20
@@ -77,7 +77,7 @@ MonoBehaviour:
   attackRadius: 2
   attackAngle: 120
   attackVariant1Chance: 0.35
-  jumpAttackChance: 1
+  jumpAttackChance: 0.4
   jumpAttackDecisionInterval: 1
   jumpAttackMinDistance: 3
   jumpAttackMaxDistance: 7

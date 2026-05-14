@@ -578,6 +578,9 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
 
     private bool TryPrepareJumpAttack()
     {
+        if (Suspicion < data.chaseThreshold)
+            return false;
+
         if (hasPreparedJumpAttack)
             return true;
 
@@ -585,7 +588,7 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         if (now < nextJumpAttackDecisionTime)
             return false;
 
-        nextJumpAttackDecisionTime = now + Mathf.Max(0.1f, data.jumpAttackDecisionInterval);
+        nextJumpAttackDecisionTime = now + Mathf.Max(0f, data.jumpAttackDecisionInterval);
         if (Random.value > data.jumpAttackChance)
             return false;
 
