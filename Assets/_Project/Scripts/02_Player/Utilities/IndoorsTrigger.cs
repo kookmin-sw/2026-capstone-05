@@ -6,6 +6,9 @@ public class IndoorsTrigger : MonoBehaviour
 
     private int overlapCount = 0;
 
+    [Header("FMOD Settings")]
+    [SerializeField] private string fmodParameterName = "IsIndoors";
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
@@ -18,6 +21,7 @@ public class IndoorsTrigger : MonoBehaviour
                 if (overlapCount == 1)
                 {
                     player.GetComponent<PlayerCondition>().SetIndoors(isIndoors);
+                    SoundManager.Instance.SetAmbienceParameter(fmodParameterName, isIndoors ? 1f : 0f);
                 }
             }
         }
@@ -36,8 +40,19 @@ public class IndoorsTrigger : MonoBehaviour
                 {
                     overlapCount = 0;
                     player.GetComponent<PlayerCondition>().SetIndoors(false);
+                    SoundManager.Instance.SetAmbienceParameter(fmodParameterName, 0f);
                 }
             }
+        }
+    }
+
+    public void OnPlayerForceExit(PlayerController player)
+    {
+        overlapCount = 0;
+        if (player != null && player.IsLocalPlayer)
+        {
+            player.GetComponent<PlayerCondition>().SetIndoors(false);
+            SoundManager.Instance.SetAmbienceParameter(fmodParameterName, 0f);
         }
     }
 }

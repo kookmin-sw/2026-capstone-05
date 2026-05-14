@@ -96,12 +96,12 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
         }
     }
 
-    public void ReviveToFull()
+    public void Revive()
     {
         health.Add(health.maxValue);
         stamina.Add(stamina.maxValue);
         satiety.Add(satiety.maxValue);
-        coldness.Add(coldness.maxValue);
+        coldness.Subtract(coldness.maxValue);
 
         hasRaisedDeathEvent = false;
     }
