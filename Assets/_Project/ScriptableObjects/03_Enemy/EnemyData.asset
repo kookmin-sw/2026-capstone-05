@@ -34,6 +34,17 @@ MonoBehaviour:
   waitStartTime: 0.8
   waitEndTime: 1.2
   newNoisePositionThreshold: 0.25
+  locomotionSoundInitialDelayMin: 0.25
+  locomotionSoundInitialDelayMax: 0.75
+  locomotionSoundIntervalMin: 2
+  locomotionSoundIntervalMax: 4.5
+  alertLookSoundIntervalMin: 1.5
+  alertLookSoundIntervalMax: 3
+  chaseSoundInitialDelayMin: 0.25
+  chaseSoundInitialDelayMax: 0.75
+  chaseSoundIntervalMin: 2.5
+  chaseSoundIntervalMax: 5
+  movingSoundVelocityThreshold: 0.05
   alertThreshold: 20
   lookThreshold: 40
   searchThreshold: 70

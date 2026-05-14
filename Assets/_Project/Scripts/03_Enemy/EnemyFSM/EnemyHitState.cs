@@ -81,6 +81,8 @@ public class EnemyHitState : EnemyState
 
     private void PlayHitAnimation()
     {
+        enemy.RequestStateSound(EnemySoundCue.Hit);
+
         enemy.Animator.SetInteger("HitIndex", Random.Range(0, 2));
         enemy.Animator.ResetTrigger("Hit");
         enemy.Animator.SetTrigger("Hit");

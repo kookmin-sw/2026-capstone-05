@@ -87,6 +87,7 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
     public Animator Animator { get; private set; }
     public NavMeshAgent Agent { get; private set; }
     public EnemyHealth Health { get; private set; }
+    public EnemyAudioController AudioController { get; private set; }
     public EnemyAnimationEventHandler AnimationEventHandler { get; private set; }
     public EnemyAttackCollider[] AttackColliders { get; private set; }
     private int lastAnimStateChangeCount;
@@ -128,6 +129,7 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         Animator = GetComponent<Animator>();
         Agent = GetComponent<NavMeshAgent>();
         Health = GetComponent<EnemyHealth>();
+        AudioController = GetComponent<EnemyAudioController>();
         AnimationEventHandler = GetComponentInChildren<EnemyAnimationEventHandler>();
         AttackColliders = GetComponentsInChildren<EnemyAttackCollider>();
 
@@ -309,6 +311,34 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
 
         NetworkAnimStateId = stateId;
         NetworkAnimStateChangeCount++;
+    }
+
+    public void RequestStateSound(EnemySoundCue cue)
+    {
+        if (AudioController == null)
+            return;
+
+        if (isLocalSimulationActive || !isNetworkSpawned)
+        {
+            AudioController.Play(cue);
+            return;
+        }
+
+        if (!HasStateAuthority)
+            return;
+
+        RpcPlayEnemySound((byte)cue);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcPlayEnemySound(byte cueId)
+    {
+        if (AudioController == null)
+        {
+            AudioController = GetComponent<EnemyAudioController>();
+        }
+
+        AudioController?.Play((EnemySoundCue)cueId);
     }
 
     private void ApplyNetworkAnimState()

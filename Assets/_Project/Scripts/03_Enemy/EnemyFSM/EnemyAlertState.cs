@@ -6,6 +6,8 @@ public class EnemyAlertState : EnemyState
     private bool useArcMovement;
     private bool isFacingTarget;
     private float arcRadius;
+    private bool wasLookingAtNoise;
+    private float nextLookSoundTime;
 
     public EnemyAlertState(EnemyAI enemy, EnemyStateMachine stateMachine)
         : base(enemy, stateMachine) { }
@@ -13,6 +15,8 @@ public class EnemyAlertState : EnemyState
     public override void Enter()
     {
         enemy.Animator.SetBool("IsAlert", true);
+        wasLookingAtNoise = false;
+        nextLookSoundTime = Time.time;
 
         bool shouldTurn = enemy.Suspicion >= enemy.Data.lookThreshold
             && enemy.HasDetectedNoise
@@ -55,6 +59,7 @@ public class EnemyAlertState : EnemyState
                 isFacingTarget = true;
                 enemy.Agent.isStopped = true;
                 enemy.Agent.updateRotation = false;
+                TryPlayLookSound();
             }
         }
         else
@@ -67,9 +72,11 @@ public class EnemyAlertState : EnemyState
             {
                 enemy.Animator.SetFloat("Speed", 0.5f, 0.2f, Time.deltaTime);
                 enemy.LookDetectedNoisePosition();
+                TryPlayLookSound();
             }
             else
             {
+                wasLookingAtNoise = false;
                 enemy.Animator.SetFloat("Speed", 0f, 0.2f, Time.deltaTime);
             }
         }
@@ -126,5 +133,18 @@ public class EnemyAlertState : EnemyState
         Vector3 noiseDirection = enemy.DetectedNoisePosition - enemy.transform.position;
         noiseDirection.y = 0f;
         return Vector3.Angle(enemy.transform.forward, noiseDirection);
+    }
+
+    private void TryPlayLookSound()
+    {
+        if (!wasLookingAtNoise || Time.time >= nextLookSoundTime)
+        {
+            enemy.RequestStateSound(EnemySoundCue.Alert);
+            float min = Mathf.Min(enemy.Data.alertLookSoundIntervalMin, enemy.Data.alertLookSoundIntervalMax);
+            float max = Mathf.Max(enemy.Data.alertLookSoundIntervalMin, enemy.Data.alertLookSoundIntervalMax);
+            nextLookSoundTime = Time.time + Random.Range(min, max);
+        }
+
+        wasLookingAtNoise = true;
     }
 }
