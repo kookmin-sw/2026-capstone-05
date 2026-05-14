@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  triposr:
+    build: .
+    container_name: triposr_server
+    ports:
+      - "7860:7860"
+    volumes:
+      # 로컬의 코드를 컨테이너에 동기화 (코드 수정 시 즉시 반영 원할 경우)
+      - .:/app
+      # 핵심: Hugging Face 모델이 다운로드되는 경로를 로컬 폴더에 매핑하여 캐싱
+      - ./model_cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
