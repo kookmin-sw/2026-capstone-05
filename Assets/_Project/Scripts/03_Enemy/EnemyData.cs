@@ -39,6 +39,19 @@ public class EnemyData : ScriptableObject
     public float waitEndTime = 1.5f;
     public float newNoisePositionThreshold = 0.25f;
 
+    [Header("Sound Timing")]
+    [Min(0f)] public float locomotionSoundInitialDelayMin = 0.25f;
+    [Min(0f)] public float locomotionSoundInitialDelayMax = 1f;
+    [Min(0f)] public float locomotionSoundIntervalMin = 2.5f;
+    [Min(0f)] public float locomotionSoundIntervalMax = 4.5f;
+    [Min(0f)] public float alertLookSoundIntervalMin = 1.5f;
+    [Min(0f)] public float alertLookSoundIntervalMax = 3f;
+    [Min(0f)] public float chaseSoundInitialDelayMin = 0.15f;
+    [Min(0f)] public float chaseSoundInitialDelayMax = 0.75f;
+    [Min(0f)] public float chaseSoundIntervalMin = 2f;
+    [Min(0f)] public float chaseSoundIntervalMax = 4f;
+    [Min(0f)] public float movingSoundVelocityThreshold = 0.05f;
+
     [Header("Suspicion Thresholds")]
     public float alertThreshold = 20f;
     public float lookThreshold = 40f;

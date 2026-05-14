@@ -11,6 +11,8 @@ public class EnemyDeadState : EnemyState
 
     public override void Enter()
     {
+        enemy.RequestStateSound(EnemySoundCue.Dead);
+
         animationEventHandler = enemy.AnimationEventHandler;
         animationEventHandler.OnDeadEnd += HandleDeadEnd;
         failSafeTimer = enemy.Data.deadAnimationFailSafeTime;

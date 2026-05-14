@@ -87,6 +87,7 @@ GameObject:
   - component: {fileID: 1295530464003885314}
   - component: {fileID: 6141188037711129945}
   - component: {fileID: -2596923422346867576}
+  - component: {fileID: 4003363243651403042}
   m_Layer: 7
   m_Name: Enemy1_1
   m_TagString: Enemy
@@ -249,6 +250,69 @@ MonoBehaviour:
   startOnEnable: 1
   disableWhenNetworked: 1
   enemy: {fileID: 0}
+--- !u!114 &4003363243651403042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6947545585843501229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a5670aacb224f428933c88cfb6bb21d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyAudioController
+  locomotionEvent:
+    Guid:
+      Data1: -179255328
+      Data2: 1075388873
+      Data3: 909711788
+      Data4: -1826625317
+    Path: event:/SFX/Enemy/Locomotion
+  alertEvent:
+    Guid:
+      Data1: -1090654681
+      Data2: 1167497579
+      Data3: 1688019612
+      Data4: -497415677
+    Path: event:/SFX/Enemy/Alert
+  chaseEvent:
+    Guid:
+      Data1: 210113358
+      Data2: 1310552822
+      Data3: -615487595
+      Data4: -131986516
+    Path: event:/SFX/Enemy/Chase
+  searchEvent:
+    Guid:
+      Data1: -1513988469
+      Data2: 1151909324
+      Data3: -1018420294
+      Data4: -181483488
+    Path: event:/SFX/Enemy/Search
+  attackEvent:
+    Guid:
+      Data1: 890196394
+      Data2: 1334254470
+      Data3: -296447354
+      Data4: 224713211
+    Path: event:/SFX/Enemy/Attack
+  hitEvent:
+    Guid:
+      Data1: 1709809467
+      Data2: 1166371116
+      Data3: 309376407
+      Data4: 1120818947
+    Path: event:/SFX/Enemy/Hit
+  deadEvent:
+    Guid:
+      Data1: -1086766837
+      Data2: 1175561141
+      Data3: 1695256483
+      Data4: -808822713
+    Path: event:/SFX/Enemy/Dead
+  locomotionCooldown: 2
+  stateSoundCooldown: 0.1
 --- !u!1001 &4801926030991762472
 PrefabInstance:
   m_ObjectHideFlags: 0

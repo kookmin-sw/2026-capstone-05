@@ -121,6 +121,8 @@ public class EnemyAttackState : EnemyState
 
     private void StartAttackAnimation()
     {
+        enemy.RequestStateSound(EnemySoundCue.Attack);
+
         int attackIndex = SelectAttackIndex(out Quaternion attackRotation);
         lockedAttackRotation = attackRotation;
         enemy.transform.rotation = lockedAttackRotation;
