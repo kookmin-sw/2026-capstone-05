@@ -35,7 +35,7 @@ public class BunkerExitInteractable : NetworkBehaviour, IInteractable
 
     public bool CanInteract(PlayerController player)
     {
-        if (!enabled || player == null || player.InputHandler == null)
+        if (!enabled || player == null || player.InputHandler == null || !IsRoundRunning())
         {
             return false;
         }
@@ -73,7 +73,7 @@ public class BunkerExitInteractable : NetworkBehaviour, IInteractable
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     public void RpcRequestTeleportToBunkerDoor(PlayerRef requestedBy)
     {
-        if (!HasStateAuthority || Runner == null || requestedBy == PlayerRef.None)
+        if (!HasStateAuthority || Runner == null || requestedBy == PlayerRef.None || !IsRoundRunning())
         {
             return;
         }
@@ -272,6 +272,11 @@ public class BunkerExitInteractable : NetworkBehaviour, IInteractable
     {
         NetworkObject playerNetworkObject = player != null ? player.GetComponent<NetworkObject>() : null;
         return playerNetworkObject != null ? playerNetworkObject.InputAuthority : PlayerRef.None;
+    }
+
+    private bool IsRoundRunning()
+    {
+        return BackendRoundManager.Instance != null && BackendRoundManager.Instance.IsRoundRunning;
     }
 
     private Quaternion GetUprightRotation(Quaternion sourceRotation)
