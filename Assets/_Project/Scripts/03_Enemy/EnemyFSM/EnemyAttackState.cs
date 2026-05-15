@@ -19,6 +19,8 @@ public class EnemyAttackState : EnemyState
     private float jumpMoveTimer;
     private float jumpMoveDuration;
 
+    public bool BlocksHitReaction { get; private set; }
+
     public EnemyAttackState(EnemyAI enemy, EnemyStateMachine stateMachine)
         : base(enemy, stateMachine) { }
 
@@ -63,6 +65,7 @@ public class EnemyAttackState : EnemyState
         foreach (var col in enemy.AttackColliders)
             col.DisableAttackCollider();
 
+        BlocksHitReaction = false;
         EndJumpAttackMovement(true);
         hasPendingJumpAttackMovement = false;
         isRecovering = false;
@@ -129,6 +132,7 @@ public class EnemyAttackState : EnemyState
 
         hasLockedAttackRotation = true;
         enemy.RegisterAttackStarted();
+        BlocksHitReaction = true;
 
         enemy.Animator.SetInteger("AttackIndex", attackIndex);
         enemy.Animator.SetInteger("WaitIndex", Random.Range(0, 2));
@@ -160,6 +164,7 @@ public class EnemyAttackState : EnemyState
 
         EndJumpAttackMovement(true);
         hasPendingJumpAttackMovement = false;
+        BlocksHitReaction = false;
         BeginRecovery();
     }
 

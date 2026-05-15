@@ -25,7 +25,10 @@ public class NoiseManager : MonoBehaviour
     
     // Private Fields
     private readonly Dictionary<NoiseData.NoiseType, float> noiseDict = new Dictionary<NoiseData.NoiseType, float>();
-    private readonly Collider[] overlapBuffer = new Collider[64];
+    private const int InitialOverlapBufferSize = 64;
+    private const int MaxOverlapBufferSize = 1024;
+
+    private Collider[] overlapBuffer = new Collider[InitialOverlapBufferSize];
     private readonly HashSet<INoiseListener> notifiedListeners = new HashSet<INoiseListener>();
 
 #if UNITY_EDITOR
@@ -103,7 +106,7 @@ public class NoiseManager : MonoBehaviour
     {
         notifiedListeners.Clear();
 
-        int count = Physics.OverlapSphereNonAlloc(position, radius, overlapBuffer);
+        int count = GetOverlapCount(position, radius);
         for (int i = 0; i < count; i++)
         {
             INoiseListener listener = overlapBuffer[i].GetComponentInParent<INoiseListener>();
@@ -124,6 +127,19 @@ public class NoiseManager : MonoBehaviour
 
             listener.OnNoiseDetected(position, noiseIntensity, noiseType, isObstructed);
         }
+    }
+
+    private int GetOverlapCount(Vector3 position, float radius)
+    {
+        int count = Physics.OverlapSphereNonAlloc(position, radius, overlapBuffer);
+        while (count >= overlapBuffer.Length && overlapBuffer.Length < MaxOverlapBufferSize)
+        {
+            int nextSize = Mathf.Min(overlapBuffer.Length * 2, MaxOverlapBufferSize);
+            overlapBuffer = new Collider[nextSize];
+            count = Physics.OverlapSphereNonAlloc(position, radius, overlapBuffer);
+        }
+
+        return count;
     }
 
 #if UNITY_EDITOR

@@ -424,6 +424,9 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
 
         ApplyHitAwareness();
 
+        if (StateMachine.CurrentState == AttackState && AttackState.BlocksHitReaction)
+            return;
+
         if (StateMachine.CurrentState == HitState)
         {
             HitState.RestartReaction();

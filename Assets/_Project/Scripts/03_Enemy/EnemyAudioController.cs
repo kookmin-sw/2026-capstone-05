@@ -16,6 +16,9 @@ public enum EnemySoundCue : byte
 
 public class EnemyAudioController : MonoBehaviour
 {
+    [Header("Audio Toggle")]
+    [SerializeField] private bool enableAudio = true;
+
     [Header("FMOD Events")]
     [SerializeField] private EventReference locomotionEvent;
     [SerializeField] private EventReference alertEvent;
@@ -41,6 +44,9 @@ public class EnemyAudioController : MonoBehaviour
 
     public void Play(EnemySoundCue cue)
     {
+        if (!enableAudio)
+            return;
+
         EventReference eventReference = GetEvent(cue);
         if (eventReference.IsNull)
             return;
@@ -59,6 +65,16 @@ public class EnemyAudioController : MonoBehaviour
         RuntimeManager.AttachInstanceToGameObject(instance, gameObject);
         instance.start();
         instance.release();
+    }
+
+    public void SetAudioEnabled(bool isEnabled)
+    {
+        enableAudio = isEnabled;
+    }
+
+    public bool IsAudioEnabled()
+    {
+        return enableAudio;
     }
 
     private EventReference GetEvent(EnemySoundCue cue)
