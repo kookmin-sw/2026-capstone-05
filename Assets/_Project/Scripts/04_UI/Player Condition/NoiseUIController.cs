@@ -121,6 +121,11 @@ public class NoiseUIController : MonoBehaviour
         {
             targetFill = Mathf.Max(targetFill, 0.7f);
         }
+
+        if (noiseEmitter != null)
+        {
+            targetFill = Mathf.Max(targetFill, noiseEmitter.ConditionNoiseUiLevel);
+        }
     }
 
     private void TryBindLocalPlayerByInterval()
