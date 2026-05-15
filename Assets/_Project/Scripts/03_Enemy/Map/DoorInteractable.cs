@@ -158,7 +158,7 @@ public class DoorInteractable : MonoBehaviour, IInteractable
             return;
         }
 
-        InteractionUI.Instance.Show(GetObjectName(), GetInteractPrompt(), doorTransform);
+        InteractionUI.Instance.RefreshPromptForTarget(doorTransform, GetObjectName(), GetInteractPrompt());
     }
 
     private void NormalizePanelDirection()

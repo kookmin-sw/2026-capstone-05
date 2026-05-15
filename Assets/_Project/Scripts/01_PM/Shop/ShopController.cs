@@ -132,6 +132,9 @@ namespace Systems.Shop
             {
                 // 필요하다면 인벤토리를 강제로 숨기는 로직 추가
             }
+
+            // 👉 [추가] 상점 입장 인사
+            MascotEventManager.TriggerGreeting();
         }
 
         public void CloseShop()
@@ -273,6 +276,11 @@ namespace Systems.Shop
                                 {
                                     OnSpendGoldResult(false);
                                 }
+                                
+                                shopView.SetDialogue("* \"탁월한 선택이야!\"");
+                                HandleCancelPlacement(); // 배치 모드 종료 (돌아가기)
+                                // 👉 [추가] 판매 감사 애니메이션
+                                MascotEventManager.TriggerThankYou();
                             }
                             else
                             {
@@ -404,6 +412,8 @@ namespace Systems.Shop
             if (currentGold < itemToBuy.BuyPrice * quantity)
             {
                 shopView.SetDialogue("* \"장난해? 돈이 모자라잖아.\"");
+                // 👉 [추가] 잔액 부족 거절 애니메이션
+                MascotEventManager.TriggerReject();
                 return;
             }
 
@@ -654,10 +664,14 @@ namespace Systems.Shop
                     
                     shopView.SetDialogue("* \"탁월한 거래였어!\"");
                     RefreshSellCatalog(); // 판매 후 카탈로그 갱신
+                    // 👉 [추가] 판매 감사 애니메이션
+                    MascotEventManager.TriggerThankYou();
                 }
                 else
                 {
                     shopView.SetDialogue("* \"어라, 그 물건이 어디 갔지?\"");
+                    // 👉 [추가] 아이템 없음 깜짝 놀람 애니메이션
+                    MascotEventManager.TriggerSurprise();
                 }
             }
         }
@@ -674,10 +688,14 @@ namespace Systems.Shop
                     {
                         shopView.SwitchToCatalogMode();
                         shopView.SetDialogue("* \"구매 고마워!\"");
+                        // 👉 [추가] 구매 감사 애니메이션
+                        MascotEventManager.TriggerThankYou();
                     }
                     else
                     {
                         shopView.SetDialogue("* \"돈이 부족한걸!\"");
+                        // 👉 [추가] 잔액 부족 거절 애니메이션
+                        MascotEventManager.TriggerReject();
                     }
                 }
             }
@@ -689,10 +707,14 @@ namespace Systems.Shop
                     {
                         shopView.SwitchToCatalogMode();
                         shopView.SetDialogue("* \"구매 고마워!\"");
+                        // 👉 [추가] 구매 감사 애니메이션
+                        MascotEventManager.TriggerThankYou();
                     }
                     else
                     {
                         shopView.SetDialogue("* \"돈이 부족한걸!\"");
+                        // 👉 [추가] 잔액 부족 거절 애니메이션
+                        MascotEventManager.TriggerReject();
                     }
                 }
             }

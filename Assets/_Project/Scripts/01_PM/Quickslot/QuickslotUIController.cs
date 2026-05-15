@@ -406,6 +406,7 @@ public class QuickslotUIController : MonoBehaviour
 
     private void EquipFromQuickslot(int index)
     {
+        localPlayerEquipment.CancelCurrentItemUse();
         SelectSlot(index);
         ItemInstance item = GetItem(index);
 

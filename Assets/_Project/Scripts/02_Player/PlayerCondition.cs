@@ -21,6 +21,7 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
     public event Action OnDiedEvent;
 
     private bool hasRaisedDeathEvent;
+    private bool statsInitialized;
 
     [Header("Indoor Settings")]
     private bool isIndoors;
@@ -39,14 +40,27 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
 
     private void Start()
     {
+        EnsureInitialized();
+    }
+
+    public void EnsureInitialized()
+    {
+        if (statsInitialized)
+        {
+            return;
+        }
+
         health.Initialize();
         stamina.Initialize();
         satiety.Initialize();
         coldness.Initialize();
+        statsInitialized = true;
     }
 
     private void Update()
     {
+        EnsureInitialized();
+
         health.UpdatePassive();
         //stamina.UpdatePassive();
         satiety.UpdatePassive();

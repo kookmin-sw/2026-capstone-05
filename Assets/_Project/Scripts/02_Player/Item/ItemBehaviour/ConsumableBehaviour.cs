@@ -113,11 +113,20 @@ public class ConsumableBehaviour : EquippedItemBehaviour
             player.Animator.SetConsuming(false);
             isConsuming = false;
 
-            if (consumeSoundInstance.isValid())
-            {
-                consumeSoundInstance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
-                consumeSoundInstance.release();
-            }
+            StopConsumeSound();
+        }
+        else
+        {
+            StopConsumeSound();
+        }
+    }
+
+    private void StopConsumeSound()
+    {
+        if (consumeSoundInstance.isValid())
+        {
+            consumeSoundInstance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
+            consumeSoundInstance.release();
         }
     }
 }
