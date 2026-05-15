@@ -91,7 +91,7 @@ public class PauseMenuManager : MonoBehaviour
     }
 
     // 3. 확인 창에서 "예"를 눌렀을 때 실제 이동 (씬 0번)
-    public void ConfirmGoToMainMenu()
+    public async void ConfirmGoToMainMenu()
     {
         // 중요: 이동 전 모든 잠금 상태를 수동으로 풀어줘야 메인메뉴에서 조작이 가능합니다.
         isPaused = false;
@@ -100,6 +100,15 @@ public class PauseMenuManager : MonoBehaviour
         // 멀티플레이어 환경일 경우 여기서 네트워크 연결 해제 로직이 추가될 수 있습니다.
         
         // 씬 리스트의 0번(메인메뉴)을 불러옵니다.
+        try
+        {
+            await RoomLauncher.ShutdownActiveRunnerAsync();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[PauseMenuManager] Failed to shut down network session before returning to main menu. {ex}");
+        }
+
         SceneManager.LoadScene(0);
     }
 

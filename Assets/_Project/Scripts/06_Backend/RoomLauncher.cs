@@ -107,6 +107,11 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         }
     }
 
+    public static Task ShutdownActiveRunnerAsync()
+    {
+        return _instance != null ? _instance.ShutdownRunnerAsync(true) : Task.CompletedTask;
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Bootstrap()
     {
@@ -737,15 +742,12 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
         try
         {
+            if (_runner != null)
+                await ShutdownRunnerAsync(false);
+
             EnsureRunnerReady();
 
-            if (_runner.IsRunning)
-            {
-                await _runner.Shutdown();
-            }
-
-            _spawnedPlayers.Clear();
-            _configuredLocalStates.Clear();
+            ClearNetworkRuntimeState();
 
             int gameSceneBuildIndex = ResolveGameSceneBuildIndex();
             if (gameSceneBuildIndex < 0)
@@ -877,20 +879,12 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (_runner == null)
         {
-            _runner = GetComponent<NetworkRunner>();
-            if (_runner == null)
-            {
-                _runner = gameObject.AddComponent<NetworkRunner>();
-            }
-        }
+            GameObject runnerGo = new("RoomLauncherNetworkRunner");
+            runnerGo.transform.SetParent(transform, false);
 
-        if (_sceneManager == null)
-        {
-            _sceneManager = GetComponent<NetworkSceneManagerDefault>();
-            if (_sceneManager == null)
-            {
-                _sceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>();
-            }
+            _runner = runnerGo.AddComponent<NetworkRunner>();
+            _sceneManager = runnerGo.AddComponent<NetworkSceneManagerDefault>();
+            _callbacksRegistered = false;
         }
 
         _runner.ProvideInput = true;
@@ -900,6 +894,63 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
             _runner.AddCallbacks(this);
             _callbacksRegistered = true;
         }
+    }
+
+    private async Task ShutdownRunnerAsync(bool clearRoomCode)
+    {
+        NetworkRunner runnerToDispose = _runner;
+
+        if (runnerToDispose != null)
+        {
+            if (runnerToDispose.IsRunning)
+                await runnerToDispose.Shutdown();
+
+            if (_callbacksRegistered)
+                runnerToDispose.RemoveCallbacks(this);
+        }
+
+        DisposeRunnerInstance(runnerToDispose);
+        ClearNetworkRuntimeState();
+
+        if (clearRoomCode)
+            _latestRoomCode = string.Empty;
+
+        RefreshRoomCodeOverlay();
+    }
+
+    private void DisposeRunnerInstance(NetworkRunner runnerToDispose)
+    {
+        GameObject runnerGo = runnerToDispose != null ? runnerToDispose.gameObject : _sceneManager != null ? _sceneManager.gameObject : null;
+
+        _runner = null;
+        _sceneManager = null;
+        _callbacksRegistered = false;
+
+        if (runnerGo == null)
+            return;
+
+        if (runnerGo == gameObject)
+        {
+            if (runnerToDispose != null)
+                Destroy(runnerToDispose);
+
+            NetworkSceneManagerDefault sceneManager = runnerGo.GetComponent<NetworkSceneManagerDefault>();
+            if (sceneManager != null)
+                Destroy(sceneManager);
+
+            return;
+        }
+
+        Destroy(runnerGo);
+    }
+
+    private void ClearNetworkRuntimeState()
+    {
+        _spawnedPlayers.Clear();
+        _configuredLocalStates.Clear();
+        _pendingAuthorityChecks.Clear();
+        _cachedLocalPlayerObject = null;
+        _cachedLocalInputHandler = null;
     }
 
     private NetworkProjectConfig BuildStartGameConfig()
@@ -1236,11 +1287,10 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
     {
-        _spawnedPlayers.Clear();
-        _configuredLocalStates.Clear();
-        _pendingAuthorityChecks.Clear();
-        _cachedLocalPlayerObject = null;
-        _cachedLocalInputHandler = null;
+        ClearNetworkRuntimeState();
+        if (runner == _runner)
+            DisposeRunnerInstance(runner);
+
         Debug.LogWarning($"{LogPrefix} 네트워크 세션 종료. reason={shutdownReason}");
     }
 
