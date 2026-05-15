@@ -9,6 +9,7 @@ public class EnemyPatrolState : EnemyState
     private int patrolDirection;
     private float stuckTimer;
     private Vector3 lastCheckedPosition;
+    private float nextLocomotionSoundTime;
 
     public EnemyPatrolState(EnemyAI enemy, EnemyStateMachine stateMachine)
         : base(enemy, stateMachine) { }
@@ -20,6 +21,7 @@ public class EnemyPatrolState : EnemyState
         
         stuckTimer = 0f;
         lastCheckedPosition = enemy.transform.position;
+        ScheduleNextLocomotionSound(enemy.Data.locomotionSoundInitialDelayMin, enemy.Data.locomotionSoundInitialDelayMax);
         SetPatrolDestination();
     }
 
@@ -32,6 +34,8 @@ public class EnemyPatrolState : EnemyState
 
         if (enemy.TryChangeStateBySuspicion())
             return;
+
+        TryPlayMovingLocomotionSound();
 
         if (CheckStuck())
         {
@@ -70,6 +74,30 @@ public class EnemyPatrolState : EnemyState
         }
 
         enemy.TrySetDestination(enemy.PatrolCenter);
+    }
+
+    private void TryPlayMovingLocomotionSound()
+    {
+        if (Time.time < nextLocomotionSoundTime)
+            return;
+
+        float velocityThreshold = enemy.Data.movingSoundVelocityThreshold;
+        if (enemy.Agent.pathPending ||
+            enemy.Agent.remainingDistance <= enemy.Agent.stoppingDistance ||
+            enemy.Agent.velocity.sqrMagnitude < velocityThreshold * velocityThreshold)
+        {
+            return;
+        }
+
+        enemy.RequestStateSound(EnemySoundCue.Locomotion);
+        ScheduleNextLocomotionSound(enemy.Data.locomotionSoundIntervalMin, enemy.Data.locomotionSoundIntervalMax);
+    }
+
+    private void ScheduleNextLocomotionSound(float minInterval, float maxInterval)
+    {
+        float min = Mathf.Min(minInterval, maxInterval);
+        float max = Mathf.Max(minInterval, maxInterval);
+        nextLocomotionSoundTime = Time.time + Random.Range(min, max);
     }
 
     private void EnsurePatrolPattern()

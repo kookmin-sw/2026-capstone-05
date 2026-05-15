@@ -23,6 +23,11 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
     private bool hasRaisedDeathEvent;
     private bool statsInitialized;
 
+    [Header("Indoor Settings")]
+    private bool isIndoors;
+    public float indoorColdnessDecreaseRate = 0.4f;
+    public float outdoorColdnessIncreaseRate = 0.2f;
+
     [Header("Sound Settings")]
     [SerializeField] private EventReference damageSound;
 
@@ -105,12 +110,12 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
         }
     }
 
-    public void ReviveToFull()
+    public void Revive()
     {
         health.Add(health.maxValue);
         stamina.Add(stamina.maxValue);
         satiety.Add(satiety.maxValue);
-        coldness.Add(coldness.maxValue);
+        coldness.Subtract(coldness.maxValue);
 
         hasRaisedDeathEvent = false;
     }
@@ -170,6 +175,22 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
     {
         BackendPlayerNetworkSync networkSync = GetComponent<BackendPlayerNetworkSync>();
         enabled = isLocalPlayer || networkSync == null || networkSync.HasStateAuthority;
+    }
+
+    public void SetIndoors(bool indoors)
+    {
+        isIndoors = indoors;
+
+        if (isIndoors)
+        {
+            coldness.increaseRate = 0f;
+            coldness.decreaseRate = indoorColdnessDecreaseRate;
+        }
+        else
+        {
+            coldness.increaseRate = outdoorColdnessIncreaseRate;
+            coldness.decreaseRate = 0f;
+        }
     }
 
 }

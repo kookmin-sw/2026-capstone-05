@@ -118,6 +118,7 @@ public class EnemySearchState : EnemyState
             waitTimer = Random.Range(enemy.Data.waitStartTime, enemy.Data.waitEndTime);
             enemy.Agent.isStopped = true;
             enemy.Agent.updateRotation = false;
+            enemy.RequestStateSound(EnemySoundCue.Search);
             StartWaitTurn();
         }
     }

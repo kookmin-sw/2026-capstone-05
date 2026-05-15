@@ -9,6 +9,8 @@ public class EnemyIdleState : EnemyState
 
     public override void Enter()
     {
+        enemy.RequestStateSound(EnemySoundCue.Locomotion);
+
         enemy.Agent.isStopped = true;
         enemy.Agent.updateRotation = false;
 
