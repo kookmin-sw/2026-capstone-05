@@ -1,4 +1,5 @@
 using Fusion;
+using System;
 using UnityEngine;
 
 [RequireComponent(typeof(NetworkObject))]
@@ -8,6 +9,8 @@ public class EnemyHealth : NetworkBehaviour, IDamageable
     private float localCurrentHealth;
 
     [Networked] private float NetworkCurrentHealth { get; set; }
+
+    public event Action<EnemyHealth> Died;
 
     public float CurrentHealth => enemy != null && enemy.IsLocalSimulationActive
         ? localCurrentHealth
@@ -51,6 +54,7 @@ public class EnemyHealth : NetworkBehaviour, IDamageable
         if (NetworkCurrentHealth <= 0f)
         {
             NetworkCurrentHealth = 0f;
+            Died?.Invoke(this);
             enemy.StateMachine.ChangeState(enemy.DeadState);
             return;
         }
@@ -68,6 +72,7 @@ public class EnemyHealth : NetworkBehaviour, IDamageable
         if (localCurrentHealth <= 0f)
         {
             localCurrentHealth = 0f;
+            Died?.Invoke(this);
             enemy.StateMachine.ChangeState(enemy.DeadState);
             return;
         }

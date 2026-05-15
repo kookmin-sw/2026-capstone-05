@@ -1,6 +1,6 @@
-using System.Collections.Generic;
 using Fusion;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [RequireComponent(typeof(NetworkObject))]
 public class EnemySpawner : NetworkBehaviour
@@ -8,12 +8,13 @@ public class EnemySpawner : NetworkBehaviour
     [Header("Spawn Settings")]
     [SerializeField] private NetworkPrefabRef enemyPrefab;
     [SerializeField] private Transform[] spawnPoints;
-    [SerializeField, Min(0.1f)] private float spawnIntervalSeconds = 5f;
-    [SerializeField, Min(1)] private int maxAliveEnemies = 10;
+    [FormerlySerializedAs("spawnIntervalSeconds")]
+    [SerializeField, Min(0.1f)] private float respawnDelaySeconds = 5f;
 
-    [Networked] private TickTimer SpawnTimer { get; set; }
+    [Networked] private TickTimer RespawnTimer { get; set; }
 
-    private readonly List<NetworkObject> _aliveEnemies = new List<NetworkObject>();
+    private NetworkObject currentEnemy;
+    private EnemyHealth currentEnemyHealth;
 
     public override void Spawned()
     {
@@ -22,7 +23,7 @@ public class EnemySpawner : NetworkBehaviour
             return;
         }
 
-        SpawnTimer = TickTimer.CreateFromSeconds(Runner, spawnIntervalSeconds);
+        TrySpawnEnemy();
     }
 
     public override void FixedUpdateNetwork()
@@ -32,42 +33,100 @@ public class EnemySpawner : NetworkBehaviour
             return;
         }
 
-        CleanupDestroyedEnemies();
-
-        if (_aliveEnemies.Count >= maxAliveEnemies)
+        if (HasLivingEnemy())
         {
             return;
         }
 
-        if (!SpawnTimer.ExpiredOrNotRunning(Runner))
+        if (!RespawnTimer.Expired(Runner))
         {
             return;
         }
 
+        TrySpawnEnemy();
+    }
+
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        UnsubscribeFromCurrentEnemy();
+        currentEnemy = null;
+    }
+
+    private bool HasLivingEnemy()
+    {
+        if (currentEnemy != null && currentEnemy.IsValid)
+        {
+            return true;
+        }
+
+        if (currentEnemy != null)
+        {
+            currentEnemy = null;
+            UnsubscribeFromCurrentEnemy();
+            StartRespawnTimer();
+        }
+
+        return false;
+    }
+
+    private void TrySpawnEnemy()
+    {
         if (!TryGetSpawnTransform(out Vector3 position, out Quaternion rotation))
         {
-            SpawnTimer = TickTimer.CreateFromSeconds(Runner, spawnIntervalSeconds);
+            StartRespawnTimer();
             return;
         }
 
         NetworkObject spawnedEnemy = Runner.Spawn(enemyPrefab, position, rotation, PlayerRef.None);
         if (spawnedEnemy != null)
         {
-            _aliveEnemies.Add(spawnedEnemy);
+            currentEnemy = spawnedEnemy;
+            SubscribeToEnemy(spawnedEnemy);
+            RespawnTimer = TickTimer.None;
+            return;
         }
 
-        SpawnTimer = TickTimer.CreateFromSeconds(Runner, spawnIntervalSeconds);
+        StartRespawnTimer();
     }
 
-    private void CleanupDestroyedEnemies()
+    private void SubscribeToEnemy(NetworkObject enemyObject)
     {
-        for (int i = _aliveEnemies.Count - 1; i >= 0; i--)
+        UnsubscribeFromCurrentEnemy();
+
+        currentEnemyHealth = enemyObject.GetComponent<EnemyHealth>();
+        if (currentEnemyHealth == null)
         {
-            if (_aliveEnemies[i] == null || !_aliveEnemies[i].IsValid)
-            {
-                _aliveEnemies.RemoveAt(i);
-            }
+            Debug.LogWarning("[EnemySpawner] Spawned enemy does not have EnemyHealth.", enemyObject);
+            return;
         }
+
+        currentEnemyHealth.Died += HandleCurrentEnemyDied;
+    }
+
+    private void UnsubscribeFromCurrentEnemy()
+    {
+        if (currentEnemyHealth != null)
+        {
+            currentEnemyHealth.Died -= HandleCurrentEnemyDied;
+            currentEnemyHealth = null;
+        }
+    }
+
+    private void HandleCurrentEnemyDied(EnemyHealth enemyHealth)
+    {
+        if (enemyHealth != currentEnemyHealth)
+        {
+            return;
+        }
+
+        UnsubscribeFromCurrentEnemy();
+        currentEnemy = null;
+        StartRespawnTimer();
+    }
+
+    private void StartRespawnTimer()
+    {
+        RespawnTimer = TickTimer.CreateFromSeconds(Runner, respawnDelaySeconds);
     }
 
     private bool TryGetSpawnTransform(out Vector3 position, out Quaternion rotation)
