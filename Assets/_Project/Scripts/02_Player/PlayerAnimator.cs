@@ -22,6 +22,7 @@ public class PlayerAnimator : MonoBehaviour
     private readonly int hashOnChangePose = Animator.StringToHash("OnChangePose");
     private readonly int hashPoseID = Animator.StringToHash("PoseID");
     private readonly int hashIsConsuming = Animator.StringToHash("IsConsuming");
+    private readonly int hashIsDead = Animator.StringToHash("IsDead");
 
     private Dictionary<ItemUseAnimationType, int> itemUseAnimTriggers = new Dictionary<ItemUseAnimationType, int>
     {
@@ -97,6 +98,29 @@ public class PlayerAnimator : MonoBehaviour
         if (animator3P != null)
         {
             animator3P.SetTrigger(hashOnHit);
+        }
+    }
+
+    public void Die() => SetDead(true);
+    public void Revive() => SetDead(false);
+
+    public void SetDead(bool isDead)
+    {
+        if (animator1P != null)
+        {
+            animator1P.SetBool(hashIsDead, isDead);
+            for (int i = 1; i < animator1P.layerCount; i++)
+            {
+                animator1P.SetLayerWeight(i, isDead ? 0f : 1f);
+            }
+        }
+        if (animator3P != null)
+        {
+            animator3P.SetBool(hashIsDead, isDead);
+            for (int i = 1; i < animator3P.layerCount; i++)
+            {
+                animator3P.SetLayerWeight(i, isDead ? 0f : 1f);
+            }
         }
     }
 

@@ -18,6 +18,7 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
 
     public event Action<float> OnTakeDamageEvent;
 
+    public event Action OnReviveEvent;
     public event Action OnDiedEvent;
 
     private bool hasRaisedDeathEvent;
@@ -30,6 +31,7 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
 
     [Header("Sound Settings")]
     [SerializeField] private EventReference damageSound;
+    [SerializeField] private EventReference deathSound;
 
     private PlayerController controller;
 
@@ -96,8 +98,6 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
 
             OnTakeDamageEvent?.Invoke(damageAmount);
 
-            RuntimeManager.PlayOneShot(damageSound, transform.position);
-
             if (!IsAlive)
             {
                 if (!hasRaisedDeathEvent)
@@ -106,12 +106,20 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
                     OnDiedEvent?.Invoke();
                 }
                 Debug.Log("Player has died.");
+
+                RuntimeManager.PlayOneShot(deathSound, transform.position);
+            }
+            else
+            {
+                RuntimeManager.PlayOneShot(damageSound, transform.position);
             }
         }
     }
 
     public void Revive()
     {
+        OnReviveEvent?.Invoke();
+
         health.Add(health.maxValue);
         stamina.Add(stamina.maxValue);
         satiety.Add(satiety.maxValue);

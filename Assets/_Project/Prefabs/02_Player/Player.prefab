@@ -214,6 +214,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 219158335034487518}
+  - component: {fileID: 5510533945472190893}
   m_Layer: 3
   m_Name: CameraRoot
   m_TagString: Untagged
@@ -238,6 +239,26 @@ Transform:
   - {fileID: 4301501043799749578}
   m_Father: {fileID: 5128881092086213484}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5510533945472190893
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1324282998248299244}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4895c1a6090bb30448957ff3f424ea3a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeathCameraDirector
+  cameraTransform: {fileID: 219158335034487518}
+  rigBuilders:
+  - {fileID: 8732123392866674325}
+  - {fileID: 9027482675281875723}
+  dropDuration: 2
+  dropEase: 5
+  targetLocalPosition: {x: 0, y: 0.2, z: 0}
+  targetLocalRotation: {x: 20, y: 0, z: 35}
 --- !u!1 &1535567656922724264
 GameObject:
   m_ObjectHideFlags: 0
@@ -590,6 +611,13 @@ MonoBehaviour:
       Data3: 736813194
       Data4: 1689962371
     Path: event:/SFX/Player/Hurt
+  deathSound:
+    Guid:
+      Data1: -1916870776
+      Data2: 1315724346
+      Data3: -72926790
+      Data4: -1867859186
+    Path: event:/SFX/Player/Die
 --- !u!114 &6020099658808066126
 MonoBehaviour:
   m_ObjectHideFlags: 0

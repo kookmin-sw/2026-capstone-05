@@ -23,6 +23,7 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
     public PlayerNoiseEmitter NoiseEmitter { get; private set; }
     public PlayerEquipment Equipment { get; private set; }
     public PlayerViewmodelController ViewmodelController { get; private set; }
+    public DeathCameraDirector DeathCameraDirector { get; private set; }
     public Transform CameraTransform => cameraTransform;
 
     // 스탯 및 설정 (Stats & Settings)
@@ -83,6 +84,7 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
         NoiseEmitter = GetComponent<PlayerNoiseEmitter>();
         Equipment = GetComponent<PlayerEquipment>();
         ViewmodelController = GetComponentInChildren<PlayerViewmodelController>();
+        DeathCameraDirector = GetComponentInChildren<DeathCameraDirector>();
 
 
         StateMachine = new PlayerStateMachine();
@@ -115,22 +117,57 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
 
     private void OnEnable()
     {
-        if (Condition != null && Animator != null)
+        if (Condition != null)
         {
-            Condition.OnTakeDamageEvent += Animator.SetHitTrigger;
+            if (Animator != null)
+            {
+                Condition.OnTakeDamageEvent += Animator.SetHitTrigger;
+                Condition.OnDiedEvent += Animator.Die;
+                Condition.OnReviveEvent += Animator.Revive;
+            }
+            if (InputHandler != null)
+            {
+                Condition.OnReviveEvent += InputHandler.EnableInput;
+                Condition.OnDiedEvent += InputHandler.DisableInput;
+            }
+            if (DeathCameraDirector != null)
+            {
+                Condition.OnDiedEvent += DeathCameraDirector.PlayDeathSequence;
+                Condition.OnReviveEvent += DeathCameraDirector.PlayReviveSequence;
+            }
         }
     }
 
     private void OnDisable()
     {
-        if (Condition != null && Animator != null)
+        if (Condition != null)
         {
-            Condition.OnTakeDamageEvent -= Animator.SetHitTrigger;
+            if (Animator != null)
+            {
+                Condition.OnTakeDamageEvent -= Animator.SetHitTrigger;
+                Condition.OnDiedEvent -= Animator.Die;
+                Condition.OnReviveEvent -= Animator.Revive;
+            }
+            if (InputHandler != null)
+            {
+                Condition.OnReviveEvent -= InputHandler.EnableInput;
+                Condition.OnDiedEvent -= InputHandler.DisableInput;
+            }
+            if (DeathCameraDirector != null)
+            {
+                Condition.OnDiedEvent -= DeathCameraDirector.PlayDeathSequence;
+                Condition.OnReviveEvent -= DeathCameraDirector.PlayReviveSequence;
+            }
         }
     }
 
     private void Update()
     {
+        if (Condition != null && !Condition.IsAlive)
+        {
+            return;
+        }
+
         CheckEnvironmentFlags();
 
         if (canLook)

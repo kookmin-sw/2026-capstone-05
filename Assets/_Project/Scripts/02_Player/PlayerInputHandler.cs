@@ -81,6 +81,15 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
     public void ConsumeInteract() => InteractTriggered = false;
     public void ConsumeAction() => ActionTriggered = false;
 
+    public void EnableInput()
+    {
+        SetInputActive(true);
+    }
+    public void DisableInput()
+    {
+        SetInputActive(false);
+    }
+
     /// <summary>
     /// 플레이어의 조작 차단/복구
     /// </summary>
