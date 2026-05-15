@@ -9,6 +9,8 @@ public class EnemyIdleState : EnemyState
 
     public override void Enter()
     {
+        enemy.RequestStateSound(EnemySoundCue.Locomotion);
+
         enemy.Agent.isStopped = true;
         enemy.Agent.updateRotation = false;
 
@@ -26,23 +28,8 @@ public class EnemyIdleState : EnemyState
         enemy.Animator.SetFloat("Speed", 0f, 0.2f, Time.deltaTime);
         enemy.Animator.SetFloat("Angle", 0f, 0.2f, Time.deltaTime);
 
-        if (enemy.Suspicion >= enemy.Data.chaseThreshold)
-        {
-            stateMachine.ChangeState(enemy.ChaseState);
+        if (enemy.TryChangeStateBySuspicion())
             return;
-        }
-
-        if (enemy.Suspicion >= enemy.Data.searchThreshold)
-        {
-            stateMachine.ChangeState(enemy.SearchState);
-            return;
-        }
-
-        if (enemy.Suspicion >= enemy.Data.alertThreshold)
-        {
-            stateMachine.ChangeState(enemy.AlertState);
-            return;
-        }
 
         stopTimer -= Time.deltaTime;
         if (stopTimer <= 0f)

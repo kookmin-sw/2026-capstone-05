@@ -126,6 +126,27 @@ public class BunkerEnterInteractable : NetworkBehaviour, IInteractable
     private void TeleportTransform(Transform playerTransform, PlayerController playerController, Vector3 position, Quaternion rotation)
     {
         CharacterController characterController = playerTransform.GetComponent<CharacterController>();
+
+        if (characterController != null && playerController != null)
+        {
+            Vector3 point1 = playerTransform.position + characterController.center + Vector3.up * (characterController.height * 0.5f - characterController.radius);
+            Vector3 point2 = playerTransform.position + characterController.center - Vector3.up * (characterController.height * 0.5f - characterController.radius);
+
+            Collider[] hits = Physics.OverlapCapsule(point1, point2, characterController.radius, Physics.AllLayers, QueryTriggerInteraction.Collide);
+
+            foreach (Collider hit in hits)
+            {
+                if (hit.isTrigger)
+                {
+                    var triggerScript = hit.GetComponent<IndoorsTrigger>();
+                    if (triggerScript != null)
+                    {
+                        triggerScript.OnPlayerForceExit(playerController);
+                    }
+                }
+            }
+        }
+
         if (characterController != null)
         {
             characterController.enabled = false;

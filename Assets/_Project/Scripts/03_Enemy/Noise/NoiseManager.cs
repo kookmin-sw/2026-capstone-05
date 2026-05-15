@@ -15,6 +15,7 @@ public class NoiseManager : MonoBehaviour
 
     [Header("Obstacle Detection")]
     [SerializeField] private LayerMask soundObstacleMask;
+    [SerializeField, Range(0f, 1f)] private float obstructedIntensityMultiplier = 0.35f;
     
 #if UNITY_EDITOR
     [Header("Debug Settings")]
@@ -95,10 +96,10 @@ public class NoiseManager : MonoBehaviour
 #if UNITY_EDITOR
         activeNoises.Add(new ActiveNoise(position, calculatedRadius, displayTime));
 #endif
-        NotifyEnemies(position, calculatedRadius);
+        NotifyEnemies(position, calculatedRadius, noiseType);
     }
 
-    private void NotifyEnemies(Vector3 position, float radius)
+    private void NotifyEnemies(Vector3 position, float radius, NoiseData.NoiseType noiseType)
     {
         notifiedListeners.Clear();
 
@@ -109,12 +110,19 @@ public class NoiseManager : MonoBehaviour
             if (listener == null || !notifiedListeners.Add(listener)) continue;
 
             Vector3 listenerPosition = overlapBuffer[i].bounds.center;
-            if (Physics.Linecast(position, listenerPosition, soundObstacleMask))
-                continue;
+            bool isObstructed = Physics.Linecast(position, listenerPosition, soundObstacleMask);
 
             float distance = Vector3.Distance(overlapBuffer[i].ClosestPoint(position), position);
-            float noiseIntensity = 1f - distance / radius;
-            listener.OnNoiseDetected(position, noiseIntensity);
+            float noiseIntensity = Mathf.Clamp01(1f - distance / radius);
+            if (isObstructed)
+            {
+                noiseIntensity *= obstructedIntensityMultiplier;
+            }
+
+            if (noiseIntensity <= 0f)
+                continue;
+
+            listener.OnNoiseDetected(position, noiseIntensity, noiseType, isObstructed);
         }
     }
 

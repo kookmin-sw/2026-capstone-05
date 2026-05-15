@@ -5,10 +5,13 @@ using UnityEngine;
 public class EnemyHealth : NetworkBehaviour, IDamageable
 {
     private EnemyAI enemy;
+    private float localCurrentHealth;
 
     [Networked] private float NetworkCurrentHealth { get; set; }
 
-    public float CurrentHealth => NetworkCurrentHealth;
+    public float CurrentHealth => enemy != null && enemy.IsLocalSimulationActive
+        ? localCurrentHealth
+        : NetworkCurrentHealth;
 
     private void Awake()
     {
@@ -23,8 +26,23 @@ public class EnemyHealth : NetworkBehaviour, IDamageable
         }
     }
 
+    public void InitializeLocalHealth()
+    {
+        enemy = enemy != null ? enemy : GetComponent<EnemyAI>();
+        if (enemy == null || enemy.Data == null)
+            return;
+
+        localCurrentHealth = enemy.Data.maxHealth;
+    }
+
     public void TakeDamage(float damageAmount)
     {
+        if (enemy != null && enemy.IsLocalSimulationActive)
+        {
+            TakeLocalDamage(damageAmount);
+            return;
+        }
+
         if (!HasStateAuthority || NetworkCurrentHealth <= 0f) return;
 
         float damage = Mathf.Min(damageAmount, NetworkCurrentHealth);
@@ -37,11 +55,23 @@ public class EnemyHealth : NetworkBehaviour, IDamageable
             return;
         }
 
-        if (enemy.StateMachine.CurrentState != enemy.DeadState &&
-        enemy.StateMachine.CurrentState != enemy.AttackState &&
-        enemy.StateMachine.CurrentState != enemy.HitState)
+        enemy.RegisterHitReaction();
+    }
+
+    private void TakeLocalDamage(float damageAmount)
+    {
+        if (localCurrentHealth <= 0f) return;
+
+        float damage = Mathf.Min(damageAmount, localCurrentHealth);
+        localCurrentHealth -= damage;
+
+        if (localCurrentHealth <= 0f)
         {
-            enemy.StateMachine.ChangeState(enemy.HitState);
+            localCurrentHealth = 0f;
+            enemy.StateMachine.ChangeState(enemy.DeadState);
+            return;
         }
+
+        enemy.RegisterHitReaction();
     }
 }

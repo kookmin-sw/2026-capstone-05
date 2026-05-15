@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: EnemyData
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   enemyName: Enemy
-  maxHealth: 10000
+  maxHealth: 60
   walkSpeed: 2
   chaseSpeed: 4
   searchSpeed: 3
@@ -21,12 +21,30 @@ MonoBehaviour:
   idleStartTime: 1
   idleEndTime: 3
   patrolRadius: 15
+  patrolMinRadiusRatio: 0.2
+  patrolMaxRadiusRatio: 1
+  patrolMinAngleStep: 35
+  patrolMaxAngleStep: 160
+  patrolDirectionChangeChance: 0.2
+  patrolDestinationAttempts: 8
   alignAngleThreshold: 12
   alertArcRadiusMin: 0.2
   alertArcRadiusMax: 1.2
   searchRadius: 6
   waitStartTime: 0.8
   waitEndTime: 1.2
+  newNoisePositionThreshold: 0.25
+  locomotionSoundInitialDelayMin: 0.25
+  locomotionSoundInitialDelayMax: 0.75
+  locomotionSoundIntervalMin: 3
+  locomotionSoundIntervalMax: 4.5
+  alertLookSoundIntervalMin: 1.5
+  alertLookSoundIntervalMax: 3
+  chaseSoundInitialDelayMin: 0.25
+  chaseSoundInitialDelayMax: 0.75
+  chaseSoundIntervalMin: 3.5
+  chaseSoundIntervalMax: 5
+  movingSoundVelocityThreshold: 0.05
   alertThreshold: 20
   lookThreshold: 40
   searchThreshold: 70
@@ -37,7 +55,43 @@ MonoBehaviour:
   suspicionGainAmount: 100
   suspicionReduceRate: 10
   suspicionReduceDelay: 2
+  noiseMemoryCapacity: 5
+  noiseMemoryDuration: 8
+  noiseMemoryScoreDecayRate: 8
+  noiseRetargetInterval: 0.5
+  noiseRetargetMinStickTime: 1.5
+  noiseRetargetScoreMargin: 10
+  repeatedNoiseMergeRadius: 3
+  repeatedNoiseBonus: 12
+  obstructedNoiseScorePenalty: 8
+  maxNoisePositionError: 6
+  obstructedNoisePositionErrorBonus: 4
+  noisePositionErrorPower: 1.25
+  navMeshSampleRange: 2
+  hitSuspicionGain: 55
+  hitMinimumSuspicion: 40
   attackDamage: 10
   attackCooldown: 1.5
+  attackRecoveryMinTime: 0.4
+  attackRecoveryMaxTime: 1.2
   attackRadius: 2
   attackAngle: 120
+  attackVariant1Chance: 0.35
+  jumpAttackChance: 0.4
+  jumpAttackDecisionInterval: 1
+  jumpAttackMinDistance: 3
+  jumpAttackMaxDistance: 7
+  jumpAttackDistanceMultiplier: 1.4
+  jumpAttackAngle: 70
+  jumpAttackMoveDuration: 0.65
+  jumpAttackArcHeight: 0.8
+  jumpAttackLandingSampleRange: 1.5
+  jumpAttackObstacleHeight: 1
+  jumpAttackObstacleRadius: 0.35
+  jumpAttackObstacleMask:
+    serializedVersion: 2
+    m_Bits: 64
+  attackAnimationFailSafeTime: 3
+  hitAnimationFailSafeTime: 2
+  deadAnimationFailSafeTime: 5
+  turnAnimationFailSafeTime: 2

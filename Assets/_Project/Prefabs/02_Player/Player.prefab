@@ -580,6 +580,8 @@ MonoBehaviour:
     increaseRate: 0.2
     decreaseRate: 0
     currentValue: 0
+  indoorColdnessDecreaseRate: 0.4
+  outdoorColdnessIncreaseRate: 0.2
   damageSound:
     Guid:
       Data1: 1286136231
@@ -1375,6 +1377,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -1526964690268444965, guid: 7c8c2356404418645b8b84dd4d30a0bb, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 4474567296929030425, guid: bc52c41a82b424820b331ac5202c1833, type: 3}
+    - target: {fileID: -1526964690268444965, guid: 7c8c2356404418645b8b84dd4d30a0bb, type: 3}
       propertyPath: m_CastShadows
       value: 3
       objectReference: {fileID: 0}
@@ -1634,6 +1640,10 @@ PrefabInstance:
       propertyPath: m_ApplyRootMotion
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8417361359673230750, guid: bb0dc8d7f8a849743977c888bec6da44, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: -4036312493791839822, guid: 664bed1c63e484cf492a6ec7fc67f8e0, type: 3}
     - target: {fileID: 8417361359673230750, guid: bb0dc8d7f8a849743977c888bec6da44, type: 3}
       propertyPath: m_CastShadows
       value: 0

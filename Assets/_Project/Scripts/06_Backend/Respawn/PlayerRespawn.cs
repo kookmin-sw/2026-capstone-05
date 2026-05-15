@@ -60,7 +60,7 @@ public class PlayerRespawn : MonoBehaviour
         yield return new WaitForSeconds(respawnDelaySeconds);
 
         SpawnAtSpawner();
-        condition.ReviveToFull();
+        condition.Revive();
 
         controller.currentVelocity = Vector3.zero;
         controller.canAction = true;
@@ -80,6 +80,26 @@ public class PlayerRespawn : MonoBehaviour
 
         Transform spawnPoint = Spawner.Instance.GetSpawnPoint();
         CharacterController characterController = controller.Controller;
+
+        if (characterController != null && controller != null)
+        {
+            Vector3 point1 = transform.position + characterController.center + Vector3.up * (characterController.height * 0.5f - characterController.radius);
+            Vector3 point2 = transform.position + characterController.center - Vector3.up * (characterController.height * 0.5f - characterController.radius);
+
+            Collider[] hits = Physics.OverlapCapsule(point1, point2, characterController.radius, Physics.AllLayers, QueryTriggerInteraction.Collide);
+
+            foreach (Collider hit in hits)
+            {
+                if (hit.isTrigger)
+                {
+                    var triggerScript = hit.GetComponent<IndoorsTrigger>();
+                    if (triggerScript != null)
+                    {
+                        triggerScript.OnPlayerForceExit(controller);
+                    }
+                }
+            }
+        }
 
         if (characterController != null)
         {

@@ -31,6 +31,12 @@ public class ConditionStat
         OnValueChanged?.Invoke(currentValue, maxValue);
     }
 
+    public void SetCurrentValue(float value)
+    {
+        currentValue = Mathf.Clamp(value, 0, maxValue);
+        OnValueChanged?.Invoke(currentValue, maxValue);
+    }
+
     /// <summary>
     /// 초당 회복량 및 감소량을 적용하여 현재 값을 갱신하는 메서드
     /// * 이 메서드는 매 프레임마다 호출되어야 합니다. (e.g. Update())
