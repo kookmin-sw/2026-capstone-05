@@ -2,13 +2,13 @@ using System.Collections.Generic;
 using Systems.GridInventory;
 using UnityEngine;
 
-namespace Systems.StorageSystem
+namespace Systems.Loot
 {
-    public static class StorageGridSerializer
+    public static class LootGridSerializer
     {
-        public static StorageSaveData ToSaveData(string storageId, GridInventoryModel model)
+        public static LootSaveData ToSaveData(string lootId, GridInventoryModel model)
         {
-            StorageSaveData data = StorageSaveManager.CreateEmpty(storageId, model.Width, model.Height);
+            LootSaveData data = LootSaveManager.CreateEmpty(lootId, model.Width, model.Height);
             HashSet<ItemInstance> processed = new HashSet<ItemInstance>();
 
             for (int i = 0; i < model.Items.Length; i++)
@@ -26,7 +26,7 @@ namespace Systems.StorageSystem
                     continue;
                 }
 
-                data.items.Add(new StorageItemData
+                data.items.Add(new LootItemData
                 {
                     slotIndex = model.GetIndex(x, y),
                     itemId = item.Data.itemID,
@@ -39,7 +39,7 @@ namespace Systems.StorageSystem
             return data;
         }
 
-        public static void ApplyToModel(StorageSaveData data, GridInventoryModel model)
+        public static void ApplyToModel(LootSaveData data, GridInventoryModel model)
         {
             if (data == null || model == null)
             {
@@ -52,12 +52,12 @@ namespace Systems.StorageSystem
                 return;
             }
 
-            foreach (StorageItemData itemData in data.items)
+            foreach (LootItemData itemData in data.items)
             {
                 ItemData itemDefinition = ItemDataRegistry.Find(itemData.itemId);
                 if (itemDefinition == null)
                 {
-                    Debug.LogWarning($"[StorageSystem] ItemData not found for '{itemData.itemId}'.");
+                    Debug.LogWarning($"[LootSystem] ItemData not found for '{itemData.itemId}'.");
                     continue;
                 }
 
@@ -66,7 +66,7 @@ namespace Systems.StorageSystem
                 (int x, int y) = model.GetCoordinates(itemData.slotIndex);
                 if (!model.PlaceItem(item, x, y))
                 {
-                    Debug.LogWarning($"[StorageSystem] Failed to place item '{itemData.itemId}' in storage '{data.storageId}' slot {itemData.slotIndex}.");
+                    Debug.LogWarning($"[LootSystem] Failed to place item '{itemData.itemId}' in loot '{data.lootId}' slot {itemData.slotIndex}.");
                 }
             }
         }

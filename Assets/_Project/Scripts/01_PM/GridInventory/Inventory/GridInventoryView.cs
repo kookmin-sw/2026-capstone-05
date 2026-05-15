@@ -45,6 +45,8 @@ namespace Systems.GridInventory {
                 document.sortingOrder = 3; // 인벤토리
             }
 
+            QuantityPopupView.EnsureExists();
+
             container = root.Q<VisualElement>(className: "container");
             if (container == null) {
                 // UXML 구조가 비정상일 경우 코드로 기본 뼈대 동적 생성 (Fallback)
@@ -190,7 +192,7 @@ namespace Systems.GridInventory {
 
             // Tab 키를 누르면 인벤토리 토글 (표시/숨김)
             if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame && container != null) {
-                if (Systems.StorageSystem.StorageUI.ActiveInstance != null && Systems.StorageSystem.StorageUI.ActiveInstance.IsOpen) {
+                if (Systems.Loot.LootController.Instance != null && Systems.Loot.LootController.Instance.IsOpen) {
                     return;
                 }
 
@@ -281,7 +283,7 @@ namespace Systems.GridInventory {
             }
             else
             {
-                bool isHost = StorageSystem.StorageNetworkSync.Instance != null && StorageSystem.StorageNetworkSync.Instance.HasStateAuthority;
+                bool isHost = Systems.Loot.LootNetworkSync.Instance != null && Systems.Loot.LootNetworkSync.Instance.HasStateAuthority;
                 if (isHost)
                 {
                     if (btnSave != null) btnSave.style.display = DisplayStyle.Flex;

@@ -9,6 +9,10 @@ namespace Systems.GridInventory {
         
         public int Width { get; private set; }
         public int Height { get; private set; }
+        
+        public int Gold { get; private set; }
+
+        public event Action<int> OnGoldChanged;
 
         public event Action<ItemInstance[]> OnModelChanged {
             add => Items.AnyValueChanged += value;
@@ -18,6 +22,7 @@ namespace Systems.GridInventory {
         public GridInventoryModel(int width, int height) {
             Width = width;
             Height = height;
+            Gold = 500;
             int capacity = width * height;
             Items = new ObservableArray<ItemInstance>(capacity);
         }
@@ -42,6 +47,25 @@ namespace Systems.GridInventory {
             }
             itemAnchors.Clear();
             Items.Invoke();
+        }
+        
+        public void SetGold(int amount) {
+            Gold = amount;
+            OnGoldChanged?.Invoke(Gold);
+        }
+
+        public void AddGold(int amount) {
+            Gold += amount;
+            OnGoldChanged?.Invoke(Gold);
+        }
+
+        public bool TrySpendGold(int amount) {
+            if (Gold >= amount) {
+                Gold -= amount;
+                OnGoldChanged?.Invoke(Gold);
+                return true;
+            }
+            return false;
         }
         
         public bool TryAdd(ItemInstance item) {

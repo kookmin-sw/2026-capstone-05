@@ -20,10 +20,10 @@ namespace Systems.GridInventory {
 
         public event Action<Vector2, GridItemView> OnStartDrag = delegate { };
         
-        public static Action<GridItemView> OnCtrlClickGlobal;
-        public static Action<GridItemView> OnShiftClickGlobal;
         public static Action<GridItemView, Vector2> OnItemDragUpdateGlobal;
         public static Action<GridItemView, Vector2> OnItemDroppedGlobal;
+        /// <summary>Emitted after drag is cancelled visually (no normal drop): right-click split flow.</summary>
+        public static Action<GridItemView, Vector2> OnItemSplitDroppedGlobal;
         private int displayedQuantity = -1;
 
         public GridItemView(ItemInstance itemInst) {
@@ -137,6 +137,8 @@ namespace Systems.GridInventory {
         }
         
         private bool isDraggingThis = false;
+        public bool IsDraggingThis => isDraggingThis;
+        private int activePointerId = -1;
         private Action<GridItemView, Vector2> onDragMove;
         private Action<GridItemView> onDragEnd;
         
@@ -155,27 +157,30 @@ namespace Systems.GridInventory {
             StackLabel.visible = qty > 1;
         }
 
+        public static bool IsAnyItemDragging { get; private set; }
+        
         void OnPointerDown(PointerDownEvent evt) {
             if (evt.button != 0) return;
             
-            if (evt.ctrlKey || evt.commandKey) {
-                OnCtrlClickGlobal?.Invoke(this);
-                evt.StopPropagation();
-                return;
-            }
-
-            if (evt.shiftKey) {
-                OnShiftClickGlobal?.Invoke(this);
-                evt.StopPropagation();
-                return;
-            }
-            
             isDraggingThis = true;
+            IsAnyItemDragging = true;
+            activePointerId = evt.pointerId;
             this.CapturePointer(evt.pointerId);
             
             OnStartDrag?.Invoke(evt.position, this);
             
             evt.StopPropagation();
+        }
+
+        /// <summary>Clears drag capture without invoking normal drop (used for right-click split).</summary>
+        public void CancelDragState() {
+            if (!isDraggingThis) return;
+            isDraggingThis = false;
+            IsAnyItemDragging = false;
+            if (activePointerId >= 0) {
+                this.ReleasePointer(activePointerId);
+                activePointerId = -1;
+            }
         }
         
         void OnPointerMove(PointerMoveEvent evt) {
@@ -189,6 +194,8 @@ namespace Systems.GridInventory {
             if (!isDraggingThis) return;
             
             isDraggingThis = false;
+            IsAnyItemDragging = false;
+            activePointerId = -1;
             this.ReleasePointer(evt.pointerId);
             
             onDragEnd?.Invoke(this);

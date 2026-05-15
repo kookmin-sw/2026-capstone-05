@@ -9,6 +9,7 @@ namespace Systems.GridInventory {
     [Serializable]
     public class InventorySaveData
     {
+        public int gold = -1;
         public List<InventoryItemSaveData> items = new List<InventoryItemSaveData>();
     }
 
@@ -66,6 +67,25 @@ namespace Systems.GridInventory {
         public static InventorySaveData GetSaveData(GridInventoryModel model)
         {
             InventorySaveData saveData = new InventorySaveData();
+            
+            bool shouldSaveGold = false;
+            if (PlayerNetworkSetup.IsOfflineTestMode)
+            {
+                shouldSaveGold = true;
+            }
+            else if (BackendPlayerNetworkSync.LocalInstance != null && BackendPlayerNetworkSync.LocalInstance.HasStateAuthority)
+            {
+                shouldSaveGold = true;
+            }
+
+            if (shouldSaveGold)
+            {
+                saveData.gold = model.Gold;
+            }
+            else
+            {
+                saveData.gold = -1;
+            }
 
             var processedItems = new HashSet<ItemInstance>();
             for (int i = 0; i < model.Items.Length; i++)
@@ -161,6 +181,33 @@ namespace Systems.GridInventory {
             if (saveData == null || saveData.items == null) return;
 
             model.Clear();
+            
+            bool shouldLoadGold = false;
+            if (PlayerNetworkSetup.IsOfflineTestMode)
+            {
+                shouldLoadGold = true;
+            }
+            else if (BackendPlayerNetworkSync.LocalInstance != null && BackendPlayerNetworkSync.LocalInstance.HasStateAuthority)
+            {
+                shouldLoadGold = true;
+            }
+
+            if (shouldLoadGold)
+            {
+                if (saveData.gold < 0)
+                {
+                    model.SetGold(500);
+                }
+                else
+                {
+                    model.SetGold(saveData.gold);
+                }
+
+                if (BackendRoundManager.Instance != null && BackendRoundManager.Instance.HasStateAuthority)
+                {
+                    BackendRoundManager.Instance.SharedGold = model.Gold;
+                }
+            }
 
             // 퀵슬롯 비우기
             if (QuickslotUIController.Instance != null)

@@ -1,0 +1,80 @@
+/* Shared quantity popup (split / move partial stack) */
+
+.quantity-popup {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-popup-panel {
+    background-color: rgb(40, 40, 40);
+    border-width: 2px;
+    border-color: rgb(100, 100, 100);
+    border-radius: 8px;
+    padding: 24px;
+    width: 300px;
+    align-items: center;
+}
+
+.quantity-popup-title {
+    font-size: 20px;
+    color: white;
+    margin-bottom: 16px;
+}
+
+.quantity-slider-container {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.qty-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+    background-color: rgb(60, 60, 60);
+    color: white;
+    border-width: 1px;
+    border-color: rgb(120, 120, 120);
+    border-radius: 4px;
+}
+
+.qty-value {
+    width: 60px;
+    font-size: 24px;
+    color: white;
+    -unity-text-align: middle-center;
+}
+
+.qty-slider {
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.quantity-actions {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.action-btn {
+    background-color: rgb(40, 40, 40);
+    color: white;
+    border-width: 1px;
+    border-color: rgb(100, 100, 100);
+    padding: 8px 16px;
+    margin-left: 12px;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: default;
+}
+
+.action-btn:hover {
+    background-color: rgb(80, 80, 80);
+}

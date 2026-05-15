@@ -53,29 +53,12 @@ namespace Systems.GridInventory {
             QuickslotUIController.OnItemDragEndGlobal -= HandleDragEnd;
             QuickslotUIController.OnItemDragEndGlobal += HandleDragEnd;
 
-            GridItemView.OnCtrlClickGlobal -= HandleCtrlClick;
-            GridItemView.OnCtrlClickGlobal += HandleCtrlClick;
-
-            GridItemView.OnShiftClickGlobal -= HandleShiftClick;
-            GridItemView.OnShiftClickGlobal += HandleShiftClick;
+            QuickslotUIController.OnQuickslotSplitRequested -= HandleQuickslotSplitRequestedToGrid;
+            QuickslotUIController.OnQuickslotSplitRequested += HandleQuickslotSplitRequestedToGrid;
 
             RefreshView();
         }
 
-        public static event Action<ItemInstance, GridInventoryModel> OnRequestQuickMove;
-        public static event Action<ItemInstance, GridInventoryModel> OnRequestSplitMove;
-
-        void HandleCtrlClick(GridItemView itemView) {
-            if (model.GetItemAnchorPosition(itemView.ItemInst).x != -1) {
-                OnRequestQuickMove?.Invoke(itemView.ItemInst, model);
-            }
-        }
-
-        void HandleShiftClick(GridItemView itemView) {
-            if (model.GetItemAnchorPosition(itemView.ItemInst).x != -1) {
-                OnRequestSplitMove?.Invoke(itemView.ItemInst, model);
-            }
-        }
         void HandleQuickslotItemDropped(ItemInstance item, int sourceQuickslotIndex, Vector2 screenPosition) {
             if (GridInventoryView.Instance != null && GridInventoryView.Instance.isActiveAndEnabled) {
                 var slot = GridInventoryView.Instance.GetGridSlotAtPosition(screenPosition);
@@ -399,6 +382,9 @@ namespace Systems.GridInventory {
             if (PlayerNetworkSetup.IsOfflineTestMode) {
                 // 싱글플레이어 오프라인 모드에서는 로컬 저장
                 GridInventorySaveSystem.SaveInventory(model);
+                if (Systems.Loot.LootNetworkSync.Instance != null) {
+                    Systems.Loot.LootNetworkSync.Instance.SaveAllLoots();
+                }
             } else if (BackendPlayerNetworkSync.LocalInstance != null) {
                 // 멀티플레이어 모드에서는 호스트가 전체 저장
                 BackendPlayerNetworkSync.LocalInstance.HostInitiateSaveAll();
@@ -418,6 +404,8 @@ namespace Systems.GridInventory {
 
         readonly Dictionary<ItemInstance, GridItemView> itemViews = new Dictionary<ItemInstance, GridItemView>();
 
+        public Action<ItemInstance, int, int, int, int, int> OnRequestInternalMove; // item, oldX, oldY, newX, newY, newRotation
+
         void HandleDrop(GridItemView originalGridItemView, GridSlot closestGridSlot) {
             ItemInstance sourceItem = originalGridItemView.ItemInst;
             if (sourceItem == null) return;
@@ -428,7 +416,7 @@ namespace Systems.GridInventory {
             var targetCoords = model.GetCoordinates(closestGridSlot.Index);
             var aOld = sourcePos;
             var aNew = new Vector2Int(targetCoords.x, targetCoords.y);
-            
+
             // 1. Remove sourceItem from grid momentarily for collision check
             model.TryRemove(sourceItem);
 
@@ -461,6 +449,9 @@ namespace Systems.GridInventory {
             if (overlappingItems.Count == 0) {
                 // Free space!
                 model.PlaceItem(sourceItem, aNew.x, aNew.y);
+                if (OnRequestInternalMove != null) {
+                    OnRequestInternalMove.Invoke(sourceItem, aOld.x, aOld.y, aNew.x, aNew.y, (int)sourceItem.currentRotation);
+                }
                 return;
             }
 
@@ -478,6 +469,9 @@ namespace Systems.GridInventory {
                         targetItem.currentStackCount = targetItem.Data.maxStackSize;
                         sourceItem.currentStackCount = total - targetItem.Data.maxStackSize;
                         model.PlaceItem(sourceItem, aOld.x, aOld.y); // Return remaining to original
+                    }
+                    if (OnRequestInternalMove != null) {
+                        OnRequestInternalMove.Invoke(sourceItem, aOld.x, aOld.y, aNew.x, aNew.y, (int)sourceItem.currentRotation);
                     }
                     return;
                 }
@@ -514,6 +508,9 @@ namespace Systems.GridInventory {
                     model.TryRemove(targetItem); // Remove target only if successful
                     model.PlaceItem(sourceItem, aNew.x, aNew.y);
                     model.PlaceItem(targetItem, bNew.x, bNew.y);
+                    if (OnRequestInternalMove != null) {
+                        OnRequestInternalMove.Invoke(sourceItem, aOld.x, aOld.y, aNew.x, aNew.y, (int)sourceItem.currentRotation);
+                    }
                 } else {
                     originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation);
                     model.PlaceItem(sourceItem, aOld.x, aOld.y); // Revert source item
@@ -524,6 +521,370 @@ namespace Systems.GridInventory {
             // More than 1 item overlapping = fail: rollback
             originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation);
             model.PlaceItem(sourceItem, aOld.x, aOld.y);
+        }
+
+        /// <summary>Inventory grid drag split: drops onto a quickslot (empty or stack merge).</summary>
+        public bool TryConsumeGridSplitToQuickslot(GridItemView itemView, Vector2 screenPos) {
+            QuantityPopupView.EnsureExists();
+            if (!(view is GridInventoryView)) return false;
+
+            var qsCtl = QuickslotUIController.Instance;
+            if (qsCtl == null) return false;
+
+            int qi = qsCtl.GetSlotIndexAtPosition(screenPos);
+            if (qi < 0) return false;
+
+            ItemInstance sourceItem = itemView?.ItemInst;
+            if (sourceItem == null || sourceItem.currentStackCount <= 1) return false;
+
+            var anchor = model.GetItemAnchorPosition(sourceItem);
+            if (anchor.x < 0 || anchor.y < 0) return false;
+
+            ItemInstance qsItem = qsCtl.GetItem(qi);
+            int maxQuantity;
+            if (qsItem == null) {
+                maxQuantity = sourceItem.currentStackCount - 1;
+            } else if (qsItem.Data == sourceItem.Data && sourceItem.Data.maxStackSize > 1) {
+                int spaceLeft = qsItem.Data.maxStackSize - qsItem.currentStackCount;
+                if (spaceLeft <= 0) return false;
+
+                maxQuantity = Mathf.Min(sourceItem.currentStackCount - 1, spaceLeft);
+            } else return false;
+
+            if (maxQuantity < 1) return false;
+
+            QuantityPopupView.Show(maxQuantity, qty => ExecuteGridSplitToQuickslot(itemView, qi, qty));
+            return true;
+        }
+
+        void ExecuteGridSplitToQuickslot(GridItemView itemView, int quickslotIndex, int quantity) {
+            ItemInstance sourceItem = itemView?.ItemInst;
+            if (sourceItem == null || quantity < 1) return;
+
+            int originalStack = sourceItem.currentStackCount;
+            if (quantity >= originalStack) return;
+
+            var anchor = model.GetItemAnchorPosition(sourceItem);
+            if (anchor.x < 0 || anchor.y < 0) return;
+
+            var qsCtl = QuickslotUIController.Instance;
+            if (qsCtl == null) return;
+
+            ItemInstance qsTarget = qsCtl.GetItem(quickslotIndex);
+
+            model.TryRemove(sourceItem);
+
+            bool mergeIntoQs = qsTarget != null && qsTarget.Data == sourceItem.Data && sourceItem.Data.maxStackSize > 1;
+            if (mergeIntoQs) {
+                int spaceLeftAfterRemove = qsTarget.Data.maxStackSize - qsTarget.currentStackCount;
+                if (quantity > spaceLeftAfterRemove) {
+                    sourceItem.currentStackCount = originalStack;
+                    model.PlaceItem(sourceItem, anchor.x, anchor.y);
+                    return;
+                }
+
+                qsTarget.currentStackCount += quantity;
+                sourceItem.currentStackCount = originalStack - quantity;
+                qsCtl.RefreshSlotVisual(quickslotIndex);
+            } else if (qsTarget == null) {
+                var fragment = new ItemInstance(sourceItem.Data, quantity);
+                fragment.currentRotation = ItemRotation.Deg0;
+                sourceItem.currentStackCount = originalStack - quantity;
+                qsCtl.SetItemInSlot(quickslotIndex, fragment);
+                qsCtl.RefreshSlotVisual(quickslotIndex);
+            } else {
+                sourceItem.currentStackCount = originalStack;
+                model.PlaceItem(sourceItem, anchor.x, anchor.y);
+                return;
+            }
+
+            model.PlaceItem(sourceItem, anchor.x, anchor.y);
+            model.Items.Invoke();
+        }
+
+        void HandleQuickslotSplitRequestedToGrid(ItemInstance item, int qsIndex, Vector2 screenPos) {
+            QuantityPopupView.EnsureExists();
+            if (!(view is GridInventoryView)) return;
+            if (GridInventoryView.Instance == null || !GridInventoryView.Instance.isActiveAndEnabled) return;
+
+            var qsCtl = QuickslotUIController.Instance;
+            if (qsCtl == null || qsCtl.GetItem(qsIndex) != item) return;
+
+            GridSlot closest = GridInventoryView.Instance.GetGridSlotAtPosition(screenPos);
+            if (closest == null) return;
+
+            if (!TryEvaluateQuickslotStackSplitOntoGrid(item, closest, out int maxQuantity) || maxQuantity < 1) return;
+
+            QuantityPopupView.Show(maxQuantity,
+                qty => ExecuteQuickslotSplitToGridSlot(item, qsIndex, closest, qty));
+        }
+
+        bool TryEvaluateQuickslotStackSplitOntoGrid(ItemInstance qsSource, GridSlot closestGridSlot, out int maxQuantity) {
+            maxQuantity = 0;
+
+            var targetCoords = model.GetCoordinates(closestGridSlot.Index);
+            var aNew = new Vector2Int(targetCoords.x, targetCoords.y);
+
+            overlappingItems.Clear();
+            var positions = qsSource.Data.gridShape.GetRotatedPositions(qsSource.currentRotation);
+            bool outOfBounds = false;
+
+            foreach (var pos in positions) {
+                int checkX = aNew.x + pos.x;
+                int checkY = aNew.y + pos.y;
+
+                if (checkX < 0 || checkY < 0 || checkX >= width || checkY >= height) {
+                    outOfBounds = true;
+                    break;
+                }
+
+                var foundItem = model.Get(checkX, checkY);
+                if (foundItem != null) overlappingItems.Add(foundItem);
+            }
+
+            if (outOfBounds || overlappingItems.Count > 1) return false;
+
+            if (overlappingItems.Count == 0) {
+                var probe = new ItemInstance(qsSource.Data, 1);
+                probe.currentRotation = qsSource.currentRotation;
+                if (!model.CanPlaceItem(probe, aNew.x, aNew.y)) return false;
+
+                maxQuantity = qsSource.currentStackCount - 1;
+                return maxQuantity >= 1;
+            }
+
+            var mergeTarget = GetSingleItem(overlappingItems);
+            if (qsSource.Data != mergeTarget.Data || mergeTarget.Data.maxStackSize <= 1) return false;
+
+            int space = mergeTarget.Data.maxStackSize - mergeTarget.currentStackCount;
+            if (space <= 0) return false;
+
+            maxQuantity = Mathf.Min(qsSource.currentStackCount - 1, space);
+            return maxQuantity >= 1;
+        }
+
+        void ExecuteQuickslotSplitToGridSlot(ItemInstance qsSource, int qsIndex, GridSlot closestGridSlot,
+            int quantity) {
+            var qsCtl = QuickslotUIController.Instance;
+            if (qsCtl == null || qsCtl.GetItem(qsIndex) != qsSource || quantity < 1) return;
+
+            int qsOriginalStack = qsSource.currentStackCount;
+            if (quantity >= qsOriginalStack) return;
+
+            if (!TryEvaluateQuickslotStackSplitOntoGrid(qsSource, closestGridSlot, out int maxQty) ||
+                quantity > maxQty) return;
+
+            var targetCoords = model.GetCoordinates(closestGridSlot.Index);
+            var aNew = new Vector2Int(targetCoords.x, targetCoords.y);
+
+            overlappingItems.Clear();
+            var positionsCheck = qsSource.Data.gridShape.GetRotatedPositions(qsSource.currentRotation);
+            foreach (var pos in positionsCheck) {
+                var foundItem = model.Get(aNew.x + pos.x, aNew.y + pos.y);
+                if (foundItem != null) overlappingItems.Add(foundItem);
+            }
+
+            if (overlappingItems.Count > 1) return;
+
+            if (overlappingItems.Count == 0) {
+                var placed = new ItemInstance(qsSource.Data, quantity);
+                placed.currentRotation = qsSource.currentRotation;
+                if (!model.CanPlaceItem(placed, aNew.x, aNew.y)) return;
+
+                qsSource.currentStackCount = qsOriginalStack - quantity;
+                if (qsSource.currentStackCount <= 0)
+                    qsCtl.RemoveItemFromSlot(qsIndex);
+                else qsCtl.RefreshSlotVisual(qsIndex);
+
+                model.PlaceItem(placed, aNew.x, aNew.y);
+                model.Items.Invoke();
+                return;
+            }
+
+            var mergeTarget = GetSingleItem(overlappingItems);
+            if (qsSource.Data != mergeTarget.Data || mergeTarget.Data.maxStackSize <= 1) return;
+
+            int spaceLeft = mergeTarget.Data.maxStackSize - mergeTarget.currentStackCount;
+            int moveQty = Mathf.Min(quantity, spaceLeft);
+            if (moveQty < 1) return;
+
+            mergeTarget.currentStackCount += moveQty;
+            qsSource.currentStackCount = qsOriginalStack - moveQty;
+
+            if (qsSource.currentStackCount <= 0)
+                qsCtl.RemoveItemFromSlot(qsIndex);
+            else qsCtl.RefreshSlotVisual(qsIndex);
+
+            model.Items.Invoke();
+        }
+
+        /// <summary>Right-click split: empty cell or compatible stack merge only (validated before popup).</summary>
+        public void TrySplitAfterRightClick(GridItemView itemView, Vector2 screenPos, Action onApplied = null) {
+            ItemInstance sourceItem = itemView?.ItemInst;
+            if (sourceItem == null || sourceItem.currentStackCount <= 1) return;
+
+            var sourcePos = model.GetItemAnchorPosition(sourceItem);
+            if (sourcePos.x == -1 || sourcePos.y == -1) return;
+
+            GridSlot closestGridSlot = view.GetGridSlotAtPosition(screenPos);
+            if (closestGridSlot == null) return;
+
+            var targetCoords = model.GetCoordinates(closestGridSlot.Index);
+            var aOld = sourcePos;
+            var aNew = new Vector2Int(targetCoords.x, targetCoords.y);
+
+            if (aNew.x == aOld.x && aNew.y == aOld.y) return;
+
+            model.TryRemove(sourceItem);
+
+            overlappingItems.Clear();
+            var positions = sourceItem.Data.gridShape.GetRotatedPositions(sourceItem.currentRotation);
+            bool outOfBounds = false;
+
+            foreach (var pos in positions) {
+                int checkX = aNew.x + pos.x;
+                int checkY = aNew.y + pos.y;
+
+                if (checkX < 0 || checkY < 0 || checkX >= width || checkY >= height) {
+                    outOfBounds = true;
+                    break;
+                }
+
+                var foundItem = model.Get(checkX, checkY);
+                if (foundItem != null) overlappingItems.Add(foundItem);
+            }
+
+            if (outOfBounds || overlappingItems.Count > 1) {
+                model.PlaceItem(sourceItem, aOld.x, aOld.y);
+                return;
+            }
+
+            int maxQuantity;
+            if (overlappingItems.Count == 0) {
+                var probe = new ItemInstance(sourceItem.Data, 1);
+                if (!model.CanPlaceItem(probe, aNew.x, aNew.y)) {
+                    model.PlaceItem(sourceItem, aOld.x, aOld.y);
+                    return;
+                }
+
+                maxQuantity = sourceItem.currentStackCount - 1;
+            } else {
+                var targetItem = GetSingleItem(overlappingItems);
+                if (sourceItem.Data != targetItem.Data || targetItem.Data.maxStackSize <= 1) {
+                    model.PlaceItem(sourceItem, aOld.x, aOld.y);
+                    return;
+                }
+
+                int space = targetItem.Data.maxStackSize - targetItem.currentStackCount;
+                if (space <= 0) {
+                    model.PlaceItem(sourceItem, aOld.x, aOld.y);
+                    return;
+                }
+
+                maxQuantity = Mathf.Min(sourceItem.currentStackCount - 1, space);
+            }
+
+            if (maxQuantity < 1) {
+                model.PlaceItem(sourceItem, aOld.x, aOld.y);
+                return;
+            }
+
+            model.PlaceItem(sourceItem, aOld.x, aOld.y);
+
+            QuantityPopupView.Show(maxQuantity, qty =>
+                ExecuteSplitMove(itemView, closestGridSlot, qty, onApplied));
+        }
+
+        void ExecuteSplitMove(GridItemView originalGridItemView, GridSlot closestGridSlot, int quantity,
+            Action onApplied = null) {
+            ItemInstance sourceItem = originalGridItemView.ItemInst;
+            if (sourceItem == null || quantity < 1) return;
+
+            int originalStack = sourceItem.currentStackCount;
+
+            var sourcePos = model.GetItemAnchorPosition(sourceItem);
+            if (sourcePos.x == -1 || sourcePos.y == -1) return;
+
+            var targetCoords = model.GetCoordinates(closestGridSlot.Index);
+            var aOld = sourcePos;
+            var aNew = new Vector2Int(targetCoords.x, targetCoords.y);
+
+            model.TryRemove(sourceItem);
+
+            overlappingItems.Clear();
+            var positions = sourceItem.Data.gridShape.GetRotatedPositions(sourceItem.currentRotation);
+            bool outOfBounds = false;
+
+            foreach (var pos in positions) {
+                int checkX = aNew.x + pos.x;
+                int checkY = aNew.y + pos.y;
+
+                if (checkX < 0 || checkY < 0 || checkX >= width || checkY >= height) {
+                    outOfBounds = true;
+                    break;
+                }
+
+                var foundItem = model.Get(checkX, checkY);
+                if (foundItem != null) overlappingItems.Add(foundItem);
+            }
+
+            if (outOfBounds || overlappingItems.Count > 1) {
+                sourceItem.currentStackCount = originalStack;
+                model.PlaceItem(sourceItem, aOld.x, aOld.y);
+                originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation);
+                return;
+            }
+
+            if (overlappingItems.Count == 0) {
+                var placed = new ItemInstance(sourceItem.Data, quantity);
+                if (!model.CanPlaceItem(placed, aNew.x, aNew.y)) {
+                    sourceItem.currentStackCount = originalStack;
+                    model.PlaceItem(sourceItem, aOld.x, aOld.y);
+                    originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation);
+                    return;
+                }
+
+                sourceItem.currentStackCount = originalStack - quantity;
+                model.PlaceItem(sourceItem, aOld.x, aOld.y);
+                model.PlaceItem(placed, aNew.x, aNew.y);
+                model.Items.Invoke();
+                if (OnRequestInternalMove != null) {
+                    OnRequestInternalMove.Invoke(placed, aOld.x, aOld.y, aNew.x, aNew.y,
+                        (int)placed.currentRotation);
+                }
+
+                onApplied?.Invoke();
+                return;
+            }
+
+            var mergeTarget = GetSingleItem(overlappingItems);
+            if (sourceItem.Data != mergeTarget.Data || mergeTarget.Data.maxStackSize <= 1) {
+                sourceItem.currentStackCount = originalStack;
+                model.PlaceItem(sourceItem, aOld.x, aOld.y);
+                originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation);
+                return;
+            }
+
+            int spaceLeft = mergeTarget.Data.maxStackSize - mergeTarget.currentStackCount;
+            int moveQty = Mathf.Min(quantity, spaceLeft);
+            if (moveQty < 1) {
+                sourceItem.currentStackCount = originalStack;
+                model.PlaceItem(sourceItem, aOld.x, aOld.y);
+                originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation);
+                return;
+            }
+
+            mergeTarget.currentStackCount += moveQty;
+            sourceItem.currentStackCount = originalStack - moveQty;
+            model.PlaceItem(sourceItem, aOld.x, aOld.y);
+            model.Items.Invoke();
+
+            if (OnRequestInternalMove != null) {
+                OnRequestInternalMove.Invoke(sourceItem, aOld.x, aOld.y, aNew.x, aNew.y,
+                    (int)sourceItem.currentRotation);
+            }
+
+            onApplied?.Invoke();
         }
 
         void HandleModelChanged(IList<ItemInstance> items) => RefreshView();
@@ -549,6 +910,9 @@ namespace Systems.GridInventory {
             itemsToRemove.Clear();
             foreach (var kvp in itemViews) {
                 if (!currentItemsInModel.Contains(kvp.Key)) {
+                    if (kvp.Value.IsDraggingThis) {
+                        view.ForceResetDrag();
+                    }
                     view.RemoveItem(kvp.Value);
                     itemsToRemove.Add(kvp.Key);
                 }
@@ -575,7 +939,10 @@ namespace Systems.GridInventory {
                     } else {
                         itemView.SetQuantity(item.currentStackCount);
                         view.UpdateItemPosition(itemView, anchorIndex);
-                        itemView.style.visibility = UnityEngine.UIElements.Visibility.Visible;
+                        
+                        if (!itemView.IsDraggingThis) {
+                            itemView.style.visibility = UnityEngine.UIElements.Visibility.Visible;
+                        }
                     }
                 }
             }
