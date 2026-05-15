@@ -130,6 +130,21 @@ public class InteractionUI : MonoBehaviour
         }
     }
 
+    public bool IsShowingTarget(Transform target)
+    {
+        return isShowing && targetTransform == target;
+    }
+
+    public void RefreshPromptForTarget(Transform target, string objectName, string prompt)
+    {
+        if (!IsShowingTarget(target))
+        {
+            return;
+        }
+
+        Show(objectName, prompt, target);
+    }
+
     public void Hide()
     {
         if (!isInitialized)

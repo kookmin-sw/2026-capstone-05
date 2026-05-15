@@ -51,6 +51,7 @@ public class PlayerEquipment : MonoBehaviour
 
     public void EquipItem(ItemInstance itemInstance, bool notifyNetwork)
     {
+        CancelCurrentItemUse();
         UnequipItem(false);
 
         if (itemInstance == null || itemInstance.Data == null)
@@ -120,6 +121,8 @@ public class PlayerEquipment : MonoBehaviour
 
     public void UnequipItem(bool notifyNetwork)
     {
+        CancelCurrentItemUse();
+
         if (currentObj1P != null)
         {
             Destroy(currentObj1P);
