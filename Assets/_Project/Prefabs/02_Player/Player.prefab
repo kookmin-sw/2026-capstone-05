@@ -443,6 +443,7 @@ GameObject:
   - component: {fileID: 238594519516289107}
   - component: {fileID: 1979278333881505096}
   - component: {fileID: -1790409643959626491}
+  - component: {fileID: -6851899960745548226}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -644,6 +645,8 @@ MonoBehaviour:
   satietyNoiseThreshold: 30
   coldnessNoiseThreshold: 70
   noiseIntervalRange: {x: 10, y: 25}
+  conditionNoiseUiLevel: 0.65
+  conditionNoiseUiFadeSpeed: 1.8
   hungerEvent:
     Guid:
       Data1: 1780834297
@@ -806,6 +809,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerRespawn
   respawnDelaySeconds: 3
+--- !u!114 &-6851899960745548226
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3438671979807047463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5ef5a56e6e9c5645b1a21570e39a89d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerPauseListener
 --- !u!1 &4209545890320065660
 GameObject:
   m_ObjectHideFlags: 0
