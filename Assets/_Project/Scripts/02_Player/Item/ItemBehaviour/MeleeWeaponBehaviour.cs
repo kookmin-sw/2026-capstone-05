@@ -46,7 +46,14 @@ public class MeleeWeaponBehaviour : EquippedItemBehaviour
             {
                 if (hit.TryGetComponent(out IDamageable target))
                 {
-                    target.TakeDamage(data.damage);
+                    DamageInfo damageInfo = new DamageInfo
+                    {
+                        damageAmount = data.damage,
+                        hitPoint = hit.ClosestPoint(checkCenter),
+                        hitNormal = (hit.ClosestPoint(checkCenter) - checkCenter).normalized,
+                        attacker = player.gameObject
+                    };
+                    target.TakeDamage(damageInfo);
                 }
             }
             NoiseManager.Instance.GenerateNoise(checkCenter, data.hitNoiseType);
