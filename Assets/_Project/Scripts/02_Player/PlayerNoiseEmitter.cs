@@ -28,6 +28,8 @@ public class PlayerNoiseEmitter : MonoBehaviour, IPlayerNetworkConfigurable
     public float satietyNoiseThreshold = 30f;
     public float coldnessNoiseThreshold = 70f;
     public Vector2 noiseIntervalRange = new Vector2(10f, 25f);
+    [SerializeField, Range(0f, 1f)] private float conditionNoiseUiLevel = 0.65f;
+    [SerializeField] private float conditionNoiseUiFadeSpeed = 1.8f;
 
     [SerializeField] private EventReference hungerEvent;
     [SerializeField] private EventReference shiverEvent;
@@ -40,6 +42,15 @@ public class PlayerNoiseEmitter : MonoBehaviour, IPlayerNetworkConfigurable
 
     private float nextHungerTime = 0f;
     private float nextShiverTime = 0f;
+    private float conditionNoiseUiImpulse;
+    private BackendPlayerNetworkSync networkSync;
+
+    public float ConditionNoiseUiLevel => conditionNoiseUiImpulse;
+
+    private void Awake()
+    {
+        networkSync = GetComponent<BackendPlayerNetworkSync>();
+    }
 
     private void Update()
     {
@@ -73,6 +84,7 @@ public class PlayerNoiseEmitter : MonoBehaviour, IPlayerNetworkConfigurable
 
         wasGrounded = isGrounded;
 
+        conditionNoiseUiImpulse = Mathf.MoveTowards(conditionNoiseUiImpulse, 0f, conditionNoiseUiFadeSpeed * Time.deltaTime);
         HandleConditionNoises();
     }
 
@@ -199,6 +211,11 @@ public class PlayerNoiseEmitter : MonoBehaviour, IPlayerNetworkConfigurable
 
     private void HandleConditionNoises()
     {
+        if (networkSync != null && networkSync.IsNetworkReady && networkSync.Object != null && !networkSync.Object.HasInputAuthority)
+        {
+            return;
+        }
+
         if (player.Condition.satiety.currentValue <= satietyNoiseThreshold)
         {
             nextHungerTime -= Time.deltaTime;
@@ -230,7 +247,8 @@ public class PlayerNoiseEmitter : MonoBehaviour, IPlayerNetworkConfigurable
 
     private void GenerateConditionNoise(EventReference fmodEvent, NoiseData.NoiseType noiseType)
     {
-        NoiseManager.Instance.GenerateNoise(transform.position, noiseType);
+        conditionNoiseUiImpulse = Mathf.Max(conditionNoiseUiImpulse, conditionNoiseUiLevel);
+        GenerateConditionNoiseOnAuthority(noiseType);
 
         EventInstance instance = RuntimeManager.CreateInstance(fmodEvent);
         RuntimeManager.AttachInstanceToGameObject(instance, player.gameObject);
@@ -238,9 +256,23 @@ public class PlayerNoiseEmitter : MonoBehaviour, IPlayerNetworkConfigurable
         instance.release();
     }
 
+    private void GenerateConditionNoiseOnAuthority(NoiseData.NoiseType noiseType)
+    {
+        if (networkSync != null && networkSync.IsNetworkReady)
+        {
+            networkSync.RequestNoise(noiseType);
+            return;
+        }
+
+        if (NoiseManager.Instance != null)
+        {
+            NoiseManager.Instance.GenerateNoise(transform.position, noiseType);
+        }
+    }
+
     public void ConfigureForNetwork(bool isLocalPlayer)
     {
-        BackendPlayerNetworkSync networkSync = GetComponent<BackendPlayerNetworkSync>();
+        networkSync = networkSync != null ? networkSync : GetComponent<BackendPlayerNetworkSync>();
         enabled = isLocalPlayer || networkSync == null || networkSync.HasStateAuthority;
     }
 }

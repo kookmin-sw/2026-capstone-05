@@ -31,11 +31,22 @@ public class ConditionStat
         OnValueChanged?.Invoke(currentValue, maxValue);
     }
 
-    public void SetCurrentValue(float value)
+    public void SetValue(float value)
+{
+    SetCurrentValue(value);
+}
+
+public void SetCurrentValue(float value)
+{
+    float clampedValue = Mathf.Clamp(value, 0, maxValue);
+    if (Mathf.Approximately(currentValue, clampedValue))
     {
-        currentValue = Mathf.Clamp(value, 0, maxValue);
-        OnValueChanged?.Invoke(currentValue, maxValue);
+        return;
     }
+
+    currentValue = clampedValue;
+    OnValueChanged?.Invoke(currentValue, maxValue);
+}
 
     /// <summary>
     /// 초당 회복량 및 감소량을 적용하여 현재 값을 갱신하는 메서드

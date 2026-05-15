@@ -10,6 +10,7 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
     private PlayerInputHandler _inputHandler;
     private PlayerAnimator _playerAnimator;
     private PlayerEquipment _playerEquipment;
+    private PlayerCondition _playerCondition;
     private Transform _cameraTransform;
     private Vector3 _authoritativeSpawnPosition;
     private Quaternion _authoritativeSpawnRotation;
@@ -30,6 +31,11 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
     [Networked] private int NetworkEquippedStackCount { get; set; }
     [Networked] private int NetworkUseAnimationType { get; set; }
     [Networked] private int NetworkUseAnimationCount { get; set; }
+    [Networked] private float NetworkHealth { get; set; }
+    [Networked] private float NetworkStamina { get; set; }
+    [Networked] private float NetworkSatiety { get; set; }
+    [Networked] private float NetworkColdness { get; set; }
+    [Networked] private NetworkBool NetworkConditionInitialized { get; set; }
 
     public static BackendPlayerNetworkSync LocalInstance { get; private set; }
 
@@ -49,6 +55,7 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         _inputHandler = GetComponent<PlayerInputHandler>();
         _playerAnimator = GetComponent<PlayerAnimator>();
         _playerEquipment = GetComponent<PlayerEquipment>();
+        _playerCondition = GetComponent<PlayerCondition>();
         _cameraTransform = _playerController != null ? _playerController.CameraTransform : null;
 
         if (_playerEquipment != null)
@@ -75,6 +82,7 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
             NetworkIsGrounded = true;
             NetworkIsSprinting = false;
             NetworkIsCrouching = false;
+            SyncConditionSnapshot();
             ApplyEquippedItemNetworkState(_playerEquipment != null ? _playerEquipment.CurrentItemInstance : null);
         }
     }
@@ -126,6 +134,7 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
             NetworkIsCrouching = _playerController != null &&
                                 _playerController.GroundedState != null &&
                                 _playerController.GroundedState.CurrentPosture == PlayerGroundedPosture.Crouching;
+            SyncConditionSnapshot();
 
             if (!Object.HasInputAuthority)
             {
@@ -191,6 +200,7 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         }
 
         ApplyProxyAnimationState();
+        ApplyProxyConditionState();
         ApplyProxyEquipmentState();
         ApplyProxyUseAnimationState();
     }
@@ -216,6 +226,30 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
             rawX -= 360f;
 
         return rawX;
+    }
+
+    private void SyncConditionSnapshot()
+    {
+        if (_playerCondition == null)
+            return;
+
+        _playerCondition.EnsureInitialized();
+        NetworkHealth = _playerCondition.health.currentValue;
+        NetworkStamina = _playerCondition.stamina.currentValue;
+        NetworkSatiety = _playerCondition.satiety.currentValue;
+        NetworkColdness = _playerCondition.coldness.currentValue;
+        NetworkConditionInitialized = true;
+    }
+
+    private void ApplyProxyConditionState()
+    {
+        if (_playerCondition == null || !NetworkConditionInitialized)
+            return;
+
+        _playerCondition.health.SetValue(NetworkHealth);
+        _playerCondition.stamina.SetValue(NetworkStamina);
+        _playerCondition.satiety.SetValue(NetworkSatiety);
+        _playerCondition.coldness.SetValue(NetworkColdness);
     }
 
     private void SyncInputOverrideState()
@@ -264,6 +298,17 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         RpcRequestDoorToggle(requester, door.DoorKey, shouldOpen, normalizedDirection);
     }
 
+    public void RequestNoise(NoiseData.NoiseType noiseType)
+    {
+        if (HasStateAuthority)
+        {
+            GenerateAuthoritativeNoise((int)noiseType);
+            return;
+        }
+
+        RpcRequestNoise((int)noiseType);
+    }
+
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     private void RpcRequestPickup(PlayerRef requestedBy, int pickupKey)
     {
@@ -280,6 +325,20 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
             requestedBy = Object.InputAuthority;
 
         ApproveDoorToggle(requestedBy, doorKey, shouldOpen, openDirection);
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcRequestNoise(int noiseType)
+    {
+        GenerateAuthoritativeNoise(noiseType);
+    }
+
+    private void GenerateAuthoritativeNoise(int noiseType)
+    {
+        if (!HasStateAuthority || NoiseManager.Instance == null)
+            return;
+
+        NoiseManager.Instance.GenerateNoise(transform.position, (NoiseData.NoiseType)noiseType);
     }
 
     private void TryApprovePickup(PlayerRef requestedBy, int pickupKey)
