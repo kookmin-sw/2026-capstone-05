@@ -90,13 +90,12 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
 
     public bool IsAlive => health.currentValue > 0;
 
-    public void TakeDamage(float damageAmount)
+    public void TakeDamage(DamageInfo info)
     {
         if (IsAlive)
         {
-            health.Subtract(damageAmount);
-
-            OnTakeDamageEvent?.Invoke(damageAmount);
+            health.Subtract(info.damageAmount);
+            OnTakeDamageEvent?.Invoke(info.damageAmount);
 
             if (!IsAlive)
             {

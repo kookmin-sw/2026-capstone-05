@@ -224,9 +224,6 @@ public class PlayerEquipment : MonoBehaviour
         Transform originTransform = player.CameraTransform != null ? player.CameraTransform : Camera.main.transform;
         Vector3 checkCenter = originTransform.position + originTransform.forward * unarmedRange;
 
-        Debug.Log("Performing unarmed hit check at: " + checkCenter + " with radius: " + unarmedHitRadius);
-        Debug.DrawLine(originTransform.position, checkCenter, Color.red, 1f);
-
         Collider[] hitColliders = Physics.OverlapSphere(checkCenter, unarmedHitRadius, hitLayerMask);
         if (hitColliders.Length > 0)
         {
@@ -234,23 +231,21 @@ public class PlayerEquipment : MonoBehaviour
             {
                 if (hit.TryGetComponent(out IDamageable target))
                 {
-                    target.TakeDamage(unarmedDamage);
+                    DamageInfo damageInfo = new DamageInfo
+                    {
+                        damageAmount = unarmedDamage,
+                        hitPoint = hit.ClosestPoint(originTransform.position),
+                        hitNormal = (hit.transform.position - originTransform.position).normalized,
+                        attacker = player.gameObject
+                    };
+                    target.TakeDamage(damageInfo);
                 }
             }
-            // TODO: 타격 시 소리
             RuntimeManager.PlayOneShot(unarmedHitEvent, checkCenter);
-            Debug.Log("Unarmed hit! Damage applied to " + hitColliders.Length + " targets.");
-            // log all the hit colliders for debugging
-            foreach (var hit in hitColliders)
-            {
-                Debug.Log("Hit collider: " + hit.name);
-            }
         }
         else
         {
-            // TODO: 빗나갔을 때 소리
             RuntimeManager.PlayOneShot(unarmedSwingEvent, checkCenter);
-            Debug.Log("Unarmed attack missed.");
         }
     }
 }

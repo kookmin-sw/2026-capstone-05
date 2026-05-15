@@ -43,7 +43,14 @@ public class FirearmWeaponBehaviour : EquippedItemBehaviour
             Debug.Log($"Hit: {hit.collider.name}");
             if (hit.collider.TryGetComponent(out IDamageable target))
             {
-                target.TakeDamage(data.damage);
+                DamageInfo damageInfo = new DamageInfo
+                {
+                    damageAmount = data.damage,
+                    hitPoint = hit.point,
+                    hitNormal = hit.normal,
+                    attacker = player.gameObject
+                };
+                target.TakeDamage(damageInfo);
             }
 
             // TODO: 피격 이펙트(피, 불꽃, 흙먼지 등) 스폰

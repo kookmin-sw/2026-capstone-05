@@ -38,17 +38,17 @@ public class EnemyHealth : NetworkBehaviour, IDamageable
         localCurrentHealth = enemy.Data.maxHealth;
     }
 
-    public void TakeDamage(float damageAmount)
+    public void TakeDamage(DamageInfo info)
     {
         if (enemy != null && enemy.IsLocalSimulationActive)
         {
-            TakeLocalDamage(damageAmount);
+            TakeLocalDamage(info.damageAmount);
             return;
         }
 
         if (!HasStateAuthority || NetworkCurrentHealth <= 0f) return;
 
-        float damage = Mathf.Min(damageAmount, NetworkCurrentHealth);
+        float damage = Mathf.Min(info.damageAmount, NetworkCurrentHealth);
         NetworkCurrentHealth -= damage;
 
         if (NetworkCurrentHealth <= 0f)

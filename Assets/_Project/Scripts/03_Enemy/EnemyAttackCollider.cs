@@ -39,7 +39,14 @@ public class EnemyAttackCollider : MonoBehaviour
         if (!collision.collider.CompareTag("Player")) return;
         if (!collision.collider.TryGetComponent(out IDamageable damageable)) return;
 
-        damageable.TakeDamage(enemy.Data.attackDamage);
+        DamageInfo damageInfo = new DamageInfo
+        {
+            damageAmount = enemy.Data.attackDamage,
+            hitPoint = collision.GetContact(0).point,
+            hitNormal = collision.GetContact(0).normal,
+            attacker = enemy.gameObject
+        };
+        damageable.TakeDamage(damageInfo);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -49,7 +56,14 @@ public class EnemyAttackCollider : MonoBehaviour
         if (!other.CompareTag("Player")) return;
         if (!other.TryGetComponent(out IDamageable damageable)) return;
 
-        damageable.TakeDamage(enemy.Data.attackDamage);
+        DamageInfo damageInfo = new DamageInfo
+        {
+            damageAmount = enemy.Data.attackDamage,
+            hitPoint = other.ClosestPoint(transform.position),
+            hitNormal = (other.transform.position - transform.position).normalized,
+            attacker = enemy.gameObject
+        };
+        damageable.TakeDamage(damageInfo);
         canDamage = false;
     }
 }
