@@ -10,6 +10,7 @@ public interface IPlayerNetworkConfigurable
 
 public class PlayerNetworkSetup : MonoBehaviour
 {
+    private bool isLocalPlayer = false;
     [Header("Network Test")]
     public bool isLocalPlayerTest = true;
 
@@ -18,23 +19,28 @@ public class PlayerNetworkSetup : MonoBehaviour
     private void Awake()
     {
         // 테스트 코드
-        IsOfflineTestMode = true;
+        if (isLocalPlayerTest)
+            IsOfflineTestMode = true;
     }
 
     private void Start()
     {
-        InitializeNetworkState(true);
+        if (isLocalPlayerTest)
+        {
+            InitializeNetworkState(true);
+            GetComponent<PlayerCameraHandler>().TestLocalCameraSetup();
+        }
     }
 
-    public void InitializeNetworkState(bool isLocalPlayer)
+    public void InitializeNetworkState(bool _isLocalPlayer)
     {
-        isLocalPlayerTest = isLocalPlayer;
+        isLocalPlayer = _isLocalPlayer;
 
         IPlayerNetworkConfigurable[] configurables = GetComponentsInChildren<IPlayerNetworkConfigurable>(true);
 
         foreach (var config in configurables)
         {
-            config.ConfigureForNetwork(isLocalPlayerTest);
+            config.ConfigureForNetwork(isLocalPlayer);
         }
     }
 

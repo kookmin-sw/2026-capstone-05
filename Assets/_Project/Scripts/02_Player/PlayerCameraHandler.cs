@@ -32,7 +32,7 @@ public class PlayerCameraHandler : MonoBehaviour, IPlayerNetworkConfigurable
     private void Start()
     {
         // 테스트코드
-        TestLocalCameraSetup();
+        //TestLocalCameraSetup();
     }
 
     public void SetupLocalCamera(CinemachineCamera sceneCam)
@@ -96,7 +96,7 @@ public class PlayerCameraHandler : MonoBehaviour, IPlayerNetworkConfigurable
         }
     }
 
-    private void TestLocalCameraSetup()
+    public void TestLocalCameraSetup()
     {
         // 임시로 씬에서 첫 번째 CinemachineCamera를 찾아 설정
         CinemachineCamera sceneCam = FindAnyObjectByType<CinemachineCamera>();
