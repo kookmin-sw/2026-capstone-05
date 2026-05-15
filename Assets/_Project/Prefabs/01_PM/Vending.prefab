@@ -45,7 +45,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef305753c5a0a154faabdcfaed740f8c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Shop.JapankiShop
-  itemsToSell: []
+  itemsToSell:
+  - ItemData: {fileID: 11400000, guid: 3e17cc4ce64a7d44d9c91f0087210ee1, type: 2}
+    BuyPrice: 100
+    StockCount: 2
+  - ItemData: {fileID: 11400000, guid: 14db5644fac33174d8351723fab119c2, type: 2}
+    BuyPrice: 100
+    StockCount: 4
+  - ItemData: {fileID: 11400000, guid: e8548119c13981a4aa6bc4f5faba14fd, type: 2}
+    BuyPrice: 300
+    StockCount: 2
+  - ItemData: {fileID: 11400000, guid: 622deb46846d5b54c89bf56829d32d71, type: 2}
+    BuyPrice: 500
+    StockCount: 1
+  - ItemData: {fileID: 11400000, guid: a667e957fcdb1d5478d4ec027ebe1677, type: 2}
+    BuyPrice: 1000
+    StockCount: 1
   interactPrompt: Open Shop
   objectName: Vending Machine
 --- !u!1001 &4121312835234103548
@@ -58,15 +73,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 2118188c981794f9f954b01d292e7442, type: 3}
       propertyPath: m_LocalScale.x
-      value: 27
+      value: 24
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2118188c981794f9f954b01d292e7442, type: 3}
       propertyPath: m_LocalScale.y
-      value: 31
+      value: 26
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2118188c981794f9f954b01d292e7442, type: 3}
       propertyPath: m_LocalScale.z
-      value: 30
+      value: 25
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2118188c981794f9f954b01d292e7442, type: 3}
       propertyPath: m_LocalPosition.x
@@ -74,7 +89,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2118188c981794f9f954b01d292e7442, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.26
+      value: 1.022
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2118188c981794f9f954b01d292e7442, type: 3}
       propertyPath: m_LocalPosition.z
