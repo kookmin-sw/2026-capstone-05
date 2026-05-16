@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 5074076945198559570}
   - component: {fileID: 9204279431648537594}
   - component: {fileID: -8767810445403618163}
+  - component: {fileID: -7711502183961211334}
   m_Layer: 0
   m_Name: ind_wooden_crates_04_tarp
   m_TagString: Untagged
@@ -115,3 +116,16 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -2387782812419800783, guid: 1d3874ed118b1d9429950cac7dc84e61, type: 3}
+--- !u!114 &-7711502183961211334
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6674276763961910715}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
+  lootConfiguration: {fileID: 11400000, guid: a9971e7427e502b46a7dfbd65d6f01ec, type: 2}
