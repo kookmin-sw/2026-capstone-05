@@ -761,7 +761,7 @@ namespace Systems.Loot
             InteractableLoot[] loots = FindObjectsByType<InteractableLoot>(FindObjectsSortMode.None);
             foreach (InteractableLoot loot in loots)
             {
-                if (loot != null)
+                if (loot != null && loot.HasConfiguration)
                 {
                     GetOrCreateModel(loot.StorageId, loot.Width, loot.Height);
                 }

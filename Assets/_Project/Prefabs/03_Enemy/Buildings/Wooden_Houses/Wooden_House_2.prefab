@@ -2253,7 +2253,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -2274,7 +2274,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -2293,6 +2293,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IndoorsTrigger
   isIndoors: 1
+  fmodParameterName: IsIndoors
 --- !u!1001 &639201740656341118
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3323,6 +3324,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Fridge
       objectReference: {fileID: 0}
+    - target: {fileID: 5499747448297077898, guid: 66b752c2f6a5bf8478e7fbe970acc2c1, type: 3}
+      propertyPath: lootConfiguration
+      value: 
+      objectReference: {fileID: 11400000, guid: ad2a3c801cab51449b3baa36078d0142, type: 2}
     - target: {fileID: 9168467192469915586, guid: 66b752c2f6a5bf8478e7fbe970acc2c1, type: 3}
       propertyPath: m_LocalScale.x
       value: 180
@@ -4979,18 +4984,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 8172227366493358070}
     m_Modifications:
-    - target: {fileID: 2335526636554490020, guid: 2f723da49705b654d8254e30bce111a8, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 299.99997
-      objectReference: {fileID: 0}
-    - target: {fileID: 2335526636554490020, guid: 2f723da49705b654d8254e30bce111a8, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 299.99997
-      objectReference: {fileID: 0}
-    - target: {fileID: 2335526636554490020, guid: 2f723da49705b654d8254e30bce111a8, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 299.99997
-      objectReference: {fileID: 0}
     - target: {fileID: 2335526636554490020, guid: 2f723da49705b654d8254e30bce111a8, type: 3}
       propertyPath: m_LocalPosition.x
       value: 5.0959997

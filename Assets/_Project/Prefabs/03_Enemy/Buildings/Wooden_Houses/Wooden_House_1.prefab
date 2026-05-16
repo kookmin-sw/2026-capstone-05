@@ -886,6 +886,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IndoorsTrigger
   isIndoors: 1
+  fmodParameterName: IsIndoors
 --- !u!1 &5522463589909084203
 GameObject:
   m_ObjectHideFlags: 0
@@ -1679,7 +1680,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 116698592269830018, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
       propertyPath: m_Name
-      value: Wooden closet02
+      value: Wooden closet 02
       objectReference: {fileID: 0}
     - target: {fileID: 1873823923574774844, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
       propertyPath: m_LocalScale.x
@@ -1983,8 +1984,12 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 654587991884934802, guid: 958bea388890db048a14fbc43f28ea07, type: 3}
       propertyPath: m_Name
-      value: Wooden closet04 (1)
+      value: Wooden closet 04 (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 891229303865546296, guid: 958bea388890db048a14fbc43f28ea07, type: 3}
+      propertyPath: lootConfiguration
+      value: 
+      objectReference: {fileID: 11400000, guid: 1439b4e6f3a9f1745aa4d6dbec76f6c0, type: 2}
     - target: {fileID: 6467439394793331910, guid: 958bea388890db048a14fbc43f28ea07, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.02
@@ -2061,7 +2066,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 654587991884934802, guid: 958bea388890db048a14fbc43f28ea07, type: 3}
       propertyPath: m_Name
-      value: Wooden closet04
+      value: Wooden closet 04
       objectReference: {fileID: 0}
     - target: {fileID: 6467439394793331910, guid: 958bea388890db048a14fbc43f28ea07, type: 3}
       propertyPath: m_LocalScale.x

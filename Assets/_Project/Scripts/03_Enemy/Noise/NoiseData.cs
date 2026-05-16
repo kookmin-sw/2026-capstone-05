@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-[CreateAssetMenu(fileName = "NoiseData", menuName = "NUNBORA/NoiseData")]
+[CreateAssetMenu(fileName = "NoiseData", menuName = "Noise Data")]
 public class NoiseData : ScriptableObject
 {
     public enum NoiseType

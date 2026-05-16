@@ -196,6 +196,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IndoorsTrigger
   isIndoors: 1
+  fmodParameterName: IsIndoors
 --- !u!54 &7507102453089152116
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1952,6 +1953,10 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7797756744584363043, guid: e17c965607cf26640af96f18fc31b8fe, type: 3}
+      propertyPath: lootConfiguration
+      value: 
+      objectReference: {fileID: 11400000, guid: 963fe6fdd9c3ef540ad0ab8a9efeb10d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2554,6 +2559,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Bath_Closet (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 8995741585855341027, guid: 1ab7a10098fcd344087f620c23fd9a5a, type: 3}
+      propertyPath: lootConfiguration
+      value: 
+      objectReference: {fileID: 11400000, guid: 4d1a9b9f1210ced4986c1e4f22861eed, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2944,6 +2953,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Filecabinet01
       objectReference: {fileID: 0}
+    - target: {fileID: 8957438399061653594, guid: 22e8979a2dcd23c47b343233881d4200, type: 3}
+      propertyPath: lootConfiguration
+      value: 
+      objectReference: {fileID: 11400000, guid: fefa437ceef31cc4ebb3fd859cdc4632, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3568,6 +3581,10 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7146679669956277331, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
+      propertyPath: lootConfiguration
+      value: 
+      objectReference: {fileID: 11400000, guid: 583b3f80559840c48bb9569c9ae65bbf, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -4184,6 +4201,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: -90
       objectReference: {fileID: 0}
+    - target: {fileID: 4080489999786156386, guid: 2f723da49705b654d8254e30bce111a8, type: 3}
+      propertyPath: lootConfiguration
+      value: 
+      objectReference: {fileID: 11400000, guid: ae4b1377297c57542bef09bc4bf82937, type: 2}
     - target: {fileID: 6797968951135041467, guid: 2f723da49705b654d8254e30bce111a8, type: 3}
       propertyPath: m_Name
       value: TV_table_1
@@ -4362,6 +4383,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Fridge
       objectReference: {fileID: 0}
+    - target: {fileID: 5499747448297077898, guid: 66b752c2f6a5bf8478e7fbe970acc2c1, type: 3}
+      propertyPath: lootConfiguration
+      value: 
+      objectReference: {fileID: 11400000, guid: 4b846d484d965844fa441ca763af4d08, type: 2}
     - target: {fileID: 9168467192469915586, guid: 66b752c2f6a5bf8478e7fbe970acc2c1, type: 3}
       propertyPath: m_LocalScale.x
       value: 180
