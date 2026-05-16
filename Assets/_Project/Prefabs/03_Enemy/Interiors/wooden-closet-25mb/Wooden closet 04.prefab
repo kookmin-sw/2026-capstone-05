@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6467439394793331910}
+  - component: {fileID: 891229303865546296}
   m_Layer: 6
   m_Name: Wooden closet 04
   m_TagString: Untagged
@@ -34,6 +35,19 @@ Transform:
   - {fileID: 1183079791822373349}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &891229303865546296
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 654587991884934802}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
+  lootConfiguration: {fileID: 11400000, guid: 9acbaaf8c29c3dc41bacd700f1b196f3, type: 2}
 --- !u!1 &3473508696447693931
 GameObject:
   m_ObjectHideFlags: 0

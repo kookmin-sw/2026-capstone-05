@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 622451373386195259}
   - component: {fileID: 5657729653532309181}
   - component: {fileID: 5900200416288586600}
+  - component: {fileID: 8995741585855341027}
   m_Layer: 6
   m_Name: Bath_Closet
   m_TagString: Untagged
@@ -127,3 +128,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
   surfaceType: 1
+--- !u!114 &8995741585855341027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6968920581387066316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
+  lootConfiguration: {fileID: 11400000, guid: 481af0fe59c86094f879fd66a8d37ddd, type: 2}

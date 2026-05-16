@@ -1417,6 +1417,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5637754432003235465, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
       insertIndex: -1
       addedObject: {fileID: 684768708630361407}
+    - targetCorrespondingSourceObject: {fileID: 6163943173082379184, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6835349911664840473}
     - targetCorrespondingSourceObject: {fileID: -5066410274037885060, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6114195235038801162}
@@ -1426,6 +1429,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 4137070919807563185, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5663842136839625}
+    - targetCorrespondingSourceObject: {fileID: 8615010826834040175, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 766933484519838299}
     - targetCorrespondingSourceObject: {fileID: -618846883971354179, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4509329998926206353}
@@ -2127,7 +2133,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
-  lootConfiguration: {fileID: 11400000, guid: 0af362991717ac5488909e0da0309a4f, type: 2}
+  lootConfiguration: {fileID: 11400000, guid: 4efc6a7b5a2fbd64b962392402031a29, type: 2}
 --- !u!1 &1328783759872152909 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 9195636338924938650, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
@@ -2310,6 +2316,24 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.002575487, y: 0.0025754867, z: 0.0025754867}
   m_Center: {x: 0, y: 0.000000007450581, z: -0.0000000018626451}
+--- !u!1 &1901387650135352760 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8615010826834040175, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
+  m_PrefabInstance: {fileID: 7921197659450749143}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &766933484519838299
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1901387650135352760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
+  lootConfiguration: {fileID: 11400000, guid: 9e456ad47d4137d459378ab24e743010, type: 2}
 --- !u!1 &1910886630511608170 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -618846883971354179, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
@@ -2483,7 +2507,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
-  lootConfiguration: {fileID: 11400000, guid: 6f19c1a14cab0c049a18959dc388429b, type: 2}
+  lootConfiguration: {fileID: 11400000, guid: 4efc6a7b5a2fbd64b962392402031a29, type: 2}
 --- !u!1 &2580822640937168478 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5637754432003235465, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
@@ -3206,6 +3230,24 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.0025754876, y: 0.002575487, z: 0.002575487}
   m_Center: {x: -0.0000000037252903, y: -0.000000007450581, z: -0.0000000018626451}
+--- !u!1 &4064224773108089703 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6163943173082379184, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
+  m_PrefabInstance: {fileID: 7921197659450749143}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6835349911664840473
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4064224773108089703}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
+  lootConfiguration: {fileID: 11400000, guid: 9e456ad47d4137d459378ab24e743010, type: 2}
 --- !u!1 &4121346657546158468 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6114843480637305171, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
@@ -3555,7 +3597,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
-  lootConfiguration: {fileID: 11400000, guid: 9d8940cd8fdc77844bfaf80693a548b6, type: 2}
+  lootConfiguration: {fileID: 11400000, guid: 4efc6a7b5a2fbd64b962392402031a29, type: 2}
 --- !u!4 &5283433590606487003 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2647898422681595148, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
@@ -3736,7 +3778,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
-  lootConfiguration: {fileID: 11400000, guid: f228977cecda8a24ab067843da4c4708, type: 2}
+  lootConfiguration: {fileID: 11400000, guid: 9f198ffcc39295446ac8aad503b78ec1, type: 2}
 --- !u!1 &5528735270436961784 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2402595780786834735, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
@@ -3754,7 +3796,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
-  lootConfiguration: {fileID: 11400000, guid: 6f19c1a14cab0c049a18959dc388429b, type: 2}
+  lootConfiguration: {fileID: 11400000, guid: 4efc6a7b5a2fbd64b962392402031a29, type: 2}
 --- !u!1 &5619825634026953527 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2310380616811031520, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
@@ -3842,7 +3884,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
-  lootConfiguration: {fileID: 11400000, guid: 6762028de5f48ea4cb3b85d0f332a205, type: 2}
+  lootConfiguration: {fileID: 11400000, guid: 4efc6a7b5a2fbd64b962392402031a29, type: 2}
 --- !u!1 &5804136904560697524 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4423045620967985251, guid: 2074f0c61c2576b44844fc773b718467, type: 3}

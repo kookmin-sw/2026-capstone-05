@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 3027284508610664574}
   - component: {fileID: 5860565730823977341}
   - component: {fileID: 4573765960259273761}
+  - component: {fileID: 3958314165554406648}
   m_Layer: 6
   m_Name: Safe01_5
   m_TagString: Untagged
@@ -127,3 +128,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
   surfaceType: 2
+--- !u!114 &3958314165554406648
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1213164186590226298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
+  lootConfiguration: {fileID: 11400000, guid: 05304ba1fe709a441a8cc32f3150fd09, type: 2}
