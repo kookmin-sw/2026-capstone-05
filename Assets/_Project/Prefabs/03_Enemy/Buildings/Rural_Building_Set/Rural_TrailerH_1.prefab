@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 5655952569562023821}
   - component: {fileID: 5449189355349558174}
   - component: {fileID: 7291840155063452040}
-  - component: {fileID: 1885787071430394946}
   m_Layer: 6
   m_Name: Rural_TrailerH_1
   m_TagString: Untagged
@@ -28732,21 +28731,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
   surfaceType: 3
---- !u!114 &1885787071430394946
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 404578643241398466}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
-  lootConfiguration: {fileID: 0}
-  storageId: Loot_0
-  lootTitle: Supply Chest
-  lootWidth: 9
-  lootHeight: 18
-  initialItems: []

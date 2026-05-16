@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1873823923574774844}
-  - component: {fileID: -5610738038460090057}
   m_Layer: 6
   m_Name: Wooden closet 02
   m_TagString: Untagged
@@ -35,24 +34,6 @@ Transform:
   - {fileID: 6266553068871875188}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &-5610738038460090057
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 116698592269830018}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
-  lootConfiguration: {fileID: 0}
-  storageId: Loot_0
-  lootTitle: Supply Chest
-  lootWidth: 9
-  lootHeight: 18
-  initialItems: []
 --- !u!1 &797723576553499027
 GameObject:
   m_ObjectHideFlags: 0
