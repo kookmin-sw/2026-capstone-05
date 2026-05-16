@@ -465,6 +465,7 @@ GameObject:
   - component: {fileID: 1979278333881505096}
   - component: {fileID: -1790409643959626491}
   - component: {fileID: -6851899960745548226}
+  - component: {fileID: 3993721557676340526}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -850,6 +851,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5ef5a56e6e9c5645b1a21570e39a89d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerPauseListener
+--- !u!114 &3993721557676340526
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3438671979807047463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbd68b50b9ec29744b3330893fcd5d30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSensitivityModifier
 --- !u!1 &4209545890320065660
 GameObject:
   m_ObjectHideFlags: 0
