@@ -9,9 +9,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8229187340360759461}
-  - component: {fileID: 820034272814145734}
+  - component: {fileID: -4279624067541735284}
+  - component: {fileID: -8929247033887530849}
+  - component: {fileID: 2659280600951275048}
   m_Layer: 0
-  m_Name: EquippedAlarmClock
+  m_Name: ThrownAlarmClock
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -33,7 +35,34 @@ Transform:
   - {fileID: 7247535970212240945}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &820034272814145734
+--- !u!54 &-4279624067541735284
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6019898013941919088}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!114 &-8929247033887530849
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,10 +71,40 @@ MonoBehaviour:
   m_GameObject: {fileID: 6019898013941919088}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6ed95a497098bcf44ab35101120c0320, type: 3}
+  m_Script: {fileID: 11500000, guid: 265f0a548c6b5ca45b10493e58a7cd68, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ThrowableBehaviour
-  leftHandGrip: {fileID: 0}
+  m_EditorClassIdentifier: Assembly-CSharp::ThrownAlarmClock
+  lifeTime: 10
+  alarmWaitTime: 3
+  visualModel: {fileID: 7247535970212240945}
+  alarmSoundEvent:
+    Guid:
+      Data1: -1511610879
+      Data2: 1124472955
+      Data3: 1654437543
+      Data4: -1875252456
+    Path: event:/SFX/Item/Alarm
+--- !u!65 &2659280600951275048
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6019898013941919088}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.5, y: 1.5, z: 1.5}
+  m_Center: {x: 0, y: -0.1, z: 0}
 --- !u!1001 &7142377977221790170
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -68,43 +127,43 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f32048e3baa0243ff8ea7f8bc1cb5e96, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.23
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f32048e3baa0243ff8ea7f8bc1cb5e96, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.36
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f32048e3baa0243ff8ea7f8bc1cb5e96, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.25
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f32048e3baa0243ff8ea7f8bc1cb5e96, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.5499443
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f32048e3baa0243ff8ea7f8bc1cb5e96, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.41920555
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f32048e3baa0243ff8ea7f8bc1cb5e96, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.45490575
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f32048e3baa0243ff8ea7f8bc1cb5e96, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.5611496
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f32048e3baa0243ff8ea7f8bc1cb5e96, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: -103.683
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f32048e3baa0243ff8ea7f8bc1cb5e96, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 187.255
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f32048e3baa0243ff8ea7f8bc1cb5e96, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -94.548004
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f32048e3baa0243ff8ea7f8bc1cb5e96, type: 3}
       propertyPath: m_ConstrainProportionsScale

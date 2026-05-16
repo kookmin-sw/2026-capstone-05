@@ -1,5 +1,32 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8753120453620386129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/SFX/Item/Dynamite_Explosion
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/SFX/Item/Dynamite_Explosion
+  Guid:
+    Data1: -1234167253
+    Data2: 1254696807
+    Data3: 1376893875
+    Data4: -810385648
+  Banks:
+  - {fileID: 5550584238374082889}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 0
 --- !u!114 &-8458731784763659736
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -84,6 +111,33 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 0
+--- !u!114 &-5889183787716351137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/SFX/Item/Dynamite_Fuse
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/SFX/Item/Dynamite_Fuse
+  Guid:
+    Data1: -356352745
+    Data2: 1219259359
+    Data3: 2015524777
+    Data4: 1571313526
+  Banks:
+  - {fileID: 5550584238374082889}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 20480
 --- !u!114 &-3884637212694438301
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -163,6 +217,33 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 0
+--- !u!114 &-2566704977552927653
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/SFX/Item/Alarm
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/SFX/Item/Alarm
+  Guid:
+    Data1: -1511610879
+    Data2: 1124472955
+    Data3: 1654437543
+    Data4: -1875252456
+  Banks:
+  - {fileID: 5550584238374082889}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 15433
 --- !u!114 &-2301422053210748337
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -254,13 +335,16 @@ MonoBehaviour:
   - {fileID: 5219286768943705150}
   - {fileID: 2290053112078975598}
   - {fileID: 7801617787697433729}
+  - {fileID: -2566704977552927653}
+  - {fileID: -5889183787716351137}
+  - {fileID: -8753120453620386129}
   EditorParameters: []
   MasterBanks:
   - {fileID: 5550584238374082889}
   StringsBanks:
   - {fileID: 6573240060274684362}
   cacheVersion: 131858
-  cacheTime: 639144809947613275
+  cacheTime: 639145744877956552
   SerializableEventsDict:
   - key: event:/SFX/Player/Landing
     index: 0
@@ -304,6 +388,12 @@ MonoBehaviour:
     index: 19
   - key: event:/SFX/Player/Die
     index: 20
+  - key: event:/SFX/Item/Alarm
+    index: 21
+  - key: event:/SFX/Item/Dynamite_Fuse
+    index: 22
+  - key: event:/SFX/Item/Dynamite_Explosion
+    index: 23
 --- !u!114 &307868550030311807
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -725,10 +815,10 @@ MonoBehaviour:
   Path: FMOD_Project/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639144809947603262
+  lastModified: 639145744877936562
   FileSizes:
   - Name: Desktop
-    Value: 3219328
+    Value: 3762336
   Exists: 1
 --- !u!114 &6573240060274684362
 MonoBehaviour:
@@ -745,10 +835,10 @@ MonoBehaviour:
   Path: FMOD_Project/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639144809947613275
+  lastModified: 639145744877956552
   FileSizes:
   - Name: Desktop
-    Value: 2174
+    Value: 2358
   Exists: 1
 --- !u!114 &7298204743422360799
 MonoBehaviour:

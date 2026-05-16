@@ -9,9 +9,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9113246184189442731}
-  - component: {fileID: 1402199341352718090}
+  - component: {fileID: -5055172665347763187}
+  - component: {fileID: 6394729303446072790}
   m_Layer: 0
-  m_Name: EquippedRock
+  m_Name: ThrownRock
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -33,7 +34,7 @@ Transform:
   - {fileID: 6178318772491533306}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1402199341352718090
+--- !u!114 &-5055172665347763187
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,10 +43,37 @@ MonoBehaviour:
   m_GameObject: {fileID: 986091679982551683}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6ed95a497098bcf44ab35101120c0320, type: 3}
+  m_Script: {fileID: 11500000, guid: d2594f60d0801f84cb91775de62cdebe, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ThrowableBehaviour
-  leftHandGrip: {fileID: 0}
+  m_EditorClassIdentifier: Assembly-CSharp::NormalThrownItem
+  lifeTime: 5
+--- !u!54 &6394729303446072790
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 986091679982551683}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1001 &5924332808431557649
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -68,7 +96,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 54bbe92f270f5412a8517b98b99d9167, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.71
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 54bbe92f270f5412a8517b98b99d9167, type: 3}
       propertyPath: m_LocalPosition.y
@@ -76,7 +104,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 54bbe92f270f5412a8517b98b99d9167, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 1.44
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 54bbe92f270f5412a8517b98b99d9167, type: 3}
       propertyPath: m_LocalRotation.w
@@ -117,10 +145,40 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 54bbe92f270f5412a8517b98b99d9167, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6279183955202665599}
   m_SourcePrefab: {fileID: 100100000, guid: 54bbe92f270f5412a8517b98b99d9167, type: 3}
 --- !u!4 &6178318772491533306 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 54bbe92f270f5412a8517b98b99d9167, type: 3}
   m_PrefabInstance: {fileID: 5924332808431557649}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &6842688144031899968 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 54bbe92f270f5412a8517b98b99d9167, type: 3}
+  m_PrefabInstance: {fileID: 5924332808431557649}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &6279183955202665599
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6842688144031899968}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 4711208715938537054, guid: 54bbe92f270f5412a8517b98b99d9167, type: 3}
