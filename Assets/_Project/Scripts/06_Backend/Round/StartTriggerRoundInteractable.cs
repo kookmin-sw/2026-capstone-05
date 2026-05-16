@@ -85,7 +85,7 @@ public class StartTriggerRoundInteractable : MonoBehaviour, IInteractable, IHold
 
     public string GetObjectName()
     {
-        return "Start Trigger";
+        return "하루 시작하기";
     }
 
     private void Awake()

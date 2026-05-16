@@ -189,7 +189,6 @@ public class BackendRoundManager : NetworkBehaviour
     {
         IsRoundRunning = true;
         RoundTimer = TickTimer.CreateFromSeconds(Runner, roundDurationSeconds);
-        CurrentRoundNumber += 1;
 
         PlayerPrefs.SetInt(_hostRoundCountPrefKey, CurrentRoundNumber);
         PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(_activeHostSlot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
@@ -210,6 +209,7 @@ public class BackendRoundManager : NetworkBehaviour
     {
         IsRoundRunning = false;
         RoundTimer = TickTimer.None;
+        CurrentRoundNumber += 1;
 
         PlayerPrefs.SetInt(_hostRoundCountPrefKey, CurrentRoundNumber);
         PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(_activeHostSlot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));

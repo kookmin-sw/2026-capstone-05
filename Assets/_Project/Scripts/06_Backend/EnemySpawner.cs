@@ -15,6 +15,7 @@ public class EnemySpawner : NetworkBehaviour
 
     private NetworkObject currentEnemy;
     private EnemyHealth currentEnemyHealth;
+    private bool wasRoundRunning;
 
     public override void Spawned()
     {
@@ -23,13 +24,39 @@ public class EnemySpawner : NetworkBehaviour
             return;
         }
 
-        TrySpawnEnemy();
+        wasRoundRunning = IsRoundRunning();
+        RespawnTimer = TickTimer.None;
+
+        if (wasRoundRunning)
+        {
+            TrySpawnEnemy();
+        }
     }
 
     public override void FixedUpdateNetwork()
     {
         if (!HasStateAuthority)
         {
+            return;
+        }
+
+        bool isRoundRunning = IsRoundRunning();
+        if (!isRoundRunning)
+        {
+            if (wasRoundRunning)
+            {
+                DespawnCurrentEnemy();
+            }
+
+            wasRoundRunning = false;
+            RespawnTimer = TickTimer.None;
+            return;
+        }
+
+        if (!wasRoundRunning)
+        {
+            wasRoundRunning = true;
+            TrySpawnEnemy();
             return;
         }
 
@@ -50,6 +77,7 @@ public class EnemySpawner : NetworkBehaviour
     {
         UnsubscribeFromCurrentEnemy();
         currentEnemy = null;
+        wasRoundRunning = false;
     }
 
     private bool HasLivingEnemy()
@@ -63,7 +91,10 @@ public class EnemySpawner : NetworkBehaviour
         {
             currentEnemy = null;
             UnsubscribeFromCurrentEnemy();
-            StartRespawnTimer();
+            if (IsRoundRunning())
+            {
+                StartRespawnTimer();
+            }
         }
 
         return false;
@@ -121,12 +152,32 @@ public class EnemySpawner : NetworkBehaviour
 
         UnsubscribeFromCurrentEnemy();
         currentEnemy = null;
-        StartRespawnTimer();
+
+        if (IsRoundRunning())
+        {
+            StartRespawnTimer();
+        }
     }
 
     private void StartRespawnTimer()
     {
         RespawnTimer = TickTimer.CreateFromSeconds(Runner, respawnDelaySeconds);
+    }
+
+    private void DespawnCurrentEnemy()
+    {
+        if (currentEnemy != null && currentEnemy.IsValid && Runner != null)
+        {
+            Runner.Despawn(currentEnemy);
+        }
+
+        UnsubscribeFromCurrentEnemy();
+        currentEnemy = null;
+    }
+
+    private bool IsRoundRunning()
+    {
+        return BackendRoundManager.Instance != null && BackendRoundManager.Instance.IsRoundRunning;
     }
 
     private bool TryGetSpawnTransform(out Vector3 position, out Quaternion rotation)
