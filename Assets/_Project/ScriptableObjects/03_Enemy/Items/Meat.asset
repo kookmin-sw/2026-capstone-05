@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f62b195572a69b4d8a2bdf1b2a371b0, type: 3}
+  m_Name: Meat
+  m_EditorClassIdentifier: Assembly-CSharp::ConsumableItemData
+  itemID: 29
+  itemName: Meat
+  description: 
+  itemIcon: {fileID: 0}
+  gridShape:
+    basePositions:
+    - {x: 0, y: 0}
+    - {x: 0, y: 1}
+    - {x: 1, y: 0}
+    - {x: 1, y: 1}
+  maxStackSize: 1
+  pickupPrefab: {fileID: 1256822885735521464, guid: 1f58ab4bb004e88478462d1bbea2a661, type: 3}
+  equipPrefab: {fileID: 0}
+  useAnimationType: 4
+  poseType: 0
+  actionCooldown: 2
+  isTradable: 1
+  price: 0
+  effects:
+  - targetStat: 3
+    totalAmount: -50
+    duration: 10
+  consumeNoiseType: 0
+  consumeSound:
+    Guid:
+      Data1: -299079353
+      Data2: 1317335295
+      Data3: 1030624410
+      Data4: 811134571
+    Path: event:/SFX/Player/UseItem
