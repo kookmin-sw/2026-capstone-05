@@ -1,7 +1,10 @@
 using FMODUnity;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
+using UnityEngine.VFX;
 
 public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigurable
 {
@@ -29,6 +32,11 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
     public float indoorColdnessDecreaseRate = 0.4f;
     public float outdoorColdnessIncreaseRate = 0.2f;
 
+    [Header("VFX Settings")]
+    [SerializeField] private GameObject damageVFXPrefab;
+
+    private ObjectPool<GameObject> damageVFXPool;
+
     [Header("Sound Settings")]
     [SerializeField] private EventReference damageSound;
     [SerializeField] private EventReference deathSound;
@@ -38,6 +46,16 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
     private void Awake()
     {
         controller = GetComponent<PlayerController>();
+
+        damageVFXPool = new ObjectPool<GameObject>(
+            createFunc: () => Instantiate(damageVFXPrefab, transform),
+            actionOnGet: (obj) => obj.SetActive(true),
+            actionOnRelease: (obj) => obj.SetActive(false),
+            actionOnDestroy: (obj) => Destroy(obj),
+            collectionCheck: false,
+            defaultCapacity: 10,
+            maxSize: 20
+        );
     }
 
     private void Start()
@@ -96,6 +114,14 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
         {
             health.Subtract(info.damageAmount);
             OnTakeDamageEvent?.Invoke(info.damageAmount);
+
+            if (damageVFXPrefab != null)
+            {
+                GameObject vfx = damageVFXPool.Get();
+                vfx.transform.position = info.hitPoint;
+                vfx.transform.rotation = Quaternion.LookRotation(info.hitNormal);
+                StartCoroutine(ReturnVFXToPoolAfterDelay(vfx, vfx.GetComponent<ParticleSystem>().main.duration));
+            }
 
             if (!IsAlive)
             {
@@ -198,6 +224,12 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
             coldness.increaseRate = outdoorColdnessIncreaseRate;
             coldness.decreaseRate = 0f;
         }
+    }
+
+    private IEnumerator ReturnVFXToPoolAfterDelay(GameObject vfx, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        damageVFXPool.Release(vfx);
     }
 
 }
