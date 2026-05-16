@@ -13,7 +13,8 @@ GameObject:
   - component: {fileID: 6851784069330072544}
   - component: {fileID: 4890359856131807645}
   - component: {fileID: -8456302617500076231}
-  m_Layer: 0
+  - component: {fileID: 7151881414233166078}
+  m_Layer: 6
   m_Name: ind_crate_03_worn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -127,3 +128,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
   lootConfiguration: {fileID: 11400000, guid: 6f7a829c65024504c83ebd187322bb82, type: 2}
+--- !u!114 &7151881414233166078
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7435852616428164475}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 1

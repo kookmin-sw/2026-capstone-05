@@ -12,7 +12,8 @@ GameObject:
   - component: {fileID: 1243850776674874520}
   - component: {fileID: 7585409398590706147}
   - component: {fileID: -6265598489218345707}
-  m_Layer: 0
+  - component: {fileID: 941319356633270153}
+  m_Layer: 6
   m_Name: ind_barrel_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -113,3 +114,16 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -4799456664524698118, guid: 1d3874ed118b1d9429950cac7dc84e61, type: 3}
+--- !u!114 &941319356633270153
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2147633433625088706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 3

@@ -13,7 +13,8 @@ GameObject:
   - component: {fileID: 7594343671065005662}
   - component: {fileID: 4055956656706405797}
   - component: {fileID: 8760062181822503605}
-  m_Layer: 0
+  - component: {fileID: 4552482030444735823}
+  m_Layer: 6
   m_Name: ind_wooden_crates_01_tarp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -128,3 +129,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
   lootConfiguration: {fileID: 11400000, guid: da803474f06cb6c4e875b4615e0cd158, type: 2}
+--- !u!114 &4552482030444735823
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1311204904416820755}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 1

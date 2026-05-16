@@ -12,7 +12,8 @@ GameObject:
   - component: {fileID: 46567212470041038}
   - component: {fileID: 9782021834107832}
   - component: {fileID: -6627155128264554075}
-  m_Layer: 0
+  - component: {fileID: 1886129828470075564}
+  m_Layer: 6
   m_Name: ind_crate_03_open
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -113,3 +114,16 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -8493018665143690553, guid: 1d3874ed118b1d9429950cac7dc84e61, type: 3}
+--- !u!114 &1886129828470075564
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1130959157733965101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 1

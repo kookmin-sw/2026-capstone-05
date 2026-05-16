@@ -13,7 +13,8 @@ GameObject:
   - component: {fileID: 8191374132671909326}
   - component: {fileID: 4319347384168166562}
   - component: {fileID: 6193071196923152136}
-  m_Layer: 0
+  - component: {fileID: 4868408599805352532}
+  m_Layer: 6
   m_Name: Box_paper02c
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -126,3 +127,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
   lootConfiguration: {fileID: 11400000, guid: 6afe2f24b9d00b64f9575c738a6e4740, type: 2}
+--- !u!114 &4868408599805352532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4342677152759353240}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 1
