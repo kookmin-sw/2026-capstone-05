@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Systems.Loot
 {
-    [CreateAssetMenu(fileName = "New Loot Configuration", menuName = "_Project/Loot/Loot Configuration")]
+    [CreateAssetMenu(fileName = "New Loot Configuration", menuName = "Loot/Loot Configuration")]
     public class LootConfiguration : ScriptableObject
     {
         [Header("Loot Configuration")]
