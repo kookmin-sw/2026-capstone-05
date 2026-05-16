@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 2495297894814908150}
   - component: {fileID: 845953050246793092}
   - component: {fileID: 5150131236185963055}
+  - component: {fileID: 2472978432682881446}
   m_Layer: 6
   m_Name: TV_table
   m_TagString: Untagged
@@ -126,3 +127,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
   surfaceType: 1
+--- !u!114 &2472978432682881446
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6797968951135041467}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
+  lootConfiguration: {fileID: 0}
+  storageId: Loot_0
+  lootTitle: Supply Chest
+  lootWidth: 9
+  lootHeight: 18
+  initialItems: []

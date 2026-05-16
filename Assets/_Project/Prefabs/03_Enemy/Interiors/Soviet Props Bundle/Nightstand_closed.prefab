@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 5625940098267970356}
   - component: {fileID: 5854542568603097315}
   - component: {fileID: 99991371050967620}
+  - component: {fileID: 5593420684512327249}
   m_Layer: 6
   m_Name: Nightstand_closed
   m_TagString: Untagged
@@ -127,3 +128,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
   surfaceType: 1
+--- !u!114 &5593420684512327249
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1115581556278786836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
+  lootConfiguration: {fileID: 0}
+  storageId: Loot_0
+  lootTitle: Supply Chest
+  lootWidth: 9
+  lootHeight: 18
+  initialItems: []
