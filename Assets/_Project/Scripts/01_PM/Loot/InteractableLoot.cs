@@ -13,29 +13,37 @@ namespace Systems.Loot
 
     public class InteractableLoot : MonoBehaviour, IInteractable
     {
-        [Header("Loot Configuration")]
-        [SerializeField] private string storageId = "Loot_0";
-        [SerializeField] private string lootTitle = "Supply Chest";
-        [SerializeField] private int lootWidth = 9;
-        [SerializeField] private int lootHeight = 18;
+        [Header("Loot Configuration Asset")]
+        [Tooltip("Required. Defines the storage key, title, size, and initial items for this loot container.")]
+        [SerializeField] private LootConfiguration lootConfiguration;
         
-        [Header("Initial Items (Only spawned if storage is empty)")]
-        [SerializeField] private List<LootItemSetup> initialItems;
-        
-        public string StorageId => storageId;
-        public int Width => lootWidth;
-        public int Height => lootHeight;
-        
-        private void Awake()
-        {
-        }
+        public bool HasConfiguration => lootConfiguration != null;
+        public string StorageId => lootConfiguration.StorageId;
+        public int Width => lootConfiguration.Width;
+        public int Height => lootConfiguration.Height;
+        private string LootTitle => lootConfiguration.LootTitle;
+        private IReadOnlyList<LootItemSetup> InitialItems => lootConfiguration.InitialItems;
         
         private bool isInitialized = false;
+
+        private void OnValidate()
+        {
+            if (lootConfiguration == null)
+            {
+                Debug.LogWarning($"[InteractableLoot] Loot Configuration is missing on {name}.", this);
+            }
+        }
 
         private void InitializeItemsIfNeeded()
         {
             if (isInitialized) return;
             isInitialized = true;
+
+            if (!HasConfiguration)
+            {
+                Debug.LogError($"[InteractableLoot] Loot Configuration is missing on {name}.", this);
+                return;
+            }
             
             if (LootNetworkSync.Instance == null)
             {
@@ -50,10 +58,10 @@ namespace Systems.Loot
                 }
             }
             
-            var model = LootNetworkSync.Instance.GetOrCreateModel(storageId, lootWidth, lootHeight);
+            string resolvedStorageId = StorageId;
+            var model = LootNetworkSync.Instance.GetOrCreateModel(resolvedStorageId, Width, Height);
             
-            // Only seed items if the storage is completely empty (could check if first time initialization)
-            // But since model could be loaded empty, let's check if there are no items.
+            // Only seed items if the storage is completely empty.
             bool isEmpty = true;
             for (int i = 0; i < model.Items.Length; i++)
             {
@@ -64,14 +72,12 @@ namespace Systems.Loot
                 }
             }
             
-            if (isEmpty && initialItems != null && initialItems.Count > 0)
+            IReadOnlyList<LootItemSetup> resolvedInitialItems = InitialItems;
+            if (isEmpty && resolvedInitialItems != null && resolvedInitialItems.Count > 0)
             {
-                // This will only work correctly if the server has authority, 
-                // but for now we just seed locally to the model if empty. 
-                // A true multiplayer setup would have the host seed it.
                 if (LootNetworkSync.Instance.HasStateAuthority || PlayerNetworkSetup.IsOfflineTestMode)
                 {
-                    foreach (var setup in initialItems)
+                    foreach (var setup in resolvedInitialItems)
                     {
                         if (setup.itemData != null)
                         {
@@ -79,14 +85,19 @@ namespace Systems.Loot
                             model.TryAdd(item);
                         }
                     }
-                    LootNetworkSync.Instance.SubmitLootSnapshot(storageId, 
-                        LootGridSerializer.ToSaveData(storageId, model));
+                    LootNetworkSync.Instance.SubmitLootSnapshot(resolvedStorageId, 
+                        LootGridSerializer.ToSaveData(resolvedStorageId, model));
                 }
             }
         }
 
         public bool CanInteract(PlayerController player)
         {
+            if (!HasConfiguration)
+            {
+                return false;
+            }
+
             if (LootController.Instance != null && LootController.Instance.IsOpen)
             {
                 return false;
@@ -94,7 +105,7 @@ namespace Systems.Loot
 
             if (LootNetworkSync.Instance != null && !PlayerNetworkSetup.IsOfflineTestMode)
             {
-                if (LootNetworkSync.Instance.ActiveLootUsers.TryGet(storageId, out Fusion.PlayerRef currentUser))
+                if (LootNetworkSync.Instance.ActiveLootUsers.TryGet(StorageId, out Fusion.PlayerRef currentUser))
                 {
                     if (LootNetworkSync.Instance.Runner != null && currentUser != LootNetworkSync.Instance.Runner.LocalPlayer)
                     {
@@ -113,11 +124,17 @@ namespace Systems.Loot
 
         public string GetObjectName()
         {
-            return lootTitle;
+            return HasConfiguration ? LootTitle : string.Empty;
         }
 
         public void OnInteract(PlayerController player)
         {
+            if (!HasConfiguration)
+            {
+                Debug.LogError($"[InteractableLoot] Loot Configuration is missing on {name}.", this);
+                return;
+            }
+
             if (LootNetworkSync.Instance == null)
             {
                 Debug.LogWarning("[InteractableLoot] LootNetworkSync is missing.");
@@ -137,7 +154,7 @@ namespace Systems.Loot
             
             if (LootController.Instance != null)
             {
-                LootController.Instance.RequestOpenLoot(this, storageId, lootTitle, LootNetworkSync.Instance);
+                LootController.Instance.RequestOpenLoot(this, StorageId, LootTitle, LootNetworkSync.Instance);
             }
             else
             {
