@@ -57,7 +57,10 @@ public class BackendRoundManager : NetworkBehaviour
 
     public override void Spawned()
     {
-        Instance = this;
+        if (!RegisterInstance())
+        {
+            return;
+        }
 
         if (!HasStateAuthority)
         {
@@ -86,8 +89,44 @@ public class BackendRoundManager : NetworkBehaviour
         Debug.Log($"[BackendRoundManager] 호스트 라운드 저장소 로드. key={_hostRoundCountPrefKey}, userId={AuthSession.CurrentUserId}, round={CurrentRoundNumber}");
     }
 
+    private bool RegisterInstance()
+    {
+        if (Instance == null || Instance == this)
+        {
+            Instance = this;
+            return true;
+        }
+
+        if (IsPreferredInstanceOver(Instance))
+        {
+            Debug.LogWarning($"[BackendRoundManager] Replacing duplicate instance {Instance.name} with preferred instance {name}.");
+            Instance = this;
+            return true;
+        }
+
+        Debug.LogWarning($"[BackendRoundManager] Duplicate ignored on {name}. Active instance is {Instance.name}. Remove extra BackendRoundManager components from the scene/prefab.");
+        return false;
+    }
+
+    private bool IsPreferredInstanceOver(BackendRoundManager other)
+    {
+        if (other == null)
+        {
+            return true;
+        }
+
+        bool thisIsDedicatedManager = gameObject.name == nameof(BackendRoundManager);
+        bool otherIsDedicatedManager = other.gameObject.name == nameof(BackendRoundManager);
+        return thisIsDedicatedManager && !otherIsDedicatedManager;
+    }
+
     public override void FixedUpdateNetwork()
     {
+        if (Instance != this)
+        {
+            return;
+        }
+
         BroadcastWeatherState();
 
         if (!HasStateAuthority)
@@ -156,7 +195,15 @@ public class BackendRoundManager : NetworkBehaviour
         PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(_activeHostSlot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         PlayerPrefs.Save();
 
+        RpcShowRoundDay(CurrentRoundNumber);
+
         Debug.Log($"[BackendRoundManager] 라운드 시작. round={CurrentRoundNumber}, reason={reason}, duration={roundDurationSeconds}s");
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RpcShowRoundDay(int roundNumber)
+    {
+        RoundDayOverlay.Show(roundNumber);
     }
 
     private void EndRound(string reason)

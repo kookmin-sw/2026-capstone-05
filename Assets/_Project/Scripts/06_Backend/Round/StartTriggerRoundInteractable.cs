@@ -25,8 +25,6 @@ public class StartTriggerRoundInteractable : MonoBehaviour, IInteractable, IHold
 
     public bool CanInteract(PlayerController player)
     {
-        // roundManager가 늦게 바인딩되더라도 안내 UI는 먼저 표시되도록 허용한다.
-        // 실제 라운드 토글은 OnHoldInteract에서 null 체크로 안전하게 처리한다.
         if (player == null || player.InputHandler == null)
         {
             return false;
@@ -37,7 +35,6 @@ public class StartTriggerRoundInteractable : MonoBehaviour, IInteractable, IHold
 
     public void OnInteract(PlayerController player)
     {
-        // 홀드 상호작용 전용: 즉시 상호작용은 사용하지 않음
     }
 
     public float GetHoldDuration(PlayerController player)
@@ -47,7 +44,8 @@ public class StartTriggerRoundInteractable : MonoBehaviour, IInteractable, IHold
 
     public void OnHoldInteract(PlayerController player)
     {
-        if (roundManager == null)
+        BackendRoundManager activeRoundManager = ResolveRoundManager();
+        if (activeRoundManager == null)
         {
             return;
         }
@@ -64,9 +62,9 @@ public class StartTriggerRoundInteractable : MonoBehaviour, IInteractable, IHold
             requester = playerNetworkObject.InputAuthority;
         }
 
-        if (!roundManager.IsRoundRunning)
+        if (!activeRoundManager.IsRoundRunning)
         {
-            roundManager.RpcRequestSetRoundState(requester, true);
+            activeRoundManager.RpcRequestSetRoundState(requester, true);
         }
 
         lastToggleRequestTime = Time.time;
@@ -74,12 +72,13 @@ public class StartTriggerRoundInteractable : MonoBehaviour, IInteractable, IHold
 
     public string GetInteractPrompt()
     {
-        if (roundManager == null)
+        BackendRoundManager activeRoundManager = ResolveRoundManager();
+        if (activeRoundManager == null)
         {
             return "[Hold E] 준비 안됨";
         }
 
-        return roundManager.IsRoundRunning
+        return activeRoundManager.IsRoundRunning
             ? "[Hold E] 라운드 진행 중"
             : "[Hold E] 라운드 시작";
     }
@@ -91,10 +90,7 @@ public class StartTriggerRoundInteractable : MonoBehaviour, IInteractable, IHold
 
     private void Awake()
     {
-        if (roundManager == null)
-        {
-            roundManager = FindFirstObjectByType<BackendRoundManager>();
-        }
+        ResolveRoundManager();
 
         if (autoCreateInteractionCollider)
         {
@@ -105,6 +101,22 @@ public class StartTriggerRoundInteractable : MonoBehaviour, IInteractable, IHold
         {
             EnsureOutlineComponent();
         }
+    }
+
+    private BackendRoundManager ResolveRoundManager()
+    {
+        if (BackendRoundManager.Instance != null)
+        {
+            roundManager = BackendRoundManager.Instance;
+            return roundManager;
+        }
+
+        if (roundManager == null)
+        {
+            roundManager = FindFirstObjectByType<BackendRoundManager>();
+        }
+
+        return roundManager;
     }
 
     private void OnValidate()

@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 5189829053540248593}
   - component: {fileID: 4717245548830369246}
   - component: {fileID: 1144397097644963537}
-  - component: {fileID: 3331916375713473798}
   m_Layer: 0
   m_Name: EnemySpawner
   m_TagString: Untagged
@@ -52,7 +51,6 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 1144397097644963537}
-  - {fileID: 3331916375713473798}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &1144397097644963537
 MonoBehaviour:
@@ -71,20 +69,3 @@ MonoBehaviour:
   spawnPoints: []
   spawnIntervalSeconds: 50
   maxAliveEnemies: 10
---- !u!114 &3331916375713473798
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3783324770710697232}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c48832dba3814d9f883e6e326e1d3f1b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BackendRoundManager
-  roundDurationSeconds: 300
-  initialWeatherState: 0
-  _IsRoundRunning:
-    _value: 0
-  _CurrentRoundNumber: 0
