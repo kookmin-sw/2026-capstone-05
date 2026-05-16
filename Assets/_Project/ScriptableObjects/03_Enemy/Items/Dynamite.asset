@@ -9,21 +9,25 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dcc07c36f93919e468131c0354841235, type: 3}
+  m_Script: {fileID: 11500000, guid: 68f53a0177d852a41ac6af94783bb771, type: 3}
   m_Name: Dynamite
-  m_EditorClassIdentifier: Assembly-CSharp::MiscItemData
+  m_EditorClassIdentifier: Assembly-CSharp::ThrowableItemData
   itemID: 22
   itemName: Dynamite
   description: 
-  itemIcon: {fileID: 0}
+  itemIcon: {fileID: 21300000, guid: 7e0ae23994ac3d0448410281fe6d6da9, type: 3}
   gridShape:
     basePositions:
     - {x: 0, y: 0}
+    - {x: 1, y: 0}
   maxStackSize: 1
   pickupPrefab: {fileID: 7297582729195882027, guid: d58e1daa1e5151f4b851852e746a197c, type: 3}
-  equipPrefab: {fileID: 0}
-  useAnimationType: 0
+  equipPrefab: {fileID: 7297582729195882027, guid: a870f7a208c3b6541b16ff80f3321cab, type: 3}
+  useAnimationType: 3
   poseType: 0
   actionCooldown: 1
   isTradable: 1
   price: 0
+  thrownPrefab: {fileID: 0}
+  throwForce: 3
+  throwNoiseType: 0

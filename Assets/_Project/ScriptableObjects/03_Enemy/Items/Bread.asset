@@ -15,13 +15,13 @@ MonoBehaviour:
   itemID: 19
   itemName: Bread
   description: 
-  itemIcon: {fileID: 0}
+  itemIcon: {fileID: 21300000, guid: beb365d63e3e1d14f87745a0e9f2a7ed, type: 3}
   gridShape:
     basePositions:
     - {x: 0, y: 0}
   maxStackSize: 1
   pickupPrefab: {fileID: 2102096984014267861, guid: 0fb268e3e57f73047a8f8e1eb9fbb89e, type: 3}
-  equipPrefab: {fileID: 0}
+  equipPrefab: {fileID: 2102096984014267861, guid: 520de893269a4a84bae7d838cb790881, type: 3}
   useAnimationType: 4
   poseType: 0
   actionCooldown: 2
@@ -29,9 +29,9 @@ MonoBehaviour:
   price: 0
   effects:
   - targetStat: 2
-    totalAmount: 5
+    totalAmount: 20
     duration: 0
-  consumeNoiseType: 0
+  consumeNoiseType: 15
   consumeSound:
     Guid:
       Data1: -299079353

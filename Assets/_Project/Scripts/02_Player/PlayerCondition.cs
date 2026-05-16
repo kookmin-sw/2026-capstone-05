@@ -123,6 +123,8 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
                 StartCoroutine(ReturnVFXToPoolAfterDelay(vfx, vfx.GetComponent<ParticleSystem>().main.duration));
             }
 
+            NoiseManager.Instance.GenerateNoise(transform.position, NoiseData.NoiseType.Pain);
+
             if (!IsAlive)
             {
                 if (!hasRaisedDeathEvent)

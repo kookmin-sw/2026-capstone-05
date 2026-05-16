@@ -15,7 +15,7 @@ MonoBehaviour:
   itemID: 29
   itemName: Meat
   description: 
-  itemIcon: {fileID: 0}
+  itemIcon: {fileID: 21300000, guid: fe9af3f098966ef46ada3f7f6ed45566, type: 3}
   gridShape:
     basePositions:
     - {x: 0, y: 0}
@@ -24,17 +24,20 @@ MonoBehaviour:
     - {x: 1, y: 1}
   maxStackSize: 1
   pickupPrefab: {fileID: 1256822885735521464, guid: 1f58ab4bb004e88478462d1bbea2a661, type: 3}
-  equipPrefab: {fileID: 0}
+  equipPrefab: {fileID: 1256822885735521464, guid: d7618c5d1d7013a418c5491d1ef22c7d, type: 3}
   useAnimationType: 4
   poseType: 0
-  actionCooldown: 2
+  actionCooldown: 3
   isTradable: 1
   price: 0
   effects:
-  - targetStat: 3
-    totalAmount: -50
-    duration: 10
-  consumeNoiseType: 0
+  - targetStat: 2
+    totalAmount: 50
+    duration: 2
+  - targetStat: 1
+    totalAmount: 50
+    duration: 30
+  consumeNoiseType: 15
   consumeSound:
     Guid:
       Data1: -299079353

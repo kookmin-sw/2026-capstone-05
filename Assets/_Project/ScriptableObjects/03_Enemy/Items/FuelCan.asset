@@ -15,10 +15,13 @@ MonoBehaviour:
   itemID: 24
   itemName: FuelCan
   description: 
-  itemIcon: {fileID: 0}
+  itemIcon: {fileID: 21300000, guid: 33d70c68573bc9b4580069d67ef4133c, type: 3}
   gridShape:
     basePositions:
     - {x: 0, y: 0}
+    - {x: 1, y: 0}
+    - {x: 0, y: 1}
+    - {x: 1, y: 1}
   maxStackSize: 1
   pickupPrefab: {fileID: 5696404471118726108, guid: ed7cc307916e456459b41dda7775fd5d, type: 3}
   equipPrefab: {fileID: 0}

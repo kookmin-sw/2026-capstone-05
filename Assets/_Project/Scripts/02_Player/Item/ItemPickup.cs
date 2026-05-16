@@ -89,6 +89,7 @@ public class ItemPickup : MonoBehaviour, IInteractable
         {
             // Hook pickup noise here when the noise system is ready for item pickups.
             RuntimeManager.PlayOneShot("event:/SFX/Player/Grab", player.transform.position);
+            NoiseManager.Instance.GenerateNoise(player.transform.position, NoiseData.NoiseType.ItemPickup);
         }
 
         return true;

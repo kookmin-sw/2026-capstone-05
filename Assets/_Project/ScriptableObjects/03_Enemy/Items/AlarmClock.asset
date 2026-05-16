@@ -9,33 +9,24 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f62b195572a69b4d8a2bdf1b2a371b0, type: 3}
+  m_Script: {fileID: 11500000, guid: 68f53a0177d852a41ac6af94783bb771, type: 3}
   m_Name: AlarmClock
-  m_EditorClassIdentifier: Assembly-CSharp::ConsumableItemData
+  m_EditorClassIdentifier: Assembly-CSharp::ThrowableItemData
   itemID: 16
   itemName: AlarmClock
   description: 
-  itemIcon: {fileID: 0}
+  itemIcon: {fileID: 21300000, guid: fde3f05f500a70d4f8aa3b32be96c307, type: 3}
   gridShape:
     basePositions:
     - {x: 0, y: 0}
   maxStackSize: 1
   pickupPrefab: {fileID: 6019898013941919088, guid: 61c896c9ace3ba540a32e5557abd555e, type: 3}
-  equipPrefab: {fileID: 0}
+  equipPrefab: {fileID: 6019898013941919088, guid: 23a5b34d763f8a74698d1e2dd217dc15, type: 3}
   useAnimationType: 3
   poseType: 0
-  actionCooldown: 2
+  actionCooldown: 1
   isTradable: 1
   price: 0
-  effects:
-  - targetStat: 2
-    totalAmount: 5
-    duration: 0
-  consumeNoiseType: 0
-  consumeSound:
-    Guid:
-      Data1: -299079353
-      Data2: 1317335295
-      Data3: 1030624410
-      Data4: 811134571
-    Path: event:/SFX/Player/UseItem
+  thrownPrefab: {fileID: 0}
+  throwForce: 5
+  throwNoiseType: 0

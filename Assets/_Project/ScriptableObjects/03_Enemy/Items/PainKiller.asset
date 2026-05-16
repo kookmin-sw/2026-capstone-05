@@ -15,26 +15,24 @@ MonoBehaviour:
   itemID: 30
   itemName: PainKiller
   description: 
-  itemIcon: {fileID: 0}
+  itemIcon: {fileID: 21300000, guid: 35c9d000893ebb446807ef451f55706d, type: 3}
   gridShape:
     basePositions:
     - {x: 0, y: 0}
     - {x: 0, y: 1}
-    - {x: 1, y: 0}
-    - {x: 1, y: 1}
   maxStackSize: 1
   pickupPrefab: {fileID: 1333433043014885282, guid: 7e2a6101f45efc547a494da28f5ccd50, type: 3}
-  equipPrefab: {fileID: 0}
+  equipPrefab: {fileID: 1333433043014885282, guid: 0efa008871713e64aa8ea483ff2b2f70, type: 3}
   useAnimationType: 4
   poseType: 0
-  actionCooldown: 2
+  actionCooldown: 3
   isTradable: 1
   price: 0
   effects:
-  - targetStat: 3
-    totalAmount: -50
-    duration: 10
-  consumeNoiseType: 0
+  - targetStat: 0
+    totalAmount: 30
+    duration: 5
+  consumeNoiseType: 15
   consumeSound:
     Guid:
       Data1: -299079353

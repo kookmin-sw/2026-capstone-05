@@ -15,18 +15,18 @@ MonoBehaviour:
   itemID: 33
   itemName: Rock
   description: 
-  itemIcon: {fileID: 0}
+  itemIcon: {fileID: 21300000, guid: 77c6edd723ecbe5409d316bc72a504b2, type: 3}
   gridShape:
     basePositions:
     - {x: 0, y: 0}
   maxStackSize: 1
   pickupPrefab: {fileID: 986091679982551683, guid: 66d0e1754eadd8145b63f9c2fdd07750, type: 3}
-  equipPrefab: {fileID: 0}
+  equipPrefab: {fileID: 986091679982551683, guid: 4d9fb2dcf49e3a44db786509c49b6287, type: 3}
   useAnimationType: 3
   poseType: 0
   actionCooldown: 1
   isTradable: 1
   price: 0
   thrownPrefab: {fileID: 0}
-  throwForce: 0
+  throwForce: 8
   throwNoiseType: 0

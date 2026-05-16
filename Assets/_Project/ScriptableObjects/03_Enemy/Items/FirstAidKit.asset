@@ -15,22 +15,27 @@ MonoBehaviour:
   itemID: 23
   itemName: FirstAidKit
   description: 
-  itemIcon: {fileID: 0}
+  itemIcon: {fileID: 21300000, guid: a67cbe3e77330a840a1cea01f0d00d31, type: 3}
   gridShape:
     basePositions:
     - {x: 0, y: 0}
+    - {x: 1, y: 0}
+    - {x: 2, y: 0}
+    - {x: 0, y: 1}
+    - {x: 1, y: 1}
+    - {x: 2, y: 1}
   maxStackSize: 1
   pickupPrefab: {fileID: 8074747985566829872, guid: a3ae3d91d83e161458bbc0d0bc6a37a7, type: 3}
-  equipPrefab: {fileID: 0}
+  equipPrefab: {fileID: 8074747985566829872, guid: 05dfa1f33e652054ba854397823fc087, type: 3}
   useAnimationType: 4
   poseType: 0
-  actionCooldown: 2
+  actionCooldown: 4
   isTradable: 1
   price: 0
   effects:
-  - targetStat: 2
-    totalAmount: 5
-    duration: 0
+  - targetStat: 0
+    totalAmount: 80
+    duration: 5
   consumeNoiseType: 0
   consumeSound:
     Guid:
