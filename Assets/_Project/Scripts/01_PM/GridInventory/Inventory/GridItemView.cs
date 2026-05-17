@@ -21,7 +21,6 @@ namespace Systems.GridInventory {
         public event Action<Vector2, GridItemView> OnStartDrag = delegate { };
         
         public static Action<GridItemView, Vector2> OnItemDragUpdateGlobal;
-        public static Action<GridItemView, Vector2> OnItemDroppedGlobal;
         /// <summary>Emitted after drag is cancelled visually (no normal drop): right-click split flow.</summary>
         public static Action<GridItemView, Vector2> OnItemSplitDroppedGlobal;
         private int displayedQuantity = -1;

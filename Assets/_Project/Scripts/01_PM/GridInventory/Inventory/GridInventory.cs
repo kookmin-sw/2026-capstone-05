@@ -31,6 +31,12 @@ namespace Systems.GridInventory {
                 .Build();
         }
 
+        void Start() {
+            if (PlayerNetworkSetup.IsOfflineTestMode && controller != null && controller.Model != null) {
+                GridInventorySaveSystem.LoadInventory(controller.Model);
+            }
+        }
+
         // 아이템 추가, 확인, 소모 등은 확장해야 할 Model 기능에 의존하므로
         // 임시로 ItemData 기반으로 수정해 둡니다.
         public bool AddItem(ItemData itemData, int quantity = 1) {

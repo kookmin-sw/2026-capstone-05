@@ -105,7 +105,6 @@ public class QuickslotUIController : MonoBehaviour
         {
             model?.Dispose();
             Instance = null;
-            OnItemDroppedGlobal = null;
             OnQuickslotSplitRequested = null;
             OnInitialized = null;
         }
@@ -270,7 +269,84 @@ public class QuickslotUIController : MonoBehaviour
         }
     }
 
-    public static event System.Action<ItemInstance, int, Vector2> OnItemDroppedGlobal;
+    public void ReceiveDrop(ItemInstance item, Systems.GridInventory.DragSource source, int sourceIndex, int targetQuickslotIndex, GridInventoryModel sourceModel)
+    {
+        var targetItem = model.Get(targetQuickslotIndex);
+
+        if (source == DragSource.Quickslot)
+        {
+            if (sourceIndex != targetQuickslotIndex)
+            {
+                model.MergeOrSwap(sourceIndex, targetQuickslotIndex);
+                item.currentRotation = ItemRotation.Deg0;
+            }
+            else
+            {
+                item.currentRotation = originalDragRotation;
+            }
+        }
+        else if (sourceModel != null) // From Grid (Inventory/Loot)
+        {
+            if (targetItem != null && targetItem.Data == item.Data && item.Data.maxStackSize > 1)
+            {
+                // Stack
+                int total = item.currentStackCount + targetItem.currentStackCount;
+                if (total <= item.Data.maxStackSize)
+                {
+                    targetItem.currentStackCount = total;
+                    sourceModel.TryRemove(item);
+                    sourceModel.Items.Invoke();
+                    RefreshSlotVisual(targetQuickslotIndex);
+                }
+                else
+                {
+                    targetItem.currentStackCount = item.Data.maxStackSize;
+                    item.currentStackCount = total - item.Data.maxStackSize;
+                    sourceModel.Items.Invoke();
+                    RefreshSlotVisual(targetQuickslotIndex);
+                }
+            }
+            else
+            {
+                // Swap or Place
+                var sourceOldPos = sourceModel.GetItemAnchorPosition(item);
+                sourceModel.TryRemove(item);
+
+                item.currentRotation = ItemRotation.Deg0;
+
+                if (targetItem != null)
+                {
+                    // Try to place the targetItem back into the source grid
+                    if (sourceOldPos.x != -1 && sourceModel.CanPlaceItem(targetItem, sourceOldPos.x, sourceOldPos.y))
+                    {
+                        sourceModel.PlaceItem(targetItem, sourceOldPos.x, sourceOldPos.y);
+                        SetItemInSlot(targetQuickslotIndex, item);
+                        sourceModel.Items.Invoke();
+                    }
+                    else
+                    {
+                        if (!sourceModel.TryAdd(targetItem))
+                        {
+                            // Revert
+                            sourceModel.PlaceItem(item, sourceOldPos.x, sourceOldPos.y);
+                            GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
+                            return;
+                        }
+                        else
+                        {
+                            SetItemInSlot(targetQuickslotIndex, item);
+                            sourceModel.Items.Invoke();
+                        }
+                    }
+                }
+                else
+                {
+                    SetItemInSlot(targetQuickslotIndex, item);
+                    sourceModel.Items.Invoke();
+                }
+            }
+        }
+    }
 
     private void OnPointerUp(PointerUpEvent evt)
     {
@@ -294,22 +370,12 @@ public class QuickslotUIController : MonoBehaviour
             var item = model.Get(draggingSlotIndex);
             if (item != null)
             {
-                int targetQuickslot = GetSlotIndexAtPosition(evt.position);
-
-                if (targetQuickslot >= 0 && targetQuickslot != draggingSlotIndex)
+                GlobalDragDropRouter.ProcessDrop(item, DragSource.Quickslot, draggingSlotIndex, evt.position, null);
+                
+                // 이벤트 발생 후에도 아이템이 퀵슬롯에 그대로 남아있다면(아무도 처리하지 않았다면) 회전 상태를 원래대로 복구
+                if (model.Get(draggingSlotIndex) == item)
                 {
-                    model.MergeOrSwap(draggingSlotIndex, targetQuickslot);
-                    item.currentRotation = originalDragRotation; // 퀵슬롯으로 드롭된 경우 회전 원복
-                }
-                else
-                {
-                    OnItemDroppedGlobal?.Invoke(item, draggingSlotIndex, evt.position);
-                    
-                    // 이벤트 발생 후에도 아이템이 퀵슬롯에 그대로 남아있다면(아무도 처리하지 않았다면) 회전 상태를 원래대로 복구
-                    if (model.Get(draggingSlotIndex) == item)
-                    {
-                        item.currentRotation = originalDragRotation;
-                    }
+                    item.currentRotation = originalDragRotation;
                 }
             }
         }

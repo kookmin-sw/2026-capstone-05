@@ -84,10 +84,17 @@ public class PlayerGroundedState : PlayerState
 
     private void HandleStandingState()
     {
-        if (player.InputHandler.JumpTriggered && player.Condition.UseStamina(player.jumpStaminaCost))
+        if (player.InputHandler.JumpTriggered)
         {
-            ExecuteJump();
-            return;
+            if (player.Condition.UseStamina(player.jumpStaminaCost))
+            {
+                ExecuteJump();
+                return;
+            }
+            else
+            {
+                player.InputHandler.ConsumeJump();
+            }
         }
 
         if (player.InputHandler.CrouchTriggered)
