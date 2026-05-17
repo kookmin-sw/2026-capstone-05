@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Systems.GridInventory;
 using UnityEngine;
 
 namespace Systems.Loot
@@ -26,6 +27,7 @@ namespace Systems.Loot
         [Header("Generated Items")]
         [SerializeField, Min(0)] private int minItemRolls = 1;
         [SerializeField, Min(0)] private int maxItemRolls = 3;
+        [SerializeField, Min(1)] private int placementAttemptsPerRoll = 8;
         [SerializeField] private List<LootTableEntry> lootTable = new List<LootTableEntry>();
 
         public string StorageIdPrefix => string.IsNullOrWhiteSpace(storageIdPrefix) ? "Loot" : storageIdPrefix.Trim();
@@ -36,35 +38,143 @@ namespace Systems.Loot
         public List<ItemInstance> RollItems(string storageId)
         {
             List<ItemInstance> items = new List<ItemInstance>();
-            if (lootTable == null || lootTable.Count == 0 || maxItemRolls <= 0)
+            if (!TryCreatePicker(out WeightedLootPicker picker) || maxItemRolls <= 0)
             {
                 return items;
             }
 
-            int minRolls = Mathf.Clamp(minItemRolls, 0, maxItemRolls);
-            int maxRolls = Mathf.Max(minRolls, maxItemRolls);
             System.Random random = new System.Random(BuildStableSeed(storageId, name));
-            int rollCount = random.Next(minRolls, maxRolls + 1);
+            int rollCount = GetRollCount(random);
+            Dictionary<ItemData, int> generatedCounts = new Dictionary<ItemData, int>();
 
             for (int i = 0; i < rollCount; i++)
             {
-                LootTableEntry entry = PickEntry(random);
-                if (entry?.itemData == null)
+                LootTableEntry entry = picker.Pick(random);
+                if (entry?.itemData == null || !CanCreateMore(entry, generatedCounts))
                 {
                     continue;
                 }
 
-                int minQuantity = Mathf.Max(1, entry.minQuantity);
-                int maxQuantity = Mathf.Max(minQuantity, entry.maxQuantity);
-                int quantity = random.Next(minQuantity, maxQuantity + 1);
-                items.Add(new ItemInstance(entry.itemData, quantity));
+                ItemInstance item = CreateItemInstance(entry, random, generatedCounts);
+                if (item == null)
+                {
+                    continue;
+                }
+
+                items.Add(item);
+                AddGeneratedCount(generatedCounts, entry.itemData, item.currentStackCount);
             }
 
             return items;
         }
 
-        private LootTableEntry PickEntry(System.Random random)
+        public int PopulateModel(GridInventoryModel model, string storageId)
         {
+            if (model == null || !TryCreatePicker(out WeightedLootPicker picker) || maxItemRolls <= 0)
+            {
+                return 0;
+            }
+
+            System.Random random = new System.Random(BuildStableSeed(storageId, name));
+            int rollCount = GetRollCount(random);
+            int placedCount = 0;
+            Dictionary<ItemData, int> generatedCounts = new Dictionary<ItemData, int>();
+
+            for (int roll = 0; roll < rollCount; roll++)
+            {
+                for (int attempt = 0; attempt < placementAttemptsPerRoll; attempt++)
+                {
+                    LootTableEntry entry = picker.Pick(random);
+                    if (entry?.itemData == null || !CanCreateMore(entry, generatedCounts))
+                    {
+                        continue;
+                    }
+
+                    ItemInstance item = CreateItemInstance(entry, random, generatedCounts);
+                    if (item == null)
+                    {
+                        continue;
+                    }
+
+                    if (model.TryAdd(item))
+                    {
+                        AddGeneratedCount(generatedCounts, entry.itemData, item.currentStackCount);
+                        placedCount++;
+                        break;
+                    }
+                }
+            }
+
+            return placedCount;
+        }
+
+        private int GetRollCount(System.Random random)
+        {
+            int minRolls = Mathf.Clamp(minItemRolls, 0, maxItemRolls);
+            int maxRolls = Mathf.Max(minRolls, maxItemRolls);
+            return random.Next(minRolls, maxRolls + 1);
+        }
+
+        private static ItemInstance CreateItemInstance(
+            LootTableEntry entry,
+            System.Random random,
+            Dictionary<ItemData, int> generatedCounts)
+        {
+            if (entry?.itemData == null)
+            {
+                return null;
+            }
+
+            int alreadyGenerated = GetGeneratedCount(generatedCounts, entry.itemData);
+            int minQuantity = Mathf.Max(1, entry.minQuantity);
+            int maxQuantity = Mathf.Max(minQuantity, entry.maxQuantity);
+            int remainingQuantity = maxQuantity - alreadyGenerated;
+            if (remainingQuantity <= 0)
+            {
+                return null;
+            }
+
+            minQuantity = Mathf.Min(minQuantity, remainingQuantity);
+            maxQuantity = Mathf.Min(maxQuantity, remainingQuantity);
+            int quantity = random.Next(minQuantity, maxQuantity + 1);
+            return new ItemInstance(entry.itemData, quantity);
+        }
+
+        private static bool CanCreateMore(LootTableEntry entry, Dictionary<ItemData, int> generatedCounts)
+        {
+            if (entry?.itemData == null)
+            {
+                return false;
+            }
+
+            int maxQuantity = Mathf.Max(1, entry.maxQuantity);
+            return GetGeneratedCount(generatedCounts, entry.itemData) < maxQuantity;
+        }
+
+        private static int GetGeneratedCount(Dictionary<ItemData, int> generatedCounts, ItemData itemData)
+        {
+            return itemData != null && generatedCounts.TryGetValue(itemData, out int count) ? count : 0;
+        }
+
+        private static void AddGeneratedCount(Dictionary<ItemData, int> generatedCounts, ItemData itemData, int amount)
+        {
+            if (itemData == null || amount <= 0)
+            {
+                return;
+            }
+
+            generatedCounts[itemData] = GetGeneratedCount(generatedCounts, itemData) + amount;
+        }
+
+        private bool TryCreatePicker(out WeightedLootPicker picker)
+        {
+            picker = default;
+            if (lootTable == null || lootTable.Count == 0)
+            {
+                return false;
+            }
+
+            List<WeightedLootEntry> entries = new List<WeightedLootEntry>();
             float totalWeight = 0f;
             for (int i = 0; i < lootTable.Count; i++)
             {
@@ -75,31 +185,16 @@ namespace Systems.Loot
                 }
 
                 totalWeight += entry.frequency;
+                entries.Add(new WeightedLootEntry(entry, totalWeight));
             }
 
             if (totalWeight <= 0f)
             {
-                return null;
+                return false;
             }
 
-            double pick = random.NextDouble() * totalWeight;
-            float cumulative = 0f;
-            for (int i = 0; i < lootTable.Count; i++)
-            {
-                LootTableEntry entry = lootTable[i];
-                if (entry?.itemData == null || entry.frequency <= 0f)
-                {
-                    continue;
-                }
-
-                cumulative += entry.frequency;
-                if (pick <= cumulative)
-                {
-                    return entry;
-                }
-            }
-
-            return null;
+            picker = new WeightedLootPicker(entries, totalWeight);
+            return true;
         }
 
         private void OnValidate()
@@ -108,6 +203,7 @@ namespace Systems.Loot
             lootHeight = Mathf.Max(1, lootHeight);
             minItemRolls = Mathf.Max(0, minItemRolls);
             maxItemRolls = Mathf.Max(minItemRolls, maxItemRolls);
+            placementAttemptsPerRoll = Mathf.Max(1, placementAttemptsPerRoll);
 
             if (lootTable == null)
             {
@@ -152,6 +248,56 @@ namespace Systems.Loot
                     hash ^= value[i];
                     hash *= 16777619;
                 }
+            }
+        }
+
+        private readonly struct WeightedLootEntry
+        {
+            public readonly LootTableEntry Entry;
+            public readonly float CumulativeWeight;
+
+            public WeightedLootEntry(LootTableEntry entry, float cumulativeWeight)
+            {
+                Entry = entry;
+                CumulativeWeight = cumulativeWeight;
+            }
+        }
+
+        private readonly struct WeightedLootPicker
+        {
+            private readonly List<WeightedLootEntry> entries;
+            private readonly float totalWeight;
+
+            public WeightedLootPicker(List<WeightedLootEntry> entries, float totalWeight)
+            {
+                this.entries = entries;
+                this.totalWeight = totalWeight;
+            }
+
+            public LootTableEntry Pick(System.Random random)
+            {
+                if (entries == null || entries.Count == 0 || totalWeight <= 0f)
+                {
+                    return null;
+                }
+
+                double pick = random.NextDouble() * totalWeight;
+                int low = 0;
+                int high = entries.Count - 1;
+                while (low < high)
+                {
+                    int mid = low + ((high - low) / 2);
+                    if (pick <= entries[mid].CumulativeWeight)
+                    {
+                        high = mid;
+                    }
+                    else
+                    {
+                        low = mid + 1;
+                    }
+                }
+
+                return entries[low].Entry;
             }
         }
     }

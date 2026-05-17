@@ -5,6 +5,10 @@ using UnityEngine.Serialization;
 [RequireComponent(typeof(NetworkObject))]
 public class EnemySpawner : NetworkBehaviour
 {
+    private static readonly Color SpawnerGizmoColor = new Color(1f, 0.25f, 0.1f, 0.9f);
+    private static readonly Color SpawnPointGizmoColor = new Color(1f, 0.75f, 0.1f, 0.9f);
+    private static readonly Color SpawnLinkGizmoColor = new Color(1f, 0.6f, 0.1f, 0.35f);
+
     [Header("Spawn Settings")]
     [SerializeField] private NetworkPrefabRef enemyPrefab;
     [SerializeField] private Transform[] spawnPoints;
@@ -206,5 +210,35 @@ public class EnemySpawner : NetworkBehaviour
         position = selected.position;
         rotation = selected.rotation;
         return true;
+    }
+
+    private void OnDrawGizmos()
+    {
+        DrawSpawnGizmo(transform.position, transform.rotation, SpawnerGizmoColor, 2.2f);
+
+        if (spawnPoints == null || spawnPoints.Length == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < spawnPoints.Length; i++)
+        {
+            Transform spawnPoint = spawnPoints[i];
+            if (spawnPoint == null)
+            {
+                continue;
+            }
+
+            Gizmos.color = SpawnLinkGizmoColor;
+            Gizmos.DrawLine(transform.position, spawnPoint.position);
+            DrawSpawnGizmo(spawnPoint.position, spawnPoint.rotation, SpawnPointGizmoColor, 1.9f);
+        }
+    }
+
+    private static void DrawSpawnGizmo(Vector3 position, Quaternion rotation, Color color, float size)
+    {
+        Gizmos.color = color;
+        Gizmos.DrawWireSphere(position, size);
+        Gizmos.DrawSphere(position, size * 0.18f);
     }
 }

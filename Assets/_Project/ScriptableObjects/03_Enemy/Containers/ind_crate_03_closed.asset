@@ -18,11 +18,12 @@ MonoBehaviour:
   lootHeight: 18
   minItemRolls: 1
   maxItemRolls: 3
+  placementAttemptsPerRoll: 8
   lootTable:
   - itemData: {fileID: 11400000, guid: d1fcdd65d7f5da04ba602aadcc2befe6, type: 2}
     frequency: 10
     minQuantity: 1
-    maxQuantity: 1
+    maxQuantity: 2
   - itemData: {fileID: 11400000, guid: 7845d674af5ab67428f6299558611341, type: 2}
     frequency: 4
     minQuantity: 1

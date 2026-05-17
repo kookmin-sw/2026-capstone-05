@@ -16,30 +16,35 @@ MonoBehaviour:
   lootTitle: Fridge
   lootWidth: 9
   lootHeight: 18
-  minItemRolls: 2
+  minItemRolls: 3
   maxItemRolls: 6
+  placementAttemptsPerRoll: 8
   lootTable:
-  - itemData: {fileID: 11400000, guid: d1333002ff1438a46a8727ee102be9ca, type: 2}
+  - itemData: {fileID: 11400000, guid: 23205457c36c2564bab80ef3572bb484, type: 2}
     frequency: 10
     minQuantity: 1
-    maxQuantity: 2
-  - itemData: {fileID: 11400000, guid: 23205457c36c2564bab80ef3572bb484, type: 2}
-    frequency: 8
-    minQuantity: 1
     maxQuantity: 1
-  - itemData: {fileID: 11400000, guid: 735ef87ef74720b4d936410c8d06ac52, type: 2}
-    frequency: 6
-    minQuantity: 1
-    maxQuantity: 2
-  - itemData: {fileID: 11400000, guid: 1a02a01293dafa24b86d5ceb94e63492, type: 2}
-    frequency: 8
-    minQuantity: 1
-    maxQuantity: 2
-  - itemData: {fileID: 11400000, guid: 12540fc858566414394b4256b1b5a5d5, type: 2}
-    frequency: 6
+  - itemData: {fileID: 11400000, guid: d1333002ff1438a46a8727ee102be9ca, type: 2}
+    frequency: 10
     minQuantity: 1
     maxQuantity: 1
   - itemData: {fileID: 11400000, guid: 6165450589e5b784f8a1d5a28a93ebc8, type: 2}
     frequency: 10
     minQuantity: 1
-    maxQuantity: 3
+    maxQuantity: 2
+  - itemData: {fileID: 11400000, guid: 735ef87ef74720b4d936410c8d06ac52, type: 2}
+    frequency: 4
+    minQuantity: 1
+    maxQuantity: 2
+  - itemData: {fileID: 11400000, guid: 1a02a01293dafa24b86d5ceb94e63492, type: 2}
+    frequency: 7
+    minQuantity: 1
+    maxQuantity: 2
+  - itemData: {fileID: 11400000, guid: 12540fc858566414394b4256b1b5a5d5, type: 2}
+    frequency: 5
+    minQuantity: 1
+    maxQuantity: 1
+  - itemData: {fileID: 11400000, guid: b75b94312c483b24aa1839515f11064e, type: 2}
+    frequency: 3
+    minQuantity: 1
+    maxQuantity: 1

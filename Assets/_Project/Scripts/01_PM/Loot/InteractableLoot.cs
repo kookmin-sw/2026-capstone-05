@@ -96,10 +96,7 @@ namespace Systems.Loot
             bool canSeedLoot = LootNetworkSync.Instance.HasStateAuthority || PlayerNetworkSetup.IsOfflineTestMode;
             if (isEmpty && canSeedLoot && !LootSaveManager.HasLootSave(resolvedStorageId))
             {
-                foreach (ItemInstance item in lootConfiguration.RollItems(resolvedStorageId))
-                {
-                    model.TryAdd(item);
-                }
+                lootConfiguration.PopulateModel(model, resolvedStorageId);
 
                 LootNetworkSync.Instance.SubmitLootSnapshot(resolvedStorageId, 
                     LootGridSerializer.ToSaveData(resolvedStorageId, model));
