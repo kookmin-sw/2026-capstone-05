@@ -11478,7 +11478,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   enemyPrefab:
     RawGuidValue: cbf0981834bf2494d9405644b9a39e71
-  spawnPoints: []
   respawnDelaySeconds: 5
 --- !u!114 &1000361351
 MonoBehaviour:
@@ -11497,7 +11496,6 @@ MonoBehaviour:
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
-  - {fileID: 1000361350}
   - {fileID: 1000361353}
   ForceRemoteRenderTimeframe: 0
 --- !u!4 &1000361352

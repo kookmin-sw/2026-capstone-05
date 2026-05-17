@@ -362,6 +362,32 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         PatrolCenter = newCenter;
     }
 
+    public void ApplySpawnPose(Vector3 position, Quaternion rotation)
+    {
+        if (!EnsureRuntimeInitialized())
+            return;
+
+        PatrolCenter = position;
+
+        if (Agent != null && Agent.enabled && Agent.isOnNavMesh)
+        {
+            Agent.Warp(position);
+        }
+        else
+        {
+            transform.position = position;
+        }
+
+        transform.rotation = rotation;
+
+        if (isNetworkSpawned && HasStateAuthority)
+        {
+            NetworkPosition = transform.position;
+            NetworkRotation = transform.rotation;
+            NetworkCurrentInvestigationPosition = transform.position;
+        }
+    }
+
     public void SetCurrentInvestigationPosition(Vector3 position)
     {
         if (UsesLocalState)

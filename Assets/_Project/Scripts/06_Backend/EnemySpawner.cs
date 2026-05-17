@@ -2,44 +2,33 @@ using Fusion;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-[RequireComponent(typeof(NetworkObject))]
-public class EnemySpawner : NetworkBehaviour
+public class EnemySpawner : MonoBehaviour
 {
     private static readonly Color SpawnerGizmoColor = new Color(1f, 0.25f, 0.1f, 0.9f);
-    private static readonly Color SpawnPointGizmoColor = new Color(1f, 0.75f, 0.1f, 0.9f);
-    private static readonly Color SpawnLinkGizmoColor = new Color(1f, 0.6f, 0.1f, 0.35f);
 
     [Header("Spawn Settings")]
     [SerializeField] private NetworkPrefabRef enemyPrefab;
-    [SerializeField] private Transform[] spawnPoints;
     [FormerlySerializedAs("spawnIntervalSeconds")]
     [SerializeField, Min(0.1f)] private float respawnDelaySeconds = 5f;
 
-    [Networked] private TickTimer RespawnTimer { get; set; }
-
     private NetworkObject currentEnemy;
     private EnemyHealth currentEnemyHealth;
+    private NetworkRunner cachedRunner;
+    private float respawnAtTime = -1f;
     private bool wasRoundRunning;
 
-    public override void Spawned()
+    private void OnDisable()
     {
-        if (!HasStateAuthority)
-        {
-            return;
-        }
-
-        wasRoundRunning = IsRoundRunning();
-        RespawnTimer = TickTimer.None;
-
-        if (wasRoundRunning)
-        {
-            TrySpawnEnemy();
-        }
+        UnsubscribeFromCurrentEnemy();
+        currentEnemy = null;
+        wasRoundRunning = false;
+        respawnAtTime = -1f;
     }
 
-    public override void FixedUpdateNetwork()
+    private void Update()
     {
-        if (!HasStateAuthority)
+        NetworkRunner runner = GetStateAuthorityRunner();
+        if (runner == null)
         {
             return;
         }
@@ -49,18 +38,18 @@ public class EnemySpawner : NetworkBehaviour
         {
             if (wasRoundRunning)
             {
-                DespawnCurrentEnemy();
+                DespawnCurrentEnemy(runner);
             }
 
             wasRoundRunning = false;
-            RespawnTimer = TickTimer.None;
+            respawnAtTime = -1f;
             return;
         }
 
         if (!wasRoundRunning)
         {
             wasRoundRunning = true;
-            TrySpawnEnemy();
+            TrySpawnEnemy(runner);
             return;
         }
 
@@ -69,19 +58,12 @@ public class EnemySpawner : NetworkBehaviour
             return;
         }
 
-        if (!RespawnTimer.Expired(Runner))
+        if (respawnAtTime < 0f || Time.time < respawnAtTime)
         {
             return;
         }
 
-        TrySpawnEnemy();
-    }
-
-    public override void Despawned(NetworkRunner runner, bool hasState)
-    {
-        UnsubscribeFromCurrentEnemy();
-        currentEnemy = null;
-        wasRoundRunning = false;
+        TrySpawnEnemy(runner);
     }
 
     private bool HasLivingEnemy()
@@ -104,7 +86,7 @@ public class EnemySpawner : NetworkBehaviour
         return false;
     }
 
-    private void TrySpawnEnemy()
+    private void TrySpawnEnemy(NetworkRunner runner)
     {
         if (!TryGetSpawnTransform(out Vector3 position, out Quaternion rotation))
         {
@@ -112,12 +94,25 @@ public class EnemySpawner : NetworkBehaviour
             return;
         }
 
-        NetworkObject spawnedEnemy = Runner.Spawn(enemyPrefab, position, rotation, PlayerRef.None);
+        NetworkObject spawnedEnemy = runner.Spawn(
+            enemyPrefab,
+            position,
+            rotation,
+            PlayerRef.None,
+            onBeforeSpawned: (_, enemyObject) =>
+            {
+                if (enemyObject != null)
+                {
+                    ApplyEnemySpawnPose(enemyObject, position, rotation);
+                }
+            });
+
         if (spawnedEnemy != null)
         {
+            ApplyEnemySpawnPose(spawnedEnemy, position, rotation);
             currentEnemy = spawnedEnemy;
             SubscribeToEnemy(spawnedEnemy);
-            RespawnTimer = TickTimer.None;
+            respawnAtTime = -1f;
             return;
         }
 
@@ -165,14 +160,14 @@ public class EnemySpawner : NetworkBehaviour
 
     private void StartRespawnTimer()
     {
-        RespawnTimer = TickTimer.CreateFromSeconds(Runner, respawnDelaySeconds);
+        respawnAtTime = Time.time + respawnDelaySeconds;
     }
 
-    private void DespawnCurrentEnemy()
+    private void DespawnCurrentEnemy(NetworkRunner runner)
     {
-        if (currentEnemy != null && currentEnemy.IsValid && Runner != null)
+        if (currentEnemy != null && currentEnemy.IsValid && runner != null)
         {
-            Runner.Despawn(currentEnemy);
+            runner.Despawn(currentEnemy);
         }
 
         UnsubscribeFromCurrentEnemy();
@@ -195,44 +190,44 @@ public class EnemySpawner : NetworkBehaviour
             return false;
         }
 
-        if (spawnPoints == null || spawnPoints.Length == 0)
-        {
-            return true;
-        }
-
-        int index = Random.Range(0, spawnPoints.Length);
-        Transform selected = spawnPoints[index];
-        if (selected == null)
-        {
-            return true;
-        }
-
-        position = selected.position;
-        rotation = selected.rotation;
         return true;
+    }
+
+    private static void ApplyEnemySpawnPose(NetworkObject enemyObject, Vector3 position, Quaternion rotation)
+    {
+        enemyObject.transform.SetPositionAndRotation(position, rotation);
+
+        EnemyAI enemyAI = enemyObject.GetComponent<EnemyAI>();
+        if (enemyAI != null)
+        {
+            enemyAI.ApplySpawnPose(position, rotation);
+        }
+    }
+
+    private NetworkRunner GetStateAuthorityRunner()
+    {
+        if (cachedRunner != null && cachedRunner.IsRunning && cachedRunner.IsServer)
+        {
+            return cachedRunner;
+        }
+
+        NetworkRunner[] runners = FindObjectsByType<NetworkRunner>(FindObjectsSortMode.None);
+        foreach (NetworkRunner runner in runners)
+        {
+            if (runner != null && runner.IsRunning && runner.IsServer)
+            {
+                cachedRunner = runner;
+                return cachedRunner;
+            }
+        }
+
+        cachedRunner = null;
+        return null;
     }
 
     private void OnDrawGizmos()
     {
         DrawSpawnGizmo(transform.position, transform.rotation, SpawnerGizmoColor, 2.2f);
-
-        if (spawnPoints == null || spawnPoints.Length == 0)
-        {
-            return;
-        }
-
-        for (int i = 0; i < spawnPoints.Length; i++)
-        {
-            Transform spawnPoint = spawnPoints[i];
-            if (spawnPoint == null)
-            {
-                continue;
-            }
-
-            Gizmos.color = SpawnLinkGizmoColor;
-            Gizmos.DrawLine(transform.position, spawnPoint.position);
-            DrawSpawnGizmo(spawnPoint.position, spawnPoint.rotation, SpawnPointGizmoColor, 1.9f);
-        }
     }
 
     private static void DrawSpawnGizmo(Vector3 position, Quaternion rotation, Color color, float size)
