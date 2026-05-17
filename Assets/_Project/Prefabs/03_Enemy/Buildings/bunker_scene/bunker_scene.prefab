@@ -2221,7 +2221,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
-  lootConfiguration: {fileID: 0}
+  lootConfiguration: {fileID: 11400000, guid: 45d2d5baa658aac40bbeb6568102935c, type: 2}
   generatedStorageId: Loot_bddc7bce
 --- !u!1 &1227010495511919291 stripped
 GameObject:
@@ -3981,7 +3981,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
-  lootConfiguration: {fileID: 0}
+  lootConfiguration: {fileID: 11400000, guid: 45d2d5baa658aac40bbeb6568102935c, type: 2}
   generatedStorageId: Loot_44a0e4aa
 --- !u!1 &5619825634026953527 stripped
 GameObject:
@@ -4116,6 +4116,8 @@ MonoBehaviour:
   openAngle: 90
   rotationSpeed: 180
   panelLocalDirection: {x: -1, y: 0, z: 0}
+  navMeshObstacle: {fileID: 0}
+  manageNavMeshObstacle: 1
   openPrompt: "[E] \uC5F4\uAE30"
   closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
