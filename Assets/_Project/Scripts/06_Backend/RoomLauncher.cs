@@ -63,8 +63,10 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     private readonly Dictionary<int, UnityAction> _hostConfirmButtonActions = new();
     private readonly Dictionary<int, List<TMP_Text>> _hostSlotDateTmpTexts = new();
     private readonly Dictionary<int, List<TMP_Text>> _hostSlotDayTmpTexts = new();
+    private readonly Dictionary<int, List<TMP_Text>> _hostSlotCoinTmpTexts = new();
     private readonly Dictionary<int, List<Text>> _hostSlotDateLegacyTexts = new();
     private readonly Dictionary<int, List<Text>> _hostSlotDayLegacyTexts = new();
+    private readonly Dictionary<int, List<Text>> _hostSlotCoinLegacyTexts = new();
     private int _pendingHostSlot = -1;
     private bool _hostFlowBound;
     private TMP_InputField _roomCodeInput;
@@ -248,8 +250,10 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         _hostConfirmButtonActions.Clear();
         _hostSlotDateTmpTexts.Clear();
         _hostSlotDayTmpTexts.Clear();
+        _hostSlotCoinTmpTexts.Clear();
         _hostSlotDateLegacyTexts.Clear();
         _hostSlotDayLegacyTexts.Clear();
+        _hostSlotCoinLegacyTexts.Clear();
         _hostFlowBound = false;
 
         BindHostSlotUi(1, "Start Game Box1", "Gmae1 Start Box", "Game1 Start Box", "Start Box1");
@@ -299,12 +303,14 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
             {
                 if (ContainsAny(text.name, new[] { "Date" })) AddText(_hostSlotDateTmpTexts, slot, text);
                 else if (ContainsAny(text.name, new[] { "Day" })) AddText(_hostSlotDayTmpTexts, slot, text);
+                else if (ContainsAny(text.name, new[] { "Coin" })) AddText(_hostSlotCoinTmpTexts, slot, text);
             }
 
             foreach (Text text in container.GetComponentsInChildren<Text>(true))
             {
                 if (ContainsAny(text.name, new[] { "Date" })) AddText(_hostSlotDateLegacyTexts, slot, text);
                 else if (ContainsAny(text.name, new[] { "Day" })) AddText(_hostSlotDayLegacyTexts, slot, text);
+                else if (ContainsAny(text.name, new[] { "Coin" })) AddText(_hostSlotCoinLegacyTexts, slot, text);
             }
         }
     }
@@ -345,11 +351,15 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         for (int slot = 1; slot <= 3; slot++)
         {
             GetHostSaveSlotLabels(slot, out string dateLabel, out string dayLabel);
+            int gold = Systems.GridInventory.GridInventorySaveSystem.GetSavedGoldForSlot(slot);
+            string coinLabel = $"{gold} Coin";
 
             SetAllText(_hostSlotDateTmpTexts, slot, dateLabel);
             SetAllText(_hostSlotDayTmpTexts, slot, dayLabel);
+            SetAllText(_hostSlotCoinTmpTexts, slot, coinLabel);
             SetAllText(_hostSlotDateLegacyTexts, slot, dateLabel);
             SetAllText(_hostSlotDayLegacyTexts, slot, dayLabel);
+            SetAllText(_hostSlotCoinLegacyTexts, slot, coinLabel);
         }
     }
 
@@ -581,6 +591,10 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     private void StartHostGameForSlot(int slot)
     {
+        // 새 게임 시작 시 이전 세이브 데이터 초기화
+        Systems.GridInventory.GridInventorySaveSystem.ClearSaveForSlot(slot);
+        Systems.Loot.LootSaveManager.ClearSaveForSlot(slot);
+
         int roomCode = GenerateHostRoomCode();
         string normalizedCode = roomCode.ToString();
         string sessionName = ResolveSessionName(roomCode);

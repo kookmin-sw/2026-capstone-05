@@ -33,21 +33,14 @@ namespace Systems.GridInventory {
         IEnumerator Initialize() {
             yield return view.Initialize(Capacity, width);
 
-            view.OnDrop += HandleDrop;
-            view.OnDropToQuickslot += HandleDropToQuickslot;
+            view.OnRouteDropRequested += HandleRouteDropRequested;
             if (view is GridInventoryView invView) {
                 invView.OnSaveClicked += HandleSave;
-                invView.OnLoadClicked += HandleLoad;
             }
             model.OnModelChanged += HandleModelChanged;
             view.OnDragUpdate += HandleDragUpdate;
             view.OnDragEndEvent += HandleDragEnd;
 
-            // 정적 이벤트를 활용해 객체 생성(순서) 여부와 무관하게 즉시 구독
-            QuickslotUIController.OnItemDroppedGlobal -= HandleQuickslotItemDropped;
-            QuickslotUIController.OnItemDroppedGlobal += HandleQuickslotItemDropped;
-            
-            QuickslotUIController.OnItemDragUpdateGlobal -= HandleQuickslotItemDragUpdate;
             QuickslotUIController.OnItemDragUpdateGlobal += HandleQuickslotItemDragUpdate;
             
             QuickslotUIController.OnItemDragEndGlobal -= HandleDragEnd;
@@ -113,79 +106,64 @@ namespace Systems.GridInventory {
                             model.PlaceItem(baseTargetItem, baseTargetPos.x, baseTargetPos.y);
                         }
                     }
-                }
-            }
-        }
-
-        void HandleDropToQuickslot(GridItemView originalGridItemView, int quickslotIndex) {
-            ItemInstance sourceItem = originalGridItemView.ItemInst;
-            if (sourceItem == null) return;
-            
-            var sourcePos = model.GetItemAnchorPosition(sourceItem);
-            if (sourcePos.x == -1 || sourcePos.y == -1) return; // not in model somehow?
-            
-            // Check if there's already an item in quickslot
-            ItemInstance targetItem = QuickslotUIController.Instance.GetItem(quickslotIndex);
-            
-            if (targetItem == sourceItem) {
-                // If it's literally the same item, just reset view
-                originalGridItemView.style.visibility = UnityEngine.UIElements.Visibility.Visible;
-                return;
-            }
-            
-            // 겹쳤을 때 스택 합치기 (동일 아이템이고, 스택 가능할 때)
-            if (targetItem != null && targetItem.Data == sourceItem.Data && targetItem.Data.maxStackSize > 1) {
-                int total = sourceItem.currentStackCount + targetItem.currentStackCount;
-                if (total <= targetItem.Data.maxStackSize) {
-                    targetItem.currentStackCount = total;
-                    model.TryRemove(sourceItem); // 인벤토리의 소스 아이템 데이터 완벽히 파괴
-                    QuickslotUIController.Instance.RefreshSlotVisual(quickslotIndex);
-                    model.Items.Invoke();
                     return;
-                } else {
-                    originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation);
-                    targetItem.currentStackCount = targetItem.Data.maxStackSize;
-                    sourceItem.currentStackCount = total - targetItem.Data.maxStackSize;
-                    QuickslotUIController.Instance.RefreshSlotVisual(quickslotIndex);
-                    model.Items.Invoke();
-                    return; // 소스 아이템은 스택이 줄어든 채로 인벤토리에 남음
                 }
             }
-            
-            model.TryRemove(sourceItem); // Pull out from grid
-            
-            // 퀵슬롯에 새로 들어가는 아이템의 회전각은 0도로 초기화
-            ItemRotation oldRotation = sourceItem.currentRotation;
-            sourceItem.currentRotation = ItemRotation.Deg0;
-            
-            if (targetItem != null) {
-                // The Quickslot item needs to be unequipped/removed from quickslot before we put it in grid
-                QuickslotUIController.Instance.RemoveItemFromSlot(quickslotIndex); // remove first
+
+            // NEW: Check if it was dropped over the Loot UI
+            if (Systems.Loot.LootController.Instance != null && Systems.Loot.LootController.Instance.IsOpen) {
+                var lootSlot = Systems.Loot.LootController.Instance.GetLootGridSlotAtPosition(screenPosition);
+                if (lootSlot != null) {
+                    // The LootController will handle placing it in the chest via its own event listener.
+                    // We just need to return here so we don't drop it on the ground.
+                    return;
+                }
                 
-                if (model.CanPlaceItem(targetItem, sourcePos.x, sourcePos.y)) {
-                    model.PlaceItem(targetItem, sourcePos.x, sourcePos.y);
-                } else {
-                    // Try auto layout or fallback?
-                    if (!model.TryAdd(targetItem)) {
-                        // Undo everything if it completely fails to fit
-                        sourceItem.currentRotation = oldRotation;
-                        model.TryRemove(targetItem);
-                        model.PlaceItem(sourceItem, sourcePos.x, sourcePos.y);
-                        QuickslotUIController.Instance.SetItemInSlot(quickslotIndex, targetItem);
-                        return; // swap failed
+                // If it's over the Loot UI but not on a valid slot, we still shouldn't drop it on the ground.
+                // It will just snap back to the quickslot.
+                if (Systems.Loot.LootController.Instance.IsPositionInsideLootUI(screenPosition)) {
+                    QuickslotUIController.Instance.RefreshSlotVisual(sourceQuickslotIndex);
+                    return;
+                }
+            }
+
+            // If it reaches here, it means it was dropped outside of quickslots and outside of the grid.
+            // Drop it on the ground.
+            if (LocalPlayerReferenceResolver.TryGetLocalPlayer(out PlayerController player)) {
+                Vector3 dropPosition = player.transform.position;
+                
+                QuickslotUIController.Instance.RemoveItemFromSlot(sourceQuickslotIndex);
+
+                if (BackendPlayerNetworkSync.LocalInstance != null && BackendPlayerNetworkSync.LocalInstance.IsNetworkReady) {
+                    BackendPlayerNetworkSync.LocalInstance.RequestDropItem(item.Data.itemID, item.currentStackCount, dropPosition);
+                } else if (PlayerNetworkSetup.IsOfflineTestMode) {
+                    if (item.Data.pickupPrefab != null) {
+                        var obj = UnityEngine.Object.Instantiate(item.Data.pickupPrefab, dropPosition, Quaternion.identity);
+                        
+                        // 바닥 높이 보정 로직
+                        Collider col = obj.GetComponentInChildren<Collider>();
+                        if (col != null) {
+                            float bottomOffset = col.bounds.min.y - obj.transform.position.y;
+                            obj.transform.position = new Vector3(dropPosition.x, dropPosition.y - bottomOffset, dropPosition.z);
+                        }
+
+                        var pickup = obj.GetComponent<ItemPickup>();
+                        if (pickup != null) {
+                            pickup.itemInstance = new ItemInstance(item.Data, item.currentStackCount);
+                        }
                     }
                 }
             }
-            
-            // Success, place sourceItem into quickslot
-            QuickslotUIController.Instance.SetItemInSlot(quickslotIndex, sourceItem);
-            
-            // We trigger model update just in case
-            model.Items.Invoke();
         }
+
 
         void HandleDragEnd() {
             view.ResetAllSlotColors();
+        }
+
+        void HandleRouteDropRequested(ItemInstance item, Vector2 position) {
+            DragSource source = view is GridInventoryView ? DragSource.Inventory : DragSource.Loot;
+            GlobalDragDropRouter.ProcessDrop(item, source, -1, position, model);
         }
 
         void HandleQuickslotItemDragUpdate(ItemInstance sourceItem, Vector2 screenPosition) {
@@ -378,19 +356,14 @@ namespace Systems.GridInventory {
             }
         }
 
+        // 테스트용 라운드 시간 단축 버튼으로 사용
         void HandleSave() {
-            if (PlayerNetworkSetup.IsOfflineTestMode) {
-                // 싱글플레이어 오프라인 모드에서는 로컬 저장
-                GridInventorySaveSystem.SaveInventory(model);
-                if (Systems.Loot.LootNetworkSync.Instance != null) {
-                    Systems.Loot.LootNetworkSync.Instance.SaveAllLoots();
-                }
-            } else if (BackendPlayerNetworkSync.LocalInstance != null) {
-                // 멀티플레이어 모드에서는 호스트가 전체 저장
-                BackendPlayerNetworkSync.LocalInstance.HostInitiateSaveAll();
+            if (BackendRoundManager.Instance != null) {
+                BackendRoundManager.Instance.ForceEndRoundSoon();
             }
         }
 
+        /* 수동 저장/로드 주석 처리 (라운드 단위 자동 저장으로 변경)
         void HandleLoad() {
             if (PlayerNetworkSetup.IsOfflineTestMode) {
                 // 싱글플레이어 오프라인 모드에서는 로컬 불러오기
@@ -401,127 +374,11 @@ namespace Systems.GridInventory {
             }
             RefreshView();
         }
+        */
 
         readonly Dictionary<ItemInstance, GridItemView> itemViews = new Dictionary<ItemInstance, GridItemView>();
 
-        public Action<ItemInstance, int, int, int, int, int> OnRequestInternalMove; // item, oldX, oldY, newX, newY, newRotation
 
-        void HandleDrop(GridItemView originalGridItemView, GridSlot closestGridSlot) {
-            ItemInstance sourceItem = originalGridItemView.ItemInst;
-            if (sourceItem == null) return;
-
-            var sourcePos = model.GetItemAnchorPosition(sourceItem);
-            if (sourcePos.x == -1 || sourcePos.y == -1) return;
-            
-            var targetCoords = model.GetCoordinates(closestGridSlot.Index);
-            var aOld = sourcePos;
-            var aNew = new Vector2Int(targetCoords.x, targetCoords.y);
-
-            // 1. Remove sourceItem from grid momentarily for collision check
-            model.TryRemove(sourceItem);
-
-            // 2. Discover all overlapping items at the new position
-            overlappingItems.Clear();
-            var positions = sourceItem.Data.gridShape.GetRotatedPositions(sourceItem.currentRotation);
-            bool outOfBounds = false;
-            
-            foreach (var pos in positions) {
-                int checkX = aNew.x + pos.x;
-                int checkY = aNew.y + pos.y;
-                
-                if (checkX < 0 || checkY < 0 || checkX >= width || checkY >= height) {
-                    outOfBounds = true;
-                    break;
-                }
-                
-                var foundItem = model.Get(checkX, checkY);
-                if (foundItem != null) {
-                    overlappingItems.Add(foundItem);
-                }
-            }
-
-            if (outOfBounds) {
-                originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation);
-                model.PlaceItem(sourceItem, aOld.x, aOld.y);
-                return;
-            }
-
-            if (overlappingItems.Count == 0) {
-                // Free space!
-                model.PlaceItem(sourceItem, aNew.x, aNew.y);
-                if (OnRequestInternalMove != null) {
-                    OnRequestInternalMove.Invoke(sourceItem, aOld.x, aOld.y, aNew.x, aNew.y, (int)sourceItem.currentRotation);
-                }
-                return;
-            }
-
-            if (overlappingItems.Count == 1) {
-                var targetItem = GetSingleItem(overlappingItems);
-                
-                // Stack Combine logic
-                if (sourceItem.Data == targetItem.Data && targetItem.Data.maxStackSize > 1) {
-                    int total = sourceItem.currentStackCount + targetItem.currentStackCount;
-                    if (total <= targetItem.Data.maxStackSize) {
-                        targetItem.currentStackCount = total;
-                        model.Items.Invoke();
-                    } else {
-                        originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation); 
-                        targetItem.currentStackCount = targetItem.Data.maxStackSize;
-                        sourceItem.currentStackCount = total - targetItem.Data.maxStackSize;
-                        model.PlaceItem(sourceItem, aOld.x, aOld.y); // Return remaining to original
-                    }
-                    if (OnRequestInternalMove != null) {
-                        OnRequestInternalMove.Invoke(sourceItem, aOld.x, aOld.y, aNew.x, aNew.y, (int)sourceItem.currentRotation);
-                    }
-                    return;
-                }
-                
-                // 1:1 Swap Logic
-                var delta = aNew - new Vector2Int(aOld.x, aOld.y);
-                var bOld = model.GetItemAnchorPosition(targetItem);
-                var bNew = new Vector2Int(bOld.x - delta.x, bOld.y - delta.y);
-                
-                // Safely check if we can place BOTH items without removing targetItem yet!
-                // aNew might overlap with targetItem's old position, so we ignore targetItem.
-                // bNew might overlap with targetItem's old position, so we ignore targetItem.
-                // sourceItem is already removed from grid, so it won't block anything.
-                bool canPlaceA = model.CanPlaceItem(sourceItem, aNew.x, aNew.y, targetItem);
-                bool canPlaceB = model.CanPlaceItem(targetItem, bNew.x, bNew.y, targetItem);
-                
-                // Intersect check for swap overlapping each other at their new positions
-                bool overlapEachOther = false;
-                var aPositions = sourceItem.Data.gridShape.GetRotatedPositions(sourceItem.currentRotation);
-                var bPositionsTarget = targetItem.Data.gridShape.GetRotatedPositions(targetItem.currentRotation);
-                foreach (var a in aPositions) {
-                    var absA = new Vector2Int(aNew.x + a.x, aNew.y + a.y);
-                    foreach (var b in bPositionsTarget) {
-                        var absB = new Vector2Int(bNew.x + b.x, bNew.y + b.y);
-                        if (absA == absB) {
-                            overlapEachOther = true;
-                            break;
-                        }
-                    }
-                    if (overlapEachOther) break;
-                }
-                
-                if (!overlapEachOther && canPlaceA && canPlaceB) {
-                    model.TryRemove(targetItem); // Remove target only if successful
-                    model.PlaceItem(sourceItem, aNew.x, aNew.y);
-                    model.PlaceItem(targetItem, bNew.x, bNew.y);
-                    if (OnRequestInternalMove != null) {
-                        OnRequestInternalMove.Invoke(sourceItem, aOld.x, aOld.y, aNew.x, aNew.y, (int)sourceItem.currentRotation);
-                    }
-                } else {
-                    originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation);
-                    model.PlaceItem(sourceItem, aOld.x, aOld.y); // Revert source item
-                }
-                return;
-            }
-
-            // More than 1 item overlapping = fail: rollback
-            originalGridItemView.RevertRotation(originalGridItemView.OriginalRotation);
-            model.PlaceItem(sourceItem, aOld.x, aOld.y);
-        }
 
         /// <summary>Inventory grid drag split: drops onto a quickslot (empty or stack merge).</summary>
         public bool TryConsumeGridSplitToQuickslot(GridItemView itemView, Vector2 screenPos) {
@@ -795,6 +652,103 @@ namespace Systems.GridInventory {
                 ExecuteSplitMove(itemView, closestGridSlot, qty, onApplied));
         }
 
+        public void ReceiveDrop(ItemInstance item, DragSource source, int sourceIndex, GridSlot targetSlot, GridInventoryModel sourceModel)
+        {
+            var targetCoords = model.GetCoordinates(targetSlot.Index);
+            var baseTargetItem = model.Get(targetCoords.x, targetCoords.y);
+
+            if (baseTargetItem == item)
+            {
+                GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
+                return;
+            }
+
+            // 겹쳤을 때 스택 합치기 로직
+            if (baseTargetItem != null && baseTargetItem.Data == item.Data && item.Data.maxStackSize > 1)
+            {
+                int total = item.currentStackCount + baseTargetItem.currentStackCount;
+                if (total <= item.Data.maxStackSize)
+                {
+                    baseTargetItem.currentStackCount = total;
+                    if (source == DragSource.Quickslot) QuickslotUIController.Instance.RemoveItemFromSlot(sourceIndex);
+                    else if (sourceModel != null) sourceModel.TryRemove(item);
+                    model.Items.Invoke();
+                    return;
+                }
+                else
+                {
+                    baseTargetItem.currentStackCount = item.Data.maxStackSize;
+                    item.currentStackCount = total - item.Data.maxStackSize;
+                    if (source == DragSource.Quickslot) QuickslotUIController.Instance.RefreshSlotVisual(sourceIndex);
+                    else if (sourceModel != null) sourceModel.Items.Invoke();
+                    model.Items.Invoke();
+                    return;
+                }
+            }
+
+            // Simple logic:
+            if (baseTargetItem == null)
+            {
+                if (model.CanPlaceItem(item, targetCoords.x, targetCoords.y))
+                {
+                    if (source == DragSource.Quickslot) QuickslotUIController.Instance.RemoveItemFromSlot(sourceIndex);
+                    else if (sourceModel != null) sourceModel.TryRemove(item);
+                    model.PlaceItem(item, targetCoords.x, targetCoords.y);
+                }
+                else
+                {
+                    GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
+                }
+            }
+            else
+            {
+                // For swapping, figure out its start pos
+                var baseTargetPos = model.GetItemAnchorPosition(baseTargetItem);
+                model.TryRemove(baseTargetItem); // Try taking out the grid item
+
+                if (model.CanPlaceItem(item, targetCoords.x, targetCoords.y))
+                {
+                    if (source == DragSource.Quickslot) QuickslotUIController.Instance.RemoveItemFromSlot(sourceIndex);
+                    else if (sourceModel != null) sourceModel.TryRemove(item);
+                    
+                    model.PlaceItem(item, targetCoords.x, targetCoords.y);
+
+                    // 퀵슬롯에 들어가는 아이템의 회전각은 0도로 초기화
+                    baseTargetItem.currentRotation = ItemRotation.Deg0;
+                    
+                    if (source == DragSource.Quickslot)
+                    {
+                        QuickslotUIController.Instance.SetItemInSlot(sourceIndex, baseTargetItem);
+                    }
+                    else if (sourceModel != null)
+                    {
+                        // Swap with another grid
+                        var sourceOldPos = sourceModel.GetItemAnchorPosition(item);
+                        if (sourceOldPos.x != -1 && sourceModel.CanPlaceItem(baseTargetItem, sourceOldPos.x, sourceOldPos.y))
+                        {
+                            sourceModel.PlaceItem(baseTargetItem, sourceOldPos.x, sourceOldPos.y);
+                        }
+                        else
+                        {
+                            // If it doesn't fit in the old spot, we might need a more complex fallback.
+                            // For now, try auto-add or drop on ground.
+                            if (!sourceModel.TryAdd(baseTargetItem))
+                            {
+                                // Fallback: drop on ground
+                                GlobalDragDropRouter.ProcessDrop(baseTargetItem, DragSource.Inventory, -1, Vector2.zero, null); // Force drop
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    // Revert taking out the grid item
+                    model.PlaceItem(baseTargetItem, baseTargetPos.x, baseTargetPos.y);
+                    GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
+                }
+            }
+        }
+
         void ExecuteSplitMove(GridItemView originalGridItemView, GridSlot closestGridSlot, int quantity,
             Action onApplied = null) {
             ItemInstance sourceItem = originalGridItemView.ItemInst;
@@ -848,10 +802,6 @@ namespace Systems.GridInventory {
                 model.PlaceItem(sourceItem, aOld.x, aOld.y);
                 model.PlaceItem(placed, aNew.x, aNew.y);
                 model.Items.Invoke();
-                if (OnRequestInternalMove != null) {
-                    OnRequestInternalMove.Invoke(placed, aOld.x, aOld.y, aNew.x, aNew.y,
-                        (int)placed.currentRotation);
-                }
 
                 onApplied?.Invoke();
                 return;
@@ -879,10 +829,6 @@ namespace Systems.GridInventory {
             model.PlaceItem(sourceItem, aOld.x, aOld.y);
             model.Items.Invoke();
 
-            if (OnRequestInternalMove != null) {
-                OnRequestInternalMove.Invoke(sourceItem, aOld.x, aOld.y, aNew.x, aNew.y,
-                    (int)sourceItem.currentRotation);
-            }
 
             onApplied?.Invoke();
         }

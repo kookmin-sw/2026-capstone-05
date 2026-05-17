@@ -40,6 +40,7 @@ namespace Systems.Loot
 
         private readonly Dictionary<string, GridInventoryModel> modelsById = new Dictionary<string, GridInventoryModel>();
         private readonly HashSet<string> dirtyLootIds = new HashSet<string>();
+        private readonly HashSet<string> baseStorageIds = new HashSet<string>();
         private readonly Dictionary<int, IncomingPayload> incomingPayloads = new Dictionary<int, IncomingPayload>();
         private int outboundSequence;
 
@@ -607,7 +608,7 @@ namespace Systems.Loot
             List<string> ids = new List<string>(modelsById.Keys);
             foreach (string lootId in ids)
             {
-                if (modelsById.TryGetValue(lootId, out GridInventoryModel model))
+                if (baseStorageIds.Contains(lootId) && modelsById.TryGetValue(lootId, out GridInventoryModel model))
                 {
                     LootSaveData data = LootSaveManager.LoadLoot(lootId, model.Width, model.Height);
                     LootGridSerializer.ApplyToModel(data, model);
@@ -626,6 +627,11 @@ namespace Systems.Loot
 
             foreach (string lootId in new List<string>(dirtyLootIds))
             {
+                if (!baseStorageIds.Contains(lootId))
+                {
+                    continue;
+                }
+
                 if (!modelsById.TryGetValue(lootId, out GridInventoryModel model))
                 {
                     continue;
@@ -764,6 +770,10 @@ namespace Systems.Loot
                 if (loot != null && loot.HasConfiguration)
                 {
                     GetOrCreateModel(loot.StorageId, loot.Width, loot.Height);
+                    if (loot.IsBaseStorage)
+                    {
+                        baseStorageIds.Add(loot.StorageId);
+                    }
                 }
             }
         }

@@ -110,20 +110,25 @@ namespace Systems.GridInventory {
             ghostIcon.style.visibility = Visibility.Hidden;
             ghostIcon.pickingMode = PickingMode.Ignore;
             
+            // 테스트용 라운드 강제 종료 버튼 복구 (Load 버튼은 숨김 유지)
             var btnSave = inventory.Q<Button>(name: "btn-save");
-            var btnLoad = inventory.Q<Button>(name: "btn-load");
+            // var btnLoad = inventory.Q<Button>(name: "btn-load");
 
             UpdateSaveLoadButtonsVisibility();
 
             if (btnSave != null) {
+                btnSave.text = "Round End (Test)"; // 버튼 텍스트 변경
                 btnSave.clicked -= HandleSaveClicked;
                 btnSave.clicked += HandleSaveClicked;
             }
 
+            /*
             if (btnLoad != null) {
-                btnLoad.clicked -= HandleLoadClicked;
-                btnLoad.clicked += HandleLoadClicked;
+                btnLoad.style.display = DisplayStyle.None; // Load 버튼은 강제로 숨김
+                // btnLoad.clicked -= HandleLoadClicked;
+                // btnLoad.clicked += HandleLoadClicked;
             }
+            */
 
             // 인벤토리 창 게임 시작 시 안 보이도록 숨기기
             container.style.display = DisplayStyle.None;
@@ -150,7 +155,7 @@ namespace Systems.GridInventory {
             IsAnyInventoryOpen = true;
             ApplyStorageLayout();
             
-            UpdateSaveLoadButtonsVisibility();
+            UpdateSaveLoadButtonsVisibility(); // 테스트용 버튼 가시성 업데이트 복구
 
             UnityEngine.Cursor.lockState = CursorLockMode.None;
             UnityEngine.Cursor.visible = true;
@@ -173,6 +178,7 @@ namespace Systems.GridInventory {
             IsAnyInventoryOpen = false;
             ResetStorageLayout();
         }
+
 
         protected override void Update() {
             base.Update();
@@ -274,12 +280,14 @@ namespace Systems.GridInventory {
             if (inventory == null) return;
             
             var btnSave = inventory.Q<Button>(name: "btn-save");
-            var btnLoad = inventory.Q<Button>(name: "btn-load");
+            // var btnLoad = inventory.Q<Button>(name: "btn-load");
             
+            // 로드 버튼은 사용하지 않으므로 항상 숨김
+            // if (btnLoad != null) btnLoad.style.display = DisplayStyle.None;
+
             if (PlayerNetworkSetup.IsOfflineTestMode)
             {
                 if (btnSave != null) btnSave.style.display = DisplayStyle.Flex;
-                if (btnLoad != null) btnLoad.style.display = DisplayStyle.Flex;
             }
             else
             {
@@ -287,12 +295,10 @@ namespace Systems.GridInventory {
                 if (isHost)
                 {
                     if (btnSave != null) btnSave.style.display = DisplayStyle.Flex;
-                    if (btnLoad != null) btnLoad.style.display = DisplayStyle.Flex;
                 }
                 else
                 {
                     if (btnSave != null) btnSave.style.display = DisplayStyle.None;
-                    if (btnLoad != null) btnLoad.style.display = DisplayStyle.None;
                 }
             }
         }

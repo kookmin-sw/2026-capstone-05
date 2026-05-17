@@ -84,6 +84,21 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
             NetworkIsCrouching = false;
             SyncConditionSnapshot();
             ApplyEquippedItemNetworkState(_playerEquipment != null ? _playerEquipment.CurrentItemInstance : null);
+
+            // 호스트 본인의 인벤토리 로드 (로컬 기준)
+            if (HasInputAuthority)
+            {
+                if (Systems.GridInventory.GridInventory.Instance != null && Systems.GridInventory.GridInventory.Instance.Controller != null)
+                {
+                    Systems.GridInventory.GridInventorySaveSystem.LoadInventory(Systems.GridInventory.GridInventory.Instance.Controller.Model);
+                }
+            }
+        }
+        else if (HasInputAuthority)
+        {
+            // 클라이언트가 스폰되면 호스트에게 자신의 인벤토리를 요청
+            string myUserId = AuthSession.IsLoggedIn ? AuthSession.CurrentUserId : "1";
+            RpcRequestMyInventoryLoad(myUserId);
         }
     }
 
@@ -307,6 +322,51 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         }
 
         RpcRequestNoise((int)noiseType);
+    }
+
+    public void RequestDropItem(string itemId, int stackCount, Vector3 position)
+    {
+        if (HasStateAuthority)
+        {
+            RpcSpawnDroppedItem(itemId, stackCount, position);
+            return;
+        }
+
+        RpcRequestDropItem(itemId, stackCount, position);
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcRequestDropItem(NetworkString<_64> itemId, int stackCount, Vector3 position)
+    {
+        // 호스트에서 검증 (필요하다면) 후 전체 클라이언트에게 스폰 명령
+        RpcSpawnDroppedItem(itemId, stackCount, position);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcSpawnDroppedItem(NetworkString<_64> itemId, int stackCount, Vector3 position)
+    {
+        string idStr = itemId.ToString();
+        ItemData itemData = ItemDataRegistry.Find(idStr);
+        if (itemData == null || itemData.pickupPrefab == null)
+        {
+            Debug.LogWarning($"[BackendPlayerNetworkSync] Cannot spawn dropped item. ItemData or prefab missing for: {idStr}");
+            return;
+        }
+
+        var obj = Instantiate(itemData.pickupPrefab, position, Quaternion.identity);
+        
+        // 바닥 높이 보정 로직
+        Collider col = obj.GetComponentInChildren<Collider>();
+        if (col != null) {
+            float bottomOffset = col.bounds.min.y - obj.transform.position.y;
+            obj.transform.position = new Vector3(position.x, position.y - bottomOffset, position.z);
+        }
+
+        var pickup = obj.GetComponent<ItemPickup>();
+        if (pickup != null)
+        {
+            pickup.itemInstance = new ItemInstance(itemData, stackCount);
+        }
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
@@ -546,11 +606,30 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         // Client collects its inventory data
         if (Systems.GridInventory.GridInventory.Instance != null && Systems.GridInventory.GridInventory.Instance.Controller != null)
         {
-            Systems.GridInventory.InventorySaveData data = Systems.GridInventory.GridInventorySaveSystem.GetSaveData(Systems.GridInventory.GridInventory.Instance.Controller.Model);
-            string json = JsonUtility.ToJson(data);
-            
-            // Send back to Host
-            RpcSendInventoryDataToHost(json);
+            if (HasStateAuthority)
+            {
+                // 호스트 본인은 로컬 파일에 직접 저장
+                Systems.GridInventory.GridInventorySaveSystem.SaveInventory(Systems.GridInventory.GridInventory.Instance.Controller.Model);
+            }
+            else
+            {
+                // 클라이언트는 호스트에게 전송하여 계정 기반으로 저장
+                Systems.GridInventory.InventorySaveData data = Systems.GridInventory.GridInventorySaveSystem.GetSaveData(Systems.GridInventory.GridInventory.Instance.Controller.Model);
+                string json = JsonUtility.ToJson(data);
+                string myUserId = AuthSession.IsLoggedIn ? AuthSession.CurrentUserId : "1";
+                RpcSendInventoryDataToHost(myUserId, json);
+            }
+        }
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    public void RpcRequestMyInventoryLoad(string userId)
+    {
+        // 호스트가 요청을 받고 디스크에서 읽어서 돌려줌
+        string json = Systems.GridInventory.GridInventorySaveSystem.LoadInventoryDataFromDisk(userId);
+        if (!string.IsNullOrEmpty(json))
+        {
+            RpcReceiveInventoryLoad(json);
         }
     }
 
@@ -569,11 +648,10 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
     // --- CLIENT to HOST ---
     
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    public void RpcSendInventoryDataToHost(string json)
+    public void RpcSendInventoryDataToHost(string userId, string json)
     {
         // Host saves it to disk per player
-        string playerId = Object.InputAuthority.PlayerId.ToString();
-        Systems.GridInventory.GridInventorySaveSystem.SaveInventoryDataToDisk(playerId, json);
+        Systems.GridInventory.GridInventorySaveSystem.SaveInventoryDataToDisk(userId, json);
     }
 
     // --- GOLD SYNC ---
@@ -635,14 +713,14 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
     {
         if (!HasStateAuthority) return;
 
-        foreach (var sync in FindObjectsByType<BackendPlayerNetworkSync>(FindObjectsSortMode.None))
+        // HostInitiateLoadAll은 이제 호스트가 각 클라이언트의 인벤토리를 강제로 로드시키는 용도로 사용되지 않습니다.
+        // 각 클라이언트가 스폰될 때 RpcRequestMyInventoryLoad를 통해 자신의 인벤토리를 요청하도록 변경되었습니다.
+        // 호스트 본인의 인벤토리만 다시 로드합니다.
+        if (HasInputAuthority)
         {
-            string playerId = sync.Object.InputAuthority.PlayerId.ToString();
-            string json = Systems.GridInventory.GridInventorySaveSystem.LoadInventoryDataFromDisk(playerId);
-            
-            if (!string.IsNullOrEmpty(json))
+            if (Systems.GridInventory.GridInventory.Instance != null && Systems.GridInventory.GridInventory.Instance.Controller != null)
             {
-                sync.RpcReceiveInventoryLoad(json);
+                Systems.GridInventory.GridInventorySaveSystem.LoadInventory(Systems.GridInventory.GridInventory.Instance.Controller.Model);
             }
         }
     }

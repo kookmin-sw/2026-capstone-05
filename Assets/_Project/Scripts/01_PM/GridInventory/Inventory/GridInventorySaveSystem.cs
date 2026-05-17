@@ -33,14 +33,18 @@ namespace Systems.GridInventory {
 
     public class GridInventorySaveSystem
     {
+        private const string HostSelectedSlotPrefKey = "HostSaveSlot";
+
         private static string GetSavePath()
         {
-            return Path.Combine(Application.persistentDataPath, "GridInventory", "player_inventory_items.json");
+            int slot = Mathf.Clamp(PlayerPrefs.GetInt(HostSelectedSlotPrefKey, 1), 1, 3);
+            return Path.Combine(Application.persistentDataPath, "GridInventory", $"slot_{slot}", "player_inventory_items.json");
         }
 
         private static string GetLegacySavePath()
         {
-            return Path.Combine(Application.dataPath, "_Project", "Json", "01_PM", "GridInventory", "player_inventory_items.json");
+            int slot = Mathf.Clamp(PlayerPrefs.GetInt(HostSelectedSlotPrefKey, 1), 1, 3);
+            return Path.Combine(Application.dataPath, "_Project", "Json", "01_PM", "GridInventory", $"slot_{slot}", "player_inventory_items.json");
         }
 
         private static string GetReadableSavePath()
@@ -145,7 +149,8 @@ namespace Systems.GridInventory {
 
         public static void SaveInventoryDataToDisk(string playerId, string json)
         {
-            string savePath = Path.Combine(Application.persistentDataPath, "GridInventory", $"player_inventory_{playerId}.json");
+            int slot = Mathf.Clamp(PlayerPrefs.GetInt(HostSelectedSlotPrefKey, 1), 1, 3);
+            string savePath = Path.Combine(Application.persistentDataPath, "GridInventory", $"slot_{slot}", $"player_inventory_{playerId}.json");
             Directory.CreateDirectory(Path.GetDirectoryName(savePath));
             File.WriteAllText(savePath, json);
             Debug.Log($"[Inventory] Saved player {playerId} to: {savePath}");
@@ -153,12 +158,51 @@ namespace Systems.GridInventory {
 
         public static string LoadInventoryDataFromDisk(string playerId)
         {
-            string savePath = Path.Combine(Application.persistentDataPath, "GridInventory", $"player_inventory_{playerId}.json");
+            int slot = Mathf.Clamp(PlayerPrefs.GetInt(HostSelectedSlotPrefKey, 1), 1, 3);
+            string savePath = Path.Combine(Application.persistentDataPath, "GridInventory", $"slot_{slot}", $"player_inventory_{playerId}.json");
             if (File.Exists(savePath))
             {
                 return File.ReadAllText(savePath);
             }
             return null;
+        }
+
+        public static int GetSavedGoldForSlot(int slot)
+        {
+            int safeSlot = Mathf.Clamp(slot, 1, 3);
+            string path = Path.Combine(Application.persistentDataPath, "GridInventory", $"slot_{safeSlot}", "player_inventory_items.json");
+
+            if (File.Exists(path))
+            {
+                try 
+                {
+                    string json = File.ReadAllText(path);
+                    InventorySaveData data = JsonUtility.FromJson<InventorySaveData>(json);
+                    if (data != null && data.gold >= 0)
+                    {
+                        return data.gold;
+                    }
+                }
+                catch { }
+            }
+            return 0;
+        }
+
+        public static void ClearSaveForSlot(int slot)
+        {
+            int safeSlot = Mathf.Clamp(slot, 1, 3);
+            string dirPath = Path.Combine(Application.persistentDataPath, "GridInventory", $"slot_{safeSlot}");
+            if (Directory.Exists(dirPath))
+            {
+                try
+                {
+                    Directory.Delete(dirPath, true);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[Inventory] Failed to clear save for slot {safeSlot}: {e.Message}");
+                }
+            }
         }
 
         public static void LoadInventory(GridInventoryModel model)

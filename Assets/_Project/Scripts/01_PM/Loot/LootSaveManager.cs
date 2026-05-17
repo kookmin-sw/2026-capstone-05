@@ -75,6 +75,23 @@ namespace Systems.Loot
             };
         }
 
+        public static void ClearSaveForSlot(int slot)
+        {
+            int safeSlot = Mathf.Clamp(slot, 1, 3);
+            string dirPath = Path.Combine(Application.persistentDataPath, "LootSystem", $"slot_{safeSlot}");
+            if (Directory.Exists(dirPath))
+            {
+                try
+                {
+                    Directory.Delete(dirPath, true);
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"[LootSystem] Failed to clear save for slot {safeSlot}: {e.Message}");
+                }
+            }
+        }
+
         private static string GetLootPath(string lootId)
         {
             int slot = Mathf.Clamp(PlayerPrefs.GetInt(HostSelectedSlotPrefKey, 1), 1, 3);
