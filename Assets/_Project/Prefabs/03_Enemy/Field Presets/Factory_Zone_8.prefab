@@ -31,8 +31,6 @@ Transform:
   m_Children:
   - {fileID: 4440859720686710602}
   - {fileID: 1424315300936337147}
-  - {fileID: 3612729048414869632}
-  - {fileID: 1381314654282564899}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2377038190615593398
@@ -201,6 +199,8 @@ Transform:
   - {fileID: 7424634229379950975}
   - {fileID: 766191997648260604}
   - {fileID: 1504138544816742759}
+  - {fileID: 3612729048414869632}
+  - {fileID: 1381314654282564899}
   m_Father: {fileID: 7100995799657309038}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &84110689898710107
@@ -1903,15 +1903,15 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 7100995799657309038}
+    m_TransformParent: {fileID: 4440859720686710602}
     m_Modifications:
     - target: {fileID: -8456302617500076231, guid: 0b12e1363ff19984a8a932688ed0e0cd, type: 3}
       propertyPath: lootConfiguration
       value: 
-      objectReference: {fileID: 11400000, guid: 667a6bb1af9815344ad05b1a4db44341, type: 2}
+      objectReference: {fileID: 11400000, guid: 6f7a829c65024504c83ebd187322bb82, type: 2}
     - target: {fileID: 1602677787807076242, guid: 0b12e1363ff19984a8a932688ed0e0cd, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -6.817
+      value: -6.8170013
       objectReference: {fileID: 0}
     - target: {fileID: 1602677787807076242, guid: 0b12e1363ff19984a8a932688ed0e0cd, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1919,7 +1919,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1602677787807076242, guid: 0b12e1363ff19984a8a932688ed0e0cd, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 21.133644
+      value: 21.133636
       objectReference: {fileID: 0}
     - target: {fileID: 1602677787807076242, guid: 0b12e1363ff19984a8a932688ed0e0cd, type: 3}
       propertyPath: m_LocalRotation.w
@@ -3993,19 +3993,27 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 7100995799657309038}
+    m_TransformParent: {fileID: 4440859720686710602}
     m_Modifications:
     - target: {fileID: 1735403993124491051, guid: 0113998d35ca4804d9b490f962f07f51, type: 3}
       propertyPath: m_Name
       value: IronScrapes
       objectReference: {fileID: 0}
     - target: {fileID: 8964846923913027374, guid: 0113998d35ca4804d9b490f962f07f51, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.7500001
+      objectReference: {fileID: 0}
+    - target: {fileID: 8964846923913027374, guid: 0113998d35ca4804d9b490f962f07f51, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.7500001
+      objectReference: {fileID: 0}
+    - target: {fileID: 8964846923913027374, guid: 0113998d35ca4804d9b490f962f07f51, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 3.387042
+      value: 3.3870392
       objectReference: {fileID: 0}
     - target: {fileID: 8964846923913027374, guid: 0113998d35ca4804d9b490f962f07f51, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.22702837
+      value: 0.2270279
       objectReference: {fileID: 0}
     - target: {fileID: 8964846923913027374, guid: 0113998d35ca4804d9b490f962f07f51, type: 3}
       propertyPath: m_LocalPosition.z

@@ -12,8 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c1a540ca1a64f24b86f25a4ebf0f80d, type: 3}
   m_Name: ind_wooden_crates_03_tarp
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.LootConfiguration
-  storageId: ind_wooden_crates_03_tarp
+  storageIdPrefix: Loot
   lootTitle: Tarp
   lootWidth: 9
   lootHeight: 18
-  initialItems: []
+  minItemRolls: 2
+  maxItemRolls: 4
+  lootTable:
+  - itemData: {fileID: 11400000, guid: 1a02a01293dafa24b86d5ceb94e63492, type: 2}
+    frequency: 10
+    minQuantity: 1
+    maxQuantity: 1
+  - itemData: {fileID: 11400000, guid: 370c890747d73694abb0227db3b84aca, type: 2}
+    frequency: 8
+    minQuantity: 1
+    maxQuantity: 2
+  - itemData: {fileID: 11400000, guid: a667e957fcdb1d5478d4ec027ebe1677, type: 2}
+    frequency: 1
+    minQuantity: 1
+    maxQuantity: 1

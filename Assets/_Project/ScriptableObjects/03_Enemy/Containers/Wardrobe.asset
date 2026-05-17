@@ -12,14 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c1a540ca1a64f24b86f25a4ebf0f80d, type: 3}
   m_Name: Wardrobe
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.LootConfiguration
-  storageId: Wardrobe
+  storageIdPrefix: Loot
   lootTitle: Wardrobe
   lootWidth: 9
   lootHeight: 18
-  initialItems:
-  - itemData: {fileID: 11400000, guid: 14db5644fac33174d8351723fab119c2, type: 2}
-    quantity: 1
-  - itemData: {fileID: 11400000, guid: 42aa2c9bcb77fef4d9391a59fb949811, type: 2}
-    quantity: 1
-  - itemData: {fileID: 11400000, guid: 3e17cc4ce64a7d44d9c91f0087210ee1, type: 2}
-    quantity: 1
+  minItemRolls: 1
+  maxItemRolls: 3
+  lootTable:
+  - itemData: {fileID: 11400000, guid: 168a798a288a8dc4eaacff37b02e75ae, type: 2}
+    frequency: 10
+    minQuantity: 1
+    maxQuantity: 1
+  - itemData: {fileID: 11400000, guid: 1a02a01293dafa24b86d5ceb94e63492, type: 2}
+    frequency: 6
+    minQuantity: 1
+    maxQuantity: 1
+  - itemData: {fileID: 11400000, guid: 320ee4cc9b2a5b741887993e8fd0ee6c, type: 2}
+    frequency: 2
+    minQuantity: 1
+    maxQuantity: 1

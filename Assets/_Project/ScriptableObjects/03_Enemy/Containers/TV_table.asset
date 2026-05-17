@@ -12,10 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c1a540ca1a64f24b86f25a4ebf0f80d, type: 3}
   m_Name: TV_table
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.LootConfiguration
-  storageId: TV_table
+  storageIdPrefix: Loot
   lootTitle: TV table
   lootWidth: 9
   lootHeight: 18
-  initialItems:
-  - itemData: {fileID: 11400000, guid: 04037417f74aeb84c9f5ed1849673c40, type: 2}
-    quantity: 1
+  minItemRolls: 1
+  maxItemRolls: 3
+  lootTable:
+  - itemData: {fileID: 11400000, guid: 14db5644fac33174d8351723fab119c2, type: 2}
+    frequency: 10
+    minQuantity: 1
+    maxQuantity: 2
+  - itemData: {fileID: 11400000, guid: 1a1f5da77eab1a847a1cf115ebb0020e, type: 2}
+    frequency: 8
+    minQuantity: 1
+    maxQuantity: 1
+  - itemData: {fileID: 11400000, guid: edc347c69a5cf6d49bd816ac0f5f1aa1, type: 2}
+    frequency: 6
+    minQuantity: 1
+    maxQuantity: 1

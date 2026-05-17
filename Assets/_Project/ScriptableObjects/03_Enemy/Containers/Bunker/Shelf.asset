@@ -12,8 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c1a540ca1a64f24b86f25a4ebf0f80d, type: 3}
   m_Name: Shelf
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.LootConfiguration
-  storageId: Shelf_B
+  storageIdPrefix: Loot
   lootTitle: Shelf
   lootWidth: 9
   lootHeight: 18
-  initialItems: []
+  minItemRolls: 0
+  maxItemRolls: 1
+  lootTable:
+  - itemData: {fileID: 11400000, guid: 168a798a288a8dc4eaacff37b02e75ae, type: 2}
+    frequency: 3
+    minQuantity: 1
+    maxQuantity: 1

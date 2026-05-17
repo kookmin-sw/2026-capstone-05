@@ -10,14 +10,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c1a540ca1a64f24b86f25a4ebf0f80d, type: 3}
-  m_Name: Wooden closet04_1
+  m_Name: Wooden_closet04
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.LootConfiguration
-  storageId: Wooden_closet_4_1
+  storageIdPrefix: Loot
   lootTitle: Cabinet
   lootWidth: 9
   lootHeight: 18
-  initialItems:
-  - itemData: {fileID: 11400000, guid: 3c23aa4da17ecc442a1643312eb50fe9, type: 2}
-    quantity: 1
+  minItemRolls: 0
+  maxItemRolls: 3
+  lootTable:
   - itemData: {fileID: 11400000, guid: 14db5644fac33174d8351723fab119c2, type: 2}
-    quantity: 1
+    frequency: 8
+    minQuantity: 1
+    maxQuantity: 1
+  - itemData: {fileID: 11400000, guid: 7897ba0a61c11224f9dfb363958c25fa, type: 2}
+    frequency: 6
+    minQuantity: 1
+    maxQuantity: 1
+  - itemData: {fileID: 11400000, guid: e8548119c13981a4aa6bc4f5faba14fd, type: 2}
+    frequency: 2
+    minQuantity: 1
+    maxQuantity: 1

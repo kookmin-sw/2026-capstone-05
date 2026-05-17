@@ -30,6 +30,11 @@ namespace Systems.Loot
             return data;
         }
 
+        public static bool HasLootSave(string lootId)
+        {
+            return !string.IsNullOrWhiteSpace(lootId) && File.Exists(GetLootPath(lootId));
+        }
+
         public static void SaveLoot(LootSaveData data)
         {
             if (data == null || string.IsNullOrWhiteSpace(data.lootId))

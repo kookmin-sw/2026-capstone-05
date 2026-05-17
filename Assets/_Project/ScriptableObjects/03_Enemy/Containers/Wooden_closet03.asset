@@ -10,10 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c1a540ca1a64f24b86f25a4ebf0f80d, type: 3}
-  m_Name: Dresser_opened
+  m_Name: Wooden_closet03
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.LootConfiguration
-  storageId: Dresser_opened
-  lootTitle: Dresser
+  storageIdPrefix: Loot
+  lootTitle: Closet
   lootWidth: 9
   lootHeight: 18
-  initialItems: []
+  minItemRolls: 0
+  maxItemRolls: 3
+  lootTable:
+  - itemData: {fileID: 11400000, guid: d1333002ff1438a46a8727ee102be9ca, type: 2}
+    frequency: 10
+    minQuantity: 1
+    maxQuantity: 2
+  - itemData: {fileID: 11400000, guid: e1638ebe4c8bc074080706ebf9850b8c, type: 2}
+    frequency: 6
+    minQuantity: 1
+    maxQuantity: 1

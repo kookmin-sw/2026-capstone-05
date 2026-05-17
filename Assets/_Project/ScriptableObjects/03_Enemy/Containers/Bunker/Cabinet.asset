@@ -12,8 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c1a540ca1a64f24b86f25a4ebf0f80d, type: 3}
   m_Name: Cabinet
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.LootConfiguration
-  storageId: Cabinet_B
+  storageIdPrefix: Loot
   lootTitle: Cabinet
   lootWidth: 9
   lootHeight: 18
-  initialItems: []
+  minItemRolls: 0
+  maxItemRolls: 2
+  lootTable:
+  - itemData: {fileID: 11400000, guid: 735ef87ef74720b4d936410c8d06ac52, type: 2}
+    frequency: 2
+    minQuantity: 1
+    maxQuantity: 1

@@ -12,8 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c1a540ca1a64f24b86f25a4ebf0f80d, type: 3}
   m_Name: ind_metal_crate_01
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.LootConfiguration
-  storageId: ind_metal_crate_01
+  storageIdPrefix: Loot
   lootTitle: Crate
   lootWidth: 9
   lootHeight: 18
-  initialItems: []
+  minItemRolls: 1
+  maxItemRolls: 3
+  lootTable:
+  - itemData: {fileID: 11400000, guid: 364c1911f793d7d4991a74cc3962d316, type: 2}
+    frequency: 8
+    minQuantity: 2
+    maxQuantity: 4
+  - itemData: {fileID: 11400000, guid: e8548119c13981a4aa6bc4f5faba14fd, type: 2}
+    frequency: 6
+    minQuantity: 1
+    maxQuantity: 1

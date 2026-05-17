@@ -10,12 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c1a540ca1a64f24b86f25a4ebf0f80d, type: 3}
-  m_Name: Box_wood02
+  m_Name: Box_paper
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.LootConfiguration
-  storageId: Box_wood02
+  storageIdPrefix: Loot
   lootTitle: Box
   lootWidth: 9
   lootHeight: 18
-  initialItems:
-  - itemData: {fileID: 11400000, guid: 17f0c5d5d3102bb449db1cbbe1de2575, type: 2}
-    quantity: 1
+  minItemRolls: 1
+  maxItemRolls: 2
+  lootTable:
+  - itemData: {fileID: 11400000, guid: 3e17cc4ce64a7d44d9c91f0087210ee1, type: 2}
+    frequency: 10
+    minQuantity: 1
+    maxQuantity: 1
+  - itemData: {fileID: 11400000, guid: 1a1f5da77eab1a847a1cf115ebb0020e, type: 2}
+    frequency: 10
+    minQuantity: 1
+    maxQuantity: 1

@@ -10,12 +10,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c1a540ca1a64f24b86f25a4ebf0f80d, type: 3}
-  m_Name: Bath_Closet_1
+  m_Name: Safe_small
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.LootConfiguration
-  storageId: Bath_Closet_1
-  lootTitle: Bath Closet
+  storageIdPrefix: Loot
+  lootTitle: Safe
   lootWidth: 9
   lootHeight: 18
-  initialItems:
+  minItemRolls: 1
+  maxItemRolls: 3
+  lootTable:
   - itemData: {fileID: 11400000, guid: d1fcdd65d7f5da04ba602aadcc2befe6, type: 2}
-    quantity: 1
+    frequency: 10
+    minQuantity: 1
+    maxQuantity: 1
+  - itemData: {fileID: 11400000, guid: 42aa2c9bcb77fef4d9391a59fb949811, type: 2}
+    frequency: 8
+    minQuantity: 1
+    maxQuantity: 1
+  - itemData: {fileID: 11400000, guid: f50aa86931cc8b746b55fa1702d800d8, type: 2}
+    frequency: 8
+    minQuantity: 1
+    maxQuantity: 1

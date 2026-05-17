@@ -10,24 +10,28 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c1a540ca1a64f24b86f25a4ebf0f80d, type: 3}
-  m_Name: Bath_Closet
+  m_Name: Wooden_closet02
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.LootConfiguration
   storageIdPrefix: Loot
-  lootTitle: BathCloset
+  lootTitle: Closet
   lootWidth: 9
   lootHeight: 18
   minItemRolls: 0
-  maxItemRolls: 3
+  maxItemRolls: 4
   lootTable:
-  - itemData: {fileID: 11400000, guid: 7897ba0a61c11224f9dfb363958c25fa, type: 2}
+  - itemData: {fileID: 11400000, guid: 6165450589e5b784f8a1d5a28a93ebc8, type: 2}
     frequency: 10
     minQuantity: 1
-    maxQuantity: 2
-  - itemData: {fileID: 11400000, guid: d1fcdd65d7f5da04ba602aadcc2befe6, type: 2}
-    frequency: 6
+    maxQuantity: 1
+  - itemData: {fileID: 11400000, guid: 370c890747d73694abb0227db3b84aca, type: 2}
+    frequency: 8
     minQuantity: 1
     maxQuantity: 1
-  - itemData: {fileID: 11400000, guid: 42aa2c9bcb77fef4d9391a59fb949811, type: 2}
-    frequency: 4
+  - itemData: {fileID: 11400000, guid: 63d04096f22aad24b9e1b1a1812f66b4, type: 2}
+    frequency: 8
+    minQuantity: 1
+    maxQuantity: 1
+  - itemData: {fileID: 11400000, guid: 17f0c5d5d3102bb449db1cbbe1de2575, type: 2}
+    frequency: 2
     minQuantity: 1
     maxQuantity: 1
