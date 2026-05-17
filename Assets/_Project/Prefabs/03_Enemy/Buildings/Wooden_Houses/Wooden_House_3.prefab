@@ -4469,7 +4469,7 @@ PrefabInstance:
     - target: {fileID: 7146679669956277331, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
       propertyPath: lootConfiguration
       value: 
-      objectReference: {fileID: 11400000, guid: 96a1be40c94574445b5798cf212ad68a, type: 2}
+      objectReference: {fileID: 11400000, guid: ed3e600f9798b24449bab5249f18520f, type: 2}
     - target: {fileID: 7146679669956277331, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
       propertyPath: generatedStorageId
       value: Loot_66970921
@@ -4477,98 +4477,8 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 5611585663033827652, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 3576845784218034591}
-    - targetCorrespondingSourceObject: {fileID: 797723576553499027, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 5279467494154757736}
-    - targetCorrespondingSourceObject: {fileID: 9003447974444867611, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 9064796048597237317}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
---- !u!1 &725926883632141019 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5611585663033827652, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
-  m_PrefabInstance: {fileID: 5184586321628410783}
-  m_PrefabAsset: {fileID: 0}
---- !u!64 &3576845784218034591
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 725926883632141019}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -5540745745588522871, guid: 5717945851036f84290f1b7dfc231514, type: 3}
---- !u!1 &4251949937148662660 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 9003447974444867611, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
-  m_PrefabInstance: {fileID: 5184586321628410783}
-  m_PrefabAsset: {fileID: 0}
---- !u!64 &9064796048597237317
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4251949937148662660}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 881999927619870717, guid: 5717945851036f84290f1b7dfc231514, type: 3}
---- !u!1 &5539793230506121740 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 797723576553499027, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
-  m_PrefabInstance: {fileID: 5184586321628410783}
-  m_PrefabAsset: {fileID: 0}
---- !u!64 &5279467494154757736
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5539793230506121740}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 158971897146778965, guid: 5717945851036f84290f1b7dfc231514, type: 3}
 --- !u!4 &6769597590939840419 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1873823923574774844, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
