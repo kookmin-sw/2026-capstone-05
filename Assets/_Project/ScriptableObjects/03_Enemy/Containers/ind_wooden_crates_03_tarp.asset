@@ -16,8 +16,9 @@ MonoBehaviour:
   lootTitle: Tarp
   lootWidth: 9
   lootHeight: 18
-  minItemRolls: 2
-  maxItemRolls: 4
+  minItemRolls: 3
+  maxItemRolls: 5
+  placementAttemptsPerRoll: 8
   lootTable:
   - itemData: {fileID: 11400000, guid: 1a02a01293dafa24b86d5ceb94e63492, type: 2}
     frequency: 10
@@ -27,6 +28,10 @@ MonoBehaviour:
     frequency: 8
     minQuantity: 1
     maxQuantity: 2
+  - itemData: {fileID: 11400000, guid: 364c1911f793d7d4991a74cc3962d316, type: 2}
+    frequency: 7
+    minQuantity: 1
+    maxQuantity: 3
   - itemData: {fileID: 11400000, guid: a667e957fcdb1d5478d4ec027ebe1677, type: 2}
     frequency: 1
     minQuantity: 1

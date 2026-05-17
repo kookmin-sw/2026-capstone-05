@@ -16,8 +16,9 @@ MonoBehaviour:
   lootTitle: Wardrobe
   lootWidth: 9
   lootHeight: 18
-  minItemRolls: 1
+  minItemRolls: 2
   maxItemRolls: 3
+  placementAttemptsPerRoll: 8
   lootTable:
   - itemData: {fileID: 11400000, guid: 168a798a288a8dc4eaacff37b02e75ae, type: 2}
     frequency: 10
@@ -28,6 +29,6 @@ MonoBehaviour:
     minQuantity: 1
     maxQuantity: 1
   - itemData: {fileID: 11400000, guid: 320ee4cc9b2a5b741887993e8fd0ee6c, type: 2}
-    frequency: 2
+    frequency: 4
     minQuantity: 1
     maxQuantity: 1

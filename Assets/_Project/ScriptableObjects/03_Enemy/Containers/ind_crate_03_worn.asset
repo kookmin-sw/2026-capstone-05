@@ -16,8 +16,9 @@ MonoBehaviour:
   lootTitle: Crate
   lootWidth: 9
   lootHeight: 18
-  minItemRolls: 1
+  minItemRolls: 2
   maxItemRolls: 4
+  placementAttemptsPerRoll: 8
   lootTable:
   - itemData: {fileID: 11400000, guid: d7577d80e4c956543a9898640224cde5, type: 2}
     frequency: 10
@@ -32,6 +33,6 @@ MonoBehaviour:
     minQuantity: 1
     maxQuantity: 1
   - itemData: {fileID: 11400000, guid: 0f32383fddacd4945b4d24066c52ee9e, type: 2}
-    frequency: 2
+    frequency: 3
     minQuantity: 1
     maxQuantity: 1
