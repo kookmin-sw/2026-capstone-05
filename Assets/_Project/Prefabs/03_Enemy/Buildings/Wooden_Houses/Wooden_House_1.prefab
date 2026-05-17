@@ -141,6 +141,7 @@ GameObject:
   - component: {fileID: 5030518381651665325}
   - component: {fileID: 6739725194055912997}
   - component: {fileID: 529013449009950900}
+  - component: {fileID: 8008839528505298665}
   m_Layer: 10
   m_Name: Door_3
   m_TagString: Untagged
@@ -259,6 +260,8 @@ MonoBehaviour:
   openAngle: 90
   rotationSpeed: 180
   panelLocalDirection: {x: 1, y: 0, z: 0}
+  navMeshObstacle: {fileID: 0}
+  manageNavMeshObstacle: 1
   openPrompt: "[E] \uC5F4\uAE30"
   closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
@@ -275,6 +278,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
   surfaceType: 1
+--- !u!208 &8008839528505298665
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1789935244537475193}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 0.115, y: 1.0020001, z: 2.345}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0.115, y: -0.94100004, z: 0}
+  m_TimeToStationary: 0.5
 --- !u!1 &1849812781975289626
 GameObject:
   m_ObjectHideFlags: 0
@@ -547,6 +566,7 @@ GameObject:
   - component: {fileID: 840192847514324309}
   - component: {fileID: 2886583262772253463}
   - component: {fileID: 6393870549989284636}
+  - component: {fileID: 3702109479776394018}
   m_Layer: 10
   m_Name: Door_1
   m_TagString: Untagged
@@ -665,6 +685,8 @@ MonoBehaviour:
   openAngle: 90
   rotationSpeed: 180
   panelLocalDirection: {x: 1, y: 0, z: 0}
+  navMeshObstacle: {fileID: 0}
+  manageNavMeshObstacle: 1
   openPrompt: "[E] \uC5F4\uAE30"
   closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
@@ -681,6 +703,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
   surfaceType: 1
+--- !u!208 &3702109479776394018
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2930741798311583439}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 0.115, y: 1.0020001, z: 2.345}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0.115, y: -0.94100004, z: 0}
+  m_TimeToStationary: 0.5
 --- !u!1 &2943930661577618198
 GameObject:
   m_ObjectHideFlags: 0
@@ -695,6 +733,7 @@ GameObject:
   - component: {fileID: 3850944358774291399}
   - component: {fileID: 6060665797645974691}
   - component: {fileID: 4880320480006459164}
+  - component: {fileID: 5225668588466616826}
   m_Layer: 10
   m_Name: Door_2
   m_TagString: Untagged
@@ -813,6 +852,8 @@ MonoBehaviour:
   openAngle: 90
   rotationSpeed: 180
   panelLocalDirection: {x: 1, y: 0, z: 0}
+  navMeshObstacle: {fileID: 0}
+  manageNavMeshObstacle: 1
   openPrompt: "[E] \uC5F4\uAE30"
   closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
@@ -829,6 +870,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
   surfaceType: 1
+--- !u!208 &5225668588466616826
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2943930661577618198}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 0.115, y: 1.0020001, z: 2.345}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0.115, y: -0.94100004, z: 0}
+  m_TimeToStationary: 0.5
 --- !u!1 &4897619199945089083
 GameObject:
   m_ObjectHideFlags: 0

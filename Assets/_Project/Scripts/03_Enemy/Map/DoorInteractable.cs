@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 
 [DisallowMultipleComponent]
@@ -15,6 +16,10 @@ public class DoorInteractable : MonoBehaviour, IInteractable
     [SerializeField] private float openAngle = 90f;
     [SerializeField] private float rotationSpeed = 180f;
     [SerializeField] private Vector3 panelLocalDirection = Vector3.right;
+
+    [Header("AI Navigation")]
+    [SerializeField] private NavMeshObstacle navMeshObstacle;
+    [SerializeField] private bool manageNavMeshObstacle = true;
 
     [Header("Prompt")]
     [SerializeField] private string openPrompt = "[E] 열기";
@@ -43,6 +48,8 @@ public class DoorInteractable : MonoBehaviour, IInteractable
         closedLocalRotation = doorTransform.localRotation;
         targetLocalRotation = closedLocalRotation;
         NormalizePanelDirection();
+        ResolveNavMeshObstacle();
+        SyncNavMeshObstacle();
     }
 
     private void OnEnable()
@@ -131,7 +138,37 @@ public class DoorInteractable : MonoBehaviour, IInteractable
             isOpen = false;
         }
 
+        SyncNavMeshObstacle();
         RefreshInteractionPrompt();
+    }
+
+    private void SyncNavMeshObstacle()
+    {
+        if (!manageNavMeshObstacle)
+        {
+            return;
+        }
+
+        ResolveNavMeshObstacle();
+        if (navMeshObstacle == null)
+        {
+            return;
+        }
+
+        navMeshObstacle.carving = true;
+        navMeshObstacle.enabled = !isOpen;
+    }
+
+    private void ResolveNavMeshObstacle()
+    {
+        if (navMeshObstacle != null)
+        {
+            return;
+        }
+
+        navMeshObstacle = doorTransform != null
+            ? doorTransform.GetComponentInChildren<NavMeshObstacle>()
+            : GetComponentInChildren<NavMeshObstacle>();
     }
 
     private int GetOpenDirection(PlayerController player)
