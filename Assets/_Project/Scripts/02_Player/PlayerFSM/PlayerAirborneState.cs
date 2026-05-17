@@ -36,6 +36,12 @@ public class PlayerAirborneState : PlayerState
     {
         base.LogicUpdate();
 
+        // 공중에서 발생한 점프 입력(선입력) 무시
+        if (player.InputHandler.JumpTriggered)
+        {
+            player.InputHandler.ConsumeJump();
+        }
+
         if (player.IsGrounded && player.currentVelocity.y <= 0f)
         {
             stateMachine.ChangeState(player.GroundedState);
