@@ -1,4 +1,5 @@
 using System;
+using FMODUnity;
 using UnityEngine;
 using Systems.GridInventory;
 
@@ -28,6 +29,10 @@ namespace Systems.Loot
         [Header("Save Settings")]
         [Tooltip("If true, this storage will be saved and loaded. If false, it will be reset every time.")]
         [SerializeField] private bool isBaseStorage = false;
+
+        [Header("Sound")]
+        [SerializeField] private EventReference interactionSoundEvent;
+        [SerializeField] private Transform soundOrigin;
         
         public bool HasConfiguration => lootConfiguration != null;
         public string StorageId => NormalizeStorageId(generatedStorageId);
@@ -181,11 +186,23 @@ namespace Systems.Loot
             if (LootController.Instance != null)
             {
                 LootController.Instance.RequestOpenLoot(this, StorageId, LootTitle, LootNetworkSync.Instance);
+                PlayInteractionSound();
             }
             else
             {
                 Debug.LogWarning("[InteractableLoot] LootController.Instance is missing. Cannot open loot.");
             }
+        }
+
+        private void PlayInteractionSound()
+        {
+            if (interactionSoundEvent.IsNull)
+            {
+                return;
+            }
+
+            Vector3 position = soundOrigin != null ? soundOrigin.position : transform.position;
+            RuntimeManager.PlayOneShot(interactionSoundEvent, position);
         }
 
         public void SaveRemainingItems()
