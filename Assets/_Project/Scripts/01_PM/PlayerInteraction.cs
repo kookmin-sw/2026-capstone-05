@@ -12,6 +12,7 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
     [Header("Interaction Settings")]
     [SerializeField] private float interactionRange = 3f;
     [SerializeField] private LayerMask interactableLayers = -1;
+    [SerializeField] private LayerMask obstacleLayers = -1;
     [SerializeField] private float interactionCooldown = 0.3f; // 상호작용 쿨다운 시간
     
     private float lastInteractionTime = 0f;
@@ -80,7 +81,8 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
         }
 
         Ray ray = new Ray(cameraTransform.position, cameraTransform.forward);
-        int hitCount = Physics.RaycastNonAlloc(ray, interactionHits, interactionRange, interactableLayers);
+        LayerMask combinedLayers = interactableLayers | obstacleLayers;
+        int hitCount = Physics.RaycastNonAlloc(ray, interactionHits, interactionRange, combinedLayers);
         
         if (hitCount > 0)
         {
@@ -109,6 +111,11 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
                         SetCurrentInteractable(targetObj, interactable);
                     }
                     return; // 가장 가까운 상호작용 가능 객체를 찾았으므로 종료
+                }
+
+                if (((1 << h.collider.gameObject.layer) & obstacleLayers) != 0)
+                {
+                    break;
                 }
             }
             

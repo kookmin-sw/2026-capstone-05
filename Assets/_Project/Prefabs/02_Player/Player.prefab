@@ -550,10 +550,15 @@ MonoBehaviour:
   minStaminaToSprint: 10
   jumpStaminaCost: 10
   staminaRegenDelay: 1.5
-  idleRegenRate: 20
-  crouchWalkRegenRate: 15
-  walkRegenRate: 5
-  airborneRegenRate: 0
+  staminaIdleRegenRate: 20
+  staminaCrouchWalkRegenRate: 15
+  staminaWalkRegenRate: 5
+  staminaAirborneRegenRate: 0
+  satietyIdleDecayRate: 0.1
+  satietyWalkDecayRate: 0.15
+  satietySprintDecayRate: 0.25
+  satietyCrouchWalkDecayRate: 0.12
+  satietyAirborneDecayRate: 0.1
   recoilReturnSpeed: 3
 --- !u!114 &1374220835064663929
 MonoBehaviour:
@@ -827,7 +832,10 @@ MonoBehaviour:
   interactionRange: 3
   interactableLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 2001
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 577
   interactionCooldown: 0.3
 --- !u!114 &-1790409643959626491
 MonoBehaviour:
