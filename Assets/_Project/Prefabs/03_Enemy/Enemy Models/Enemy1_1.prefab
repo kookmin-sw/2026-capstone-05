@@ -180,6 +180,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d059aae62f02604f80ba1ad1a39478e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
+  hitParticlePrefab: {fileID: 2738786527308404416, guid: c5173e1e6866d4e468abd600a7a4879d, type: 3}
+  hitParticleLifetime: 5
 --- !u!114 &8524155529575229384
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -262,6 +264,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a5670aacb224f428933c88cfb6bb21d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAudioController
+  enableAudio: 1
   locomotionEvent:
     Guid:
       Data1: -179255328
