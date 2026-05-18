@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using FMODUnity;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
@@ -20,6 +21,10 @@ public class DoorInteractable : MonoBehaviour, IInteractable
     [Header("AI Navigation")]
     [SerializeField] private NavMeshObstacle navMeshObstacle;
     [SerializeField] private bool manageNavMeshObstacle = true;
+
+    [Header("FMOD Events")]
+    [SerializeField] private EventReference openEvent;
+    [SerializeField] private EventReference closeEvent;
 
     [Header("Prompt")]
     [SerializeField] private string openPrompt = "[E] 열기";
@@ -125,6 +130,8 @@ public class DoorInteractable : MonoBehaviour, IInteractable
 
     public void ApplyState(bool shouldOpen, int openDirection)
     {
+        bool stateChanged = isOpen != shouldOpen;
+
         if (shouldOpen)
         {
             int direction = openDirection >= 0 ? 1 : -1;
@@ -139,7 +146,24 @@ public class DoorInteractable : MonoBehaviour, IInteractable
         }
 
         SyncNavMeshObstacle();
+        if (stateChanged)
+        {
+            PlayDoorSound(shouldOpen);
+        }
+
         RefreshInteractionPrompt();
+    }
+
+    private void PlayDoorSound(bool opened)
+    {
+        EventReference eventReference = opened ? openEvent : closeEvent;
+        if (eventReference.IsNull)
+        {
+            return;
+        }
+
+        Vector3 soundPosition = doorTransform != null ? doorTransform.position : transform.position;
+        RuntimeManager.PlayOneShot(eventReference, soundPosition);
     }
 
     private void SyncNavMeshObstacle()
