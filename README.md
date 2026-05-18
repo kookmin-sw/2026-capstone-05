@@ -168,7 +168,7 @@
 
 | **역할** | **종류** |
 |-|-|
-| **Sprite Design** |  |
+| **Sprite Design** | Photoshop, Illustrator |
 | **3D Modeling & UV** | Cinema 4D |
 | **Texturing** | Substance Patiner, Photoshop |
 
