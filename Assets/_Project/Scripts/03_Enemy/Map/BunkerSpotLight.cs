@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class BunkerFluorescentLight : MonoBehaviour
+public class BunkerSpotLight : MonoBehaviour
 {
     private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
 
