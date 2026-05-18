@@ -1,5 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class NoiseManager : MonoBehaviour
 {
@@ -38,12 +41,14 @@ public class NoiseManager : MonoBehaviour
     {
         public Vector3 position;
         public float radius;
+        public NoiseData.NoiseType noiseType;
         public float expireTime;
 
-        public ActiveNoise(Vector3 pos, float rad, float duration)
+        public ActiveNoise(Vector3 pos, float rad, NoiseData.NoiseType type, float duration)
         {
             position = pos;
             radius = rad;
+            noiseType = type;
             expireTime = Time.time + duration;
         }
     }
@@ -97,7 +102,7 @@ public class NoiseManager : MonoBehaviour
         if (calculatedRadius <= 0f) return;
 
 #if UNITY_EDITOR
-        activeNoises.Add(new ActiveNoise(position, calculatedRadius, displayTime));
+        activeNoises.Add(new ActiveNoise(position, calculatedRadius, noiseType, displayTime));
 #endif
         NotifyEnemies(position, calculatedRadius, noiseType);
     }
@@ -154,6 +159,11 @@ public class NoiseManager : MonoBehaviour
 
             Gizmos.DrawSphere(noise.position, 0.2f);
             Gizmos.DrawWireSphere(noise.position, noise.radius);
+
+            Handles.color = new Color(1f, 0.25f, 0.25f, remaining);
+            Handles.Label(
+                noise.position + Vector3.up * 0.5f,
+                $"{noise.noiseType} Noise\nRadius: {noise.radius:F1}m");
         }
     }
 #endif

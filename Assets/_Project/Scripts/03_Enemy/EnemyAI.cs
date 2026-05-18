@@ -1027,8 +1027,10 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
     private void OnDrawGizmos()
     {
 #if UNITY_EDITOR
+        string stateName = GetDebugStateName();
+        string suspicionStateName = GetDebugSuspicionStateName();
         Handles.Label(transform.position + Vector3.up * 2.2f,
-            $"Suspicion: {Suspicion:F0}%");
+            $"State: {stateName}\nSuspicion: {Suspicion:F0}% ({suspicionStateName})");
 #endif
     }
 
@@ -1047,6 +1049,78 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         Handles.DrawLine(transform.position, transform.position + leftDir * data.attackRadius);
         Handles.DrawLine(transform.position, transform.position + rightDir * data.attackRadius);
         Handles.DrawWireArc(transform.position, Vector3.up, leftDir, data.attackAngle, data.attackRadius);
+
+        DrawNoiseDebugGizmos();
 #endif
     }
+
+#if UNITY_EDITOR
+    private void DrawNoiseDebugGizmos()
+    {
+        if (!HasDetectedNoise)
+            return;
+
+        Vector3 enemyPosition = transform.position;
+        Vector3 confirmedPosition = LastConfirmedNoisePosition;
+        Vector3 estimatedPosition = CurrentInvestigationPosition;
+        bool hasConfirmedPosition = confirmedPosition != Vector3.zero;
+        bool hasEstimatedPosition = estimatedPosition != Vector3.zero;
+
+        Handles.color = new Color(1f, 0.65f, 0.1f, 1f);
+        Gizmos.color = new Color(1f, 0.65f, 0.1f, 0.8f);
+        if (hasEstimatedPosition)
+        {
+            Gizmos.DrawSphere(estimatedPosition + Vector3.up * 0.08f, 0.18f);
+            Handles.DrawDottedLine(enemyPosition + Vector3.up * 0.2f, estimatedPosition + Vector3.up * 0.2f, 4f);
+            Handles.Label(
+                estimatedPosition + Vector3.up * 0.6f,
+                $"Investigating\n{LastNoiseType} / Intensity {LastNoiseIntensity:F2}");
+        }
+
+        Handles.color = new Color(0.2f, 0.9f, 1f, 1f);
+        Gizmos.color = new Color(0.2f, 0.9f, 1f, 0.8f);
+        if (hasConfirmedPosition)
+        {
+            Gizmos.DrawWireSphere(confirmedPosition + Vector3.up * 0.08f, 0.35f);
+            Handles.Label(confirmedPosition + Vector3.up * 0.9f, "Noise Source");
+        }
+
+        if (hasConfirmedPosition && hasEstimatedPosition)
+        {
+            Handles.color = new Color(0.8f, 0.8f, 0.8f, 0.8f);
+            Handles.DrawDottedLine(confirmedPosition + Vector3.up * 0.15f, estimatedPosition + Vector3.up * 0.15f, 3f);
+        }
+    }
+
+    private string GetDebugStateName()
+    {
+        EnemyState currentState = StateMachine?.CurrentState;
+        if (currentState == null)
+            return Application.isPlaying ? "None" : "Edit Mode";
+
+        string typeName = currentState.GetType().Name;
+        return typeName.Replace("Enemy", "").Replace("State", "");
+    }
+
+    private string GetDebugSuspicionStateName()
+    {
+        if (data == null)
+            return "No Data";
+
+        float suspicion = Suspicion;
+        if (suspicion >= data.chaseThreshold)
+            return "Chase";
+
+        if (suspicion >= data.searchThreshold)
+            return "Search";
+
+        if (suspicion >= data.lookThreshold)
+            return "Look";
+
+        if (suspicion >= data.alertThreshold)
+            return "Alert";
+
+        return "Calm";
+    }
+#endif
 }

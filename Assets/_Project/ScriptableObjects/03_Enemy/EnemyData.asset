@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: EnemyData
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   enemyName: Enemy
-  maxHealth: 60
-  walkSpeed: 2
-  chaseSpeed: 4
-  searchSpeed: 3
-  rotationSpeed: 10
+  maxHealth: 240
+  walkSpeed: 3
+  chaseSpeed: 4.5
+  searchSpeed: 4
+  rotationSpeed: 15
   idleStartTime: 1
   idleEndTime: 3
   patrolRadius: 15
@@ -51,9 +51,9 @@ MonoBehaviour:
   searchExitThreshold: 30
   chaseThreshold: 100
   chaseExitThreshold: 80
-  suspicionSensitivity: 0.5
+  suspicionSensitivity: 0.65
   suspicionGainAmount: 100
-  suspicionReduceRate: 10
+  suspicionReduceRate: 15
   suspicionReduceDelay: 2
   noiseMemoryCapacity: 5
   noiseMemoryDuration: 8
@@ -70,18 +70,18 @@ MonoBehaviour:
   navMeshSampleRange: 2
   hitSuspicionGain: 55
   hitMinimumSuspicion: 40
-  attackDamage: 10
+  attackDamage: 15
   attackCooldown: 1.5
   attackRecoveryMinTime: 0.4
   attackRecoveryMaxTime: 1.2
   attackRadius: 2
   attackAngle: 120
   attackVariant1Chance: 0.35
-  jumpAttackChance: 0.4
+  jumpAttackChance: 0.25
   jumpAttackDecisionInterval: 1
   jumpAttackMinDistance: 3
   jumpAttackMaxDistance: 7
-  jumpAttackDistanceMultiplier: 1.4
+  jumpAttackDistanceMultiplier: 1.5
   jumpAttackAngle: 70
   jumpAttackMoveDuration: 0.65
   jumpAttackArcHeight: 0.8
