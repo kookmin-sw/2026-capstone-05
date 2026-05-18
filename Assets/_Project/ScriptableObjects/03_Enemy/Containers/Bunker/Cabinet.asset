@@ -16,26 +16,11 @@ MonoBehaviour:
   lootTitle: Cabinet
   lootWidth: 9
   lootHeight: 18
-  minItemRolls: 10
-  maxItemRolls: 10
+  minItemRolls: 0
+  maxItemRolls: 2
+  placementAttemptsPerRoll: 8
   lootTable:
   - itemData: {fileID: 11400000, guid: 1a02a01293dafa24b86d5ceb94e63492, type: 2}
-    frequency: 10
-    minQuantity: 1
-    maxQuantity: 1
-  - itemData: {fileID: 11400000, guid: 17f0c5d5d3102bb449db1cbbe1de2575, type: 2}
-    frequency: 10
-    minQuantity: 1
-    maxQuantity: 1
-  - itemData: {fileID: 11400000, guid: 23205457c36c2564bab80ef3572bb484, type: 2}
-    frequency: 10
-    minQuantity: 1
-    maxQuantity: 1
-  - itemData: {fileID: 11400000, guid: 364c1911f793d7d4991a74cc3962d316, type: 2}
-    frequency: 10
-    minQuantity: 1
-    maxQuantity: 1
-  - itemData: {fileID: 11400000, guid: d1fcdd65d7f5da04ba602aadcc2befe6, type: 2}
-    frequency: 10
+    frequency: 3
     minQuantity: 1
     maxQuantity: 1
