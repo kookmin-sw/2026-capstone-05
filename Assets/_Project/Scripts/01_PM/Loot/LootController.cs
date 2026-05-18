@@ -32,6 +32,28 @@ namespace Systems.Loot
             else Destroy(gameObject);
         }
 
+        public GridSlot GetLootGridSlotAtPosition(Vector2 screenPosition)
+        {
+            if (!IsOpen || dummyLootGridView == null) return null;
+            return dummyLootGridView.GetGridSlotAtPosition(screenPosition);
+        }
+
+        public bool IsPositionInsideLootUI(Vector2 screenPosition)
+        {
+            if (!IsOpen || lootView == null) return false;
+            var root = lootView.GetRootVisualElement();
+            if (root == null || root.style.display == DisplayStyle.None) return false;
+
+            // Check if the position is inside the loot panel or player inventory panel within the loot view
+            var lootPanel = root.Q<VisualElement>(className: "left-panel");
+            var playerPanel = root.Q<VisualElement>(className: "right-panel");
+
+            if (lootPanel != null && lootPanel.worldBound.Contains(screenPosition)) return true;
+            if (playerPanel != null && playerPanel.worldBound.Contains(screenPosition)) return true;
+
+            return false;
+        }
+
         private float lastSnapshotTime;
         private const float SnapshotCooldown = 0.1f;
         private bool snapshotPending;
@@ -42,14 +64,8 @@ namespace Systems.Loot
 
             lootView.OnCloseClicked += CloseLoot;
 
-            GridItemView.OnItemDroppedGlobal -= HandleItemDroppedGlobal;
-            GridItemView.OnItemDroppedGlobal += HandleItemDroppedGlobal;
-
             GridItemView.OnItemSplitDroppedGlobal -= HandleItemSplitDroppedGlobal;
             GridItemView.OnItemSplitDroppedGlobal += HandleItemSplitDroppedGlobal;
-
-            QuickslotUIController.OnItemDroppedGlobal -= HandleQuickslotItemDropped;
-            QuickslotUIController.OnItemDroppedGlobal += HandleQuickslotItemDropped;
 
             QuickslotUIController.OnQuickslotSplitRequested -= HandleQuickslotSplitRequestedToLoot;
             QuickslotUIController.OnQuickslotSplitRequested += HandleQuickslotSplitRequestedToLoot;
@@ -58,9 +74,7 @@ namespace Systems.Loot
         private void OnDestroy()
         {
             GridItemView.OnItemSplitDroppedGlobal -= HandleItemSplitDroppedGlobal;
-            GridItemView.OnItemDroppedGlobal -= HandleItemDroppedGlobal;
 
-            QuickslotUIController.OnItemDroppedGlobal -= HandleQuickslotItemDropped;
             QuickslotUIController.OnQuickslotSplitRequested -= HandleQuickslotSplitRequestedToLoot;
         }
 
@@ -161,7 +175,6 @@ namespace Systems.Loot
                 .WithExistingModel(model)
                 .Build();
 
-            lootInventoryController.OnRequestInternalMove = HandleLootInternalMove;
 
             lootInventoryController.Model.OnModelChanged -= HandleModelChanged;
             lootInventoryController.Model.OnModelChanged += HandleModelChanged;
@@ -322,113 +335,6 @@ namespace Systems.Loot
         }
 
 
-        private void HandleQuickslotItemDropped(ItemInstance item, int sourceQuickslotIndex, Vector2 screenPosition)
-        {
-            if (!IsOpen || dummyLootGridView == null || lootInventoryController == null || currentNetworkSync == null) return;
-
-            var lootSlot = dummyLootGridView.GetGridSlotAtPosition(screenPosition);
-            if (lootSlot == null) return;
-
-            var lootModel = lootInventoryController.Model;
-            var targetCoords = lootModel.GetCoordinates(lootSlot.Index);
-            var baseTargetItem = lootModel.Get(targetCoords.x, targetCoords.y);
-
-            bool isHost = currentNetworkSync.HasStateAuthority;
-            bool isOffline = PlayerNetworkSetup.IsOfflineTestMode;
-
-            if (baseTargetItem != null && baseTargetItem.Data == item.Data && item.Data.maxStackSize > 1)
-            {
-                // 스택 병합
-                int total = item.currentStackCount + baseTargetItem.currentStackCount;
-                int moveQty = 0;
-                if (total <= item.Data.maxStackSize)
-                {
-                    moveQty = item.currentStackCount;
-                    QuickslotUIController.Instance.RemoveItemFromSlot(sourceQuickslotIndex);
-                    if (!isHost || isOffline)
-                    {
-                        baseTargetItem.currentStackCount = total;
-                        lootModel.Items.Invoke();
-                    }
-                }
-                else
-                {
-                    moveQty = item.Data.maxStackSize - baseTargetItem.currentStackCount;
-                    item.currentStackCount = total - item.Data.maxStackSize;
-                    QuickslotUIController.Instance.RefreshSlotVisual(sourceQuickslotIndex);
-                    if (!isHost || isOffline)
-                    {
-                        baseTargetItem.currentStackCount = item.Data.maxStackSize;
-                        lootModel.Items.Invoke();
-                    }
-                }
-
-                if (moveQty > 0)
-                {
-                    if (!isOffline && currentNetworkSync.Runner != null)
-                        currentNetworkSync.Rpc_RequestPutItem(currentNetworkSync.Runner.LocalPlayer, currentStorageId,
-                            item.Data.itemID, 0, lootSlot.Index, moveQty, (int)item.currentRotation);
-                    SubmitSnapshot(force: true);
-                }
-            }
-            else if (baseTargetItem == null)
-            {
-                // 빈 공간 배치
-                if (lootModel.CanPlaceItem(item, targetCoords.x, targetCoords.y))
-                {
-                    QuickslotUIController.Instance.RemoveItemFromSlot(sourceQuickslotIndex);
-                if (!isHost || isOffline)
-                {
-                    lootModel.PlaceItem(item, targetCoords.x, targetCoords.y);
-                    lootModel.Items.Invoke();
-                }
-
-                if (!isOffline && currentNetworkSync.Runner != null)
-                    currentNetworkSync.Rpc_RequestPutItem(currentNetworkSync.Runner.LocalPlayer, currentStorageId,
-                        item.Data.itemID, 0, lootSlot.Index, item.currentStackCount, (int)item.currentRotation);
-                SubmitSnapshot(force: true);
-                }
-                else
-                {
-                    QuickslotUIController.Instance.RefreshSlotVisual(sourceQuickslotIndex);
-                }
-            }
-            else
-            {
-                // 1:1 스왑
-                var baseTargetPos = lootModel.GetItemAnchorPosition(baseTargetItem);
-                lootModel.TryRemove(baseTargetItem);
-
-                if (lootModel.CanPlaceItem(item, targetCoords.x, targetCoords.y))
-                {
-                    QuickslotUIController.Instance.RemoveItemFromSlot(sourceQuickslotIndex);
-                    baseTargetItem.currentRotation = ItemRotation.Deg0;
-                    QuickslotUIController.Instance.SetItemInSlot(sourceQuickslotIndex, baseTargetItem);
-
-                    if (!isHost || isOffline)
-                    {
-                        lootModel.PlaceItem(item, targetCoords.x, targetCoords.y);
-                        lootModel.Items.Invoke();
-                    }
-                    else
-                    {
-                        // 호스트는 RPC에서 처리하므로 원상복구
-                        lootModel.PlaceItem(baseTargetItem, baseTargetPos.x, baseTargetPos.y);
-                    }
-
-                    // Rpc_RequestPutItem은 스왑도 처리함 (서버에서 existingItem이 있고 다르면 스왑으로 처리됨)
-                    if (!isOffline && currentNetworkSync.Runner != null)
-                        currentNetworkSync.Rpc_RequestPutItem(currentNetworkSync.Runner.LocalPlayer, currentStorageId,
-                            item.Data.itemID, 0, lootSlot.Index, item.currentStackCount, (int)item.currentRotation);
-                    SubmitSnapshot(force: true);
-                }
-                else
-                {
-                    lootModel.PlaceItem(baseTargetItem, baseTargetPos.x, baseTargetPos.y);
-                    QuickslotUIController.Instance.RefreshSlotVisual(sourceQuickslotIndex);
-                }
-            }
-        }
 
         private void HandleQuickslotSplitRequestedToLoot(ItemInstance item, int qsIndex, Vector2 screenPos)
         {
@@ -524,6 +430,171 @@ namespace Systems.Loot
                     currentNetworkSync.Rpc_RequestPutItem(currentNetworkSync.Runner.LocalPlayer, currentStorageId,
                         item.Data.itemID, 0, lootSlot.Index, qty, (int)item.currentRotation);
                 SubmitSnapshot(force: true);
+            }
+        }
+
+        public void ReceiveDrop(ItemInstance item, Systems.GridInventory.DragSource source, int sourceIndex, GridSlot lootSlot, GridInventoryModel sourceModel)
+        {
+            if (!IsOpen || lootInventoryController == null || currentNetworkSync == null) return;
+
+            var lootModel = lootInventoryController.Model;
+            var targetCoords = lootModel.GetCoordinates(lootSlot.Index);
+            var baseTargetItem = lootModel.Get(targetCoords.x, targetCoords.y);
+
+            bool isHost = currentNetworkSync.HasStateAuthority;
+            bool isOffline = PlayerNetworkSetup.IsOfflineTestMode;
+
+            if (baseTargetItem != null && baseTargetItem.Data == item.Data && item.Data.maxStackSize > 1)
+            {
+                // 스택 병합
+                int total = item.currentStackCount + baseTargetItem.currentStackCount;
+                int moveQty = 0;
+                if (total <= item.Data.maxStackSize)
+                {
+                    moveQty = item.currentStackCount;
+                    if (source == Systems.GridInventory.DragSource.Quickslot) QuickslotUIController.Instance.RemoveItemFromSlot(sourceIndex);
+                    else if (sourceModel != null) sourceModel.TryRemove(item);
+
+                    if (!isHost || isOffline)
+                    {
+                        baseTargetItem.currentStackCount = total;
+                        lootModel.Items.Invoke();
+                    }
+                }
+                else
+                {
+                    moveQty = item.Data.maxStackSize - baseTargetItem.currentStackCount;
+                    item.currentStackCount = total - item.Data.maxStackSize;
+                    if (source == Systems.GridInventory.DragSource.Quickslot) QuickslotUIController.Instance.RefreshSlotVisual(sourceIndex);
+                    else if (sourceModel != null) sourceModel.Items.Invoke();
+
+                    if (!isHost || isOffline)
+                    {
+                        baseTargetItem.currentStackCount = item.Data.maxStackSize;
+                        lootModel.Items.Invoke();
+                    }
+                }
+
+                if (moveQty > 0)
+                {
+                    if (!isOffline && currentNetworkSync.Runner != null)
+                        currentNetworkSync.Rpc_RequestPutItem(currentNetworkSync.Runner.LocalPlayer, currentStorageId,
+                            item.Data.itemID, 0, lootSlot.Index, moveQty, (int)item.currentRotation);
+                    SubmitSnapshot(force: true);
+                }
+            }
+            else if (baseTargetItem == null)
+            {
+                // 빈 공간 배치
+                if (lootModel.CanPlaceItem(item, targetCoords.x, targetCoords.y))
+                {
+                    int oldIndex = -1;
+                    if (source == Systems.GridInventory.DragSource.Loot && sourceModel == lootModel)
+                    {
+                        var oldPos = sourceModel.GetItemAnchorPosition(item);
+                        if (oldPos.x != -1) oldIndex = sourceModel.GetIndex(oldPos.x, oldPos.y);
+                    }
+
+                    if (source == Systems.GridInventory.DragSource.Quickslot) QuickslotUIController.Instance.RemoveItemFromSlot(sourceIndex);
+                    else if (sourceModel != null) sourceModel.TryRemove(item);
+
+                    if (!isHost || isOffline)
+                    {
+                        lootModel.PlaceItem(item, targetCoords.x, targetCoords.y);
+                        lootModel.Items.Invoke();
+                    }
+
+                    if (!isOffline && currentNetworkSync.Runner != null)
+                    {
+                        if (source == Systems.GridInventory.DragSource.Loot && sourceModel == lootModel && oldIndex != -1)
+                        {
+                            currentNetworkSync.Rpc_RequestMoveItem(currentNetworkSync.Runner.LocalPlayer, currentStorageId, oldIndex, lootSlot.Index, (int)item.currentRotation);
+                        }
+                        else
+                        {
+                            currentNetworkSync.Rpc_RequestPutItem(currentNetworkSync.Runner.LocalPlayer, currentStorageId,
+                                item.Data.itemID, 0, lootSlot.Index, item.currentStackCount, (int)item.currentRotation);
+                        }
+                    }
+                    SubmitSnapshot(force: true);
+                }
+                else
+                {
+                    Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
+                }
+            }
+            else
+            {
+                // 1:1 스왑
+                var baseTargetPos = lootModel.GetItemAnchorPosition(baseTargetItem);
+                lootModel.TryRemove(baseTargetItem);
+
+                if (lootModel.CanPlaceItem(item, targetCoords.x, targetCoords.y))
+                {
+                    int oldIndex = -1;
+                    if (source == Systems.GridInventory.DragSource.Loot && sourceModel == lootModel)
+                    {
+                        var oldPos = sourceModel.GetItemAnchorPosition(item);
+                        if (oldPos.x != -1) oldIndex = sourceModel.GetIndex(oldPos.x, oldPos.y);
+                    }
+
+                    if (source == Systems.GridInventory.DragSource.Quickslot) QuickslotUIController.Instance.RemoveItemFromSlot(sourceIndex);
+                    else if (sourceModel != null) sourceModel.TryRemove(item);
+
+                    baseTargetItem.currentRotation = ItemRotation.Deg0;
+                    
+                    if (source == Systems.GridInventory.DragSource.Quickslot)
+                    {
+                        QuickslotUIController.Instance.SetItemInSlot(sourceIndex, baseTargetItem);
+                    }
+                    else if (sourceModel != null)
+                    {
+                        var sourceOldPos = sourceModel.GetItemAnchorPosition(item);
+                        if (sourceOldPos.x != -1 && sourceModel.CanPlaceItem(baseTargetItem, sourceOldPos.x, sourceOldPos.y))
+                        {
+                            sourceModel.PlaceItem(baseTargetItem, sourceOldPos.x, sourceOldPos.y);
+                        }
+                        else
+                        {
+                            if (!sourceModel.TryAdd(baseTargetItem))
+                            {
+                                Systems.GridInventory.GlobalDragDropRouter.ProcessDrop(baseTargetItem, Systems.GridInventory.DragSource.Loot, -1, Vector2.zero, null);
+                            }
+                        }
+                    }
+
+                    if (!isHost || isOffline)
+                    {
+                        lootModel.PlaceItem(item, targetCoords.x, targetCoords.y);
+                        lootModel.Items.Invoke();
+                    }
+                    else
+                    {
+                        lootModel.PlaceItem(baseTargetItem, baseTargetPos.x, baseTargetPos.y);
+                    }
+
+                    if (!isOffline && currentNetworkSync.Runner != null)
+                    {
+                        if (source == Systems.GridInventory.DragSource.Loot && sourceModel == lootModel && oldIndex != -1)
+                        {
+                            currentNetworkSync.Rpc_RequestMoveItem(currentNetworkSync.Runner.LocalPlayer, currentStorageId,
+                                oldIndex, lootSlot.Index, (int)item.currentRotation);
+                        }
+                        else
+                        {
+                            // External swap
+                            currentNetworkSync.Rpc_RequestPutItemWithSwap(currentNetworkSync.Runner.LocalPlayer, currentStorageId,
+                                item.Data.itemID, 0, lootSlot.Index, item.currentStackCount, (int)item.currentRotation,
+                                baseTargetItem.Data.itemID, baseTargetItem.currentStackCount);
+                        }
+                    }
+                    SubmitSnapshot(force: true);
+                }
+                else
+                {
+                    lootModel.PlaceItem(baseTargetItem, baseTargetPos.x, baseTargetPos.y);
+                    Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
+                }
             }
         }
 
@@ -860,258 +931,7 @@ namespace Systems.Loot
             SubmitSnapshot(force: true);
         }
 
-        private void HandleLootInternalMove(ItemInstance item, int oldX, int oldY, int newX, int newY, int newRotation)
-        {
-            if (currentNetworkSync == null || currentStorageId == null) return;
-            
-            int oldIndex = lootInventoryController.Model.GetIndex(oldX, oldY);
-            int newIndex = lootInventoryController.Model.GetIndex(newX, newY);
-            
-            if (!PlayerNetworkSetup.IsOfflineTestMode && currentNetworkSync.Runner != null)
-                currentNetworkSync.Rpc_RequestMoveItem(currentNetworkSync.Runner.LocalPlayer, currentStorageId, oldIndex, newIndex, newRotation);
-        }
 
-        private void HandleItemDroppedGlobal(GridItemView itemView, Vector2 screenPos)
-        {
-            if (!IsOpen) return;
-            
-            ItemInstance item = itemView.ItemInst;
-            
-            // Determine if dropped on Loot view or Player view
-            var lootSlot = dummyLootGridView.GetGridSlotAtPosition(screenPos);
-            var playerSlot = GridInventoryView.Instance.GetGridSlotAtPosition(screenPos);
-
-            GridInventoryModel sourceModel = null;
-            if (lootInventoryController.Model.GetItemAnchorPosition(item).x != -1) sourceModel = lootInventoryController.Model;
-            else if (GridInventoryClass.Instance.Controller.Model.GetItemAnchorPosition(item).x != -1) sourceModel = GridInventoryClass.Instance.Controller.Model;
-
-            if (sourceModel == null) return;
-
-            GridInventoryModel targetModel = null;
-            int targetX = -1, targetY = -1;
-            int targetIndex = -1;
-
-            if (lootSlot != null && sourceModel != lootInventoryController.Model)
-            {
-                targetModel = lootInventoryController.Model;
-                var coords = targetModel.GetCoordinates(lootSlot.Index);
-                targetX = coords.x; targetY = coords.y;
-                targetIndex = lootSlot.Index;
-            }
-            else if (playerSlot != null && sourceModel != GridInventoryClass.Instance.Controller.Model)
-            {
-                targetModel = GridInventoryClass.Instance.Controller.Model;
-                var coords = targetModel.GetCoordinates(playerSlot.Index);
-                targetX = coords.x; targetY = coords.y;
-                targetIndex = playerSlot.Index;
-            }
-
-            if (targetModel != null)
-            {
-                int newRot = (int)item.currentRotation;
-                var sourcePos = sourceModel.GetItemAnchorPosition(item);
-                int sourceIndex = sourceModel.GetIndex(sourcePos.x, sourcePos.y);
-                int originalQuantity = item.currentStackCount;
-
-                bool isHost = currentNetworkSync != null && currentNetworkSync.HasStateAuthority;
-                bool isOffline = PlayerNetworkSetup.IsOfflineTestMode;
-
-                var baseTargetItem = targetModel.Get(targetX, targetY);
-                bool isSwap = baseTargetItem != null && baseTargetItem.Data != item.Data;
-                string swapItemId = isSwap ? baseTargetItem.Data.itemID : string.Empty;
-                int swapQuantity = isSwap ? baseTargetItem.currentStackCount : 0;
-
-                // 로컬 즉시 적용 (플레이어 인벤토리 및 클라이언트 예측)
-                // 호스트의 경우, Loot 상자 모델은 RPC에서 업데이트하므로 여기서는 플레이어 인벤토리만 업데이트해야 합니다.
-                // 클라이언트의 경우, 렉 방지를 위해 Loot 상자 모델도 임시로 업데이트합니다 (이후 서버 스냅샷으로 덮어씌워짐).
-                
-                if (targetModel == lootInventoryController.Model)
-                {
-                    // Player -> Loot (Put)
-                    if (isSwap)
-                    {
-                        // 스왑
-                        var bOldPos = targetModel.GetItemAnchorPosition(baseTargetItem);
-                        targetModel.TryRemove(baseTargetItem);
-                        
-                        if (targetModel.CanPlaceItem(item, targetX, targetY) && sourceModel.CanPlaceItem(baseTargetItem, sourcePos.x, sourcePos.y))
-                        {
-                            sourceModel.TryRemove(item);
-                            sourceModel.PlaceItem(baseTargetItem, sourcePos.x, sourcePos.y); // 스왑된 아이템을 인벤토리에 넣음
-                            
-                            if (!isHost || isOffline)
-                            {
-                                targetModel.PlaceItem(item, targetX, targetY);
-                            }
-                            else
-                            {
-                                // 호스트는 RPC에서 처리할 것이므로 다시 원상복구 (Loot 상자만)
-                                targetModel.PlaceItem(baseTargetItem, bOldPos.x, bOldPos.y);
-                            }
-                        }
-                        else
-                        {
-                            targetModel.PlaceItem(baseTargetItem, bOldPos.x, bOldPos.y);
-                            itemView.RevertRotation(itemView.OriginalRotation);
-                            return; // 실패
-                        }
-                    }
-                    else
-                    {
-                        // 단순 이동 또는 병합
-                        if (baseTargetItem != null && baseTargetItem.Data == item.Data && item.Data.maxStackSize > 1)
-                        {
-                            int total = item.currentStackCount + baseTargetItem.currentStackCount;
-                            if (total <= item.Data.maxStackSize)
-                            {
-                                sourceModel.TryRemove(item);
-                                if (!isHost || isOffline)
-                                {
-                                    baseTargetItem.currentStackCount = total;
-                                    targetModel.Items.Invoke();
-                                }
-                            }
-                            else
-                            {
-                                item.currentStackCount = total - item.Data.maxStackSize;
-                                sourceModel.Items.Invoke();
-                                if (!isHost || isOffline)
-                                {
-                                    baseTargetItem.currentStackCount = item.Data.maxStackSize;
-                                    targetModel.Items.Invoke();
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (targetModel.CanPlaceItem(item, targetX, targetY))
-                            {
-                                sourceModel.TryRemove(item);
-                                if (!isHost || isOffline)
-                                {
-                                    targetModel.PlaceItem(item, targetX, targetY);
-                                }
-                            }
-                            else
-                            {
-                                itemView.RevertRotation(itemView.OriginalRotation);
-                                return; // 실패
-                            }
-                        }
-                    }
-                }
-                else if (targetModel == GridInventoryClass.Instance.Controller.Model)
-                {
-                    // Loot -> Player (Take)
-                    if (isSwap)
-                    {
-                        // 스왑
-                        var bOldPos = targetModel.GetItemAnchorPosition(baseTargetItem);
-                        targetModel.TryRemove(baseTargetItem);
-                        
-                        if (targetModel.CanPlaceItem(item, targetX, targetY) && sourceModel.CanPlaceItem(baseTargetItem, sourcePos.x, sourcePos.y))
-                        {
-                            targetModel.PlaceItem(item, targetX, targetY); // 가져온 아이템을 인벤토리에 넣음
-                            
-                            if (!isHost || isOffline)
-                            {
-                                sourceModel.TryRemove(item);
-                                sourceModel.PlaceItem(baseTargetItem, sourcePos.x, sourcePos.y);
-                            }
-                            else
-                            {
-                                // 호스트는 RPC에서 처리할 것이므로 Loot 상자는 원상복구 안 해도 됨 (어차피 안 건드렸음)
-                            }
-                        }
-                        else
-                        {
-                            targetModel.PlaceItem(baseTargetItem, bOldPos.x, bOldPos.y);
-                            itemView.RevertRotation(itemView.OriginalRotation);
-                            return; // 실패
-                        }
-                    }
-                    else
-                    {
-                        // 단순 이동 또는 병합
-                        if (baseTargetItem != null && baseTargetItem.Data == item.Data && item.Data.maxStackSize > 1)
-                        {
-                            int total = item.currentStackCount + baseTargetItem.currentStackCount;
-                            if (total <= item.Data.maxStackSize)
-                            {
-                                targetModel.TryRemove(baseTargetItem); // 기존 템 지우고 (스택 합치기 위해)
-                                baseTargetItem.currentStackCount = total;
-                                targetModel.PlaceItem(baseTargetItem, targetX, targetY);
-                                
-                                if (!isHost || isOffline)
-                                {
-                                    sourceModel.TryRemove(item);
-                                }
-                            }
-                            else
-                            {
-                                targetModel.TryRemove(baseTargetItem);
-                                baseTargetItem.currentStackCount = item.Data.maxStackSize;
-                                targetModel.PlaceItem(baseTargetItem, targetX, targetY);
-                                
-                                if (!isHost || isOffline)
-                                {
-                                    item.currentStackCount = total - item.Data.maxStackSize;
-                                    sourceModel.Items.Invoke();
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (targetModel.CanPlaceItem(item, targetX, targetY))
-                            {
-                                targetModel.PlaceItem(item, targetX, targetY);
-                                if (!isHost || isOffline)
-                                {
-                                    sourceModel.TryRemove(item);
-                                }
-                            }
-                            else
-                            {
-                                itemView.RevertRotation(itemView.OriginalRotation);
-                                return; // 실패
-                            }
-                        }
-                    }
-                }
-
-                // 서버 통보 (RPC)
-                if (!isOffline && currentNetworkSync.Runner != null)
-                {
-                    if (targetModel == lootInventoryController.Model)
-                    {
-                        // Player -> Loot (Put)
-                        // Put의 경우 서버가 상자 모델을 관리하므로 originalQuantity를 그대로 보내면 서버가 알아서 병합/나머지 처리를 합니다.
-                        if (isSwap) {
-                            currentNetworkSync.Rpc_RequestPutItemWithSwap(currentNetworkSync.Runner.LocalPlayer, currentStorageId, item.Data.itemID, sourceIndex, targetIndex, originalQuantity, newRot, swapItemId, swapQuantity);
-                        } else {
-                            currentNetworkSync.Rpc_RequestPutItem(currentNetworkSync.Runner.LocalPlayer, currentStorageId, item.Data.itemID, sourceIndex, targetIndex, originalQuantity, newRot);
-                        }
-                    }
-                    else if (targetModel == GridInventoryClass.Instance.Controller.Model)
-                    {
-                        // Loot -> Player (Take)
-                        // Take의 경우 플레이어 인벤토리 공간에 따라 실제 가져간 양이 달라질 수 있으므로 이를 계산해서 보냅니다.
-                        int actualTakeQuantity = originalQuantity;
-                        if (!isSwap && baseTargetItem != null && baseTargetItem.Data == item.Data && item.Data.maxStackSize > 1)
-                        {
-                            int spaceLeft = item.Data.maxStackSize - baseTargetItem.currentStackCount;
-                            actualTakeQuantity = Mathf.Min(originalQuantity, spaceLeft);
-                        }
-
-                        if (isSwap) {
-                            currentNetworkSync.Rpc_RequestTakeItemWithSwap(currentNetworkSync.Runner.LocalPlayer, currentStorageId, swapItemId, sourceIndex, targetIndex, actualTakeQuantity, swapQuantity);
-                        } else {
-                            currentNetworkSync.Rpc_RequestTakeItem(currentNetworkSync.Runner.LocalPlayer, currentStorageId, sourceIndex, targetIndex, actualTakeQuantity);
-                        }
-                    }
-                }
-            }
-        }
 
         private void UpdateCapacities()
         {
@@ -1175,6 +995,7 @@ namespace Systems.Loot
             }
             yield return null;
         }
+
 
         public void BindItemDirect(GridItemView itemView, int slotIndex)
         {

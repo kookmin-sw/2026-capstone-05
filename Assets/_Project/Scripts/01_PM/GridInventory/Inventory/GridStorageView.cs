@@ -38,8 +38,6 @@ namespace Systems.GridInventory {
         private readonly List<int> coloredSlotIndexes = new List<int>();
         private readonly HashSet<int> coloredSlotSet = new HashSet<int>();
 
-        public event Action<GridItemView, GridSlot> OnDrop;
-        public event Action<GridItemView, int> OnDropToQuickslot;
         public event Action<GridItemView, Vector2> OnDragUpdate;
         public event Action OnDragEndEvent;
 
@@ -153,7 +151,6 @@ namespace Systems.GridInventory {
         void OnItemDragEnd(GridItemView item) {
             if (!isDragging || draggedItem != item) return;
             ProcessDrop(currentPointerPos);
-            GridItemView.OnItemDroppedGlobal?.Invoke(item, currentPointerPos);
             OnDragEndEvent?.Invoke();
         }
 
@@ -212,32 +209,13 @@ namespace Systems.GridInventory {
             return closestGridSlot;
         }
 
+
+        public event Action<ItemInstance, Vector2> OnRouteDropRequested;
+
         protected virtual void ProcessDrop(Vector2 position) {
-            if (QuickslotUIController.Instance != null) {
-                int quickslotIndex = QuickslotUIController.Instance.GetSlotIndexAtPosition(position);
-                if (quickslotIndex >= 0) {
-                    OnDropToQuickslot?.Invoke(draggedItem, quickslotIndex);
-                    ResetDragState();
-                    return;
-                }
+            if (draggedItem != null && draggedItem.ItemInst != null) {
+                OnRouteDropRequested?.Invoke(draggedItem.ItemInst, position);
             }
-
-            if (Systems.Loot.LootController.Instance != null &&
-                Systems.Loot.LootController.Instance.IsOpen) {
-                // Loot UI에 드롭을 전달하는 로직이 필요하다면 여기에 추가
-                // 현재 LootController는 GridInventoryController 이벤트를 통해 전역으로 처리됨
-            }
-
-            GridSlot closestGridSlot = GetGridSlotAtPosition(position);
-
-            if (closestGridSlot != null) {
-                OnDrop?.Invoke(draggedItem, closestGridSlot);
-            } else {
-                if (draggedItem != null) {
-                    draggedItem.style.visibility = Visibility.Visible;
-                }
-            }
-
             ResetDragState();
         }
 

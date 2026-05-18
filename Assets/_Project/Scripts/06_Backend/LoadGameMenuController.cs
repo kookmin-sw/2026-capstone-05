@@ -11,8 +11,10 @@ internal sealed class LoadGameMenuController
     private readonly Dictionary<int, UnityAction> _loadSlotButtonActions = new();
     private readonly Dictionary<int, List<TMP_Text>> _loadSlotDateTmpTexts = new();
     private readonly Dictionary<int, List<TMP_Text>> _loadSlotDayTmpTexts = new();
+    private readonly Dictionary<int, List<TMP_Text>> _loadSlotCoinTmpTexts = new();
     private readonly Dictionary<int, List<Text>> _loadSlotDateLegacyTexts = new();
     private readonly Dictionary<int, List<Text>> _loadSlotDayLegacyTexts = new();
+    private readonly Dictionary<int, List<Text>> _loadSlotCoinLegacyTexts = new();
 
     internal LoadGameMenuController(RoomLauncher roomLauncher)
     {
@@ -30,11 +32,15 @@ internal sealed class LoadGameMenuController
         for (int slot = 1; slot <= 3; slot++)
         {
             RoomLauncher.GetHostSaveSlotLabels(slot, out string dateLabel, out string dayLabel);
+            int gold = Systems.GridInventory.GridInventorySaveSystem.GetSavedGoldForSlot(slot);
+            string coinLabel = $"{gold} Coin";
 
             SetAllText(_loadSlotDateTmpTexts, slot, dateLabel);
             SetAllText(_loadSlotDayTmpTexts, slot, dayLabel);
+            SetAllText(_loadSlotCoinTmpTexts, slot, coinLabel);
             SetAllText(_loadSlotDateLegacyTexts, slot, dateLabel);
             SetAllText(_loadSlotDayLegacyTexts, slot, dayLabel);
+            SetAllText(_loadSlotCoinLegacyTexts, slot, coinLabel);
         }
     }
 
@@ -52,8 +58,10 @@ internal sealed class LoadGameMenuController
         _loadSlotButtonActions.Clear();
         _loadSlotDateTmpTexts.Clear();
         _loadSlotDayTmpTexts.Clear();
+        _loadSlotCoinTmpTexts.Clear();
         _loadSlotDateLegacyTexts.Clear();
         _loadSlotDayLegacyTexts.Clear();
+        _loadSlotCoinLegacyTexts.Clear();
 
         BindLoadSlotUi(1, "Gmae1 Load Box", "Game1 Load Box", "Load Game Box1", "Load Box1");
         BindLoadSlotUi(2, "Gmae2 Load Box", "Game2 Load Box", "Load Game Box2", "Load Box2");
@@ -80,12 +88,14 @@ internal sealed class LoadGameMenuController
             {
                 if (ContainsAny(text.name, new[] { "Date" })) AddText(_loadSlotDateTmpTexts, slot, text);
                 else if (ContainsAny(text.name, new[] { "Day" })) AddText(_loadSlotDayTmpTexts, slot, text);
+                else if (ContainsAny(text.name, new[] { "Coin" })) AddText(_loadSlotCoinTmpTexts, slot, text);
             }
 
             foreach (Text text in container.GetComponentsInChildren<Text>(true))
             {
                 if (ContainsAny(text.name, new[] { "Date" })) AddText(_loadSlotDateLegacyTexts, slot, text);
                 else if (ContainsAny(text.name, new[] { "Day" })) AddText(_loadSlotDayLegacyTexts, slot, text);
+                else if (ContainsAny(text.name, new[] { "Coin" })) AddText(_loadSlotCoinLegacyTexts, slot, text);
             }
         }
     }

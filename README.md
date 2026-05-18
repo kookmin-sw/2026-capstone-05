@@ -58,7 +58,7 @@
 
 ## 시연 영상
 
-
+[![시연 영상](https://img.youtube.com/vi/63GaH-Ur-4E/0.jpg)](https://youtu.be/63GaH-Ur-4E)
 
 ## 팀원 소개
 
@@ -168,7 +168,7 @@
 
 | **역할** | **종류** |
 |-|-|
-| **Sprite Design** |  |
+| **Sprite Design** | Photoshop, Illustrator |
 | **3D Modeling & UV** | Cinema 4D |
 | **Texturing** | Substance Patiner, Photoshop |
 

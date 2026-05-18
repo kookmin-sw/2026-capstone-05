@@ -25,8 +25,13 @@ namespace Systems.Loot
         [Tooltip("Unique save/network key for this placed container. Auto-generated for scene instances.")]
         [SerializeField] private string generatedStorageId;
         
+        [Header("Save Settings")]
+        [Tooltip("If true, this storage will be saved and loaded. If false, it will be reset every time.")]
+        [SerializeField] private bool isBaseStorage = false;
+        
         public bool HasConfiguration => lootConfiguration != null;
         public string StorageId => NormalizeStorageId(generatedStorageId);
+        public bool IsBaseStorage => isBaseStorage;
         public int Width => lootConfiguration.Width;
         public int Height => lootConfiguration.Height;
         private string LootTitle => lootConfiguration.LootTitle;
@@ -94,12 +99,21 @@ namespace Systems.Loot
             }
             
             bool canSeedLoot = LootNetworkSync.Instance.HasStateAuthority || PlayerNetworkSetup.IsOfflineTestMode;
-            if (isEmpty && canSeedLoot && !LootSaveManager.HasLootSave(resolvedStorageId))
+            if (isEmpty && canSeedLoot)
             {
-                lootConfiguration.PopulateModel(model, resolvedStorageId);
+                bool shouldPopulate = true;
+                if (isBaseStorage && LootSaveManager.HasLootSave(resolvedStorageId))
+                {
+                    shouldPopulate = false;
+                }
 
-                LootNetworkSync.Instance.SubmitLootSnapshot(resolvedStorageId, 
-                    LootGridSerializer.ToSaveData(resolvedStorageId, model));
+                if (shouldPopulate)
+                {
+                    lootConfiguration.PopulateModel(model, resolvedStorageId);
+
+                    LootNetworkSync.Instance.SubmitLootSnapshot(resolvedStorageId, 
+                        LootGridSerializer.ToSaveData(resolvedStorageId, model));
+                }
             }
         }
 
