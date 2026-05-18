@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   enemyName: Enemy
   maxHealth: 240
-  walkSpeed: 3
-  chaseSpeed: 4.5
-  searchSpeed: 4
+  walkSpeed: 2
+  chaseSpeed: 3.5
+  searchSpeed: 3
   rotationSpeed: 15
   idleStartTime: 1
   idleEndTime: 3
@@ -77,7 +77,7 @@ MonoBehaviour:
   attackRadius: 2
   attackAngle: 120
   attackVariant1Chance: 0.35
-  jumpAttackChance: 0.25
+  jumpAttackChance: 0.1
   jumpAttackDecisionInterval: 1
   jumpAttackMinDistance: 3
   jumpAttackMaxDistance: 7

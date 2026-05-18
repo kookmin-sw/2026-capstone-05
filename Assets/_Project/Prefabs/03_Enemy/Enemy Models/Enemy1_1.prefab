@@ -316,8 +316,23 @@ MonoBehaviour:
       Data3: 1695256483
       Data4: -808822713
     Path: event:/SFX/Enemy/Dead
+  footstepEvent:
+    Guid:
+      Data1: 2063591129
+      Data2: 1251539668
+      Data3: 194615176
+      Data4: 1191936856
+    Path: event:/SFX/Enemy/Footstep
+  landingEvent:
+    Guid:
+      Data1: -965068919
+      Data2: 1112464510
+      Data3: 516916915
+      Data4: 1954247178
+    Path: event:/SFX/Enemy/Landing
   locomotionCooldown: 2
-  stateSoundCooldown: 0.1
+  footstepCooldown: 0.4
+  stateSoundCooldown: 0.2
 --- !u!1001 &4801926030991762472
 PrefabInstance:
   m_ObjectHideFlags: 0

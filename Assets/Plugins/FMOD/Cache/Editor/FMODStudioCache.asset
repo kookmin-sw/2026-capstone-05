@@ -397,13 +397,14 @@ MonoBehaviour:
   - {fileID: 21226142621045747}
   - {fileID: -3560046666339298999}
   - {fileID: -5112587166545575597}
+  - {fileID: 4177942439703970762}
   EditorParameters: []
   MasterBanks:
   - {fileID: 5550584238374082889}
   StringsBanks:
   - {fileID: 6573240060274684362}
   cacheVersion: 131858
-  cacheTime: 639147421234770175
+  cacheTime: 639147467779434117
   SerializableEventsDict:
   - key: event:/SFX/Player/Landing
     index: 0
@@ -461,6 +462,8 @@ MonoBehaviour:
     index: 26
   - key: event:/SFX/Enemy/Footstep
     index: 27
+  - key: event:/SFX/Enemy/Landing
+    index: 28
 --- !u!114 &21226142621045747
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -840,6 +843,33 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 0
+--- !u!114 &4177942439703970762
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/SFX/Enemy/Landing
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/SFX/Enemy/Landing
+  Guid:
+    Data1: -965068919
+    Data2: 1112464510
+    Data3: 516916915
+    Data4: 1954247178
+  Banks:
+  - {fileID: 5550584238374082889}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 0
 --- !u!114 &4735713305548739768
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -936,10 +966,10 @@ MonoBehaviour:
   Path: FMOD_Project/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639147421234739959
+  lastModified: 639147467779414080
   FileSizes:
   - Name: Desktop
-    Value: 3605440
+    Value: 3615456
   Exists: 1
 --- !u!114 &6573240060274684362
 MonoBehaviour:
@@ -956,10 +986,10 @@ MonoBehaviour:
   Path: FMOD_Project/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639147421234770175
+  lastModified: 639147467779434117
   FileSizes:
   - Name: Desktop
-    Value: 2588
+    Value: 2636
   Exists: 1
 --- !u!114 &7298204743422360799
 MonoBehaviour:

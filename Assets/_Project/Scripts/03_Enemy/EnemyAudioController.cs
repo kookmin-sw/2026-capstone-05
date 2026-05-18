@@ -11,11 +11,15 @@ public enum EnemySoundCue : byte
     Search = 3,
     Attack = 4,
     Hit = 5,
-    Dead = 6
+    Dead = 6,
+    Footstep = 7,
+    Landing = 8
 }
 
 public class EnemyAudioController : MonoBehaviour
 {
+    private const string EnemyMovementTypeParameter = "EnemyMovementType";
+
     [Header("Audio Toggle")]
     [SerializeField] private bool enableAudio = true;
 
@@ -27,9 +31,12 @@ public class EnemyAudioController : MonoBehaviour
     [SerializeField] private EventReference attackEvent;
     [SerializeField] private EventReference hitEvent;
     [SerializeField] private EventReference deadEvent;
+    [SerializeField] private EventReference footstepEvent;
+    [SerializeField] private EventReference landingEvent;
 
     [Header("Playback Guards")]
     [SerializeField, Min(0f)] private float locomotionCooldown = 2f;
+    [SerializeField, Min(0f)] private float footstepCooldown = 0.05f;
     [SerializeField, Min(0f)] private float stateSoundCooldown = 0.1f;
 
     private readonly float[] lastPlayTimes = new float[Enum.GetValues(typeof(EnemySoundCue)).Length];
@@ -55,7 +62,7 @@ public class EnemyAudioController : MonoBehaviour
         if (cueIndex < 0 || cueIndex >= lastPlayTimes.Length)
             return;
 
-        float cooldown = cue == EnemySoundCue.Locomotion ? locomotionCooldown : stateSoundCooldown;
+        float cooldown = GetCooldown(cue);
         if (Time.time < lastPlayTimes[cueIndex] + cooldown)
             return;
 
@@ -63,6 +70,27 @@ public class EnemyAudioController : MonoBehaviour
 
         EventInstance instance = RuntimeManager.CreateInstance(eventReference);
         RuntimeManager.AttachInstanceToGameObject(instance, gameObject);
+        instance.start();
+        instance.release();
+    }
+
+    public void PlayFootstep(float movementType)
+    {
+        if (!enableAudio)
+            return;
+
+        if (footstepEvent.IsNull)
+            return;
+
+        int cueIndex = (int)EnemySoundCue.Footstep;
+        if (Time.time < lastPlayTimes[cueIndex] + footstepCooldown)
+            return;
+
+        lastPlayTimes[cueIndex] = Time.time;
+
+        EventInstance instance = RuntimeManager.CreateInstance(footstepEvent);
+        RuntimeManager.AttachInstanceToGameObject(instance, gameObject);
+        instance.setParameterByName(EnemyMovementTypeParameter, movementType);
         instance.start();
         instance.release();
     }
@@ -95,8 +123,25 @@ public class EnemyAudioController : MonoBehaviour
                 return hitEvent;
             case EnemySoundCue.Dead:
                 return deadEvent;
+            case EnemySoundCue.Footstep:
+                return footstepEvent;
+            case EnemySoundCue.Landing:
+                return landingEvent;
             default:
                 return default;
+        }
+    }
+
+    private float GetCooldown(EnemySoundCue cue)
+    {
+        switch (cue)
+        {
+            case EnemySoundCue.Locomotion:
+                return locomotionCooldown;
+            case EnemySoundCue.Footstep:
+                return footstepCooldown;
+            default:
+                return stateSoundCooldown;
         }
     }
 }

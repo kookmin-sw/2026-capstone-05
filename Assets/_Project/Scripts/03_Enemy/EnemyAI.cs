@@ -9,6 +9,11 @@ using UnityEditor;
 public class EnemyAI : NetworkBehaviour, INoiseListener
 {
     private const int MaxNoiseMemorySlots = 8;
+    private const float FootstepAnimSpeedThreshold = 0.1f;
+    private const float FootstepMovementTypePatrol = 0f;
+    private const float FootstepMovementTypeChase = 1f;
+    private const float WalkLocomotionBlendValue = 0.5f;
+    private const float RunLocomotionBlendValue = 1f;
 
     private struct NoiseMemorySlot
     {
@@ -150,6 +155,8 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         AttackState = new EnemyAttackState(this, StateMachine);
         HitState = new EnemyHitState(this, StateMachine);
         DeadState = new EnemyDeadState(this, StateMachine);
+
+        AnimationEventHandler.OnFootstep += HandleFootstep;
 
         isRuntimeInitialized = true;
         return true;
@@ -328,6 +335,43 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
             return;
 
         RpcPlayEnemySound((byte)cue);
+    }
+
+    public void SetWalkLocomotionSpeed(float currentSpeed, float referenceSpeed)
+    {
+        SetLocomotionSpeed(currentSpeed, referenceSpeed, WalkLocomotionBlendValue);
+    }
+
+    public void SetRunLocomotionSpeed(float currentSpeed, float referenceSpeed)
+    {
+        SetLocomotionSpeed(currentSpeed, referenceSpeed, RunLocomotionBlendValue);
+    }
+
+    private void SetLocomotionSpeed(float currentSpeed, float referenceSpeed, float maxBlendValue)
+    {
+        float normalizedSpeed = referenceSpeed > 0f
+            ? Mathf.Clamp01(currentSpeed / referenceSpeed)
+            : 0f;
+
+        Animator.SetFloat("Speed", normalizedSpeed * maxBlendValue, 0.2f, Time.deltaTime);
+    }
+
+    private void HandleFootstep()
+    {
+        if (AudioController == null || Animator == null)
+            return;
+
+        if (StateMachine?.CurrentState == DeadState || StateMachine?.CurrentState == HitState || StateMachine?.CurrentState == AttackState)
+            return;
+
+        if (Animator.GetFloat("Speed") < FootstepAnimSpeedThreshold)
+            return;
+
+        float movementType = StateMachine.CurrentState == ChaseState
+            ? FootstepMovementTypeChase
+            : FootstepMovementTypePatrol;
+
+        AudioController.PlayFootstep(movementType);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
