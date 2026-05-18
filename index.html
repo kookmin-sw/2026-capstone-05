@@ -54,7 +54,7 @@
 
 <h1>NUNBORA: Frostblind</h1>
 
-<p><img src="Assets\_Project\Assets\Capstone\MainLogo.png" alt="Main Logo"></p>
+<p><img src="./Assets/_Project/Assets/Capstone/MainLogo.png" alt="Main Logo"></p>
 
 <h2><a id="목차"></a>목차</h2>
 <ol>
@@ -94,6 +94,8 @@
 <p>클라이언트의 예측 보간(Interpolation)과 API 서버의 엄격한 유효성 검증을 결합했습니다. 로컬 스토리지에 진행도를 저장해 빠른 이어하기를 지원하고, 핵심 상태는 서버 틱(Tick) 기준으로 판정하여 네트워크 지연 속에서도 공정한 협동 플레이를 보장합니다.</p>
 
 <h2><a id="시연-영상"></a>시연 영상</h2>
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/63GaH-Ur-4E?si=zOzbYbwD5Y8RW2Vr" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 <h2><a id="팀원-소개"></a>팀원 소개</h2>
 <table style="text-align: center; width: 100%;">
@@ -141,7 +143,7 @@
     <li><strong>권한 분리:</strong> 클라이언트(Unity)는 예측 보간을 통해 사용자 입력에 즉각적으로 반응하여 체감 지연을 줄이고, API 서버(ASP.NET Core)는 엄격한 유효성 검증 및 게임 상태의 최종 판정을 담당합니다.</li>
     <li><strong>진행도 저장 전략:</strong> 로컬 스토리지에 진행도(현재 웨이브, 팀 상태 등)를 1차적으로 임시 저장해 네트워크 장애 시 빠른 복구를 지원하며, 핵심 데이터는 서버 검증 후 PostgreSQL에 영속화합니다.</li>
 </ul>
-<p><img src="Assets\_Project\Assets\Capstone\ServerArchitecture.png" alt="Server Architecture"></p>
+<p><img src="./Assets/_Project/Assets/Capstone/ServerArchitecture.png" alt="Server Architecture"></p>
 
 <h3>컴포넌트 기반 1/3인칭 통합 플레이어</h3>
 <ul>
@@ -149,20 +151,20 @@
     <li><strong>계층적 상태 기계(Hierarchical FSM):</strong> 복잡한 조작을 Grounded, Airborne 등 상위/하위 상태로 체계적으로 관리합니다.</li>
     <li><strong>1P/3P 동기화 애니메이션:</strong> 1P와 3P가 기본적으로 같은 애니메이션을 사용하지만, 1P용 애니메이션(idle, attack 등)을 따로 두고 오버라이드 컨트롤러(Override Controller)를 통해 이를 적용하는 방식으로 충돌 없이 동기화했습니다.</li>
 </ul>
-<p><img src="Assets\_Project\Assets\Capstone\PlayerArchitecture.png" alt="Player Architecture"></p>
+<p><img src="./Assets/_Project/Assets/Capstone/PlayerArchitecture.png" alt="Player Architecture"></p>
 
 <h3>적 및 소음 시스템 구조</h3>
 <ul>
     <li><strong>인터페이스 기반 통신:</strong> 발생원(Player)과 수신자(Enemy)가 코드를 직접 참조하지 않는 느슨한 결합(Observer 패턴 등 적용)으로 시스템을 설계했습니다.</li>
     <li><strong>물리적 소음 전파:</strong> 단순 반경 감지가 아닌, 데시벨(dB) 기반으로 거리를 계산하고 Physics.Linecast를 활용해 벽에 의한 소음 차단 및 거리 감쇠를 물리적으로 구현했습니다.</li>
 </ul>
-<p><img src="Assets\_Project\Assets\Capstone\NoiseArchitecture.png" alt="Noise Architecture"></p>
+<p><img src="./Assets/_Project/Assets/Capstone/NoiseArchitecture.png" alt="Noise Architecture"></p>
 
 <h3>MVC 패턴 기반 인벤토리</h3>
 <ul>
     <li>데이터(Model), 시각 요소(View), 상호작용 제어(Controller)를 분리하여 UI Toolkit 환경에서 유지보수성을 극대화했습니다. 2차원 배열 기반으로 아이템의 다중 셀 형태와 회전에 따른 충돌 및 병합 로직을 처리합니다.</li>
 </ul>
-<p><img src="Assets\_Project\Assets\Capstone\InventoryArchitecture.png" alt="Inventory Architecture"></p>
+<p><img src="./Assets/_Project/Assets/Capstone/InventoryArchitecture.png" alt="Inventory Architecture"></p>
 
 <h3>마스코트 캐릭터 Live2D 연동 파이프라인: Live2D Cubism</h3>
 <ul>
@@ -170,7 +172,7 @@
     <li><strong>투 카메라(Two-Camera) 렌더링 최적화:</strong> Live2D SDK 연동 시, 배경의 짙은 눈보라 포스트 프로세싱 효과에 간섭받지 않고 UI 캔버스 위에서만 선명하게 렌더링되도록 아키텍처를 구성했습니다.</li>
     <li><strong>이벤트 기반 실시간 상호작용:</strong> 매 프레임 업데이트 방식이 아닌 상점 상태 변화(인사, 구매, 재화 부족 등)에 따른 이벤트 콜백 방식을 채택하여, 최적화된 성능으로 C# 스크립트를 통해 애니메이션 피드백을 제공합니다.</li>
 </ul>
-<p><img src="Assets\_Project\Assets\Capstone\Live2D.png" alt="Live2D Architecture"></p>
+<p><img src="./Assets/_Project/Assets/Capstone/Live2D.png" alt="Live2D Architecture"></p>
 
 <h2><a id="기술-스택"></a>기술 스택</h2>
 
