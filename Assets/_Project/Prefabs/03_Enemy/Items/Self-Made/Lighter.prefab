@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5575152117132090181}
   - component: {fileID: -1491079288624899768}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Lighter
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -100,6 +100,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: cbb2a9e834e044b20b93cca99730a6a3, type: 3}
       propertyPath: m_Name
       value: lighter
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: cbb2a9e834e044b20b93cca99730a6a3, type: 3}
+      propertyPath: m_Layer
+      value: 11
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

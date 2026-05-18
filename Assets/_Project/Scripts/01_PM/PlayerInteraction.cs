@@ -12,7 +12,6 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
     [Header("Interaction Settings")]
     [SerializeField] private float interactionRange = 3f;
     [SerializeField] private LayerMask interactableLayers = -1;
-    [SerializeField] private LayerMask obstacleLayers = -1;
     [SerializeField] private float interactionCooldown = 0.3f; // 상호작용 쿨다운 시간
     
     private float lastInteractionTime = 0f;
@@ -81,75 +80,29 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
         }
 
         Ray ray = new Ray(cameraTransform.position, cameraTransform.forward);
-        LayerMask combinedLayers = interactableLayers | obstacleLayers;
-        int hitCount = Physics.RaycastNonAlloc(ray, interactionHits, interactionRange, combinedLayers);
-        
-        if (hitCount > 0)
+        if (Physics.Raycast(ray, out RaycastHit hit, interactionRange, interactableLayers))
         {
-            // 거리순 정렬 (람다 사용 없이 간단히)
-            SortHitsByDistance(hitCount);
+            // 콜라이더 자체나 부모 객체에 IInteractable 인터페이스가 있는지 확인
+            IInteractable interactable = hit.collider.GetComponentInParent<IInteractable>();
 
-            for (int i = 0; i < hitCount; i++)
+            if (interactable != null && interactable.CanInteract(player))
             {
-                RaycastHit h = interactionHits[i];
+                GameObject targetObj = (interactable as MonoBehaviour)?.gameObject ?? hit.collider.gameObject;
 
-                // 플레이어 자신의 콜라이더는 완전히 무시
-                if (player != null && h.collider.transform.root == player.transform.root)
-                    continue;
-
-                // 콜라이더 자체나 부모 객체에 IInteractable 인터페이스가 있는지 확인
-                IInteractable interactable = h.collider.GetComponentInParent<IInteractable>();
-
-                if (interactable != null && interactable.CanInteract(player))
+                if (currentLookObject != targetObj)
                 {
-                    // 실제 스크립트가 붙어있는 객체를 대상으로 상호작용 설정
-                    GameObject targetObj = (interactable as MonoBehaviour)?.gameObject ?? h.collider.gameObject;
-
-                    if (currentLookObject != targetObj)
-                    {
-                        ClearCurrentInteractable();
-                        SetCurrentInteractable(targetObj, interactable);
-                    }
-                    return; // 가장 가까운 상호작용 가능 객체를 찾았으므로 종료
+                    ClearCurrentInteractable();
+                    SetCurrentInteractable(targetObj, interactable);
                 }
-
-                if (((1 << h.collider.gameObject.layer) & obstacleLayers) != 0)
-                {
-                    break;
-                }
-            }
-            
-            // 유효한 IInteractable을 찾지 못했다면 클리어
-            if (currentLookObject != null)
-            {
-                ClearCurrentInteractable();
+                return;
             }
         }
-        else
+
+        if (currentLookObject != null)
         {
-            if (currentLookObject != null)
-            {
-                ClearCurrentInteractable();
-            }
+            ClearCurrentInteractable();
         }
     }
-
-    private void SortHitsByDistance(int hitCount)
-    {
-        for (int i = 1; i < hitCount; i++)
-        {
-            RaycastHit key = interactionHits[i];
-            int j = i - 1;
-            while (j >= 0 && interactionHits[j].distance > key.distance)
-            {
-                interactionHits[j + 1] = interactionHits[j];
-                j--;
-            }
-
-            interactionHits[j + 1] = key;
-        }
-    }
-
 
     private void UpdateHoldInteraction(IHoldInteractable holdInteractable)
     {

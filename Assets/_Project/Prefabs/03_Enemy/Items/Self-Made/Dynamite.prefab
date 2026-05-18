@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 673357515968851816}
   - component: {fileID: -3366134540257897048}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Dynamite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -100,6 +100,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: b9aeda1bf442b47e2b6ee370d89b75b4, type: 3}
       propertyPath: m_Name
       value: dynamite
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b9aeda1bf442b47e2b6ee370d89b75b4, type: 3}
+      propertyPath: m_Layer
+      value: 11
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

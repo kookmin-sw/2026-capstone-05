@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8964846923913027374}
   - component: {fileID: -9062600856448047764}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: IronScrapes
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -100,6 +100,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 5d3305ab268f24cabb695ae48d1d3da0, type: 3}
       propertyPath: m_Name
       value: iron scrapes
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 5d3305ab268f24cabb695ae48d1d3da0, type: 3}
+      propertyPath: m_Layer
+      value: 11
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
