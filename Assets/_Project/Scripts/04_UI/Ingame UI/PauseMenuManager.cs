@@ -53,7 +53,7 @@ public class PauseMenuManager : MonoBehaviour
         pauseMenuPanel.transform.localScale = Vector3.zero;
         pauseMenuPanel.transform.DOScale(1f, 0.2f).SetUpdate(true);
         Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        Cursor.visible = false;
         OnPauseStateChanged?.Invoke(true); 
     }
 
