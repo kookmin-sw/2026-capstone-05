@@ -13,7 +13,7 @@ public class PlayerInteractionState : PlayerState
         base.Enter();
         player.useGravity = true;
 
-        player.Condition.stamina.increaseRate = player.idleRegenRate;
+        player.Condition.stamina.increaseRate = player.staminaIdleRegenRate;
     }
 
     public override void Exit()

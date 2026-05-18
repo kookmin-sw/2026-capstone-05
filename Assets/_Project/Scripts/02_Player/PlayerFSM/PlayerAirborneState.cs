@@ -20,7 +20,7 @@ public class PlayerAirborneState : PlayerState
 
         player.Animator.SetGrounded(false);
 
-        player.Condition.stamina.increaseRate = player.airborneRegenRate;
+        player.Condition.stamina.increaseRate = player.staminaAirborneRegenRate;
 
         player.Equipment.CancelCurrentItemUse();
     }

@@ -60,6 +60,7 @@ public class PlayerGroundedState : PlayerState
         HandleMovement();
         HandleAnimation();
         HandleStamina();
+        HandleSatiety();
     }
 
     public override void PhysicsUpdate()
@@ -91,10 +92,7 @@ public class PlayerGroundedState : PlayerState
                 ExecuteJump();
                 return;
             }
-            else
-            {
-                player.InputHandler.ConsumeJump();
-            }
+            player.InputHandler.ConsumeJump();
         }
 
         if (player.InputHandler.CrouchTriggered)
@@ -245,21 +243,40 @@ public class PlayerGroundedState : PlayerState
 
             if (currentLocomotion == PlayerGroundedLocomotion.Idle)
             {   // 가만히 있는 중
-                targetRegenRate = player.idleRegenRate;
+                targetRegenRate = player.staminaIdleRegenRate;
             }
             else
             {
                 if (currentPosture == PlayerGroundedPosture.Standing)
                 {   // 걷는 중
-                    targetRegenRate = player.walkRegenRate;
+                    targetRegenRate = player.staminaWalkRegenRate;
                 }
                 else
                 {   // 웅크리고 걷는 중
-                    targetRegenRate = player.crouchWalkRegenRate;
+                    targetRegenRate = player.staminaCrouchWalkRegenRate;
                 }
             }
 
             player.Condition.stamina.increaseRate = targetRegenRate;
         }
+    }
+
+    private void HandleSatiety()
+    {
+        float targetSatietyDecay = 0f;
+        if (currentLocomotion == PlayerGroundedLocomotion.Idle)
+        {
+            targetSatietyDecay = player.satietyIdleDecayRate;
+        }
+        else if (currentLocomotion == PlayerGroundedLocomotion.Walking)
+        {
+            targetSatietyDecay = currentPosture == PlayerGroundedPosture.Standing ? player.satietyWalkDecayRate : player.satietyCrouchWalkDecayRate;
+        }
+        else if (currentLocomotion == PlayerGroundedLocomotion.Sprinting)
+        {
+            targetSatietyDecay = player.satietySprintDecayRate;
+        }
+
+        player.Condition.satiety.decreaseRate = targetSatietyDecay;
     }
 }

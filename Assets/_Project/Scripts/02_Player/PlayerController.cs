@@ -66,10 +66,17 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
     public float minStaminaToSprint = 10f; // 다시 달리기를 시작하기 위한 최소 스태미나
     public float jumpStaminaCost = 10f; // 점프 시 소모되는 스태미나
     public float staminaRegenDelay = 1.5f;   // 소모 후 회복이 시작되기까지의 대기 시간
-    public float idleRegenRate = 20f;
-    public float crouchWalkRegenRate = 15f;
-    public float walkRegenRate = 5f;
-    public float airborneRegenRate = 0f;
+    public float staminaIdleRegenRate = 20f;
+    public float staminaCrouchWalkRegenRate = 15f;
+    public float staminaWalkRegenRate = 5f;
+    public float staminaAirborneRegenRate = 0f;
+
+    [Header("Satiety Settings")]
+    public float satietyIdleDecayRate = 0.1f; // 초당 감소량
+    public float satietyWalkDecayRate = 0.15f; // 이동 시 감소량
+    public float satietySprintDecayRate = 0.25f; // 달리기 시 감소량
+    public float satietyCrouchWalkDecayRate = 0.12f; // 웅크리고 이동 시 감소량
+    public float satietyAirborneDecayRate = 0.1f; // 공중에 있을 때 감소량
 
     [Header("Camera Recoil")]
     public float recoilReturnSpeed = 2f; // 반동이 원위치로 돌아오는 속도
