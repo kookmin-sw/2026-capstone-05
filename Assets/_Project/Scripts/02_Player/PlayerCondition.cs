@@ -27,6 +27,13 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
     private bool hasRaisedDeathEvent;
     private bool statsInitialized;
 
+    [Header("Condition Damage Settings")]
+    public float conditionDamageInterval = 1f; // 상태로 인한 피해 간격 (초)
+    public float hungerDamageRate = 0.5f; // 배고픔으로 인한 피해량
+    public float coldDamageRate = 0.5f; // 추위로 인한 피해량
+
+    private float conditionDamageTimer = 0f;
+
     [Header("Indoor Settings")]
     private bool isIndoors;
     public float indoorColdnessDecreaseRate = 0.4f;
@@ -103,6 +110,28 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
             {
                 activeEffects.RemoveAt(i);
             }
+        }
+
+        if (IsAlive)
+        {
+            if (conditionDamageTimer > 0f)
+            {
+                conditionDamageTimer -= Time.deltaTime;
+            }
+            else
+            {
+                if (satiety.currentValue <= 0f)
+                {
+                    health.Subtract(hungerDamageRate);
+                }
+                if (coldness.currentValue >= coldness.maxValue)
+                {
+                    health.Subtract(coldDamageRate);
+                }
+
+                conditionDamageTimer = conditionDamageInterval;
+            }
+            
         }
     }
 
