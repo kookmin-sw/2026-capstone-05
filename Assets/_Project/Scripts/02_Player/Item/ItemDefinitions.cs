@@ -30,7 +30,8 @@ public enum ItemUseAnimationType
 public enum ItemPoseType
 {
     Default,
-    Rifle
+    Rifle,
+    RaiseOneHand
 }
 
 [System.Serializable]

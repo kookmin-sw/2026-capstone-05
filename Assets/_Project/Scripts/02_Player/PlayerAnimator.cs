@@ -36,7 +36,8 @@ public class PlayerAnimator : MonoBehaviour
     private Dictionary<ItemPoseType, int> itemPoseIDs = new Dictionary<ItemPoseType, int>
     {
         { ItemPoseType.Default, 0 },
-        { ItemPoseType.Rifle, 1 }
+        { ItemPoseType.Rifle, 1 },
+        { ItemPoseType.RaiseOneHand, 2 }
     };
 
     public void SetGrounded(bool isGrounded)

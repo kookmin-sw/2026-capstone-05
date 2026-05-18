@@ -74,6 +74,7 @@ public class PlayerEquipment : MonoBehaviour
         }
 
         player.Animator.SetItemPose(itemInstance.Data.poseType);
+        Debug.Log($"Equipping item: {itemInstance.Data.itemName} with pose {itemInstance.Data.poseType}");
 
         if (player.IsLocalPlayer && handSocket1P != null)
         {

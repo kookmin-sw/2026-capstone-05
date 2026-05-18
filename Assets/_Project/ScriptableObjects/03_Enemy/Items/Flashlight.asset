@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dcc07c36f93919e468131c0354841235, type: 3}
+  m_Script: {fileID: 11500000, guid: d0f33126e7b4de744bdf086324f4e4bc, type: 3}
   m_Name: Flashlight
-  m_EditorClassIdentifier: Assembly-CSharp::MiscItemData
+  m_EditorClassIdentifier: Assembly-CSharp::FlashlightData
   itemID: 9
   itemName: Flashlight
   description: 
@@ -22,9 +22,14 @@ MonoBehaviour:
     - {x: 0, y: 1}
   maxStackSize: 1
   pickupPrefab: {fileID: 7238137137523354593, guid: 8814c618184fd86469a6b16b92299c07, type: 3}
-  equipPrefab: {fileID: 0}
+  equipPrefab: {fileID: 7238137137523354593, guid: 673592b633ccc3e40a9b752a792ef6de, type: 3}
   useAnimationType: 0
-  poseType: 0
-  actionCooldown: 1
+  poseType: 2
+  actionCooldown: 0
   isTradable: 1
   price: 0
+  useDuration: 0
+  useNoiseType: 0
+  lightRange: 20
+  lightIntensity: 5
+  lightColor: {r: 1, g: 1, b: 0.7607843, a: 1}
