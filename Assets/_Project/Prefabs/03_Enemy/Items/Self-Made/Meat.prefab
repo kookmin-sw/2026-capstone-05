@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5954977328915081459}
   - component: {fileID: -83019859722712429}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Meat
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -100,6 +100,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 40586fa7b829246a0aa2e16556484112, type: 3}
       propertyPath: m_Name
       value: meat
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 40586fa7b829246a0aa2e16556484112, type: 3}
+      propertyPath: m_Layer
+      value: 11
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
