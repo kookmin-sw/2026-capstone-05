@@ -1,14 +1,11 @@
 using Fusion;
 using UnityEngine;
+using UnityEngine.Localization.Settings;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkObject))]
 public class BunkerEnterInteractable : NetworkBehaviour, IInteractable
 {
-    [Header("Prompt")]
-    [SerializeField] private string objectName = "들어가기";
-    [SerializeField] private string interactPrompt = "[E] 들어가기";
-
     [Header("Interaction Assist")]
     [SerializeField] private bool autoCreateInteractionCollider = true;
     [SerializeField] private float assistColliderRadius = 3.5f;
@@ -22,6 +19,11 @@ public class BunkerEnterInteractable : NetworkBehaviour, IInteractable
 
     private SphereCollider assistCollider;
     private Outline cachedOutline;
+
+    private readonly string objectNameTable = "ObjectNames";
+    private readonly string objectNameKey = "Bunker";
+    private readonly string interactPromptTable = "InteractPrompts";
+    private readonly string interactPromptKey = "EnterBunker";
 
     public bool CanInteract(PlayerController player)
     {
@@ -52,12 +54,12 @@ public class BunkerEnterInteractable : NetworkBehaviour, IInteractable
 
     public string GetInteractPrompt()
     {
-        return interactPrompt;
+        return LocalizationSettings.StringDatabase.GetLocalizedString(interactPromptTable, interactPromptKey);
     }
 
     public string GetObjectName()
     {
-        return objectName;
+        return LocalizationSettings.StringDatabase.GetLocalizedString(objectNameTable, objectNameKey);
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]

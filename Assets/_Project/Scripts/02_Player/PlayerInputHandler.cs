@@ -184,4 +184,10 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
             SetInputActive(false);
         }
     }
+
+    public string GetInteractKey()
+    {
+        // TODO: 게임패드 지원 시 컨트롤러 입력에 따른 키 표시도 필요
+        return inputActions.Player.Interact.GetBindingDisplayString(0);
+    }
 }

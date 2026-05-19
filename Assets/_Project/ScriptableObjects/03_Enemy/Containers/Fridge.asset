@@ -13,7 +13,15 @@ MonoBehaviour:
   m_Name: Fridge
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.LootConfiguration
   storageIdPrefix: Loot
-  lootTitle: Fridge
+  lootTitle:
+    m_TableReference:
+      m_TableCollectionName: GUID:76aef79d7d0b6794e84c598e768c9177
+    m_TableEntryReference:
+      m_KeyId: 2264679624704
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
   lootWidth: 9
   lootHeight: 18
   minItemRolls: 3
@@ -48,3 +56,6 @@ MonoBehaviour:
     frequency: 3
     minQuantity: 1
     maxQuantity: 1
+  references:
+    version: 2
+    RefIds: []

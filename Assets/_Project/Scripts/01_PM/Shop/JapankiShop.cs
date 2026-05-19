@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.Localization.Settings;
 
 namespace Systems.Shop
 {
@@ -7,10 +8,11 @@ namespace Systems.Shop
     {
         [Header("자판기 판매 아이템 목록")]
         [SerializeField] private List<ShopItemEntry> itemsToSell;
-        
-        [Header("상호작용 설정")]
-        [SerializeField] private string interactPrompt = "Open Shop";
-        [SerializeField] private string objectName = "Pokopia Vending Machine";
+
+        private readonly string objectNameTable = "ObjectNames";
+        private readonly string objectNameKey = "VendingMachine";
+        private readonly string interactPromptTable = "InteractPrompts";
+        private readonly string interactPromptKey = "OpenShop";
 
         public bool CanInteract(PlayerController player)
         {
@@ -33,12 +35,12 @@ namespace Systems.Shop
 
         public string GetInteractPrompt()
         {
-            return interactPrompt;
+            return LocalizationSettings.StringDatabase.GetLocalizedString(interactPromptTable, interactPromptKey);
         }
 
         public string GetObjectName()
         {
-            return objectName;
+            return LocalizationSettings.StringDatabase.GetLocalizedString(objectNameTable, objectNameKey);
         }
     }
 }

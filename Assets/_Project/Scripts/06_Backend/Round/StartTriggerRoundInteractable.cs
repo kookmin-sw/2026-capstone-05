@@ -1,5 +1,6 @@
 using Fusion;
 using UnityEngine;
+using UnityEngine.Localization.Settings;
 
 public class StartTriggerRoundInteractable : MonoBehaviour, IInteractable, IHoldInteractable
 {
@@ -22,6 +23,13 @@ public class StartTriggerRoundInteractable : MonoBehaviour, IInteractable, IHold
     private SphereCollider assistCollider;
     private Outline cachedOutline;
     private float lastToggleRequestTime = float.NegativeInfinity;
+
+    private readonly string objectNameTable = "ObjectNames";
+    private readonly string objectNameKey = "StartRound";
+    private readonly string interactPromptTable = "InteractPrompts";
+    private readonly string notReadyPromptKey = "RoundNotReady";
+    private readonly string readyPromptKey = "RoundStart";
+    private readonly string inProgressPromptKey = "RoundInProgress";
 
     public bool CanInteract(PlayerController player)
     {
@@ -83,17 +91,17 @@ public class StartTriggerRoundInteractable : MonoBehaviour, IInteractable, IHold
         BackendRoundManager activeRoundManager = ResolveRoundManager();
         if (activeRoundManager == null)
         {
-            return "[Hold E] 준비 안됨";
+            return LocalizationSettings.StringDatabase.GetLocalizedString(interactPromptTable, notReadyPromptKey);
         }
 
         return activeRoundManager.IsRoundRunning
-            ? "[Hold E] 라운드 진행 중"
-            : "[Hold E] 라운드 시작";
+            ? LocalizationSettings.StringDatabase.GetLocalizedString(interactPromptTable, inProgressPromptKey)
+            : LocalizationSettings.StringDatabase.GetLocalizedString(interactPromptTable, readyPromptKey);
     }
 
     public string GetObjectName()
     {
-        return "하루 시작하기";
+        return LocalizationSettings.StringDatabase.GetLocalizedString(objectNameTable, objectNameKey);
     }
 
     private void Awake()

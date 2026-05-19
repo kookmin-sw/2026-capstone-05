@@ -1,5 +1,6 @@
 using Fusion;
 using UnityEngine;
+using UnityEngine.Localization.Settings;
 using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
@@ -15,10 +16,6 @@ public class BunkerExitInteractable : NetworkBehaviour, IInteractable
     [SerializeField] private Vector3 exitWorldOffset = Vector3.zero;
     [SerializeField] private float exitGroundClearance = 0.05f;
 
-    [Header("Prompt")]
-    [SerializeField] private string objectName = "나가기";
-    [SerializeField] private string interactPrompt = "[E] 나가기";
-
     [Header("Interaction Assist")]
     [SerializeField] private bool autoCreateInteractionCollider = true;
     [SerializeField] private float assistColliderRadius = 3.5f;
@@ -32,6 +29,11 @@ public class BunkerExitInteractable : NetworkBehaviour, IInteractable
 
     private SphereCollider assistCollider;
     private Outline cachedOutline;
+
+    private readonly string objectNameTable = "ObjectNames";
+    private readonly string objectNameKey = "Bunker";
+    private readonly string interactPromptTable = "InteractPrompts";
+    private readonly string interactPromptKey = "ExitBunker";
 
     public bool CanInteract(PlayerController player)
     {
@@ -62,12 +64,12 @@ public class BunkerExitInteractable : NetworkBehaviour, IInteractable
 
     public string GetInteractPrompt()
     {
-        return interactPrompt;
+        return LocalizationSettings.StringDatabase.GetLocalizedString(interactPromptTable, interactPromptKey);
     }
 
     public string GetObjectName()
     {
-        return objectName;
+        return LocalizationSettings.StringDatabase.GetLocalizedString(objectNameTable, objectNameKey);
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]

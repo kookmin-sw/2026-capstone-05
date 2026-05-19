@@ -13,7 +13,15 @@ MonoBehaviour:
   m_Name: Filecabinet
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.LootConfiguration
   storageIdPrefix: Loot
-  lootTitle: Cabinet
+  lootTitle:
+    m_TableReference:
+      m_TableCollectionName: GUID:76aef79d7d0b6794e84c598e768c9177
+    m_TableEntryReference:
+      m_KeyId: 1541367705600
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
   lootWidth: 9
   lootHeight: 18
   minItemRolls: 0
@@ -28,3 +36,6 @@ MonoBehaviour:
     frequency: 10
     minQuantity: 1
     maxQuantity: 2
+  references:
+    version: 2
+    RefIds: []

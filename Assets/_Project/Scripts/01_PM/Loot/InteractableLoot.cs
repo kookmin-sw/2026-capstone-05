@@ -2,6 +2,8 @@ using System;
 using FMODUnity;
 using UnityEngine;
 using Systems.GridInventory;
+using UnityEngine.Localization.Settings;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -40,6 +42,9 @@ namespace Systems.Loot
         public int Width => lootConfiguration.Width;
         public int Height => lootConfiguration.Height;
         private string LootTitle => lootConfiguration.LootTitle;
+
+        private readonly string interactPromptTable = "InteractPrompts";
+        private readonly string interactPromptKey = "OpenLoot";
 
         private bool isInitialized = false;
 
@@ -150,7 +155,7 @@ namespace Systems.Loot
 
         public string GetInteractPrompt()
         {
-            return "열기";
+            return LocalizationSettings.StringDatabase.GetLocalizedString(interactPromptTable, interactPromptKey);
         }
 
         public string GetObjectName()

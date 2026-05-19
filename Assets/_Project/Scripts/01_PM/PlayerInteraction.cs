@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Localization.Settings;
 
 /// <summary>
 /// 플레이어의 상호작용을 관리하는 클래스 (레거시 코드 기반 새 시스템)
@@ -24,6 +25,9 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
     private bool holdTriggered;
     private bool networkConfigured;
     private readonly RaycastHit[] interactionHits = new RaycastHit[64];
+
+    private readonly string interactPromptTable = "InteractPrompts";
+    private readonly string holdPrefixKey = "HoldPrefix";
 
     private void Awake()
     {
@@ -156,12 +160,17 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
         if (InteractionUI.Instance != null)
         {
             // 객체 이름과 상호작용 키 표시 (E키)
+            string keyPrefix = player.InputHandler.GetInteractKey();
             string objName = interactable.GetObjectName();
             string prompt = interactable.GetInteractPrompt();
             if (interactable is IHoldInteractable holdInteractable)
             {
                 float holdSeconds = Mathf.Max(0.1f, holdInteractable.GetHoldDuration(player));
-                prompt = $"[Hold E {holdSeconds:0.#}s]";
+                prompt = $"[{LocalizationSettings.StringDatabase.GetLocalizedString(interactPromptTable, holdPrefixKey)} {keyPrefix} {holdSeconds:0.0}s] {prompt}";
+            }
+            else
+            {
+                prompt = $"[{keyPrefix}] {prompt}";
             }
             InteractionUI.Instance.Show(objName, prompt, obj.transform);
         }
