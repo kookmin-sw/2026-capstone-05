@@ -62,7 +62,8 @@ namespace Systems.GridInventory
                 return;
             }
 
-            Vector3 dropPosition = player.transform.position;
+            Vector2 randomOffset = UnityEngine.Random.insideUnitCircle * 0.5f;
+            Vector3 dropPosition = player.transform.position + new Vector3(randomOffset.x, 0, randomOffset.y);
 
             // Remove from source
             if (source == DragSource.Quickslot)
