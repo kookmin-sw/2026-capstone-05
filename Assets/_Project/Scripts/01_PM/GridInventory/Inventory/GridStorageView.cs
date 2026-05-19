@@ -20,6 +20,8 @@ namespace Systems.GridInventory {
         protected VisualElement ghostIcon;
         protected VisualElement itemsContainer;
 
+        public static GridItemView CurrentDraggedItemView { get; protected set; }
+
         protected bool isDragging;
         protected Vector2 currentPointerPos;
         protected GridItemView draggedItem;
@@ -34,6 +36,7 @@ namespace Systems.GridInventory {
 
         protected float SlotTotalSize => slotSize + slotSpacing;
 
+        public int ModelColumns { get; set; } = 8;
         protected int currentColumns = 8;
         private readonly List<int> coloredSlotIndexes = new List<int>();
         private readonly HashSet<int> coloredSlotSet = new HashSet<int>();
@@ -65,6 +68,7 @@ namespace Systems.GridInventory {
 
         public IEnumerator Initialize(int size, int columns = 8) {
             this.currentColumns = columns;
+            this.ModelColumns = columns;
             yield return StartCoroutine(InitializeView(size));
         }
 
@@ -103,11 +107,11 @@ namespace Systems.GridInventory {
 
         public void UpdateItemPosition(GridItemView item, int slotIndex) {
             if (slotIndex >= 0 && slotIndex < Slots.Length) {
-                int col = slotIndex % currentColumns;
-                int row = slotIndex / currentColumns;
+                int modelCol = slotIndex % ModelColumns;
+                int modelRow = slotIndex / ModelColumns;
 
-                int logicalLeftCol = col + item.MinX;
-                int logicalTopRow = row + item.MinY;
+                int logicalLeftCol = modelCol + item.MinX;
+                int logicalTopRow = modelRow + item.MinY;
 
                 item.style.left = paddingLeftTop + logicalLeftCol * SlotTotalSize + (itemPadding / 2f);
                 item.style.top = paddingLeftTop + logicalTopRow * SlotTotalSize + (itemPadding / 2f);
@@ -123,6 +127,7 @@ namespace Systems.GridInventory {
             isDragging = true;
             currentPointerPos = position;
             draggedItem = item;
+            CurrentDraggedItemView = item;
             draggedItem.OriginalRotation = item.ItemInst.currentRotation;
 
             GridInventoryDragHelper.UpdateGhostPosition(ghostIcon, position);
@@ -192,11 +197,11 @@ namespace Systems.GridInventory {
             for (int i = 0; i < Slots.Length; i++) {
                 if (Slots[i] == null) continue;
 
-                int col = i % currentColumns;
-                int row = i / currentColumns;
+                int modelCol = i % ModelColumns;
+                int modelRow = i / ModelColumns;
 
-                float slotCenterX = paddingLeftTop + col * SlotTotalSize + (slotSize / 2f);
-                float slotCenterY = paddingLeftTop + row * SlotTotalSize + (slotSize / 2f);
+                float slotCenterX = paddingLeftTop + modelCol * SlotTotalSize + (slotSize / 2f);
+                float slotCenterY = paddingLeftTop + modelRow * SlotTotalSize + (slotSize / 2f);
 
                 Vector2 slotCenter = new Vector2(slotCenterX, slotCenterY);
                 float distanceSqr = (localPos - slotCenter).sqrMagnitude;
@@ -247,6 +252,7 @@ namespace Systems.GridInventory {
         protected void ResetDragState() {
             isDragging = false;
             draggedItem = null;
+            CurrentDraggedItemView = null;
             if (ghostIcon != null) {
                 ghostIcon.style.visibility = Visibility.Hidden;
             }

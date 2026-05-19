@@ -36,6 +36,13 @@ namespace Systems.GridInventory
                     LootController.Instance.ReceiveDrop(item, source, sourceIndex, lootSlot, sourceModel);
                     return;
                 }
+
+                var playerSlot = LootController.Instance.GetPlayerGridSlotAtPosition(screenPos);
+                if (playerSlot != null)
+                {
+                    LootController.Instance.ReceivePlayerDrop(item, source, sourceIndex, playerSlot, sourceModel);
+                    return;
+                }
             }
 
             // 3. Check Inventory
