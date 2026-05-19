@@ -13,10 +13,21 @@ MonoBehaviour:
   m_Name: Rack
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.LootConfiguration
   storageIdPrefix: Loot
-  lootTitle: Rack
+  lootTitle:
+    m_TableReference:
+      m_TableCollectionName: GUID:76aef79d7d0b6794e84c598e768c9177
+    m_TableEntryReference:
+      m_KeyId: 1848646610944
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
   lootWidth: 9
   lootHeight: 18
   minItemRolls: 0
   maxItemRolls: 0
   placementAttemptsPerRoll: 8
   lootTable: []
+  references:
+    version: 2
+    RefIds: []
