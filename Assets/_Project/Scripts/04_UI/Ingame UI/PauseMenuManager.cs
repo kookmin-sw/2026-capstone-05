@@ -40,8 +40,80 @@ public class PauseMenuManager : MonoBehaviour
                 (mainMenuConfirmPanel != null && mainMenuConfirmPanel.activeSelf)) 
                 return;
 
+            // 1순위: 인게임 UI(인벤토리, 상점, 루팅)가 열려있다면 해당 UI들을 모두 닫음
+            bool anyInGameUIOpen = false;
+
+            if (Systems.Loot.LootController.Instance != null && Systems.Loot.LootController.Instance.IsOpen)
+            {
+                Systems.Loot.LootController.Instance.CloseLoot();
+                anyInGameUIOpen = true;
+            }
+            if (Systems.Shop.ShopController.Instance != null && Systems.Shop.ShopController.Instance.IsOpen)
+            {
+                Systems.Shop.ShopController.Instance.CloseShop();
+                anyInGameUIOpen = true;
+            }
+            if (Systems.GridInventory.GridInventoryView.Instance != null && Systems.GridInventory.GridInventoryView.Instance.IsOpen)
+            {
+                Systems.GridInventory.GridInventoryView.Instance.CloseInventory(); 
+                anyInGameUIOpen = true;
+            }
+
+            if (anyInGameUIOpen)
+            {
+                return; // 인게임 UI만 닫고 일시정지는 띄우지 않음
+            }
+
+            // 2, 3순위: 열려있는 인게임 UI가 없다면 일시정지 메뉴 토글
             if (isPaused) ResumeGame();
             else PauseGame();
+        }
+    }
+
+    public static bool IsAnyUIOpen()
+    {
+        bool isAnyUIOpen = isPaused;
+        if (Systems.Loot.LootController.Instance != null && Systems.Loot.LootController.Instance.IsOpen) isAnyUIOpen = true;
+        if (Systems.Shop.ShopController.Instance != null && Systems.Shop.ShopController.Instance.IsOpen) isAnyUIOpen = true;
+        if (Systems.GridInventory.GridInventoryView.Instance != null && Systems.GridInventory.GridInventoryView.Instance.IsOpen) isAnyUIOpen = true;
+        return isAnyUIOpen;
+    }
+
+    public static void UpdateCursorAndInputState()
+    {
+        bool isAnyUIOpen = IsAnyUIOpen();
+
+        if (isAnyUIOpen)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            SetPlayerInputActive(false);
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+            SetPlayerInputActive(true);
+        }
+    }
+
+    private static void SetPlayerInputActive(bool active)
+    {
+        if (LocalPlayerReferenceResolver.TryGetLocalPlayer(out PlayerController controller))
+        {
+            if (controller.InputHandler != null)
+            {
+                controller.InputHandler.SetInputActive(active);
+            }
+        }
+        else
+        {
+            // Fallback for scenes without LocalPlayerReferenceResolver logic setup properly
+            PlayerInputHandler playerInput = FindAnyObjectByType<PlayerInputHandler>();
+            if (playerInput != null)
+            {
+                playerInput.SetInputActive(active);
+            }
         }
     }
 
@@ -52,8 +124,8 @@ public class PauseMenuManager : MonoBehaviour
         pauseMenuPanel.SetActive(true);
         pauseMenuPanel.transform.localScale = Vector3.zero;
         pauseMenuPanel.transform.DOScale(1f, 0.2f).SetUpdate(true);
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = false;
+        
+        UpdateCursorAndInputState();
         OnPauseStateChanged?.Invoke(true); 
     }
 
@@ -63,8 +135,8 @@ public class PauseMenuManager : MonoBehaviour
         isPaused = false;
         if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
         OnPauseStateChanged?.Invoke(false); 
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        
+        UpdateCursorAndInputState();
         pauseMenuPanel.transform.DOScale(0f, 0.15f).OnComplete(() => pauseMenuPanel.SetActive(false)).SetUpdate(true);
     }
 

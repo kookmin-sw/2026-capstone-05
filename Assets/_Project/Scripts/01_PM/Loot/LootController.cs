@@ -185,13 +185,9 @@ namespace Systems.Loot
             // 3. Move Player Inventory to Right Panel
             AttachPlayerInventory();
 
-            UnityEngine.Cursor.lockState = CursorLockMode.None;
-            UnityEngine.Cursor.visible = true;
-            
-            PlayerInputHandler playerInput = FindAnyObjectByType<PlayerInputHandler>();
-            if (playerInput != null) playerInput.SetInputActive(false);
-            
             UpdateCapacities();
+            
+            PauseMenuManager.UpdateCursorAndInputState();
         }
 
         public void CloseLoot()
@@ -230,17 +226,14 @@ namespace Systems.Loot
             currentStorageId = null;
             currentNetworkSync = null;
 
-            UnityEngine.Cursor.lockState = CursorLockMode.Locked;
-            UnityEngine.Cursor.visible = false;
-            
-            PlayerInputHandler playerInput = FindAnyObjectByType<PlayerInputHandler>();
-            if (playerInput != null) playerInput.SetInputActive(true);
+            PauseMenuManager.UpdateCursorAndInputState();
         }
 
         private void Update()
         {
             if (IsOpen && Time.time - openedTime > 0.1f && UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.eKey.wasPressedThisFrame)
             {
+                if (PauseMenuManager.isPaused) return; // 일시정지 중 무시
                 CloseLoot();
             }
 
