@@ -248,7 +248,13 @@ public class DayNightCycle : MonoBehaviour
             return false;
         }
 
-        float elapsed = Mathf.Clamp(roundDuration - roundManager.RoundTimeRemainingSeconds, 0f, roundDuration);
+        float remaining = roundManager.RoundTimeRemainingSeconds;
+        if (remaining <= 0f || remaining >= roundDuration)
+        {
+            return false;
+        }
+
+        float elapsed = Mathf.Clamp(roundDuration - remaining, 0f, roundDuration);
         timer = Mathf.Repeat(Mathf.Clamp01(cycleStartTime) * cycleDuration + elapsed, cycleDuration);
         return true;
     }
