@@ -10,6 +10,7 @@ public class BackendRoundManager : NetworkBehaviour
 
     [Header("Round")]
     [SerializeField] private float roundDurationSeconds = 300f;
+    public float RoundDurationSeconds => roundDurationSeconds;
 
     [Header("Weather")]
     [SerializeField] private NetworkWeatherState initialWeatherState = NetworkWeatherState.Snow;

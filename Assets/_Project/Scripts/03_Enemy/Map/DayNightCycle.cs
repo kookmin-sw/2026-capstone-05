@@ -11,22 +11,23 @@ public class DayNightCycle : MonoBehaviour
     [Min(0.1f)]
     public float cycleDuration = 30f;
     [Range(0f, 1f)]
-    public float startTime01 = 0.25f;
+    public float cycleStartTime = 0f;
     public bool playOnStart = true;
+
+    [Header("Day Night Shape")]
+    [Range(0.5f, 0.9f)]
+    public float dayDuration = 0.62f;
+    [Range(0.01f, 0.25f)]
+    public float twilightDuration = 0.08f;
+
+    [Header("Round Sync")]
+    public bool waitForRoundStart = true;
+    public bool resetLightingWhenRoundEnds = true;
+    public bool syncToRoundTimer = true;
 
     [Header("Sun")]
     public Vector3 sunRotationOffset = new Vector3(-90f, 0f, 0f);
     public Gradient sunColor;
-    public AnimationCurve sunIntensityCurve = new AnimationCurve(
-        new Keyframe(0f, 0.18f),
-        new Keyframe(0.08f, 0.45f),
-        new Keyframe(0.25f, 1f),
-        new Keyframe(0.42f, 0.6f),
-        new Keyframe(0.5f, 0.18f),
-        new Keyframe(0.58f, 0.04f),
-        new Keyframe(0.75f, 0f),
-        new Keyframe(0.92f, 0.04f),
-        new Keyframe(1f, 0.18f));
 
     [Header("Day")]
     public Color dayZenith = new Color(0.42f, 0.72f, 0.95f);
@@ -90,19 +91,18 @@ public class DayNightCycle : MonoBehaviour
 
     private float timer;
     private Material runtimeSkyboxMaterial;
+    private bool isCycleRunning;
 
     private void Reset()
     {
         sun = RenderSettings.sun;
         skyboxMaterial = RenderSettings.skybox;
         SetupDefaultSunColor();
-        SetupDefaultSunIntensityCurve();
     }
 
     private void Awake()
     {
         SetupDefaultSunColor();
-        SetupDefaultSunIntensityCurve();
 
         if (sun == null)
         {
@@ -124,8 +124,16 @@ public class DayNightCycle : MonoBehaviour
             RenderSettings.skybox = runtimeSkyboxMaterial;
         }
 
-        timer = Mathf.Clamp01(startTime01) * cycleDuration;
-        ApplyCycle(timer / cycleDuration);
+        timer = Mathf.Clamp01(cycleStartTime) * cycleDuration;
+
+        if (ShouldCycleRun())
+        {
+            StartCycle();
+        }
+        else
+        {
+            StopCycleAtWaitingLighting();
+        }
     }
 
     private void Update()
@@ -135,6 +143,30 @@ public class DayNightCycle : MonoBehaviour
             return;
         }
 
+        if (waitForRoundStart)
+        {
+            bool roundRunning = IsRoundRunning();
+            if (roundRunning && !isCycleRunning)
+            {
+                StartCycle();
+            }
+            else if (!roundRunning && isCycleRunning && resetLightingWhenRoundEnds)
+            {
+                StopCycleAtWaitingLighting();
+            }
+
+            if (!roundRunning)
+            {
+                return;
+            }
+
+            if (syncToRoundTimer && TrySyncTimerToRound())
+            {
+                ApplyCycle(timer / cycleDuration);
+                return;
+            }
+        }
+
         timer = Mathf.Repeat(timer + Time.deltaTime, cycleDuration);
         ApplyCycle(timer / cycleDuration);
     }
@@ -142,11 +174,12 @@ public class DayNightCycle : MonoBehaviour
     private void OnValidate()
     {
         cycleDuration = Mathf.Max(0.1f, cycleDuration);
+        dayDuration = Mathf.Clamp(dayDuration, 0.5f, 0.9f);
+        twilightDuration = Mathf.Clamp(twilightDuration, 0.01f, 0.25f);
         starsThreshold = Mathf.Clamp01(starsThreshold);
         moonThreshold = Mathf.Clamp01(moonThreshold);
 
         SetupDefaultSunColor();
-        SetupDefaultSunIntensityCurve();
 
         if (sun == null)
         {
@@ -160,34 +193,83 @@ public class DayNightCycle : MonoBehaviour
 
         if (!Application.isPlaying)
         {
-            ApplyCycle(startTime01);
+            ApplyCycle(cycleStartTime);
             return;
         }
 
+        if (ShouldCycleRun())
+        {
+            ApplyCycle(timer / cycleDuration);
+        }
+        else
+        {
+            ApplyCycle(cycleStartTime);
+        }
+    }
+
+    public void StartCycle()
+    {
+        timer = Mathf.Clamp01(cycleStartTime) * cycleDuration;
+        isCycleRunning = true;
         ApplyCycle(timer / cycleDuration);
+    }
+
+    public void StopCycleAtWaitingLighting()
+    {
+        isCycleRunning = false;
+        ApplyCycle(cycleStartTime);
+    }
+
+    private bool ShouldCycleRun()
+    {
+        return playOnStart && (!waitForRoundStart || IsRoundRunning());
+    }
+
+    private bool IsRoundRunning()
+    {
+        return BackendRoundManager.Instance != null && BackendRoundManager.Instance.IsRoundRunning;
+    }
+
+    private bool TrySyncTimerToRound()
+    {
+        BackendRoundManager roundManager = BackendRoundManager.Instance;
+        if (roundManager == null)
+        {
+            return false;
+        }
+
+        float roundDuration = roundManager.RoundDurationSeconds;
+        if (roundDuration <= 0f)
+        {
+            return false;
+        }
+
+        float elapsed = Mathf.Clamp(roundDuration - roundManager.RoundTimeRemainingSeconds, 0f, roundDuration);
+        timer = Mathf.Repeat(Mathf.Clamp01(cycleStartTime) * cycleDuration + elapsed, cycleDuration);
+        return true;
     }
 
     private void ApplyCycle(float time01)
     {
         float normalizedTime = Mathf.Repeat(time01, 1f);
-        float daylight = Mathf.Clamp01(Mathf.Sin(normalizedTime * Mathf.PI * 2f));
+        float daylight = GetDaylight01(normalizedTime);
         float nightBlend = 1f - daylight;
         Material targetSkybox = runtimeSkyboxMaterial != null ? runtimeSkyboxMaterial : skyboxMaterial;
 
-        ApplySun(normalizedTime);
+        ApplySun(normalizedTime, daylight);
         ApplySkybox(targetSkybox, nightBlend);
-        ApplyAmbient(normalizedTime, nightBlend);
+        ApplyAmbient(nightBlend);
 
         if (controlFog)
         {
-            ApplyFog(normalizedTime, nightBlend);
+            ApplyFog(nightBlend);
         }
     }
 
-    private void ApplyFog(float time01, float nightBlend)
+    private void ApplyFog(float nightBlend)
     {
         Color fogColor = Color.Lerp(dayFog, nightFog, nightBlend);
-        float fogDensity = Mathf.Lerp(dayFogDensity, nightFogDensity, GetDarkness01(time01));
+        float fogDensity = Mathf.Lerp(dayFogDensity, nightFogDensity, nightBlend);
 
         RenderSettings.fog = true;
         RenderSettings.fogMode = fogMode;
@@ -195,17 +277,18 @@ public class DayNightCycle : MonoBehaviour
         RenderSettings.fogDensity = fogDensity;
     }
 
-    private void ApplySun(float time01)
+    private void ApplySun(float time01, float daylight)
     {
         if (sun == null)
         {
             return;
         }
 
-        float angle = time01 * 360f;
+        float sunVisualTime = GetSunVisualTime(time01);
+        float angle = sunVisualTime * 360f;
         sun.transform.rotation = Quaternion.Euler(sunRotationOffset + new Vector3(angle, 0f, 0f));
-        sun.intensity = Mathf.Lerp(nightIntensity, dayIntensity, sunIntensityCurve.Evaluate(time01));
-        sun.color = sunColor.Evaluate(time01);
+        sun.intensity = Mathf.Lerp(nightIntensity, dayIntensity, daylight);
+        sun.color = sunColor.Evaluate(sunVisualTime);
     }
 
     private void ApplySkybox(Material targetSkybox, float nightBlend)
@@ -232,7 +315,7 @@ public class DayNightCycle : MonoBehaviour
         targetSkybox.SetFloat(MoonSizeId, Mathf.Lerp(dayMoonSize, nightMoonSize, nightBlend));
     }
 
-    private void ApplyAmbient(float time01, float nightBlend)
+    private void ApplyAmbient(float nightBlend)
     {
         if (!controlAmbientLight)
         {
@@ -241,13 +324,53 @@ public class DayNightCycle : MonoBehaviour
 
         RenderSettings.ambientMode = AmbientMode.Flat;
         Color ambient = Color.Lerp(dayAmbient, nightAmbient, nightBlend);
-        float brightness = Mathf.Lerp(0.35f, 1f, sunIntensityCurve.Evaluate(time01));
+        float brightness = Mathf.Lerp(1f, 0.35f, nightBlend);
         RenderSettings.ambientLight = ambient * brightness;
     }
 
-    private float GetDarkness01(float time01)
+    private float GetDaylight01(float time01)
     {
-        return 1f - sunIntensityCurve.Evaluate(time01);
+        float dayLength = Mathf.Clamp(dayDuration, 0.5f, 0.9f);
+        float twilightLength = Mathf.Min(
+            Mathf.Clamp(twilightDuration, 0.01f, 0.25f),
+            dayLength * 0.5f,
+            (1f - dayLength) * 0.5f);
+
+        float fullDayEnd = Mathf.Max(0f, dayLength - twilightLength);
+        float nightEnd = Mathf.Max(dayLength, 1f - twilightLength);
+
+        if (time01 < fullDayEnd)
+        {
+            return 1f;
+        }
+
+        if (time01 < dayLength)
+        {
+            float sunsetProgress = Mathf.InverseLerp(fullDayEnd, dayLength, time01);
+            return Mathf.SmoothStep(1f, 0f, sunsetProgress);
+        }
+
+        if (time01 < nightEnd)
+        {
+            return 0f;
+        }
+
+        float sunriseProgress = Mathf.InverseLerp(nightEnd, 1f, time01);
+        return Mathf.SmoothStep(0f, 1f, sunriseProgress);
+    }
+
+    private float GetSunVisualTime(float time01)
+    {
+        float dayLength = Mathf.Clamp(dayDuration, 0.5f, 0.9f);
+
+        if (time01 < dayLength)
+        {
+            float dayProgress = Mathf.InverseLerp(0f, dayLength, time01);
+            return Mathf.Lerp(0.25f, 0.5f, dayProgress);
+        }
+
+        float nightProgress = Mathf.InverseLerp(dayLength, 1f, time01);
+        return Mathf.Repeat(Mathf.Lerp(0.5f, 1.25f, nightProgress), 1f);
     }
 
     private void SetupDefaultSunColor()
@@ -258,16 +381,6 @@ public class DayNightCycle : MonoBehaviour
         }
 
         sunColor = CreateDefaultSunColor();
-    }
-
-    private void SetupDefaultSunIntensityCurve()
-    {
-        if (sunIntensityCurve != null && sunIntensityCurve.length > 0)
-        {
-            return;
-        }
-
-        sunIntensityCurve = CreateDefaultSunIntensityCurve();
     }
 
     private static Gradient CreateDefaultSunColor()
@@ -292,24 +405,4 @@ public class DayNightCycle : MonoBehaviour
         };
     }
 
-    private static AnimationCurve CreateDefaultSunIntensityCurve()
-    {
-        AnimationCurve curve = new AnimationCurve(
-            new Keyframe(0f, 0.18f),
-            new Keyframe(0.08f, 0.45f),
-            new Keyframe(0.25f, 1f),
-            new Keyframe(0.42f, 0.6f),
-            new Keyframe(0.5f, 0.18f),
-            new Keyframe(0.58f, 0.04f),
-            new Keyframe(0.75f, 0f),
-            new Keyframe(0.92f, 0.04f),
-            new Keyframe(1f, 0.18f));
-
-        for (int i = 0; i < curve.length; i++)
-        {
-            curve.SmoothTangents(i, 0f);
-        }
-
-        return curve;
-    }
 }
