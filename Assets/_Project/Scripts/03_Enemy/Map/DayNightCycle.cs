@@ -25,6 +25,10 @@ public class DayNightCycle : MonoBehaviour
     public bool resetLightingWhenRoundEnds = true;
     public bool syncToRoundTimer = true;
 
+    public float CurrentCycleTime { get; private set; }
+    public float DayDuration => Mathf.Clamp(dayDuration, 0.5f, 0.9f);
+    public bool IsNightTime => CurrentCycleTime >= DayDuration;
+
     [Header("Sun")]
     public Vector3 sunRotationOffset = new Vector3(-90f, 0f, 0f);
     public Gradient sunColor;
@@ -252,6 +256,7 @@ public class DayNightCycle : MonoBehaviour
     private void ApplyCycle(float time01)
     {
         float normalizedTime = Mathf.Repeat(time01, 1f);
+        CurrentCycleTime = normalizedTime;
         float daylight = GetDaylight01(normalizedTime);
         float nightBlend = 1f - daylight;
         Material targetSkybox = runtimeSkyboxMaterial != null ? runtimeSkyboxMaterial : skyboxMaterial;

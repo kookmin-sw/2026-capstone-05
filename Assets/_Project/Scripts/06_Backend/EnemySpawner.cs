@@ -4,23 +4,42 @@ using UnityEngine.Serialization;
 
 public class EnemySpawner : MonoBehaviour
 {
+    private enum SpawnSlot
+    {
+        None,
+        Default,
+        Night
+    }
+
     private static readonly Color SpawnerGizmoColor = new Color(1f, 0.25f, 0.1f, 0.9f);
 
     [Header("Spawn Settings")]
+    [Tooltip("기본 적 프리팹입니다. Night Enemy Prefab이 비어 있으면 낮과 밤 모두 이 프리팹을 사용합니다.")]
     [SerializeField] private NetworkPrefabRef enemyPrefab;
+    [Tooltip("밤에 사용할 적 프리팹입니다. 기본 프리팹 없이 이것만 할당하면 밤에만 스폰됩니다.")]
+    [SerializeField] private NetworkPrefabRef nightEnemyPrefab;
+    [Tooltip("밤 여부를 판단할 DayNightCycle입니다. 비워두면 씬에서 자동으로 찾습니다.")]
+    [SerializeField] private DayNightCycle dayNightCycle;
     [FormerlySerializedAs("spawnIntervalSeconds")]
     [SerializeField, Min(0.1f)] private float respawnDelaySeconds = 5f;
 
     private NetworkObject currentEnemy;
     private EnemyHealth currentEnemyHealth;
     private NetworkRunner cachedRunner;
+    private DayNightCycle cachedDayNightCycle;
+    private SpawnSlot currentSpawnSlot = SpawnSlot.None;
+    private SpawnSlot lastDesiredSpawnSlot = SpawnSlot.None;
     private float respawnAtTime = -1f;
     private bool wasRoundRunning;
+    private bool warnedMissingDayNightCycle;
+    private bool warnedMissingPrefab;
 
     private void OnDisable()
     {
         UnsubscribeFromCurrentEnemy();
         currentEnemy = null;
+        currentSpawnSlot = SpawnSlot.None;
+        lastDesiredSpawnSlot = SpawnSlot.None;
         wasRoundRunning = false;
         respawnAtTime = -1f;
     }
@@ -42,19 +61,52 @@ public class EnemySpawner : MonoBehaviour
             }
 
             wasRoundRunning = false;
+            lastDesiredSpawnSlot = SpawnSlot.None;
             respawnAtTime = -1f;
             return;
         }
 
-        if (!wasRoundRunning)
+        SpawnSlot desiredSpawnSlot = GetCurrentSpawnSlot();
+        if (desiredSpawnSlot == SpawnSlot.None)
+        {
+            DespawnCurrentEnemy(runner);
+            wasRoundRunning = false;
+            lastDesiredSpawnSlot = SpawnSlot.None;
+            respawnAtTime = -1f;
+            return;
+        }
+
+        bool desiredSpawnSlotChanged = desiredSpawnSlot != lastDesiredSpawnSlot;
+        lastDesiredSpawnSlot = desiredSpawnSlot;
+
+        if (!wasRoundRunning || desiredSpawnSlotChanged)
         {
             wasRoundRunning = true;
-            TrySpawnEnemy(runner);
+            respawnAtTime = -1f;
+
+            if (HasLivingEnemy())
+            {
+                if (currentSpawnSlot != desiredSpawnSlot)
+                {
+                    DespawnCurrentEnemy(runner);
+                    TrySpawnEnemy(runner, desiredSpawnSlot);
+                }
+
+                return;
+            }
+
+            TrySpawnEnemy(runner, desiredSpawnSlot);
             return;
         }
 
         if (HasLivingEnemy())
         {
+            if (currentSpawnSlot != desiredSpawnSlot)
+            {
+                DespawnCurrentEnemy(runner);
+                TrySpawnEnemy(runner, desiredSpawnSlot);
+            }
+
             return;
         }
 
@@ -63,7 +115,7 @@ public class EnemySpawner : MonoBehaviour
             return;
         }
 
-        TrySpawnEnemy(runner);
+        TrySpawnEnemy(runner, desiredSpawnSlot);
     }
 
     private bool HasLivingEnemy()
@@ -76,6 +128,7 @@ public class EnemySpawner : MonoBehaviour
         if (currentEnemy != null)
         {
             currentEnemy = null;
+            currentSpawnSlot = SpawnSlot.None;
             UnsubscribeFromCurrentEnemy();
             if (IsRoundRunning())
             {
@@ -86,16 +139,17 @@ public class EnemySpawner : MonoBehaviour
         return false;
     }
 
-    private void TrySpawnEnemy(NetworkRunner runner)
+    private void TrySpawnEnemy(NetworkRunner runner, SpawnSlot spawnSlot)
     {
-        if (!TryGetSpawnTransform(out Vector3 position, out Quaternion rotation))
+        NetworkPrefabRef prefabToSpawn = GetPrefab(spawnSlot);
+        if (!TryGetSpawnTransform(prefabToSpawn, out Vector3 position, out Quaternion rotation))
         {
             StartRespawnTimer();
             return;
         }
 
         NetworkObject spawnedEnemy = runner.Spawn(
-            enemyPrefab,
+            prefabToSpawn,
             position,
             rotation,
             PlayerRef.None,
@@ -111,6 +165,7 @@ public class EnemySpawner : MonoBehaviour
         {
             ApplyEnemySpawnPose(spawnedEnemy, position, rotation);
             currentEnemy = spawnedEnemy;
+            currentSpawnSlot = spawnSlot;
             SubscribeToEnemy(spawnedEnemy);
             respawnAtTime = -1f;
             return;
@@ -151,6 +206,7 @@ public class EnemySpawner : MonoBehaviour
 
         UnsubscribeFromCurrentEnemy();
         currentEnemy = null;
+        currentSpawnSlot = SpawnSlot.None;
 
         if (IsRoundRunning())
         {
@@ -172,6 +228,7 @@ public class EnemySpawner : MonoBehaviour
 
         UnsubscribeFromCurrentEnemy();
         currentEnemy = null;
+        currentSpawnSlot = SpawnSlot.None;
     }
 
     private bool IsRoundRunning()
@@ -179,17 +236,88 @@ public class EnemySpawner : MonoBehaviour
         return BackendRoundManager.Instance != null && BackendRoundManager.Instance.IsRoundRunning;
     }
 
-    private bool TryGetSpawnTransform(out Vector3 position, out Quaternion rotation)
+    private SpawnSlot GetCurrentSpawnSlot()
+    {
+        bool hasDefaultPrefab = enemyPrefab.IsValid;
+        bool hasNightPrefab = nightEnemyPrefab.IsValid;
+
+        if (!hasDefaultPrefab && !hasNightPrefab)
+        {
+            return SpawnSlot.None;
+        }
+
+        if (!hasNightPrefab)
+        {
+            return SpawnSlot.Default;
+        }
+
+        if (!hasDefaultPrefab)
+        {
+            return IsNightTime() ? SpawnSlot.Night : SpawnSlot.None;
+        }
+
+        return IsNightTime() ? SpawnSlot.Night : SpawnSlot.Default;
+    }
+
+    private NetworkPrefabRef GetPrefab(SpawnSlot spawnSlot)
+    {
+        switch (spawnSlot)
+        {
+            case SpawnSlot.Default:
+                return enemyPrefab;
+            case SpawnSlot.Night:
+                return nightEnemyPrefab;
+            default:
+                return default(NetworkPrefabRef);
+        }
+    }
+
+    private bool IsNightTime()
+    {
+        DayNightCycle cycle = ResolveDayNightCycle();
+        return cycle != null && cycle.IsNightTime;
+    }
+
+    private DayNightCycle ResolveDayNightCycle()
+    {
+        if (dayNightCycle != null)
+        {
+            cachedDayNightCycle = dayNightCycle;
+            return cachedDayNightCycle;
+        }
+
+        if (cachedDayNightCycle != null)
+        {
+            return cachedDayNightCycle;
+        }
+
+        cachedDayNightCycle = FindFirstObjectByType<DayNightCycle>();
+        if (cachedDayNightCycle == null && nightEnemyPrefab.IsValid && !warnedMissingDayNightCycle)
+        {
+            Debug.LogWarning("[EnemySpawner] Night Enemy Prefab을 시간대에 맞춰 사용하려면 DayNightCycle 참조가 필요합니다.", this);
+            warnedMissingDayNightCycle = true;
+        }
+
+        return cachedDayNightCycle;
+    }
+
+    private bool TryGetSpawnTransform(NetworkPrefabRef prefabToSpawn, out Vector3 position, out Quaternion rotation)
     {
         position = transform.position;
         rotation = transform.rotation;
 
-        if (enemyPrefab.IsValid == false)
+        if (prefabToSpawn.IsValid == false)
         {
-            Debug.LogWarning("[EnemySpawner] enemyPrefab 이 비어있어 스폰할 수 없습니다.", this);
+            if (!warnedMissingPrefab)
+            {
+                Debug.LogWarning("[EnemySpawner] 스폰할 enemy prefab 이 비어있어 스폰할 수 없습니다.", this);
+                warnedMissingPrefab = true;
+            }
+
             return false;
         }
 
+        warnedMissingPrefab = false;
         return true;
     }
 
