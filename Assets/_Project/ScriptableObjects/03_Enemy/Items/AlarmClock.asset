@@ -13,8 +13,24 @@ MonoBehaviour:
   m_Name: AlarmClock
   m_EditorClassIdentifier: Assembly-CSharp::ThrowableItemData
   itemID: 16
-  itemName: AlarmClock
-  description: 
+  itemName:
+    m_TableReference:
+      m_TableCollectionName: GUID:d18bae00a33a60947b23bbd708d5e7f3
+    m_TableEntryReference:
+      m_KeyId: 89643593728
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  description:
+    m_TableReference:
+      m_TableCollectionName: 
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
   itemIcon: {fileID: 21300000, guid: fde3f05f500a70d4f8aa3b32be96c307, type: 3}
   gridShape:
     basePositions:
@@ -30,3 +46,6 @@ MonoBehaviour:
   thrownPrefab: {fileID: 6019898013941919088, guid: b2dbb7773a7c79441ba278570f7a15ed, type: 3}
   throwForce: 8
   throwNoiseType: 0
+  references:
+    version: 2
+    RefIds: []

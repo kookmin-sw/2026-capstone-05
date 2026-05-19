@@ -271,7 +271,7 @@ namespace Systems.Shop
                 if (item.ItemData.itemIcon != null)
                     icon.style.backgroundImage = new StyleBackground(item.ItemData.itemIcon);
                 
-                string displayName = item.ItemData.itemName;
+                string displayName = item.ItemData.ItemNameString;
                 if (isSellMode && item.StockCount > 1)
                 {
                     displayName += $" x{item.StockCount}";
@@ -305,9 +305,9 @@ namespace Systems.Shop
             currentQuantity = 1;
             maxQuantity = item.ItemData.maxStackSize;
             
-            popupItemName.text = item.ItemData.itemName;
+            popupItemName.text = item.ItemData.ItemNameString;
             popupItemPrice.text = $"{item.BuyPrice} Gold";
-            popupItemDesc.text = item.ItemData.description;
+            popupItemDesc.text = item.ItemData.DescriptionString;
             
             UpdateQuantityUI();
             
@@ -324,9 +324,9 @@ namespace Systems.Shop
             currentQuantity = 1;
             maxQuantity = item.StockCount;
             
-            popupItemName.text = item.ItemData.itemName;
+            popupItemName.text = item.ItemData.ItemNameString;
             popupItemPrice.text = $"{item.BuyPrice} Gold"; // Adjust for sell price logic
-            popupItemDesc.text = item.ItemData.description;
+            popupItemDesc.text = item.ItemData.DescriptionString;
             
             UpdateQuantityUI();
             

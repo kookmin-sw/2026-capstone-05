@@ -10,11 +10,27 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dcc07c36f93919e468131c0354841235, type: 3}
-  m_Name: Logs
+  m_Name: WoodPlanks
   m_EditorClassIdentifier: Assembly-CSharp::MiscItemData
   itemID: 28
-  itemName: Logs
-  description: 
+  itemName:
+    m_TableReference:
+      m_TableCollectionName: GUID:d18bae00a33a60947b23bbd708d5e7f3
+    m_TableEntryReference:
+      m_KeyId: 34470928101376
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  description:
+    m_TableReference:
+      m_TableCollectionName: 
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
   itemIcon: {fileID: 21300000, guid: 519105b31aaa55046935cb8c105be88e, type: 3}
   gridShape:
     basePositions:
@@ -27,3 +43,6 @@ MonoBehaviour:
   actionCooldown: 1
   isTradable: 1
   price: 0
+  references:
+    version: 2
+    RefIds: []

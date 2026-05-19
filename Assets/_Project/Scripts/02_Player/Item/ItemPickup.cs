@@ -136,7 +136,7 @@ public class ItemPickup : MonoBehaviour, IInteractable
 
     public string GetObjectName()
     {
-        return itemInstance?.Data?.itemName ?? "Unknown Item";
+        return itemInstance?.Data?.ItemNameString ?? "Unknown";
     }
 
     private void MarkPickedUp()
