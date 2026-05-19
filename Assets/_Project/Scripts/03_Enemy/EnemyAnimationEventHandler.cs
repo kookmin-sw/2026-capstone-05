@@ -8,6 +8,8 @@ public class EnemyAnimationEventHandler : MonoBehaviour
     public event System.Action OnHitEnd;
     public event System.Action OnDeadEnd;
     public event System.Action OnTurnEnd;
+    public event System.Action OnFootstep;
+    public event System.Action OnLanding;
 
     public void AttackStart(int index) => OnAttackStart?.Invoke(index);
     public void AttackEnd(int index) => OnAttackEnd?.Invoke(index);
@@ -15,4 +17,6 @@ public class EnemyAnimationEventHandler : MonoBehaviour
     public void HitEnd() => OnHitEnd?.Invoke();
     public void DeadEnd() => OnDeadEnd?.Invoke();
     public void TurnEnd() => OnTurnEnd?.Invoke();
+    public void Footstep() => OnFootstep?.Invoke();
+    public void Landing() => OnLanding?.Invoke();
 }

@@ -13,8 +13,24 @@ MonoBehaviour:
   m_Name: Cigarette
   m_EditorClassIdentifier: Assembly-CSharp::ConsumableItemData
   itemID: 21
-  itemName: Cigarette
-  description: 
+  itemName:
+    m_TableReference:
+      m_TableCollectionName: GUID:d18bae00a33a60947b23bbd708d5e7f3
+    m_TableEntryReference:
+      m_KeyId: 666079375360
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  description:
+    m_TableReference:
+      m_TableCollectionName: 
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
   itemIcon: {fileID: 21300000, guid: 5114f81cde6756e458ce75dc29a6e80c, type: 3}
   gridShape:
     basePositions:
@@ -46,3 +62,6 @@ MonoBehaviour:
       Data3: 1030624410
       Data4: 811134571
     Path: event:/SFX/Player/UseItem
+  references:
+    version: 2
+    RefIds: []

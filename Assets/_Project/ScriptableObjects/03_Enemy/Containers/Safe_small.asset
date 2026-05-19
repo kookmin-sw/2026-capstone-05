@@ -13,11 +13,20 @@ MonoBehaviour:
   m_Name: Safe_small
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.LootConfiguration
   storageIdPrefix: Loot
-  lootTitle: Safe
+  lootTitle:
+    m_TableReference:
+      m_TableCollectionName: GUID:76aef79d7d0b6794e84c598e768c9177
+    m_TableEntryReference:
+      m_KeyId: 8502721163264
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
   lootWidth: 9
   lootHeight: 18
   minItemRolls: 1
   maxItemRolls: 3
+  placementAttemptsPerRoll: 8
   lootTable:
   - itemData: {fileID: 11400000, guid: d1fcdd65d7f5da04ba602aadcc2befe6, type: 2}
     frequency: 10
@@ -31,3 +40,6 @@ MonoBehaviour:
     frequency: 8
     minQuantity: 1
     maxQuantity: 1
+  references:
+    version: 2
+    RefIds: []

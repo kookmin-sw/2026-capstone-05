@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: InteractPrompts Shared Data
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.SharedTableData
+  m_TableCollectionName: InteractPrompts
+  m_TableCollectionNameGuidString: 7a34ba65100913e48936b0f4c78c84f1
+  m_Entries:
+  - m_Id: 241829720064
+    m_Key: OpenLoot
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7343008690176
+    m_Key: OpenShop
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8408101859328
+    m_Key: PickUp
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9788879319040
+    m_Key: OpenDoor
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9806948380672
+    m_Key: CloseDoor
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11088698322944
+    m_Key: EnterBunker
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11143001976832
+    m_Key: ExitBunker
+    m_Metadata:
+      m_Items: []
+  - m_Id: 11968180957184
+    m_Key: RoundNotReady
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12900272746496
+    m_Key: RoundStart
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13284873646080
+    m_Key: RoundInProgress
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14705140477952
+    m_Key: HoldPrefix
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 3551130520935727104
+  references:
+    version: 2
+    RefIds:
+    - rid: 3551130520935727104
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1779160155391

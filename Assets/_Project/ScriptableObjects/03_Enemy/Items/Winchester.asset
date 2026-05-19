@@ -13,8 +13,24 @@ MonoBehaviour:
   m_Name: Winchester
   m_EditorClassIdentifier: Assembly-CSharp::FirearmItemData
   itemID: 3
-  itemName: Winchester
-  description: 
+  itemName:
+    m_TableReference:
+      m_TableCollectionName: GUID:d18bae00a33a60947b23bbd708d5e7f3
+    m_TableEntryReference:
+      m_KeyId: 37771098763264
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  description:
+    m_TableReference:
+      m_TableCollectionName: 
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
   itemIcon: {fileID: 21300000, guid: 857e4f97860cba9418d44a5025c1a713, type: 3}
   gridShape:
     basePositions:
@@ -34,7 +50,7 @@ MonoBehaviour:
   actionCooldown: 0.5
   isTradable: 1
   price: 0
-  damage: 50
+  damage: 80
   attackRange: 15
   attackHitRadius: 0.5
   attackRate: 0
@@ -44,3 +60,6 @@ MonoBehaviour:
   recoilForce: 5
   shootNoiseType: 8
   reloadNoiseType: 9
+  references:
+    version: 2
+    RefIds: []

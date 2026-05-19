@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Systems.GridInventory;
 using UnityEngine;
+using UnityEngine.Localization;
 
 namespace Systems.Loot
 {
@@ -20,7 +21,7 @@ namespace Systems.Loot
     {
         [Header("Container Definition")]
         [SerializeField] private string storageIdPrefix = "Loot";
-        [SerializeField] private string lootTitle = "Supply Chest";
+        [SerializeField] private LocalizedString lootTitle;
         [SerializeField, Min(1)] private int lootWidth = 9;
         [SerializeField, Min(1)] private int lootHeight = 18;
 
@@ -31,7 +32,7 @@ namespace Systems.Loot
         [SerializeField] private List<LootTableEntry> lootTable = new List<LootTableEntry>();
 
         public string StorageIdPrefix => string.IsNullOrWhiteSpace(storageIdPrefix) ? "Loot" : storageIdPrefix.Trim();
-        public string LootTitle => lootTitle;
+        public string LootTitle => lootTitle.GetLocalizedString();
         public int Width => Mathf.Max(1, lootWidth);
         public int Height => Mathf.Max(1, lootHeight);
 

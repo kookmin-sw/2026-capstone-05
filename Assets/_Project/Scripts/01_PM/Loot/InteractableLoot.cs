@@ -1,6 +1,9 @@
 using System;
+using FMODUnity;
 using UnityEngine;
 using Systems.GridInventory;
+using UnityEngine.Localization.Settings;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -24,18 +27,25 @@ namespace Systems.Loot
         [Header("Generated Storage")]
         [Tooltip("Unique save/network key for this placed container. Auto-generated for scene instances.")]
         [SerializeField] private string generatedStorageId;
-        
+
         [Header("Save Settings")]
         [Tooltip("If true, this storage will be saved and loaded. If false, it will be reset every time.")]
         [SerializeField] private bool isBaseStorage = false;
-        
+
+        [Header("Sound")]
+        [SerializeField] private EventReference interactionSoundEvent;
+        [SerializeField] private Transform soundOrigin;
+
         public bool HasConfiguration => lootConfiguration != null;
         public string StorageId => NormalizeStorageId(generatedStorageId);
         public bool IsBaseStorage => isBaseStorage;
         public int Width => lootConfiguration.Width;
         public int Height => lootConfiguration.Height;
         private string LootTitle => lootConfiguration.LootTitle;
-        
+
+        private readonly string interactPromptTable = "InteractPrompts";
+        private readonly string interactPromptKey = "OpenLoot";
+
         private bool isInitialized = false;
 
         private void Reset()
@@ -71,7 +81,7 @@ namespace Systems.Loot
                 Debug.LogError($"[InteractableLoot] Loot Configuration is missing on {name}.", this);
                 return;
             }
-            
+
             if (LootNetworkSync.Instance == null)
             {
                 if (PlayerNetworkSetup.IsOfflineTestMode)
@@ -84,10 +94,10 @@ namespace Systems.Loot
                     return;
                 }
             }
-            
+
             string resolvedStorageId = StorageId;
             var model = LootNetworkSync.Instance.GetOrCreateModel(resolvedStorageId, Width, Height);
-            
+
             bool isEmpty = true;
             for (int i = 0; i < model.Items.Length; i++)
             {
@@ -97,7 +107,7 @@ namespace Systems.Loot
                     break;
                 }
             }
-            
+
             bool canSeedLoot = LootNetworkSync.Instance.HasStateAuthority || PlayerNetworkSetup.IsOfflineTestMode;
             if (isEmpty && canSeedLoot)
             {
@@ -111,7 +121,7 @@ namespace Systems.Loot
                 {
                     lootConfiguration.PopulateModel(model, resolvedStorageId);
 
-                    LootNetworkSync.Instance.SubmitLootSnapshot(resolvedStorageId, 
+                    LootNetworkSync.Instance.SubmitLootSnapshot(resolvedStorageId,
                         LootGridSerializer.ToSaveData(resolvedStorageId, model));
                 }
             }
@@ -145,7 +155,7 @@ namespace Systems.Loot
 
         public string GetInteractPrompt()
         {
-            return "열기";
+            return LocalizationSettings.StringDatabase.GetLocalizedString(interactPromptTable, interactPromptKey);
         }
 
         public string GetObjectName()
@@ -175,17 +185,31 @@ namespace Systems.Loot
                     return;
                 }
             }
-            
+
             InitializeItemsIfNeeded();
-            
+
             if (LootController.Instance != null)
             {
                 LootController.Instance.RequestOpenLoot(this, StorageId, LootTitle, LootNetworkSync.Instance);
+                PlayInteractionSound(player);
             }
             else
             {
                 Debug.LogWarning("[InteractableLoot] LootController.Instance is missing. Cannot open loot.");
             }
+        }
+
+        private void PlayInteractionSound(PlayerController player)
+        {
+            if (interactionSoundEvent.IsNull)
+            {
+                return;
+            }
+
+            Vector3 position = player != null
+                ? player.transform.position
+                : soundOrigin != null ? soundOrigin.position : transform.position;
+            RuntimeManager.PlayOneShot(interactionSoundEvent, position);
         }
 
         public void SaveRemainingItems()

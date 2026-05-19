@@ -13,8 +13,24 @@ MonoBehaviour:
   m_Name: Hotpack
   m_EditorClassIdentifier: Assembly-CSharp::ConsumableItemData
   itemID: 10
-  itemName: Hotpack
-  description: 
+  itemName:
+    m_TableReference:
+      m_TableCollectionName: GUID:d18bae00a33a60947b23bbd708d5e7f3
+    m_TableEntryReference:
+      m_KeyId: 32736675672064
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  description:
+    m_TableReference:
+      m_TableCollectionName: 
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
   itemIcon: {fileID: 21300000, guid: 557b9388e9648704699e9d0b6e426ea5, type: 3}
   gridShape:
     basePositions:
@@ -42,3 +58,6 @@ MonoBehaviour:
       Data3: 1030624410
       Data4: 811134571
     Path: event:/SFX/Player/UseItem
+  references:
+    version: 2
+    RefIds: []

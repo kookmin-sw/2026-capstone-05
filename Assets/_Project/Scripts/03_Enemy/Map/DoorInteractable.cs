@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using FMODUnity;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Localization.Settings;
 using UnityEngine.SceneManagement;
 
 [DisallowMultipleComponent]
@@ -12,7 +14,6 @@ public class DoorInteractable : MonoBehaviour, IInteractable
 
     [Header("Door")]
     [SerializeField] private Transform doorTransform;
-    [SerializeField] private string objectName = "문";
     [SerializeField] private float openAngle = 90f;
     [SerializeField] private float rotationSpeed = 180f;
     [SerializeField] private Vector3 panelLocalDirection = Vector3.right;
@@ -21,9 +22,11 @@ public class DoorInteractable : MonoBehaviour, IInteractable
     [SerializeField] private NavMeshObstacle navMeshObstacle;
     [SerializeField] private bool manageNavMeshObstacle = true;
 
+    [Header("FMOD Events")]
+    [SerializeField] private EventReference openEvent;
+    [SerializeField] private EventReference closeEvent;
+
     [Header("Prompt")]
-    [SerializeField] private string openPrompt = "[E] 열기";
-    [SerializeField] private string closePrompt = "[E] 닫기";
     [SerializeField] private bool refreshPromptAfterInteract = true;
 
     private Quaternion closedLocalRotation;
@@ -34,6 +37,12 @@ public class DoorInteractable : MonoBehaviour, IInteractable
 
     public int DoorKey => _doorKey;
     public bool IsOpen => isOpen;
+
+    private readonly string objectNameTable = "ObjectNames";
+    private readonly string objectNameKey = "Door";
+    private readonly string interactPromptTable = "InteractPrompts";
+    private readonly string openPromptKey = "OpenDoor";
+    private readonly string closePromptKey = "CloseDoor";
 
     private void Awake()
     {
@@ -115,16 +124,25 @@ public class DoorInteractable : MonoBehaviour, IInteractable
 
     public string GetInteractPrompt()
     {
-        return isOpen ? closePrompt : openPrompt;
+        if (isOpen)
+        {
+            return LocalizationSettings.StringDatabase.GetLocalizedString(interactPromptTable, closePromptKey);
+        }
+        else
+        {
+            return LocalizationSettings.StringDatabase.GetLocalizedString(interactPromptTable, openPromptKey);
+        }
     }
 
     public string GetObjectName()
     {
-        return objectName;
+        return LocalizationSettings.StringDatabase.GetLocalizedString(objectNameTable, objectNameKey);
     }
 
     public void ApplyState(bool shouldOpen, int openDirection)
     {
+        bool stateChanged = isOpen != shouldOpen;
+
         if (shouldOpen)
         {
             int direction = openDirection >= 0 ? 1 : -1;
@@ -139,7 +157,24 @@ public class DoorInteractable : MonoBehaviour, IInteractable
         }
 
         SyncNavMeshObstacle();
+        if (stateChanged)
+        {
+            PlayDoorSound(shouldOpen);
+        }
+
         RefreshInteractionPrompt();
+    }
+
+    private void PlayDoorSound(bool opened)
+    {
+        EventReference eventReference = opened ? openEvent : closeEvent;
+        if (eventReference.IsNull)
+        {
+            return;
+        }
+
+        Vector3 soundPosition = doorTransform != null ? doorTransform.position : transform.position;
+        RuntimeManager.PlayOneShot(eventReference, soundPosition);
     }
 
     private void SyncNavMeshObstacle()

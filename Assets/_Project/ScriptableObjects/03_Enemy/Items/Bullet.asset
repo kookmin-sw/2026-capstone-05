@@ -13,8 +13,24 @@ MonoBehaviour:
   m_Name: Bullet
   m_EditorClassIdentifier: Assembly-CSharp::MiscItemData
   itemID: 20
-  itemName: Bullet
-  description: 
+  itemName:
+    m_TableReference:
+      m_TableCollectionName: GUID:d18bae00a33a60947b23bbd708d5e7f3
+    m_TableEntryReference:
+      m_KeyId: 631627362304
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  description:
+    m_TableReference:
+      m_TableCollectionName: 
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
   itemIcon: {fileID: 21300000, guid: a0c78aa1991000140b4da07847019484, type: 3}
   gridShape:
     basePositions:
@@ -27,3 +43,6 @@ MonoBehaviour:
   actionCooldown: 1
   isTradable: 1
   price: 0
+  references:
+    version: 2
+    RefIds: []

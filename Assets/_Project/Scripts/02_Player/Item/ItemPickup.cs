@@ -1,6 +1,7 @@
 using FMODUnity;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Localization.Settings;
 using UnityEngine.SceneManagement;
 
 public class ItemPickup : MonoBehaviour, IInteractable
@@ -14,6 +15,9 @@ public class ItemPickup : MonoBehaviour, IInteractable
 
     public int PickupKey => _pickupKey;
     public bool IsPickedUp => _isPickedUp;
+
+    private readonly string interactPromptTable = "InteractPrompts";
+    private readonly string interactPromptKey = "PickUp";
 
     private void Awake()
     {
@@ -127,12 +131,12 @@ public class ItemPickup : MonoBehaviour, IInteractable
 
     public string GetInteractPrompt()
     {
-        return _isPickedUp ? string.Empty : "[E] Pick up";
+        return _isPickedUp ? string.Empty : LocalizationSettings.StringDatabase.GetLocalizedString(interactPromptTable, interactPromptKey);
     }
 
     public string GetObjectName()
     {
-        return itemInstance?.Data?.itemName ?? "Unknown Item";
+        return itemInstance?.Data?.ItemNameString ?? "Unknown";
     }
 
     private void MarkPickedUp()

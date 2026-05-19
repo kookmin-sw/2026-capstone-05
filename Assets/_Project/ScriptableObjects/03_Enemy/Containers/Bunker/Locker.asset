@@ -13,11 +13,20 @@ MonoBehaviour:
   m_Name: Locker
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.LootConfiguration
   storageIdPrefix: Loot
-  lootTitle: Locker
+  lootTitle:
+    m_TableReference:
+      m_TableCollectionName: GUID:76aef79d7d0b6794e84c598e768c9177
+    m_TableEntryReference:
+      m_KeyId: 1818393096192
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
   lootWidth: 9
   lootHeight: 18
   minItemRolls: 0
   maxItemRolls: 1
+  placementAttemptsPerRoll: 8
   lootTable:
   - itemData: {fileID: 11400000, guid: 6165450589e5b784f8a1d5a28a93ebc8, type: 2}
     frequency: 3
@@ -31,3 +40,6 @@ MonoBehaviour:
     frequency: 3
     minQuantity: 1
     maxQuantity: 1
+  references:
+    version: 2
+    RefIds: []

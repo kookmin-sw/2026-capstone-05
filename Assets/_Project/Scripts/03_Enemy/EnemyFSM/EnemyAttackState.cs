@@ -14,6 +14,7 @@ public class EnemyAttackState : EnemyState
     private bool originalAgentUpdateRotation;
     private int currentAttackIndex;
     private bool hasPendingJumpAttackMovement;
+    private bool hasPlayedJumpLandingSound;
     private Vector3 jumpStartPosition;
     private Vector3 jumpLandingPosition;
     private float jumpMoveTimer;
@@ -30,6 +31,7 @@ public class EnemyAttackState : EnemyState
         animationEventHandler.OnAttackStart += HandleAttackStart;
         animationEventHandler.OnAttackEnd += HandleAttackEnd;
         animationEventHandler.OnAttackFinish += HandleAttackFinish;
+        animationEventHandler.OnLanding += HandleLanding;
 
         originalAgentEnabled = enemy.Agent.enabled;
         originalAgentUpdatePosition = enemy.Agent.updatePosition;
@@ -37,6 +39,7 @@ public class EnemyAttackState : EnemyState
         currentAttackIndex = -1;
         hasPendingJumpAttackMovement = false;
         isJumpAttackMoving = false;
+        hasPlayedJumpLandingSound = false;
 
         enemy.Agent.isStopped = true;
         enemy.Agent.updateRotation = false;
@@ -61,6 +64,7 @@ public class EnemyAttackState : EnemyState
         animationEventHandler.OnAttackStart -= HandleAttackStart;
         animationEventHandler.OnAttackEnd -= HandleAttackEnd;
         animationEventHandler.OnAttackFinish -= HandleAttackFinish;
+        animationEventHandler.OnLanding -= HandleLanding;
 
         foreach (var col in enemy.AttackColliders)
             col.DisableAttackCollider();
@@ -157,6 +161,15 @@ public class EnemyAttackState : EnemyState
         FinishAttackExecution();
     }
 
+    private void HandleLanding()
+    {
+        if (currentAttackIndex != 2 || hasPlayedJumpLandingSound)
+            return;
+
+        hasPlayedJumpLandingSound = true;
+        enemy.RequestStateSound(EnemySoundCue.Landing);
+    }
+
     private void FinishAttackExecution()
     {
         foreach (var col in enemy.AttackColliders)
@@ -174,6 +187,7 @@ public class EnemyAttackState : EnemyState
         {
             currentAttackIndex = 2;
             hasPendingJumpAttackMovement = true;
+            hasPlayedJumpLandingSound = false;
             jumpLandingPosition = landingPosition;
             return 2;
         }
@@ -181,6 +195,7 @@ public class EnemyAttackState : EnemyState
         currentAttackIndex = Random.value < enemy.Data.attackVariant1Chance ? 1 : 0;
         hasPendingJumpAttackMovement = false;
         isJumpAttackMoving = false;
+        hasPlayedJumpLandingSound = false;
         if (!enemy.TryGetAttackTargetRotation(out attackRotation))
         {
             attackRotation = enemy.transform.rotation;

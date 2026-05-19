@@ -5165,6 +5165,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4783127310413944441}
     m_Modifications:
+    - target: {fileID: -614193494709145733, guid: 251585925e3e9b148b58abcd786129c3, type: 3}
+      propertyPath: interactionSoundEvent.Path
+      value: event:/SFX/Player/Box_Interact
+      objectReference: {fileID: 0}
+    - target: {fileID: -614193494709145733, guid: 251585925e3e9b148b58abcd786129c3, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data1
+      value: 2080370602
+      objectReference: {fileID: 0}
+    - target: {fileID: -614193494709145733, guid: 251585925e3e9b148b58abcd786129c3, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data2
+      value: 1127050745
+      objectReference: {fileID: 0}
+    - target: {fileID: -614193494709145733, guid: 251585925e3e9b148b58abcd786129c3, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data3
+      value: -1918770520
+      objectReference: {fileID: 0}
+    - target: {fileID: -614193494709145733, guid: 251585925e3e9b148b58abcd786129c3, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data4
+      value: 2094078440
+      objectReference: {fileID: 0}
     - target: {fileID: 973396923505698498, guid: 251585925e3e9b148b58abcd786129c3, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.009999999
@@ -7717,6 +7737,26 @@ PrefabInstance:
       propertyPath: lootConfiguration
       value: 
       objectReference: {fileID: 11400000, guid: 6f7a829c65024504c83ebd187322bb82, type: 2}
+    - target: {fileID: -8456302617500076231, guid: 0b12e1363ff19984a8a932688ed0e0cd, type: 3}
+      propertyPath: interactionSoundEvent.Path
+      value: event:/SFX/Player/Box_Interact
+      objectReference: {fileID: 0}
+    - target: {fileID: -8456302617500076231, guid: 0b12e1363ff19984a8a932688ed0e0cd, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data1
+      value: 2080370602
+      objectReference: {fileID: 0}
+    - target: {fileID: -8456302617500076231, guid: 0b12e1363ff19984a8a932688ed0e0cd, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data2
+      value: 1127050745
+      objectReference: {fileID: 0}
+    - target: {fileID: -8456302617500076231, guid: 0b12e1363ff19984a8a932688ed0e0cd, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data3
+      value: -1918770520
+      objectReference: {fileID: 0}
+    - target: {fileID: -8456302617500076231, guid: 0b12e1363ff19984a8a932688ed0e0cd, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data4
+      value: 2094078440
+      objectReference: {fileID: 0}
     - target: {fileID: 1602677787807076242, guid: 0b12e1363ff19984a8a932688ed0e0cd, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.009999999

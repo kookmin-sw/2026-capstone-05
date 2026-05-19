@@ -52,7 +52,7 @@ public class EnemyAlertState : EnemyState
         if (useArcMovement && !isFacingTarget)
         {
             SetArcDestination();
-            enemy.Animator.SetFloat("Speed", enemy.Agent.velocity.magnitude / enemy.Data.chaseSpeed, 0.2f, Time.deltaTime);
+            enemy.SetWalkLocomotionSpeed(enemy.Agent.velocity.magnitude, enemy.Data.chaseSpeed);
 
             if (GetDirectionAngle() < enemy.Data.alignAngleThreshold)
             {

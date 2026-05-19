@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Localization;
 
 /// <summary>
 /// 아이템 종류 당 하나씩 존재하는 데이터 클래스의 추상 클래스 (무기, 도구, 소비 아이템 등)
@@ -9,10 +10,11 @@ public abstract class ItemData : ScriptableObject
 
     [Header("Base Info")]
     public string itemID;
-    // TODO: Localization 적용
-    public string itemName;
-    [TextArea(2, 4)]
-    public string description;
+    public LocalizedString itemName;
+    public LocalizedString description;
+
+    public string ItemNameString => itemName.GetLocalizedString();
+    public string DescriptionString => description.GetLocalizedString();
 
     [Header("Inventory & UI")]
     public Sprite itemIcon;

@@ -13,8 +13,24 @@ MonoBehaviour:
   m_Name: Flashlight
   m_EditorClassIdentifier: Assembly-CSharp::FlashlightData
   itemID: 9
-  itemName: Flashlight
-  description: 
+  itemName:
+    m_TableReference:
+      m_TableCollectionName: GUID:d18bae00a33a60947b23bbd708d5e7f3
+    m_TableEntryReference:
+      m_KeyId: 32579028561920
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  description:
+    m_TableReference:
+      m_TableCollectionName: 
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
   itemIcon: {fileID: 21300000, guid: 98dded050dc1e6f4dba3e4021c6dbad6, type: 3}
   gridShape:
     basePositions:
@@ -33,3 +49,6 @@ MonoBehaviour:
   lightRange: 20
   lightIntensity: 5
   lightColor: {r: 1, g: 1, b: 0.7607843, a: 1}
+  references:
+    version: 2
+    RefIds: []

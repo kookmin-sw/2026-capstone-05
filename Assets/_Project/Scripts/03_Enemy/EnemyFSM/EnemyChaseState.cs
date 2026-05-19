@@ -25,7 +25,7 @@ public class EnemyChaseState : EnemyState
 
     public override void LogicUpdate()
     {
-        enemy.Animator.SetFloat("Speed", enemy.Agent.velocity.magnitude / enemy.Data.chaseSpeed, 0.2f, Time.deltaTime);
+        enemy.SetRunLocomotionSpeed(enemy.Agent.velocity.magnitude, enemy.Data.chaseSpeed);
         enemy.Animator.SetFloat("Angle", 0f, 0.2f, Time.deltaTime);
 
         if (enemy.CanStartAttack())

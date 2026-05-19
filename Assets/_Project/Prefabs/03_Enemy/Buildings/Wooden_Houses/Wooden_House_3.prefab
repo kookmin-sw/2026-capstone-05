@@ -135,6 +135,20 @@ MonoBehaviour:
   panelLocalDirection: {x: 1, y: 0, z: 0}
   navMeshObstacle: {fileID: 0}
   manageNavMeshObstacle: 1
+  openEvent:
+    Guid:
+      Data1: 416226304
+      Data2: 1079446520
+      Data3: -678433096
+      Data4: 1211014770
+    Path: event:/SFX/Player/Door_Open
+  closeEvent:
+    Guid:
+      Data1: -521032310
+      Data2: 1219837829
+      Data3: 988873377
+      Data4: -1806667531
+    Path: event:/SFX/Player/Door_Close
   openPrompt: "[E] \uC5F4\uAE30"
   closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
@@ -420,6 +434,20 @@ MonoBehaviour:
   panelLocalDirection: {x: 1, y: 0, z: 0}
   navMeshObstacle: {fileID: 0}
   manageNavMeshObstacle: 1
+  openEvent:
+    Guid:
+      Data1: 416226304
+      Data2: 1079446520
+      Data3: -678433096
+      Data4: 1211014770
+    Path: event:/SFX/Player/Door_Open
+  closeEvent:
+    Guid:
+      Data1: -521032310
+      Data2: 1219837829
+      Data3: 988873377
+      Data4: -1806667531
+    Path: event:/SFX/Player/Door_Close
   openPrompt: "[E] \uC5F4\uAE30"
   closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
@@ -910,6 +938,20 @@ MonoBehaviour:
   panelLocalDirection: {x: 1, y: 0, z: 0}
   navMeshObstacle: {fileID: 0}
   manageNavMeshObstacle: 1
+  openEvent:
+    Guid:
+      Data1: 416226304
+      Data2: 1079446520
+      Data3: -678433096
+      Data4: 1211014770
+    Path: event:/SFX/Player/Door_Open
+  closeEvent:
+    Guid:
+      Data1: -521032310
+      Data2: 1219837829
+      Data3: 988873377
+      Data4: -1806667531
+    Path: event:/SFX/Player/Door_Close
   openPrompt: "[E] \uC5F4\uAE30"
   closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
@@ -1204,6 +1246,20 @@ MonoBehaviour:
   panelLocalDirection: {x: 1, y: 0, z: 0}
   navMeshObstacle: {fileID: 0}
   manageNavMeshObstacle: 1
+  openEvent:
+    Guid:
+      Data1: 416226304
+      Data2: 1079446520
+      Data3: -678433096
+      Data4: 1211014770
+    Path: event:/SFX/Player/Door_Open
+  closeEvent:
+    Guid:
+      Data1: -521032310
+      Data2: 1219837829
+      Data3: 988873377
+      Data4: -1806667531
+    Path: event:/SFX/Player/Door_Close
   openPrompt: "[E] \uC5F4\uAE30"
   closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
@@ -2508,6 +2564,26 @@ PrefabInstance:
       propertyPath: generatedStorageId
       value: Loot_247ff86a
       objectReference: {fileID: 0}
+    - target: {fileID: 7797756744584363043, guid: e17c965607cf26640af96f18fc31b8fe, type: 3}
+      propertyPath: interactionSoundEvent.Path
+      value: event:/SFX/Player/Container_Interact
+      objectReference: {fileID: 0}
+    - target: {fileID: 7797756744584363043, guid: e17c965607cf26640af96f18fc31b8fe, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data1
+      value: -958768351
+      objectReference: {fileID: 0}
+    - target: {fileID: 7797756744584363043, guid: e17c965607cf26640af96f18fc31b8fe, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data2
+      value: 1116826602
+      objectReference: {fileID: 0}
+    - target: {fileID: 7797756744584363043, guid: e17c965607cf26640af96f18fc31b8fe, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data3
+      value: 541573803
+      objectReference: {fileID: 0}
+    - target: {fileID: 7797756744584363043, guid: e17c965607cf26640af96f18fc31b8fe, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data4
+      value: -1772821525
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2968,6 +3044,26 @@ PrefabInstance:
       propertyPath: generatedStorageId
       value: Loot_9a2b06a1
       objectReference: {fileID: 0}
+    - target: {fileID: 2186748021317539328, guid: e5838d7e2dad8524fadb5d712b575a28, type: 3}
+      propertyPath: interactionSoundEvent.Path
+      value: event:/SFX/Player/Container_Interact
+      objectReference: {fileID: 0}
+    - target: {fileID: 2186748021317539328, guid: e5838d7e2dad8524fadb5d712b575a28, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data1
+      value: -958768351
+      objectReference: {fileID: 0}
+    - target: {fileID: 2186748021317539328, guid: e5838d7e2dad8524fadb5d712b575a28, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data2
+      value: 1116826602
+      objectReference: {fileID: 0}
+    - target: {fileID: 2186748021317539328, guid: e5838d7e2dad8524fadb5d712b575a28, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data3
+      value: 541573803
+      objectReference: {fileID: 0}
+    - target: {fileID: 2186748021317539328, guid: e5838d7e2dad8524fadb5d712b575a28, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data4
+      value: -1772821525
+      objectReference: {fileID: 0}
     - target: {fileID: 2973277331622841274, guid: e5838d7e2dad8524fadb5d712b575a28, type: 3}
       propertyPath: m_Name
       value: Wooden closet03
@@ -3285,6 +3381,26 @@ PrefabInstance:
     - target: {fileID: 8995741585855341027, guid: 1ab7a10098fcd344087f620c23fd9a5a, type: 3}
       propertyPath: generatedStorageId
       value: Loot_236b4c09
+      objectReference: {fileID: 0}
+    - target: {fileID: 8995741585855341027, guid: 1ab7a10098fcd344087f620c23fd9a5a, type: 3}
+      propertyPath: interactionSoundEvent.Path
+      value: event:/SFX/Player/Container_Interact
+      objectReference: {fileID: 0}
+    - target: {fileID: 8995741585855341027, guid: 1ab7a10098fcd344087f620c23fd9a5a, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data1
+      value: -958768351
+      objectReference: {fileID: 0}
+    - target: {fileID: 8995741585855341027, guid: 1ab7a10098fcd344087f620c23fd9a5a, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data2
+      value: 1116826602
+      objectReference: {fileID: 0}
+    - target: {fileID: 8995741585855341027, guid: 1ab7a10098fcd344087f620c23fd9a5a, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data3
+      value: 541573803
+      objectReference: {fileID: 0}
+    - target: {fileID: 8995741585855341027, guid: 1ab7a10098fcd344087f620c23fd9a5a, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data4
+      value: -1772821525
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3914,6 +4030,26 @@ PrefabInstance:
       propertyPath: generatedStorageId
       value: Loot_90cdd737
       objectReference: {fileID: 0}
+    - target: {fileID: 8957438399061653594, guid: 22e8979a2dcd23c47b343233881d4200, type: 3}
+      propertyPath: interactionSoundEvent.Path
+      value: event:/SFX/Player/Container_Interact
+      objectReference: {fileID: 0}
+    - target: {fileID: 8957438399061653594, guid: 22e8979a2dcd23c47b343233881d4200, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data1
+      value: -958768351
+      objectReference: {fileID: 0}
+    - target: {fileID: 8957438399061653594, guid: 22e8979a2dcd23c47b343233881d4200, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data2
+      value: 1116826602
+      objectReference: {fileID: 0}
+    - target: {fileID: 8957438399061653594, guid: 22e8979a2dcd23c47b343233881d4200, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data3
+      value: 541573803
+      objectReference: {fileID: 0}
+    - target: {fileID: 8957438399061653594, guid: 22e8979a2dcd23c47b343233881d4200, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data4
+      value: -1772821525
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -4151,6 +4287,26 @@ PrefabInstance:
     - target: {fileID: 8995741585855341027, guid: 1ab7a10098fcd344087f620c23fd9a5a, type: 3}
       propertyPath: generatedStorageId
       value: Loot_c60228f8
+      objectReference: {fileID: 0}
+    - target: {fileID: 8995741585855341027, guid: 1ab7a10098fcd344087f620c23fd9a5a, type: 3}
+      propertyPath: interactionSoundEvent.Path
+      value: event:/SFX/Player/Container_Interact
+      objectReference: {fileID: 0}
+    - target: {fileID: 8995741585855341027, guid: 1ab7a10098fcd344087f620c23fd9a5a, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data1
+      value: -958768351
+      objectReference: {fileID: 0}
+    - target: {fileID: 8995741585855341027, guid: 1ab7a10098fcd344087f620c23fd9a5a, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data2
+      value: 1116826602
+      objectReference: {fileID: 0}
+    - target: {fileID: 8995741585855341027, guid: 1ab7a10098fcd344087f620c23fd9a5a, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data3
+      value: 541573803
+      objectReference: {fileID: 0}
+    - target: {fileID: 8995741585855341027, guid: 1ab7a10098fcd344087f620c23fd9a5a, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data4
+      value: -1772821525
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4549,6 +4705,26 @@ PrefabInstance:
     - target: {fileID: 7146679669956277331, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
       propertyPath: generatedStorageId
       value: Loot_66970921
+      objectReference: {fileID: 0}
+    - target: {fileID: 7146679669956277331, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
+      propertyPath: interactionSoundEvent.Path
+      value: event:/SFX/Player/Container_Interact
+      objectReference: {fileID: 0}
+    - target: {fileID: 7146679669956277331, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data1
+      value: -958768351
+      objectReference: {fileID: 0}
+    - target: {fileID: 7146679669956277331, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data2
+      value: 1116826602
+      objectReference: {fileID: 0}
+    - target: {fileID: 7146679669956277331, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data3
+      value: 541573803
+      objectReference: {fileID: 0}
+    - target: {fileID: 7146679669956277331, guid: d098c0a0693721743afc1f444c3c7575, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data4
+      value: -1772821525
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -5236,6 +5412,26 @@ PrefabInstance:
       propertyPath: generatedStorageId
       value: Loot_81fa6b92
       objectReference: {fileID: 0}
+    - target: {fileID: 4080489999786156386, guid: 2f723da49705b654d8254e30bce111a8, type: 3}
+      propertyPath: interactionSoundEvent.Path
+      value: event:/SFX/Player/Container_Interact
+      objectReference: {fileID: 0}
+    - target: {fileID: 4080489999786156386, guid: 2f723da49705b654d8254e30bce111a8, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data1
+      value: -958768351
+      objectReference: {fileID: 0}
+    - target: {fileID: 4080489999786156386, guid: 2f723da49705b654d8254e30bce111a8, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data2
+      value: 1116826602
+      objectReference: {fileID: 0}
+    - target: {fileID: 4080489999786156386, guid: 2f723da49705b654d8254e30bce111a8, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data3
+      value: 541573803
+      objectReference: {fileID: 0}
+    - target: {fileID: 4080489999786156386, guid: 2f723da49705b654d8254e30bce111a8, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data4
+      value: -1772821525
+      objectReference: {fileID: 0}
     - target: {fileID: 6797968951135041467, guid: 2f723da49705b654d8254e30bce111a8, type: 3}
       propertyPath: m_Name
       value: TV_table_1
@@ -5573,6 +5769,26 @@ PrefabInstance:
     - target: {fileID: 5499747448297077898, guid: 66b752c2f6a5bf8478e7fbe970acc2c1, type: 3}
       propertyPath: generatedStorageId
       value: Loot_cafcab14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5499747448297077898, guid: 66b752c2f6a5bf8478e7fbe970acc2c1, type: 3}
+      propertyPath: interactionSoundEvent.Path
+      value: event:/SFX/Player/Container_Interact
+      objectReference: {fileID: 0}
+    - target: {fileID: 5499747448297077898, guid: 66b752c2f6a5bf8478e7fbe970acc2c1, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data1
+      value: -958768351
+      objectReference: {fileID: 0}
+    - target: {fileID: 5499747448297077898, guid: 66b752c2f6a5bf8478e7fbe970acc2c1, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data2
+      value: 1116826602
+      objectReference: {fileID: 0}
+    - target: {fileID: 5499747448297077898, guid: 66b752c2f6a5bf8478e7fbe970acc2c1, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data3
+      value: 541573803
+      objectReference: {fileID: 0}
+    - target: {fileID: 5499747448297077898, guid: 66b752c2f6a5bf8478e7fbe970acc2c1, type: 3}
+      propertyPath: interactionSoundEvent.Guid.Data4
+      value: -1772821525
       objectReference: {fileID: 0}
     - target: {fileID: 9168467192469915586, guid: 66b752c2f6a5bf8478e7fbe970acc2c1, type: 3}
       propertyPath: m_LocalScale.x

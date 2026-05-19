@@ -13,8 +13,24 @@ MonoBehaviour:
   m_Name: WaterBottle
   m_EditorClassIdentifier: Assembly-CSharp::ConsumableItemData
   itemID: 15
-  itemName: WaterBottle
-  description: 
+  itemName:
+    m_TableReference:
+      m_TableCollectionName: GUID:d18bae00a33a60947b23bbd708d5e7f3
+    m_TableEntryReference:
+      m_KeyId: 37572381028352
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  description:
+    m_TableReference:
+      m_TableCollectionName: 
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
   itemIcon: {fileID: 21300000, guid: 129e1822c46b4194daf1f340ae87b77e, type: 3}
   gridShape:
     basePositions:
@@ -40,3 +56,6 @@ MonoBehaviour:
       Data3: 1030624410
       Data4: 811134571
     Path: event:/SFX/Player/UseItem
+  references:
+    version: 2
+    RefIds: []

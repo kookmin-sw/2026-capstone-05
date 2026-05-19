@@ -29,7 +29,7 @@ public class EnemyPatrolState : EnemyState
 
     public override void LogicUpdate()
     {
-        enemy.Animator.SetFloat("Speed", enemy.Agent.velocity.magnitude / enemy.Data.walkSpeed, 0.2f, Time.deltaTime);
+        enemy.SetWalkLocomotionSpeed(enemy.Agent.velocity.magnitude, enemy.Data.walkSpeed);
         enemy.Animator.SetFloat("Angle", 0f, 0.2f, Time.deltaTime);
 
         if (enemy.TryChangeStateBySuspicion())
