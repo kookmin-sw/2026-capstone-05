@@ -95,6 +95,47 @@ namespace Systems.GridInventory {
             return removed;
         }
 
+        public void Transpose(bool clockwise) {
+            var oldItems = new List<ItemInstance>();
+            var processedItems = new HashSet<ItemInstance>();
+            for (int i = 0; i < Items.Length; i++) {
+                var item = Items[i];
+                if (item != null && !processedItems.Contains(item)) {
+                    oldItems.Add(item);
+                    processedItems.Add(item);
+                }
+                Items.SetSilent(i, null);
+            }
+            
+            int oldWidth = Width;
+            int oldHeight = Height;
+            
+            Width = oldHeight;
+            Height = oldWidth;
+            
+            var oldAnchors = new Dictionary<ItemInstance, Vector2Int>(itemAnchors);
+            itemAnchors.Clear();
+            
+            foreach (var item in oldItems) {
+                if (oldAnchors.TryGetValue(item, out var oldAnchor)) {
+                    int newX = clockwise ? oldHeight - 1 - oldAnchor.y : oldAnchor.y;
+                    int newY = clockwise ? oldAnchor.x : oldWidth - 1 - oldAnchor.x;
+                    
+                    item.Rotate(clockwise);
+                    
+                    var positions = item.Data.gridShape.GetRotatedPositions(item.currentRotation);
+                    foreach (var pos in positions) {
+                        int px = newX + pos.x;
+                        int py = newY + pos.y;
+                        Items.SetSilent(GetIndex(px, py), item);
+                    }
+                    itemAnchors[item] = new Vector2Int(newX, newY);
+                }
+            }
+            
+            Items.Invoke();
+        }
+
         public bool CanPlaceItem(ItemInstance item, int startX, int startY, ItemInstance ignoreItem = null, ItemInstance ignoreItem2 = null) {
             if (item == null || item.Data == null || item.Data.gridShape == null) return false;
 

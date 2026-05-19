@@ -13,8 +13,8 @@ public abstract class ItemData : ScriptableObject
     public LocalizedString itemName;
     public LocalizedString description;
 
-    public string ItemNameString => itemName.GetLocalizedString();
-    public string DescriptionString => description.GetLocalizedString();
+    public string ItemNameString => (itemName != null && !itemName.IsEmpty) ? itemName.GetLocalizedString() : itemID;
+    public string DescriptionString => (description != null && !description.IsEmpty) ? description.GetLocalizedString() : "설명이 없습니다.";
 
     [Header("Inventory & UI")]
     public Sprite itemIcon;

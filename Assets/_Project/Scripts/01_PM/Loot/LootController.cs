@@ -18,6 +18,11 @@ namespace Systems.Loot
         // Dummy view for the loot grid so GridInventoryController can work with it
         private DummyLootGridView dummyLootGridView;
         private GridInventoryController lootInventoryController;
+
+        // Dummy view and controller for the player inventory side
+        private DummyLootGridView dummyPlayerGridView;
+        private GridInventoryController dummyPlayerInventoryController;
+
         private InteractableLoot currentLootSource;
         private string currentStorageId;
         private LootNetworkSync currentNetworkSync;
@@ -36,6 +41,12 @@ namespace Systems.Loot
         {
             if (!IsOpen || dummyLootGridView == null) return null;
             return dummyLootGridView.GetGridSlotAtPosition(screenPosition);
+        }
+
+        public GridSlot GetPlayerGridSlotAtPosition(Vector2 screenPosition)
+        {
+            if (!IsOpen || dummyPlayerGridView == null) return null;
+            return dummyPlayerGridView.GetGridSlotAtPosition(screenPosition);
         }
 
         public bool IsPositionInsideLootUI(Vector2 screenPosition)
@@ -252,78 +263,77 @@ namespace Systems.Loot
 
         private void AttachPlayerInventory()
         {
-            if (GridInventoryView.Instance != null && GridInventoryView.Instance.Container != null)
-            {
-                var invContainer = GridInventoryView.Instance.Container;
-                invContainer.style.display = UnityEngine.UIElements.DisplayStyle.Flex;
-                
-                var inventoryWindow = invContainer.Q<UnityEngine.UIElements.VisualElement>("inventory-window");
-                if (inventoryWindow != null) inventoryWindow.style.display = UnityEngine.UIElements.DisplayStyle.None;
+            if (GridInventoryClass.Instance == null || GridInventoryClass.Instance.Controller == null) return;
+            var playerModel = GridInventoryClass.Instance.Controller.Model;
+            playerModel.Transpose(true);
 
+            var container = lootView.GetPlayerInventoryContainer();
+
+            // 1. 스크롤 뷰 동적 생성
+            var scrollView = new UnityEngine.UIElements.ScrollView();
+            scrollView.name = "player-scroll-view";
+            scrollView.AddToClassList("slots-scroll-view");
+            scrollView.style.flexGrow = 1;
+            scrollView.style.width = new UnityEngine.UIElements.StyleLength(new UnityEngine.UIElements.Length(100, UnityEngine.UIElements.LengthUnit.Percent));
+            scrollView.style.height = new UnityEngine.UIElements.StyleLength(new UnityEngine.UIElements.Length(100, UnityEngine.UIElements.LengthUnit.Percent));
+            scrollView.style.display = UnityEngine.UIElements.DisplayStyle.Flex;
+
+            var slotsContainer = new UnityEngine.UIElements.VisualElement();
+            slotsContainer.name = "lootSlotsContainer";
+            slotsContainer.AddToClassList("slotsContainer");
+            slotsContainer.style.marginTop = 12f;
+            slotsContainer.style.marginBottom = 12f;
+            
+            // 핵심 수정: FlexLayout 속성 명시적 지정
+            slotsContainer.style.flexDirection = UnityEngine.UIElements.FlexDirection.Row;
+            slotsContainer.style.flexWrap = UnityEngine.UIElements.Wrap.Wrap;
+            slotsContainer.style.width = (5 * 100f) + 20f + 4f; // visualCols * SlotTotalSize + padding + margin
+            slotsContainer.style.height = (8 * 100f) + 20f + 4f; // visualRows * SlotTotalSize + padding + margin
+            
+            scrollView.Add(slotsContainer);
+            container.Add(scrollView);
+
+            // 3. 기존 GridInventory의 스타일 시트 복사
+            if (GridInventoryView.Instance != null)
+            {
                 var gridStyleSheet = GridInventoryView.Instance.GridStyleSheet;
                 if (gridStyleSheet != null && !lootView.GetRootVisualElement().styleSheets.Contains(gridStyleSheet))
                 {
                     lootView.GetRootVisualElement().styleSheets.Add(gridStyleSheet);
                 }
-
-                var scrollView = invContainer.Q<UnityEngine.UIElements.ScrollView>(className: "slots-scroll-view");
-                if (scrollView != null)
-                {
-                    originalInventoryParent = scrollView.parent;
-                    lootView.GetPlayerInventoryContainer().Add(scrollView);
-                    
-                    scrollView.style.flexGrow = 1;
-                    scrollView.style.width = new UnityEngine.UIElements.StyleLength(UnityEngine.UIElements.StyleKeyword.Auto);
-                    scrollView.style.height = new UnityEngine.UIElements.StyleLength(UnityEngine.UIElements.StyleKeyword.Auto);
-                    scrollView.style.display = UnityEngine.UIElements.DisplayStyle.Flex;
-
-                    var innerSlotsContainer = scrollView.Q<UnityEngine.UIElements.VisualElement>(name: "slotsContainer");
-                    if (innerSlotsContainer != null)
-                    {
-                        // Removed alignSelf = Center to prevent left-side clipping when content is large
-                        innerSlotsContainer.style.alignSelf = UnityEngine.UIElements.StyleKeyword.Null;
-                        innerSlotsContainer.style.marginTop = 12f;
-                        innerSlotsContainer.style.marginBottom = 12f;
-                    }
-                }
             }
+
+            // 4. Dummy View 초기화 (이제 ScrollView를 넘겨주므로 에러 없음)
+            dummyPlayerGridView = gameObject.AddComponent<DummyLootGridView>();
+            dummyPlayerGridView.Init(scrollView, 5, lootView.GhostIcon);
+            
+            // 코루틴 수동 호출로 GridStorageView.InitializeView를 동기식으로 실행 (슬롯 생성 등 보장)
+            var initRoutine = dummyPlayerGridView.InitializeView(40);
+            while (initRoutine.MoveNext()) { }
+            
+            dummyPlayerInventoryController = new GridInventoryController.Builder(dummyPlayerGridView)
+                .WithExistingModel(playerModel)
+                .Build();
         }
 
         private void DetachPlayerInventory()
         {
-            if (GridInventoryView.Instance != null && GridInventoryView.Instance.Container != null)
+            if (GridInventoryClass.Instance != null && GridInventoryClass.Instance.Controller != null)
             {
-                var invContainer = GridInventoryView.Instance.Container;
-                invContainer.style.display = UnityEngine.UIElements.DisplayStyle.None;
-                
-                var inventoryWindow = invContainer.Q<UnityEngine.UIElements.VisualElement>("inventory-window");
-                if (inventoryWindow != null) inventoryWindow.style.display = UnityEngine.UIElements.DisplayStyle.Flex;
+                var playerModel = GridInventoryClass.Instance.Controller.Model;
+                playerModel.Transpose(false);
+            }
 
-                var scrollView = lootView.GetPlayerInventoryContainer().Q<UnityEngine.UIElements.ScrollView>(className: "slots-scroll-view");
-                if (scrollView != null && originalInventoryParent != null)
-                {
-                    scrollView.style.flexGrow = UnityEngine.UIElements.StyleKeyword.Null;
-                    scrollView.style.width = UnityEngine.UIElements.StyleKeyword.Null;
-                    scrollView.style.height = UnityEngine.UIElements.StyleKeyword.Null;
-                    scrollView.style.alignSelf = UnityEngine.UIElements.StyleKeyword.Null;
-                    
-                    var innerSlotsContainer = scrollView.Q<UnityEngine.UIElements.VisualElement>(name: "slotsContainer");
-                    if (innerSlotsContainer != null)
-                    {
-                        innerSlotsContainer.style.alignSelf = UnityEngine.UIElements.StyleKeyword.Null;
-                        innerSlotsContainer.style.marginTop = UnityEngine.UIElements.StyleKeyword.Null;
-                        innerSlotsContainer.style.marginBottom = UnityEngine.UIElements.StyleKeyword.Null;
-                    }
-
-                    originalInventoryParent.Add(scrollView);
-                }
-                originalInventoryParent = null;
-
-                var gridStyleSheet = GridInventoryView.Instance.GridStyleSheet;
-                if (gridStyleSheet != null && lootView.GetRootVisualElement().styleSheets.Contains(gridStyleSheet))
-                {
-                    lootView.GetRootVisualElement().styleSheets.Remove(gridStyleSheet);
-                }
+            if (dummyPlayerInventoryController != null)
+            {
+                dummyPlayerInventoryController = null;
+            }
+            if (dummyPlayerGridView != null)
+            {
+                var container = lootView.GetPlayerInventoryContainer();
+                container.Clear(); // Removes the dynamically created scroll view
+                Destroy(dummyPlayerGridView);
+                dummyPlayerGridView = null;
             }
         }
 
@@ -426,9 +436,28 @@ namespace Systems.Loot
             }
         }
 
+        public void ReceivePlayerDrop(ItemInstance item, Systems.GridInventory.DragSource source, int sourceIndex, GridSlot playerSlot, GridInventoryModel sourceModel)
+        {
+            if (dummyPlayerInventoryController != null)
+            {
+                dummyPlayerInventoryController.ReceiveDrop(item, source, sourceIndex, playerSlot, sourceModel);
+            }
+        }
+
+        private ItemRotation GetTargetLogicalRotation(ItemInstance item, Systems.GridInventory.GridStorageView targetView) {
+            return item.currentRotation;
+        }
+
         public void ReceiveDrop(ItemInstance item, Systems.GridInventory.DragSource source, int sourceIndex, GridSlot lootSlot, GridInventoryModel sourceModel)
         {
-            if (!IsOpen || lootInventoryController == null || currentNetworkSync == null) return;
+            var originalRotation = item.currentRotation;
+            item.currentRotation = GetTargetLogicalRotation(item, dummyLootGridView);
+
+            if (!IsOpen || lootInventoryController == null || currentNetworkSync == null) 
+            {
+                item.currentRotation = originalRotation;
+                return;
+            }
 
             var lootModel = lootInventoryController.Model;
             var targetCoords = lootModel.GetCoordinates(lootSlot.Index);
@@ -513,6 +542,7 @@ namespace Systems.Loot
                 }
                 else
                 {
+                    item.currentRotation = originalRotation;
                     Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
                 }
             }
@@ -586,6 +616,7 @@ namespace Systems.Loot
                 else
                 {
                     lootModel.PlaceItem(baseTargetItem, baseTargetPos.x, baseTargetPos.y);
+                    item.currentRotation = originalRotation;
                     Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
                 }
             }
@@ -641,7 +672,7 @@ namespace Systems.Loot
             }
 
             GridSlot lootSlot = dummyLootGridView.GetGridSlotAtPosition(screenPos);
-            GridSlot playerSlot = GridInventoryView.Instance.GetGridSlotAtPosition(screenPos);
+            GridSlot playerSlot = GetPlayerGridSlotAtPosition(screenPos);
 
             if (lootSlot != null && srcLoot)
             {
@@ -958,11 +989,13 @@ namespace Systems.Loot
         public void Init(UnityEngine.UIElements.ScrollView targetScrollView, int cols, UnityEngine.UIElements.VisualElement sharedGhostIcon)
         {
             this.currentColumns = cols;
+            this.ModelColumns = cols;
             this.container = targetScrollView;
             this.itemsContainer = targetScrollView.Q<UnityEngine.UIElements.VisualElement>("lootSlotsContainer");
             
-            var existingSlots = itemsContainer.Query<GridSlot>().ToList();
-            Slots = existingSlots.ToArray();
+            // DummyLootGridView는 InitializeView를 돌려서 슬롯들을 생성하므로,
+            // 이 시점에서는 itemsContainer의 부모(slotsContainer)가 세팅되어야 SetRotated가 제대로 먹힙니다.
+            // 위에서 itemsContainer에 "slotsContainer" 클래스가 있으니 그것을 활용합니다.
             
             GhostIcon = sharedGhostIcon;
         }
@@ -973,7 +1006,9 @@ namespace Systems.Loot
             itemsContainer.Clear();
             
             float containerPaddingTotal = 20f; // 10f left/top + 10f right/bottom padding
-            // 패딩과 여백(4f)을 추가하여 정확히 슬롯들이 다음 줄로 밀리지(wrap) 않도록 보장
+
+            itemsContainer.style.flexDirection = UnityEngine.UIElements.FlexDirection.Row;
+            itemsContainer.style.flexWrap = UnityEngine.UIElements.Wrap.Wrap;
             itemsContainer.style.width = (currentColumns * SlotTotalSize) + containerPaddingTotal + 4f;
             int rowsForUpdate = Mathf.CeilToInt((float)size / currentColumns);
             itemsContainer.style.height = (rowsForUpdate * SlotTotalSize) + containerPaddingTotal + 4f;

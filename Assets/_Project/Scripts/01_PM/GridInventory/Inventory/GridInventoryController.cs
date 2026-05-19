@@ -10,22 +10,19 @@ namespace Systems.GridInventory {
         
         public GridInventoryModel Model => model;
 
-        readonly int width;
-        readonly int height;
+        public int width => model.Width;
+        public int height => model.Height;
         int Capacity => width * height;
         readonly HashSet<ItemInstance> overlappingItems = new HashSet<ItemInstance>();
         readonly HashSet<ItemInstance> currentItemsInModel = new HashSet<ItemInstance>();
         readonly HashSet<ItemInstance> processedItems = new HashSet<ItemInstance>();
         readonly List<ItemInstance> itemsToRemove = new List<ItemInstance>();
 
-        public GridInventoryController(GridStorageView view, GridInventoryModel model, int width, int height) {
+        public GridInventoryController(GridStorageView view, GridInventoryModel model, int initWidth, int initHeight) {
             Debug.Assert(view != null, "View is null");
             Debug.Assert(model != null, "Model is null");
-            Debug.Assert(width > 0 && height > 0, "Dimensions are less than 1");
             this.view = view;
             this.model = model;
-            this.width = width;
-            this.height = height;
 
             view.StartCoroutine(Initialize());
         }
@@ -53,10 +50,16 @@ namespace Systems.GridInventory {
         }
 
         void HandleQuickslotItemDropped(ItemInstance item, int sourceQuickslotIndex, Vector2 screenPosition) {
+            GridSlot slot = null;
             if (GridInventoryView.Instance != null && GridInventoryView.Instance.isActiveAndEnabled) {
-                var slot = GridInventoryView.Instance.GetGridSlotAtPosition(screenPosition);
-                if (slot != null) {
-                    var targetCoords = model.GetCoordinates(slot.Index);
+                slot = GridInventoryView.Instance.GetGridSlotAtPosition(screenPosition);
+            }
+            if (slot == null && Systems.Loot.LootController.Instance != null && Systems.Loot.LootController.Instance.IsOpen) {
+                slot = Systems.Loot.LootController.Instance.GetPlayerGridSlotAtPosition(screenPosition);
+            }
+
+            if (slot != null) {
+                var targetCoords = model.GetCoordinates(slot.Index);
                     // Check if the place target has an item
                     var baseTargetItem = model.Get(targetCoords.x, targetCoords.y);
                     
@@ -108,7 +111,6 @@ namespace Systems.GridInventory {
                     }
                     return;
                 }
-            }
 
             // NEW: Check if it was dropped over the Loot UI
             if (Systems.Loot.LootController.Instance != null && Systems.Loot.LootController.Instance.IsOpen) {
@@ -884,6 +886,7 @@ namespace Systems.GridInventory {
                         itemViews[item] = itemView;
                         view.BindItem(itemView, anchorIndex);
                     } else {
+                        itemView.RefreshVisuals();
                         itemView.SetQuantity(item.currentStackCount);
                         view.UpdateItemPosition(itemView, anchorIndex);
                         
@@ -895,12 +898,20 @@ namespace Systems.GridInventory {
             }
         }
 
+        public void RefreshAllItemsVisuals() {
+            foreach (var kvp in itemViews) {
+                var anchorPos = model.GetItemAnchorPosition(kvp.Key);
+                int anchorIndex = model.GetIndex(anchorPos.x, anchorPos.y);
+                view.UpdateItemPosition(kvp.Value, anchorIndex);
+            }
+        }
+
         #region Builder
 
         public class Builder {
             GridStorageView view;
             int width = 8;
-            int height = 8;
+            int height = 5;
             IEnumerable<GridInventory.StartingItem> startingItems;
             GridInventoryModel existingModel;
 

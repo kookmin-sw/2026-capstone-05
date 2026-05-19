@@ -5,7 +5,7 @@ namespace Systems.GridInventory {
     public class GridInventory : MonoBehaviour {
         [SerializeField] GridInventoryView view;
         private int gridWidth = 8;
-        private int gridHeight = 8;
+        private int gridHeight = 5;
         
         // 아이템의 종류와 초기 수량을 지정하여 시작 시 모델에 삽입하기 위함
         [System.Serializable]
