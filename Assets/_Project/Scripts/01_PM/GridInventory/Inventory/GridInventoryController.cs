@@ -130,7 +130,8 @@ namespace Systems.GridInventory {
             // If it reaches here, it means it was dropped outside of quickslots and outside of the grid.
             // Drop it on the ground.
             if (LocalPlayerReferenceResolver.TryGetLocalPlayer(out PlayerController player)) {
-                Vector3 dropPosition = player.transform.position;
+                Vector2 randomOffset = UnityEngine.Random.insideUnitCircle * 0.5f;
+                Vector3 dropPosition = player.transform.position + new Vector3(randomOffset.x, 0, randomOffset.y);
                 
                 QuickslotUIController.Instance.RemoveItemFromSlot(sourceQuickslotIndex);
 

@@ -118,15 +118,6 @@ namespace Systems.Shop
             shopView.ShowShop();
             shopView.RenderCatalog(model.ShopItems, isSellMode: false);
             
-            // 마우스 커서 표시 및 플레이어 조작 비활성화
-            UnityEngine.Cursor.lockState = CursorLockMode.None;
-            UnityEngine.Cursor.visible = true;
-            PlayerInputHandler playerInput = FindAnyObjectByType<PlayerInputHandler>();
-            if (playerInput != null)
-            {
-                playerInput.SetInputActive(false);
-            }
-            
             // 인벤토리가 열려 있다면 닫거나, 상점 전용 배치 모드를 준비하는 로직
             if (GridInventoryView.Instance != null && GridInventoryView.Instance.isActiveAndEnabled)
             {
@@ -135,6 +126,8 @@ namespace Systems.Shop
 
             // 👉 [추가] 상점 입장 인사
             MascotEventManager.TriggerGreeting();
+            
+            PauseMenuManager.UpdateCursorAndInputState();
         }
 
         public void CloseShop()
@@ -148,14 +141,7 @@ namespace Systems.Shop
 
             shopView.HideShop();
             
-            // 마우스 커서 숨김 및 플레이어 조작 활성화
-            UnityEngine.Cursor.lockState = CursorLockMode.Locked;
-            UnityEngine.Cursor.visible = false;
-            PlayerInputHandler playerInput = FindAnyObjectByType<PlayerInputHandler>();
-            if (playerInput != null)
-            {
-                playerInput.SetInputActive(true);
-            }
+            PauseMenuManager.UpdateCursorAndInputState();
         }
 
         private void Update()
@@ -164,6 +150,7 @@ namespace Systems.Shop
             {
                 if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.eKey.wasPressedThisFrame)
                 {
+                    if (PauseMenuManager.isPaused) return; // 일시정지 중 무시
                     CloseShop();
                     return;
                 }

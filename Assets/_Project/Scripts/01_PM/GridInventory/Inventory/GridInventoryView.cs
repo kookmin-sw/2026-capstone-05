@@ -157,13 +157,7 @@ namespace Systems.GridInventory {
             
             UpdateSaveLoadButtonsVisibility(); // 테스트용 버튼 가시성 업데이트 복구
 
-            UnityEngine.Cursor.lockState = CursorLockMode.None;
-            UnityEngine.Cursor.visible = true;
-
-            if (localPlayerInputHandler != null)
-            {
-                localPlayerInputHandler.SetInputActive(false);
-            }
+            PauseMenuManager.UpdateCursorAndInputState();
         }
 
         public void CloseForStorage()
@@ -177,6 +171,18 @@ namespace Systems.GridInventory {
             container.style.display = DisplayStyle.None;
             IsAnyInventoryOpen = false;
             ResetStorageLayout();
+            
+            PauseMenuManager.UpdateCursorAndInputState();
+        }
+
+        public void CloseInventory()
+        {
+            if (container != null && IsOpen)
+            {
+                container.style.display = DisplayStyle.None;
+                IsAnyInventoryOpen = false;
+                PauseMenuManager.UpdateCursorAndInputState();
+            }
         }
 
 
@@ -198,6 +204,8 @@ namespace Systems.GridInventory {
 
             // Tab 키를 누르면 인벤토리 토글 (표시/숨김)
             if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame && container != null) {
+                if (PauseMenuManager.isPaused) return; // 일시정지 중일 때 입력 무시
+
                 if (Systems.Loot.LootController.Instance != null && Systems.Loot.LootController.Instance.IsOpen) {
                     return;
                 }
@@ -214,18 +222,10 @@ namespace Systems.GridInventory {
 
                 // 인벤토리가 열려있을 때(isHidden == true가 방금 열린 것)
                 if (isHidden) {
-                    UnityEngine.Cursor.lockState = CursorLockMode.None;
-                    UnityEngine.Cursor.visible = true;
                     UpdateSaveLoadButtonsVisibility();
-                } else {
-                    UnityEngine.Cursor.lockState = CursorLockMode.Locked;
-                    UnityEngine.Cursor.visible = false;
                 }
 
-                // 플레이어 조작 활성/비활성화 (열렸을 때 조작 끄기)
-                if (localPlayerInputHandler != null) {
-                    localPlayerInputHandler.SetInputActive(!isHidden);
-                }
+                PauseMenuManager.UpdateCursorAndInputState();
             }
         }
 

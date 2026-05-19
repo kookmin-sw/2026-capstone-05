@@ -463,6 +463,7 @@ public class QuickslotUIController : MonoBehaviour
         }
 
         if (localPlayerEquipment == null || Keyboard.current == null) return;
+        if (PauseMenuManager.IsAnyUIOpen()) return;
 
         if (Keyboard.current.digit1Key.wasPressedThisFrame) EquipFromQuickslot(0);
         else if (Keyboard.current.digit2Key.wasPressedThisFrame) EquipFromQuickslot(1);
