@@ -77,6 +77,8 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     private Canvas _roomCodeCanvas;
     private TextMeshProUGUI _roomCodeText;
 
+    public static bool IsDirectScenePlay { get; private set; }
+
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -89,6 +91,16 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         DontDestroyOnLoad(gameObject);
         SceneManager.sceneLoaded += OnSceneLoaded;
         Debug.Log($"{LogPrefix} Awake 완료. sceneLoaded 콜백 등록.");
+
+        Scene activeScene = SceneManager.GetActiveScene();
+        if (IsGameScene(activeScene.name))
+        {
+            if (!AuthSession.IsLoggedIn && !AuthSession.IsOfflineMode)
+            {
+                IsDirectScenePlay = true;
+                Debug.LogWarning($"{LogPrefix} 게임 씬 직접 실행 감지. 오프라인 모드로 확정합니다.");
+            }
+        }
     }
 
     private void Start()
@@ -98,6 +110,12 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         if (TryBindMenuUi(activeScene.name))
         {
             UnlockCursorForMenu();
+        }
+
+        if (IsDirectScenePlay && _runner == null)
+        {
+            Debug.LogWarning($"{LogPrefix} 게임 씬 직접 실행 감지. GameMode.Single로 자동 접속합니다.");
+            _ = StartGameAsync("DirectPlay", "DirectSession", GameMode.Single);
         }
     }
 
@@ -543,6 +561,12 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
         RefreshAllSaveSlotMenus();
         Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 시작하기 버튼 클릭. 슬롯 UI 최신화 완료.");
+
+        if (AuthSession.IsOfflineMode && _hostButton != null)
+        {
+            Debug.Log($"{LogPrefix} 오프라인 모드: 호스트/참가 선택 창을 건너뛰고 호스트 모드로 자동 진입합니다.");
+            _hostButton.onClick.Invoke();
+        }
     }
 
     private void OnHostButtonClicked()
@@ -750,6 +774,12 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         {
             Debug.LogWarning($"{LogPrefix} 이미 접속 시도 중입니다. code={roomCode}, mode={mode}");
             return;
+        }
+
+        if (AuthSession.IsOfflineMode)
+        {
+            mode = GameMode.Single;
+            Debug.Log($"{LogPrefix} 오프라인 모드 감지: GameMode를 Single로 강제 전환합니다.");
         }
 
         _isConnecting = true;

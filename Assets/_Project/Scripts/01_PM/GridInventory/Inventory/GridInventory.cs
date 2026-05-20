@@ -32,7 +32,7 @@ namespace Systems.GridInventory {
         }
 
         void Start() {
-            if (PlayerNetworkSetup.IsOfflineTestMode && controller != null && controller.Model != null) {
+            if (AuthSession.IsOffline && controller != null && controller.Model != null) {
                 GridInventorySaveSystem.LoadInventory(controller.Model);
             }
         }

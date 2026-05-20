@@ -88,7 +88,7 @@ namespace Systems.GridInventory
             {
                 BackendPlayerNetworkSync.LocalInstance.RequestDropItem(item.Data.itemID, item.currentStackCount, dropPosition);
             }
-            else if (PlayerNetworkSetup.IsOfflineTestMode)
+            else if (AuthSession.IsOffline)
             {
                 if (item.Data.pickupPrefab != null)
                 {

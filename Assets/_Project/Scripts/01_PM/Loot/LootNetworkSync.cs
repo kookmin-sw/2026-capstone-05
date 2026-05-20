@@ -15,7 +15,7 @@ namespace Systems.Loot
         { 
             get 
             {
-                if (_instance == null && PlayerNetworkSetup.IsOfflineTestMode)
+                if (_instance == null && AuthSession.IsOffline)
                 {
                     _instance = FindFirstObjectByType<LootNetworkSync>();
                     if (_instance == null)
@@ -47,7 +47,7 @@ namespace Systems.Loot
         public override void Spawned()
         {
             Instance = this;
-            if (PlayerNetworkSetup.IsOfflineTestMode)
+            if (AuthSession.IsOffline)
                 return; // 오프라인: Start()에서 InitializeOffline로 모델 로드
 
             EnsureSceneLootModels();
@@ -77,7 +77,7 @@ namespace Systems.Loot
 
         private void Start()
         {
-            if (PlayerNetworkSetup.IsOfflineTestMode && !isOfflineInitialized)
+            if (AuthSession.IsOffline && !isOfflineInitialized)
             {
                 InitializeOffline();
             }
@@ -101,7 +101,7 @@ namespace Systems.Loot
             snapshot.lootId = NormalizeLootId(lootId);
             string json = JsonUtility.ToJson(snapshot);
 
-            if (HasStateAuthority || PlayerNetworkSetup.IsOfflineTestMode)
+            if (HasStateAuthority || AuthSession.IsOffline)
             {
                 ApplyLootSnapshot(json);
                 return;
@@ -169,7 +169,7 @@ namespace Systems.Loot
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
         public void Rpc_RequestOpenLoot(PlayerRef requestedBy, NetworkString<_64> lootId)
         {
-            if (!HasStateAuthority && !PlayerNetworkSetup.IsOfflineTestMode) return;
+            if (!HasStateAuthority && !AuthSession.IsOffline) return;
 
             if (ActiveLootUsers.TryGet(lootId, out PlayerRef currentUser))
             {
@@ -209,7 +209,7 @@ namespace Systems.Loot
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
         public void Rpc_NotifyCloseLoot(PlayerRef requestedBy, NetworkString<_64> lootId)
         {
-            if (!HasStateAuthority && !PlayerNetworkSetup.IsOfflineTestMode) return;
+            if (!HasStateAuthority && !AuthSession.IsOffline) return;
 
             if (ActiveLootUsers.TryGet(lootId, out PlayerRef currentUser) && currentUser == requestedBy)
             {
@@ -221,7 +221,7 @@ namespace Systems.Loot
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
         public void Rpc_RequestMoveItem(PlayerRef requestedBy, NetworkString<_64> lootId, int sourceSlotIndex, int targetSlotIndex, int newRotation)
         {
-            if (!HasStateAuthority && !PlayerNetworkSetup.IsOfflineTestMode) return;
+            if (!HasStateAuthority && !AuthSession.IsOffline) return;
             
             GridInventoryModel model = GetOrCreateModel(lootId.ToString());
             (int sx, int sy) = model.GetCoordinates(sourceSlotIndex);
@@ -333,7 +333,7 @@ namespace Systems.Loot
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
         public void Rpc_RequestTakeItemWithSwap(PlayerRef requestedBy, NetworkString<_64> lootId, NetworkString<_64> swapItemId, int sourceLootSlotIndex, int targetInventorySlotIndex, int takeQuantity, int swapQuantity)
         {
-            if (!HasStateAuthority && !PlayerNetworkSetup.IsOfflineTestMode) return;
+            if (!HasStateAuthority && !AuthSession.IsOffline) return;
             
             GridInventoryModel model = GetOrCreateModel(lootId.ToString());
             (int sx, int sy) = model.GetCoordinates(sourceLootSlotIndex);
@@ -370,7 +370,7 @@ namespace Systems.Loot
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
         public void Rpc_RequestPutItemWithSwap(PlayerRef requestedBy, NetworkString<_64> lootId, NetworkString<_64> putItemId, int sourceInventorySlotIndex, int targetLootSlotIndex, int putQuantity, int putRotation, NetworkString<_64> swapItemId, int swapQuantity)
         {
-            if (!HasStateAuthority && !PlayerNetworkSetup.IsOfflineTestMode) return;
+            if (!HasStateAuthority && !AuthSession.IsOffline) return;
             
             ItemData putItemDef = ItemDataRegistry.Find(putItemId.ToString());
             if (putItemDef == null) return;
@@ -396,7 +396,7 @@ namespace Systems.Loot
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
         public void Rpc_RequestTakeItem(PlayerRef requestedBy, NetworkString<_64> lootId, int sourceSlotIndex, int targetInventorySlotIndex, int quantity)
         {
-            if (!HasStateAuthority && !PlayerNetworkSetup.IsOfflineTestMode) return;
+            if (!HasStateAuthority && !AuthSession.IsOffline) return;
             
             GridInventoryModel model = GetOrCreateModel(lootId.ToString());
             (int sx, int sy) = model.GetCoordinates(sourceSlotIndex);
@@ -432,7 +432,7 @@ namespace Systems.Loot
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
         public void Rpc_RequestPutItem(PlayerRef requestedBy, NetworkString<_64> lootId, NetworkString<_64> itemId, int sourceInventorySlotIndex, int targetLootSlotIndex, int quantity, int rotation)
         {
-            if (!HasStateAuthority && !PlayerNetworkSetup.IsOfflineTestMode) return;
+            if (!HasStateAuthority && !AuthSession.IsOffline) return;
             
             ItemData itemDef = ItemDataRegistry.Find(itemId.ToString());
             if (itemDef == null) return;
@@ -480,7 +480,7 @@ namespace Systems.Loot
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
         public void Rpc_RequestTakeAll(PlayerRef requestedBy, NetworkString<_64> lootId)
         {
-            if (!HasStateAuthority && !PlayerNetworkSetup.IsOfflineTestMode) return;
+            if (!HasStateAuthority && !AuthSession.IsOffline) return;
             
             GridInventoryModel model = GetOrCreateModel(lootId.ToString());
             List<ItemInstance> itemsToMove = new List<ItemInstance>();
@@ -510,7 +510,7 @@ namespace Systems.Loot
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
         public void Rpc_RequestQuickMove(PlayerRef requestedBy, NetworkString<_64> lootId, NetworkString<_64> itemId, int sourceSlotIndex, int quantity, bool isTake)
         {
-            if (!HasStateAuthority && !PlayerNetworkSetup.IsOfflineTestMode) return;
+            if (!HasStateAuthority && !AuthSession.IsOffline) return;
             
             if (isTake)
             {
@@ -561,7 +561,7 @@ namespace Systems.Loot
 
         private void ApplyLootSnapshot(string json)
         {
-            if ((!HasStateAuthority && !PlayerNetworkSetup.IsOfflineTestMode) || string.IsNullOrWhiteSpace(json))
+            if ((!HasStateAuthority && !AuthSession.IsOffline) || string.IsNullOrWhiteSpace(json))
             {
                 return;
             }
@@ -599,7 +599,7 @@ namespace Systems.Loot
 
         public void LoadAllLoots()
         {
-            if (!HasStateAuthority && !PlayerNetworkSetup.IsOfflineTestMode)
+            if (!HasStateAuthority && !AuthSession.IsOffline)
             {
                 return;
             }
@@ -620,7 +620,7 @@ namespace Systems.Loot
 
         public void SaveAllLoots()
         {
-            if (!HasStateAuthority && !PlayerNetworkSetup.IsOfflineTestMode)
+            if (!HasStateAuthority && !AuthSession.IsOffline)
             {
                 return;
             }
