@@ -25,6 +25,13 @@ public class DayNightCycle : MonoBehaviour
     public bool resetLightingWhenRoundEnds = true;
     public bool syncToRoundTimer = true;
 
+    [Header("Weather")]
+    public bool controlWeatherByCycle = true;
+    [Range(0f, 1f)]
+    public float blizzardStartRemainingRatio = 0.3f;
+    public NetworkWeatherState defaultWeatherState = NetworkWeatherState.Snow;
+    public NetworkWeatherState lateCycleWeatherState = NetworkWeatherState.Blizzard;
+
     public float CurrentCycleTime { get; private set; }
     public float DayDuration => Mathf.Clamp(dayDuration, 0.5f, 0.9f);
     public bool IsNightTime => CurrentCycleTime >= DayDuration;
@@ -96,6 +103,8 @@ public class DayNightCycle : MonoBehaviour
     private float timer;
     private Material runtimeSkyboxMaterial;
     private bool isCycleRunning;
+    private NetworkWeatherState lastRequestedWeatherState;
+    private bool hasRequestedWeatherState;
 
     private void Reset()
     {
@@ -215,12 +224,14 @@ public class DayNightCycle : MonoBehaviour
     {
         timer = Mathf.Clamp01(cycleStartTime) * cycleDuration;
         isCycleRunning = true;
+        hasRequestedWeatherState = false;
         ApplyCycle(timer / cycleDuration);
     }
 
     public void StopCycleAtWaitingLighting()
     {
         isCycleRunning = false;
+        RequestWeatherState(defaultWeatherState);
         ApplyCycle(cycleStartTime);
     }
 
@@ -275,6 +286,46 @@ public class DayNightCycle : MonoBehaviour
         {
             ApplyFog(nightBlend);
         }
+
+        UpdateWeatherForCycle(normalizedTime);
+    }
+
+    private void UpdateWeatherForCycle(float normalizedTime)
+    {
+        if (!Application.isPlaying || !controlWeatherByCycle || !isCycleRunning)
+        {
+            return;
+        }
+
+        float blizzardStartTime = 1f - Mathf.Clamp01(blizzardStartRemainingRatio);
+        NetworkWeatherState targetWeatherState = normalizedTime >= blizzardStartTime
+            ? lateCycleWeatherState
+            : defaultWeatherState;
+
+        RequestWeatherState(targetWeatherState);
+    }
+
+    private void RequestWeatherState(NetworkWeatherState weatherState)
+    {
+        BackendRoundManager roundManager = BackendRoundManager.Instance;
+        if (roundManager == null)
+        {
+            return;
+        }
+
+        if (!PlayerNetworkSetup.IsOfflineTestMode && !roundManager.HasStateAuthority)
+        {
+            return;
+        }
+
+        if (hasRequestedWeatherState && lastRequestedWeatherState == weatherState)
+        {
+            return;
+        }
+
+        hasRequestedWeatherState = true;
+        lastRequestedWeatherState = weatherState;
+        roundManager.RequestSetWeatherState(weatherState);
     }
 
     private void ApplyFog(float nightBlend)

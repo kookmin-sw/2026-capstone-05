@@ -33969,6 +33969,10 @@ MonoBehaviour:
   localPlayerOnly: 1
   forceWorldSimulationSpace: 1
   particleSystems: []
+  syncWithWeatherState: 1
+  useAutomaticWeatherStateInference: 1
+  activeWeatherState: 0
+  useSnowOcclusionVolumes: 1
   useCeilingOcclusion: 0
   filterCeilingByLayer: 0
   ceilingOcclusionMask:
@@ -33977,7 +33981,12 @@ MonoBehaviour:
   ceilingCheckOffset: {x: 0, y: 0.25, z: 0}
   ceilingCheckDistance: 30
   ceilingCheckInterval: 0.25
-  clearParticlesWhenOccluded: 1
+  ceilingSampleRadius: 1.5
+  ceilingSampleCount: 5
+  ceilingBlockedRatio: 0.6
+  occlusionEnterDelay: 0.25
+  occlusionExitDelay: 0.5
+  clearParticlesWhenOccluded: 0
 --- !u!1 &8698198422953969795
 GameObject:
   m_ObjectHideFlags: 0

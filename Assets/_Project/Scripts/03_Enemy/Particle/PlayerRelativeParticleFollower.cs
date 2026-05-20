@@ -6,89 +6,72 @@ using UnityEngine.Serialization;
 [DisallowMultipleComponent]
 public class PlayerRelativeParticleFollower : MonoBehaviour, IPlayerNetworkConfigurable
 {
-    [Header("Follow Target")]
+    [Header("Follow")]
     [SerializeField] private Transform followTarget;
-    [SerializeField, FormerlySerializedAs("autoFindPlayerTarget")] private bool autoResolveFollowTarget = true;
-    [SerializeField] private bool preferCinemachineFollowTarget = true;
-    [SerializeField] private bool fallbackToCameraTransform = true;
-
-    [Header("Position")]
+    [SerializeField] private bool autoFindPlayerTarget = true;
     [SerializeField] private Vector3 worldOffset = new Vector3(0f, 2.5f, 0f);
-    [SerializeField] private bool useTargetYawForOffset = false;
-    [SerializeField] private bool smoothFollow = false;
-    [SerializeField] private float followSpeed = 20f;
-
-    [Header("Rotation")]
     [SerializeField] private bool keepInitialWorldRotation = true;
-    [SerializeField] private Vector3 fixedWorldEulerAngles = Vector3.zero;
 
     [Header("Particle")]
     [SerializeField] private bool localPlayerOnly = true;
-    [SerializeField] private bool forceWorldSimulationSpace = true;
-    [SerializeField] private ParticleSystem[] particleSystems;
     [SerializeField] private bool syncWithWeatherState = true;
-    [SerializeField] private bool useAutomaticWeatherStateInference = true;
     [SerializeField] private NetworkWeatherState activeWeatherState = NetworkWeatherState.Snow;
+    [SerializeField] private float fadeSeconds = 0.75f;
+    [SerializeField, HideInInspector] private bool forceWorldSimulationSpace = true;
+    [SerializeField, HideInInspector] private ParticleSystem[] particleSystems;
 
-    [Header("Indoor Occlusion")]
-    [SerializeField] private bool useCeilingOcclusion = false;
-    [SerializeField] private bool filterCeilingByLayer = false;
-    [SerializeField] private LayerMask ceilingOcclusionMask = ~0;
-    [SerializeField] private Vector3 ceilingCheckOffset = new Vector3(0f, 0.25f, 0f);
-    [SerializeField] private float ceilingCheckDistance = 30f;
-    [SerializeField] private float ceilingCheckInterval = 0.25f;
-    [SerializeField] private bool clearParticlesWhenOccluded = true;
+    [Header("Snow Volume")]
+    [SerializeField] private bool useSnowOcclusionVolumes = true;
 
     private Quaternion fixedWorldRotation;
-    private bool shouldRun = true;
     private bool hasManualFollowTarget;
-    private bool isOccluded;
-    private bool isWeatherHidden;
+    private bool shouldRun = true;
+    private bool weatherHidden;
     private bool particlesPlaying;
-    private bool playbackStateInitialized;
-    private float nextCeilingCheckTime;
+    private float emissionScale = 1f;
+    private float targetEmissionScale = 1f;
+    private float[] emissionDefaults;
     private CinemachineCamera parentCinemachineCamera;
-    private readonly RaycastHit[] ceilingHits = new RaycastHit[8];
+
+    private bool ShouldPlay => shouldRun && !weatherHidden;
 
     private void Awake()
     {
         hasManualFollowTarget = followTarget != null;
         parentCinemachineCamera = GetComponentInParent<CinemachineCamera>();
 
-        ResolveFollowTarget();
         CacheParticleSystems();
-
-        fixedWorldRotation = keepInitialWorldRotation
-            ? transform.rotation
-            : Quaternion.Euler(fixedWorldEulerAngles);
+        fixedWorldRotation = keepInitialWorldRotation ? transform.rotation : Quaternion.identity;
 
         if (forceWorldSimulationSpace)
         {
             ApplyWorldSimulationSpace();
         }
 
+        ResolveFollowTarget();
         SnapToTarget();
         ApplyWeatherState(BackendRoundManager.Instance != null
             ? BackendRoundManager.Instance.CurrentWeatherState
-            : InferWeatherStateFromName());
-        RefreshParticlePlayback();
+            : activeWeatherState);
+        RefreshPlayback(immediate: true);
     }
 
     private void OnEnable()
     {
         BackendRoundManager.WeatherStateChanged += ApplyWeatherState;
+        SnowOcclusionVolume.SnowMaskVolumesChanged += RefreshSnowParticleMasks;
+        RefreshSnowParticleMasks();
     }
 
     private void OnDisable()
     {
         BackendRoundManager.WeatherStateChanged -= ApplyWeatherState;
+        SnowOcclusionVolume.SnowMaskVolumesChanged -= RefreshSnowParticleMasks;
     }
 
     private void OnValidate()
     {
-        followSpeed = Mathf.Max(0f, followSpeed);
-        ceilingCheckDistance = Mathf.Max(0f, ceilingCheckDistance);
-        ceilingCheckInterval = Mathf.Max(0.02f, ceilingCheckInterval);
+        fadeSeconds = Mathf.Max(0f, fadeSeconds);
     }
 
     private void LateUpdate()
@@ -99,34 +82,37 @@ public class PlayerRelativeParticleFollower : MonoBehaviour, IPlayerNetworkConfi
         }
 
         ResolveFollowTarget();
-
         if (followTarget == null)
         {
             return;
         }
 
-        Vector3 targetPosition = GetTargetPosition();
-
-        if (smoothFollow)
-        {
-            float t = 1f - Mathf.Exp(-followSpeed * Time.deltaTime);
-            transform.position = Vector3.Lerp(transform.position, targetPosition, t);
-        }
-        else
-        {
-            transform.position = targetPosition;
-        }
-
+        transform.position = followTarget.position + worldOffset;
         transform.rotation = fixedWorldRotation;
 
-        UpdateOcclusion();
+        UpdateEmissionFade();
     }
 
     public void ConfigureForNetwork(bool isLocalPlayer)
     {
         shouldRun = !localPlayerOnly || isLocalPlayer;
-        enabled = shouldRun;
-        RefreshParticlePlayback();
+
+        if (!shouldRun)
+        {
+            ClearSnowParticleMasks();
+            StopParticles(ParticleSystemStopBehavior.StopEmittingAndClear);
+            enabled = false;
+            return;
+        }
+
+        enabled = true;
+        ResolveFollowTarget();
+        SnapToTarget();
+        ApplyWeatherState(BackendRoundManager.Instance != null
+            ? BackendRoundManager.Instance.CurrentWeatherState
+            : activeWeatherState);
+        RefreshSnowParticleMasks();
+        RefreshPlayback(immediate: true);
     }
 
     public void SetFollowTarget(Transform target)
@@ -136,47 +122,39 @@ public class PlayerRelativeParticleFollower : MonoBehaviour, IPlayerNetworkConfi
         SnapToTarget();
     }
 
-    public void SetIndoorBlocked(bool blocked)
-    {
-        isOccluded = blocked;
-        RefreshParticlePlayback();
-    }
-
     public void ApplyWeatherState(NetworkWeatherState weatherState)
     {
-        if (!syncWithWeatherState)
-        {
-            isWeatherHidden = false;
-            RefreshParticlePlayback();
-            return;
-        }
-
-        NetworkWeatherState expectedState = useAutomaticWeatherStateInference
-            ? InferWeatherStateFromName()
-            : activeWeatherState;
-
-        isWeatherHidden = expectedState != weatherState;
-        RefreshParticlePlayback();
+        weatherHidden = syncWithWeatherState && activeWeatherState != weatherState;
+        RefreshPlayback(immediate: weatherHidden);
     }
 
     private void ResolveFollowTarget()
     {
-        if (hasManualFollowTarget || !autoResolveFollowTarget)
+        if (hasManualFollowTarget || !autoFindPlayerTarget)
         {
             return;
         }
 
-        Transform resolvedTarget = ResolveCinemachineTarget();
-        if (resolvedTarget != null)
+        if (parentCinemachineCamera == null)
         {
-            followTarget = resolvedTarget;
-            return;
+            parentCinemachineCamera = GetComponentInParent<CinemachineCamera>();
         }
 
-        PlayerController player = GetComponentInParent<PlayerController>();
-        if (player != null)
+        if (parentCinemachineCamera != null)
         {
-            followTarget = player.transform;
+            if (parentCinemachineCamera.Follow != null)
+            {
+                followTarget = parentCinemachineCamera.Follow;
+                return;
+            }
+
+            if (parentCinemachineCamera.LookAt != null)
+            {
+                followTarget = parentCinemachineCamera.LookAt;
+                return;
+            }
+
+            followTarget = parentCinemachineCamera.transform;
             return;
         }
 
@@ -187,37 +165,6 @@ public class PlayerRelativeParticleFollower : MonoBehaviour, IPlayerNetworkConfi
         }
     }
 
-    private Transform ResolveCinemachineTarget()
-    {
-        if (!preferCinemachineFollowTarget)
-        {
-            return null;
-        }
-
-        if (parentCinemachineCamera == null)
-        {
-            parentCinemachineCamera = GetComponentInParent<CinemachineCamera>();
-        }
-
-        if (parentCinemachineCamera == null)
-        {
-            Camera parentCamera = GetComponentInParent<Camera>();
-            return parentCamera != null && fallbackToCameraTransform ? parentCamera.transform : null;
-        }
-
-        if (parentCinemachineCamera.Follow != null)
-        {
-            return parentCinemachineCamera.Follow;
-        }
-
-        if (parentCinemachineCamera.LookAt != null)
-        {
-            return parentCinemachineCamera.LookAt;
-        }
-
-        return fallbackToCameraTransform ? parentCinemachineCamera.transform : null;
-    }
-
     private void SnapToTarget()
     {
         if (followTarget == null)
@@ -225,151 +172,195 @@ public class PlayerRelativeParticleFollower : MonoBehaviour, IPlayerNetworkConfi
             return;
         }
 
-        transform.position = GetTargetPosition();
+        transform.position = followTarget.position + worldOffset;
         transform.rotation = fixedWorldRotation;
     }
 
-    private Vector3 GetTargetPosition()
+    private void RefreshPlayback(bool immediate)
     {
-        Vector3 offset = worldOffset;
+        CacheParticleSystems();
 
-        if (useTargetYawForOffset)
+        if (ShouldPlay)
         {
-            Quaternion yawRotation = Quaternion.Euler(0f, followTarget.eulerAngles.y, 0f);
-            offset = yawRotation * worldOffset;
+            PlayParticles();
+            targetEmissionScale = 1f;
+            if (immediate || fadeSeconds <= 0f)
+            {
+                emissionScale = 1f;
+                ApplyEmissionScale(emissionScale);
+            }
+            return;
         }
 
-        return followTarget.position + offset;
+        targetEmissionScale = 0f;
+
+        if (immediate || weatherHidden || !shouldRun || fadeSeconds <= 0f)
+        {
+            emissionScale = 0f;
+            ApplyEmissionScale(emissionScale);
+            StopParticles(ParticleSystemStopBehavior.StopEmitting);
+        }
     }
 
-    private void CacheParticleSystems()
+    private void UpdateEmissionFade()
     {
-        if (particleSystems != null && particleSystems.Length > 0)
+        if (Mathf.Approximately(emissionScale, targetEmissionScale))
         {
             return;
         }
 
-        particleSystems = GetComponentsInChildren<ParticleSystem>(true);
+        float speed = fadeSeconds <= 0f ? float.MaxValue : 1f / fadeSeconds;
+        emissionScale = Mathf.MoveTowards(emissionScale, targetEmissionScale, speed * Time.deltaTime);
+        ApplyEmissionScale(emissionScale);
+
+        if (emissionScale <= 0f && !ShouldPlay)
+        {
+            StopParticles(ParticleSystemStopBehavior.StopEmitting);
+        }
+    }
+
+    private void CacheParticleSystems()
+    {
+        if (particleSystems == null || particleSystems.Length == 0)
+        {
+            particleSystems = GetComponentsInChildren<ParticleSystem>(true);
+        }
+
+        if (emissionDefaults != null && emissionDefaults.Length == particleSystems.Length)
+        {
+            return;
+        }
+
+        emissionDefaults = new float[particleSystems.Length];
+        for (int i = 0; i < particleSystems.Length; i++)
+        {
+            emissionDefaults[i] = particleSystems[i] != null
+                ? particleSystems[i].emission.rateOverTimeMultiplier
+                : 0f;
+        }
+
+    }
+
+    private void RefreshSnowParticleMasks()
+    {
+        CacheParticleSystems();
+
+        if (!useSnowOcclusionVolumes || SnowOcclusionVolume.SnowMaskColliders.Count == 0)
+        {
+            ClearSnowParticleMasks();
+            return;
+        }
+
+        for (int i = 0; i < particleSystems.Length; i++)
+        {
+            ParticleSystem particleSystem = particleSystems[i];
+            if (particleSystem == null)
+            {
+                continue;
+            }
+
+            ParticleSystem.TriggerModule trigger = particleSystem.trigger;
+            trigger.enabled = true;
+            trigger.inside = ParticleSystemOverlapAction.Kill;
+            trigger.enter = ParticleSystemOverlapAction.Kill;
+            trigger.exit = ParticleSystemOverlapAction.Ignore;
+            trigger.outside = ParticleSystemOverlapAction.Ignore;
+            RemoveAllTriggerColliders(trigger);
+
+            for (int colliderIndex = 0; colliderIndex < SnowOcclusionVolume.SnowMaskColliders.Count; colliderIndex++)
+            {
+                trigger.AddCollider(SnowOcclusionVolume.SnowMaskColliders[colliderIndex]);
+            }
+        }
+    }
+
+    private void ClearSnowParticleMasks()
+    {
+        if (particleSystems == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < particleSystems.Length; i++)
+        {
+            ParticleSystem particleSystem = particleSystems[i];
+            if (particleSystem == null)
+            {
+                continue;
+            }
+
+            ParticleSystem.TriggerModule trigger = particleSystem.trigger;
+            RemoveAllTriggerColliders(trigger);
+            trigger.enabled = false;
+        }
+    }
+
+    private static void RemoveAllTriggerColliders(ParticleSystem.TriggerModule trigger)
+    {
+        for (int i = trigger.colliderCount - 1; i >= 0; i--)
+        {
+            trigger.RemoveCollider(i);
+        }
     }
 
     private void ApplyWorldSimulationSpace()
     {
         foreach (ParticleSystem particleSystem in particleSystems)
         {
+            if (particleSystem == null)
+            {
+                continue;
+            }
+
             ParticleSystem.MainModule main = particleSystem.main;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
         }
     }
 
-    private void UpdateOcclusion()
+    private void ApplyEmissionScale(float scale)
     {
-        if (!useCeilingOcclusion || Time.time < nextCeilingCheckTime)
+        for (int i = 0; i < particleSystems.Length; i++)
         {
-            return;
-        }
-
-        nextCeilingCheckTime = Time.time + ceilingCheckInterval;
-
-        Vector3 rayOrigin = followTarget != null
-            ? followTarget.position + ceilingCheckOffset
-            : transform.position + ceilingCheckOffset;
-
-        int queryMask = filterCeilingByLayer
-            ? ceilingOcclusionMask
-            : Physics.DefaultRaycastLayers;
-
-        int hitCount = Physics.RaycastNonAlloc(
-            rayOrigin,
-            Vector3.up,
-            ceilingHits,
-            ceilingCheckDistance,
-            queryMask,
-            QueryTriggerInteraction.Ignore);
-
-        bool blocked = HasValidCeilingHit(hitCount);
-
-        if (isOccluded == blocked)
-        {
-            return;
-        }
-
-        isOccluded = blocked;
-        RefreshParticlePlayback();
-    }
-
-    private bool HasValidCeilingHit(int hitCount)
-    {
-        for (int i = 0; i < hitCount; i++)
-        {
-            Collider hitCollider = ceilingHits[i].collider;
-
-            if (hitCollider == null)
+            ParticleSystem particleSystem = particleSystems[i];
+            if (particleSystem == null)
             {
                 continue;
             }
 
-            Transform hitTransform = hitCollider.transform;
-
-            if (hitTransform == transform || hitTransform.IsChildOf(transform))
-            {
-                continue;
-            }
-
-            if (followTarget != null && hitTransform.IsChildOf(followTarget))
-            {
-                continue;
-            }
-
-            return true;
+            ParticleSystem.EmissionModule emission = particleSystem.emission;
+            emission.rateOverTimeMultiplier = emissionDefaults[i] * scale;
         }
-
-        return false;
     }
 
-    private void RefreshParticlePlayback()
+    private void PlayParticles()
     {
-        SetParticlePlayback(shouldRun && !isOccluded && !isWeatherHidden);
-    }
-
-    private NetworkWeatherState InferWeatherStateFromName()
-    {
-        string targetName = gameObject.name;
-        if (string.IsNullOrEmpty(targetName))
-        {
-            return activeWeatherState;
-        }
-
-        string normalized = targetName.ToLowerInvariant();
-        if (normalized.Contains("storm") || normalized.Contains("blizzard"))
-        {
-            return NetworkWeatherState.Blizzard;
-        }
-
-        return NetworkWeatherState.Snow;
-    }
-
-    private void SetParticlePlayback(bool play)
-    {
-        if (playbackStateInitialized && particlesPlaying == play)
+        if (particlesPlaying)
         {
             return;
         }
 
-        playbackStateInitialized = true;
-        particlesPlaying = play;
-
+        particlesPlaying = true;
         foreach (ParticleSystem particleSystem in particleSystems)
         {
-            if (play)
+            if (particleSystem != null)
             {
                 particleSystem.Play(true);
             }
-            else
-            {
-                ParticleSystemStopBehavior stopBehavior = clearParticlesWhenOccluded
-                    ? ParticleSystemStopBehavior.StopEmittingAndClear
-                    : ParticleSystemStopBehavior.StopEmitting;
+        }
+    }
 
+    private void StopParticles(ParticleSystemStopBehavior stopBehavior)
+    {
+        if (!particlesPlaying && stopBehavior != ParticleSystemStopBehavior.StopEmittingAndClear)
+        {
+            return;
+        }
+
+        particlesPlaying = false;
+        foreach (ParticleSystem particleSystem in particleSystems)
+        {
+            if (particleSystem != null)
+            {
                 particleSystem.Stop(true, stopBehavior);
             }
         }

@@ -1,5 +1,73 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2606036311808993591
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8192068776167525526}
+  - component: {fileID: 2195694550101202908}
+  - component: {fileID: 8312321865674680439}
+  m_Layer: 0
+  m_Name: SnowOcclusionVolume
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8192068776167525526
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2606036311808993591}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6176546495777008715}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &2195694550101202908
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2606036311808993591}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.24992, y: 3.0043385, z: 2.1864238}
+  m_Center: {x: -6.1904244, y: 1.4997654, z: 4.4729238}
+--- !u!114 &8312321865674680439
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2606036311808993591}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 102b606077924e3996993558a37651dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SnowOcclusionVolume
+  killSnowParticlesInside: 1
+  includeChildColliders: 1
 --- !u!1 &3643985964646436352
 GameObject:
   m_ObjectHideFlags: 0
@@ -32,6 +100,7 @@ Transform:
   - {fileID: 9119731129767736050}
   - {fileID: 1250508432146268382}
   - {fileID: 2178452091570421592}
+  - {fileID: 8192068776167525526}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5017177428904901850
@@ -179,6 +248,7 @@ GameObject:
   - component: {fileID: 2178452091570421592}
   - component: {fileID: 7721505749185363495}
   - component: {fileID: 2072748047075746388}
+  - component: {fileID: 3487732934474088758}
   m_Layer: 0
   m_Name: IndoorsTrigger
   m_TagString: Untagged
@@ -220,8 +290,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 9.439819, y: 3.0541077, z: 6.03791}
-  m_Center: {x: 0.02108534, y: 1.452939, z: -1.9465886}
+  m_Size: {x: 10.071057, y: 3.36337, z: 6.4675336}
+  m_Center: {x: 0.0026023388, y: 1.6672051, z: -1.9107536}
 --- !u!114 &2072748047075746388
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -236,6 +306,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::IndoorsTrigger
   isIndoors: 1
   fmodParameterName: IsIndoors
+--- !u!114 &3487732934474088758
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8320834115225083910}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 102b606077924e3996993558a37651dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SnowOcclusionVolume
+  killSnowParticlesInside: 1
+  includeChildColliders: 1
 --- !u!1001 &252841026287293935
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -256,7 +256,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorInteractable
   doorTransform: {fileID: 7095943644592709866}
-  objectName: "\uBB38"
   openAngle: 90
   rotationSpeed: 180
   panelLocalDirection: {x: 1, y: 0, z: 0}
@@ -276,8 +275,6 @@ MonoBehaviour:
       Data3: 988873377
       Data4: -1806667531
     Path: event:/SFX/Player/Door_Close
-  openPrompt: "[E] \uC5F4\uAE30"
-  closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
 --- !u!114 &529013449009950900
 MonoBehaviour:
@@ -375,6 +372,74 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeFieldFootprintAuthoring
   footprintCollider: {fileID: 2150364105917151629}
+--- !u!1 &1931544087715632961
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1708868708663183554}
+  - component: {fileID: 3448443522378282551}
+  - component: {fileID: 1578778811711924763}
+  m_Layer: 0
+  m_Name: SnowOcclusionVolume
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1708868708663183554
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1931544087715632961}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1292146627097410594}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &3448443522378282551
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1931544087715632961}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.0356677, y: 9.674288, z: 13.90924}
+  m_Center: {x: 10.7492695, y: 4.538906, z: -3.316911}
+--- !u!114 &1578778811711924763
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1931544087715632961}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 102b606077924e3996993558a37651dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SnowOcclusionVolume
+  killSnowParticlesInside: 1
+  includeChildColliders: 1
 --- !u!1 &2731348735675390403
 GameObject:
   m_ObjectHideFlags: 0
@@ -695,7 +760,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorInteractable
   doorTransform: {fileID: 5918942302507219184}
-  objectName: "\uBB38"
   openAngle: 90
   rotationSpeed: 180
   panelLocalDirection: {x: 1, y: 0, z: 0}
@@ -715,8 +779,6 @@ MonoBehaviour:
       Data3: 988873377
       Data4: -1806667531
     Path: event:/SFX/Player/Door_Close
-  openPrompt: "[E] \uC5F4\uAE30"
-  closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
 --- !u!114 &6393870549989284636
 MonoBehaviour:
@@ -876,7 +938,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorInteractable
   doorTransform: {fileID: 3177842788129432207}
-  objectName: "\uBB38"
   openAngle: 90
   rotationSpeed: 180
   panelLocalDirection: {x: 1, y: 0, z: 0}
@@ -896,8 +957,6 @@ MonoBehaviour:
       Data3: 988873377
       Data4: -1806667531
     Path: event:/SFX/Player/Door_Close
-  openPrompt: "[E] \uC5F4\uAE30"
-  closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
 --- !u!114 &4880320480006459164
 MonoBehaviour:
@@ -939,6 +998,7 @@ GameObject:
   - component: {fileID: 4559502561328422360}
   - component: {fileID: 3307681968447434998}
   - component: {fileID: 7449410256998127431}
+  - component: {fileID: 2600331213394947212}
   m_Layer: 0
   m_Name: IndoorsTrigger
   m_TagString: Untagged
@@ -980,8 +1040,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 19.390564, y: 5.423663, z: 12.942947}
-  m_Center: {x: -1.3712616, y: 2.2118316, z: -3.3338928}
+  m_Size: {x: 20.722069, y: 6.6227427, z: 13.909235}
+  m_Center: {x: -1.348846, y: 3.013134, z: -3.316911}
 --- !u!114 &7449410256998127431
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -996,6 +1056,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::IndoorsTrigger
   isIndoors: 1
   fmodParameterName: IsIndoors
+--- !u!114 &2600331213394947212
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4897619199945089083}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 102b606077924e3996993558a37651dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SnowOcclusionVolume
+  killSnowParticlesInside: 1
+  includeChildColliders: 1
 --- !u!1 &5522463589909084203
 GameObject:
   m_ObjectHideFlags: 0
@@ -1157,6 +1231,7 @@ Transform:
   - {fileID: 3618594728595293618}
   - {fileID: 7453020391228603849}
   - {fileID: 4559502561328422360}
+  - {fileID: 1708868708663183554}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &530275402744262763

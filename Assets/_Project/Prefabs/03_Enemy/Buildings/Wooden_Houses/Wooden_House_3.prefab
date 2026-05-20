@@ -129,7 +129,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorInteractable
   doorTransform: {fileID: 3058312402287600255}
-  objectName: "\uBB38"
   openAngle: 90
   rotationSpeed: 180
   panelLocalDirection: {x: 1, y: 0, z: 0}
@@ -149,8 +148,6 @@ MonoBehaviour:
       Data3: 988873377
       Data4: -1806667531
     Path: event:/SFX/Player/Door_Close
-  openPrompt: "[E] \uC5F4\uAE30"
-  closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
 --- !u!114 &2583318776562892160
 MonoBehaviour:
@@ -181,6 +178,54 @@ NavMeshObstacle:
   m_CarveOnlyStationary: 1
   m_Center: {x: 0.115, y: -0.94100004, z: 0}
   m_TimeToStationary: 0.5
+--- !u!1 &456056946979689309
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 742496298567090204}
+  - component: {fileID: 4836014214851683529}
+  m_Layer: 0
+  m_Name: SnowOcclusionVolume
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &742496298567090204
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 456056946979689309}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 629031173090248766}
+  - {fileID: 422239914005363384}
+  m_Father: {fileID: 8772136044087019561}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4836014214851683529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 456056946979689309}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 102b606077924e3996993558a37651dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SnowOcclusionVolume
+  killSnowParticlesInside: 1
+  includeChildColliders: 1
 --- !u!1 &1514772096358167108
 GameObject:
   m_ObjectHideFlags: 0
@@ -276,8 +321,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 19.987019, y: 5.324727, z: 17.239197}
-  m_Center: {x: 0.05015563, y: 2.1623635, z: -2.0850239}
+  m_Size: {x: 20.869251, y: 6.4949946, z: 17.349049}
+  m_Center: {x: 0.077163376, y: 2.9995515, z: -2.13995}
 --- !u!65 &4295524255726240063
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -297,8 +342,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 9.457314, y: 5.324727, z: 11.894291}
-  m_Center: {x: -5.214678, y: 2.1623635, z: 7.045552}
+  m_Size: {x: 9.868126, y: 6.4949956, z: 12.514764}
+  m_Center: {x: -5.420084, y: 2.999552, z: 7.355786}
 --- !u!1 &1864900731552669758
 GameObject:
   m_ObjectHideFlags: 0
@@ -428,7 +473,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorInteractable
   doorTransform: {fileID: 6912414001445169109}
-  objectName: "\uBB38"
   openAngle: 90
   rotationSpeed: 180
   panelLocalDirection: {x: 1, y: 0, z: 0}
@@ -448,8 +492,6 @@ MonoBehaviour:
       Data3: 988873377
       Data4: -1806667531
     Path: event:/SFX/Player/Door_Close
-  openPrompt: "[E] \uC5F4\uAE30"
-  closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
 --- !u!114 &6865279506805710566
 MonoBehaviour:
@@ -512,6 +554,7 @@ Transform:
   - {fileID: 890131954284917305}
   - {fileID: 6475721434573214784}
   - {fileID: 1656813894895375685}
+  - {fileID: 742496298567090204}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2370593065732055773
@@ -932,7 +975,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorInteractable
   doorTransform: {fileID: 4019074943489774214}
-  objectName: "\uBB38"
   openAngle: 90
   rotationSpeed: 180
   panelLocalDirection: {x: 1, y: 0, z: 0}
@@ -952,8 +994,6 @@ MonoBehaviour:
       Data3: 988873377
       Data4: -1806667531
     Path: event:/SFX/Player/Door_Close
-  openPrompt: "[E] \uC5F4\uAE30"
-  closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
 --- !u!114 &5592610814400256457
 MonoBehaviour:
@@ -984,6 +1024,59 @@ NavMeshObstacle:
   m_CarveOnlyStationary: 1
   m_Center: {x: 0.115, y: -0.94100004, z: 0}
   m_TimeToStationary: 0.5
+--- !u!1 &3016117445694124192
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 422239914005363384}
+  - component: {fileID: 457360761949904555}
+  m_Layer: 0
+  m_Name: BlockTrigger (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &422239914005363384
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3016117445694124192}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 742496298567090204}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &457360761949904555
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3016117445694124192}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 9.868126, y: 6.4949956, z: 12.514764}
+  m_Center: {x: -5.420084, y: 2.999552, z: 7.355786}
 --- !u!1 &3380284273374786984
 GameObject:
   m_ObjectHideFlags: 0
@@ -1240,7 +1333,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorInteractable
   doorTransform: {fileID: 5483678296290338541}
-  objectName: "\uBB38"
   openAngle: 90
   rotationSpeed: 180
   panelLocalDirection: {x: 1, y: 0, z: 0}
@@ -1260,8 +1352,6 @@ MonoBehaviour:
       Data3: 988873377
       Data4: -1806667531
     Path: event:/SFX/Player/Door_Close
-  openPrompt: "[E] \uC5F4\uAE30"
-  closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
 --- !u!114 &8265341976719625175
 MonoBehaviour:
@@ -1675,6 +1765,59 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
   surfaceType: 1
+--- !u!1 &8868199992034847229
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 629031173090248766}
+  - component: {fileID: 1751607971115264992}
+  m_Layer: 0
+  m_Name: BlockTrigger
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &629031173090248766
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8868199992034847229}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 742496298567090204}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &1751607971115264992
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8868199992034847229}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 20.869251, y: 6.4949946, z: 17.349049}
+  m_Center: {x: 0.077163376, y: 2.9995515, z: -2.13995}
 --- !u!1 &8958440542437104770
 GameObject:
   m_ObjectHideFlags: 0

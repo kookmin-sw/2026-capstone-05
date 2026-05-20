@@ -1,5 +1,58 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &15832396089468686
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4446369270606945865}
+  - component: {fileID: 8304484379636125365}
+  m_Layer: 0
+  m_Name: BlockTrigger (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4446369270606945865
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 15832396089468686}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3029864398065824409}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &8304484379636125365
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 15832396089468686}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 9.940246, y: 6.5432053, z: 11.178641}
+  m_Center: {x: -6.955811, y: 3.01358, z: 5.8979774}
 --- !u!1 &244686393450799604
 GameObject:
   m_ObjectHideFlags: 0
@@ -357,6 +410,59 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
   surfaceType: 1
+--- !u!1 &2918640131430993115
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3945188120540627489}
+  - component: {fileID: 2420821558485190139}
+  m_Layer: 0
+  m_Name: BlockTrigger
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3945188120540627489
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2918640131430993115}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3029864398065824409}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &2420821558485190139
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2918640131430993115}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 20.562288, y: 6.543205, z: 17.238007}
+  m_Center: {x: -1.5459139, y: 3.01358, z: -4.277907}
 --- !u!1 &2920726349570488015
 GameObject:
   m_ObjectHideFlags: 0
@@ -486,7 +592,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorInteractable
   doorTransform: {fileID: 976168661889192020}
-  objectName: "\uBB38"
   openAngle: 90
   rotationSpeed: 180
   panelLocalDirection: {x: 1, y: 0, z: 0}
@@ -506,8 +611,6 @@ MonoBehaviour:
       Data3: 988873377
       Data4: -1806667531
     Path: event:/SFX/Player/Door_Close
-  openPrompt: "[E] \uC5F4\uAE30"
-  closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
 --- !u!114 &5603847283992190203
 MonoBehaviour:
@@ -1302,7 +1405,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorInteractable
   doorTransform: {fileID: 7460721831962249804}
-  objectName: "\uBB38"
   openAngle: 90
   rotationSpeed: 180
   panelLocalDirection: {x: 1, y: 0, z: 0}
@@ -1322,8 +1424,6 @@ MonoBehaviour:
       Data3: 988873377
       Data4: -1806667531
     Path: event:/SFX/Player/Door_Close
-  openPrompt: "[E] \uC5F4\uAE30"
-  closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
 --- !u!114 &2037467456278314419
 MonoBehaviour:
@@ -1769,6 +1869,7 @@ Transform:
   - {fileID: 8172227366493358070}
   - {fileID: 168462102776819718}
   - {fileID: 6914661052137904743}
+  - {fileID: 3029864398065824409}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6673678166858695266
@@ -1900,7 +2001,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorInteractable
   doorTransform: {fileID: 5765857395415362233}
-  objectName: "\uBB38"
   openAngle: 90
   rotationSpeed: 180
   panelLocalDirection: {x: 1, y: 0, z: 0}
@@ -1920,8 +2020,6 @@ MonoBehaviour:
       Data3: 988873377
       Data4: -1806667531
     Path: event:/SFX/Player/Door_Close
-  openPrompt: "[E] \uC5F4\uAE30"
-  closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
 --- !u!114 &6518862747855774319
 MonoBehaviour:
@@ -2208,7 +2306,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorInteractable
   doorTransform: {fileID: 1103266480710412395}
-  objectName: "\uBB38"
   openAngle: 90
   rotationSpeed: 180
   panelLocalDirection: {x: 1, y: 0, z: 0}
@@ -2228,8 +2325,6 @@ MonoBehaviour:
       Data3: 988873377
       Data4: -1806667531
     Path: event:/SFX/Player/Door_Close
-  openPrompt: "[E] \uC5F4\uAE30"
-  closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
 --- !u!114 &6530881065156120396
 MonoBehaviour:
@@ -2327,6 +2422,55 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeFieldFootprintAuthoring
   footprintCollider: {fileID: 1540305241477548985}
+--- !u!1 &7811023148954970708
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3029864398065824409}
+  - component: {fileID: 7825488177851384975}
+  m_Layer: 0
+  m_Name: SnowOcclusionVolume
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3029864398065824409
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7811023148954970708}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 3945188120540627489}
+  - {fileID: 4446369270606945865}
+  - {fileID: 6475309135611202305}
+  m_Father: {fileID: 8840414845538663431}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7825488177851384975
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7811023148954970708}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 102b606077924e3996993558a37651dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SnowOcclusionVolume
+  killSnowParticlesInside: 1
+  includeChildColliders: 1
 --- !u!1 &8170695547152808105
 GameObject:
   m_ObjectHideFlags: 0
@@ -2408,8 +2552,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 20.562286, y: 7.072443, z: 16.935532}
-  m_Center: {x: -1.5459137, y: 3.0362215, z: -4.126671}
+  m_Size: {x: 20.562288, y: 6.543205, z: 17.238007}
+  m_Center: {x: -1.5459139, y: 3.01358, z: -4.277907}
 --- !u!65 &1567823437389943486
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2429,8 +2573,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 9.940247, y: 6.691183, z: 10.889603}
-  m_Center: {x: -6.9558105, y: 2.8455915, z: 5.753456}
+  m_Size: {x: 9.940246, y: 6.5432053, z: 11.178641}
+  m_Center: {x: -6.955811, y: 3.01358, z: 5.8979774}
 --- !u!114 &8688407392785655629
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2445,6 +2589,59 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::IndoorsTrigger
   isIndoors: 1
   fmodParameterName: IsIndoors
+--- !u!1 &8342715980560076900
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6475309135611202305}
+  - component: {fileID: 3405830429910045703}
+  m_Layer: 0
+  m_Name: BlockTrigger (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6475309135611202305
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8342715980560076900}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3029864398065824409}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &3405830429910045703
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8342715980560076900}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 12.682513, y: 12.310452, z: 26.485554}
+  m_Center: {x: 4.733568, y: 5.897203, z: 0.15084901}
 --- !u!1001 &303735649210787454
 PrefabInstance:
   m_ObjectHideFlags: 0
