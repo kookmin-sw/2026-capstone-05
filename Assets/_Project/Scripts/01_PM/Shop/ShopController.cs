@@ -50,7 +50,7 @@ namespace Systems.Shop
             
             if (shopView != null)
             {
-                if (PlayerNetworkSetup.IsOfflineTestMode)
+                if (AuthSession.IsOffline)
                 {
                     if (global::Systems.GridInventory.GridInventory.Instance != null && global::Systems.GridInventory.GridInventory.Instance.Controller != null)
                     {
@@ -73,7 +73,7 @@ namespace Systems.Shop
             // 초기화 시 빈 아이템 리스트로 모델 생성 (실제 아이템은 OpenShop 할 때 주입)
             int initialGold = 0;
             
-            if (PlayerNetworkSetup.IsOfflineTestMode)
+            if (AuthSession.IsOffline)
             {
                 if (global::Systems.GridInventory.GridInventory.Instance != null && global::Systems.GridInventory.GridInventory.Instance.Controller != null)
                 {
@@ -151,7 +151,7 @@ namespace Systems.Shop
                 if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.eKey.wasPressedThisFrame)
                 {
                     if (PauseMenuManager.isPaused) return; // 일시정지 중 무시
-                    CloseShop();
+                    PauseMenuManager.CloseOpenInGameUI();
                     return;
                 }
             }
@@ -252,7 +252,7 @@ namespace Systems.Shop
                             pendingPlacementCoords = targetCoords;
                             pendingStackTargetItem = stackTargetItem;
                             
-                            if (PlayerNetworkSetup.IsOfflineTestMode)
+                            if (AuthSession.IsOffline)
                             {
                                 // Offline fallback
                                 if (invModel.TrySpendGold(totalCost))
@@ -381,7 +381,7 @@ namespace Systems.Shop
         private void HandleBuyItemClicked(ShopItemEntry itemToBuy, int quantity)
         {
             int currentGold = 0;
-            if (PlayerNetworkSetup.IsOfflineTestMode)
+            if (AuthSession.IsOffline)
             {
                 if (global::Systems.GridInventory.GridInventory.Instance != null && global::Systems.GridInventory.GridInventory.Instance.Controller != null)
                 {
@@ -635,7 +635,7 @@ namespace Systems.Shop
                 bool success = global::Systems.GridInventory.GridInventory.Instance.ConsumeItem(itemToSell.ItemData, quantity);
                 if (success)
                 {
-                    if (PlayerNetworkSetup.IsOfflineTestMode)
+                    if (AuthSession.IsOffline)
                     {
                         // Offline fallback
                         var invModel = global::Systems.GridInventory.GridInventory.Instance.Controller.Model;
@@ -666,7 +666,7 @@ namespace Systems.Shop
         // 아이템 배치 성공 시 호출하는 시뮬레이션 메서드
         private void SimulatePlacement(ShopItemEntry itemToBuy)
         {
-            if (PlayerNetworkSetup.IsOfflineTestMode)
+            if (AuthSession.IsOffline)
             {
                 if (global::Systems.GridInventory.GridInventory.Instance != null && global::Systems.GridInventory.GridInventory.Instance.Controller != null)
                 {

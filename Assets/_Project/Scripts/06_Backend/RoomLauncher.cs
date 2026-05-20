@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using DG.Tweening;
 
 [DefaultExecutionOrder(-10000)]
 public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
@@ -77,6 +78,8 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     private Canvas _roomCodeCanvas;
     private TextMeshProUGUI _roomCodeText;
 
+    public static bool IsDirectScenePlay { get; private set; }
+
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -95,10 +98,7 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     {
         Scene activeScene = SceneManager.GetActiveScene();
         Debug.Log($"{LogPrefix} Start 진입. 현재 씬에서 즉시 메뉴 바인딩 시도. scene={activeScene.name}");
-        if (TryBindMenuUi(activeScene.name))
-        {
-            UnlockCursorForMenu();
-        }
+        HandleSceneReady(activeScene, "Start");
     }
 
     private void OnDestroy()
@@ -141,12 +141,33 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        HandleSceneReady(scene, $"sceneLoaded({mode})");
+    }
+
+    private void HandleSceneReady(Scene scene, string reason)
+    {
         EnsureRoomCodeOverlay(scene);
 
         if (TryBindMenuUi(scene.name))
         {
             UnlockCursorForMenu();
         }
+
+        TryStartDirectScenePlay(scene, reason);
+    }
+
+    private void TryStartDirectScenePlay(Scene scene, string reason)
+    {
+        if (!IsGameScene(scene.name))
+            return;
+
+        if (_isConnecting || (_runner != null && _runner.IsRunning))
+            return;
+
+        // 메인 메뉴를 거치지 않고 게임 씬을 직접 실행한 경우 자동 Single 모드 시작
+        IsDirectScenePlay = true;
+        Debug.LogWarning($"{LogPrefix} 게임 씬 직접 실행 감지. GameMode.Single로 자동 접속합니다. reason={reason}, scene={scene.name}");
+        _ = StartGameAsync("DirectPlay", "DirectSession", GameMode.Single);
     }
 
     private static void UnlockCursorForMenu()
@@ -158,7 +179,7 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
     private bool TryBindMenuUi(string sceneName)
     {
         _loginButton = FindButtonByCandidates("Login Button", "Login", "로그인");
-        _startButton = FindButtonByCandidates("Start Button", "Start", "시작");
+        _startButton = FindButtonByCandidates("Start Button");
         _hostButton = FindButtonByCandidates("Host Button", "Host", "호스트", "방 만들기", "생성");
         _joinButton = FindButtonByCandidates("Join Button", "Join", "참가");
         _enterButton = FindButtonByCandidates("Entry Button", "Entry", "Enter", "입장하기", "입장");
@@ -183,8 +204,7 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
         if (_startButton != null)
         {
-            _startButton.onClick.RemoveListener(OnStartButtonClicked);
-            _startButton.onClick.AddListener(OnStartButtonClicked);
+            BindAllStartButtons();
         }
         else
         {
@@ -445,6 +465,26 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         return null;
     }
 
+    private static IReadOnlyList<Button> FindButtonsByCandidates(params string[] candidates)
+    {
+        List<Button> results = new();
+        Button[] allButtons = FindObjectsOfType<Button>(true);
+        foreach (Button button in allButtons)
+        {
+            if (ContainsAny(button.name, candidates))
+            {
+                results.Add(button);
+                continue;
+            }
+
+            TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+            if (label != null && ContainsAny(label.text, candidates))
+                results.Add(button);
+        }
+
+        return results;
+    }
+
     private static bool ContainsAny(string source, IEnumerable<string> candidates)
     {
         if (string.IsNullOrWhiteSpace(source))
@@ -538,11 +578,136 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     private void OnStartButtonClicked()
     {
+        if (HandleStartButtonClicked())
+            return;
+
         if (!EnsureLoggedInForMenuAction("시작하기"))
             return;
 
         RefreshAllSaveSlotMenus();
         Debug.Log($"{LogPrefix} Main_menu 버튼 흐름: 시작하기 버튼 클릭. 슬롯 UI 최신화 완료.");
+
+        if (AuthSession.IsOfflineMode && _hostButton != null)
+        {
+            Debug.Log($"{LogPrefix} 오프라인 모드: 호스트/참가 선택 창을 건너뛰고 호스트 모드로 자동 진입합니다.");
+            _hostButton.onClick.Invoke();
+
+            ClosePanelContainingButtonImmediate(_hostButton);
+        }
+    }
+
+    private void BindAllStartButtons()
+    {
+        HashSet<Button> buttons = new();
+        if (_startButton != null)
+            buttons.Add(_startButton);
+
+        foreach (Button button in FindButtonsByCandidates("Start Button"))
+            buttons.Add(button);
+
+        foreach (Button button in buttons)
+        {
+            if (button == null)
+                continue;
+
+            button.onClick = new Button.ButtonClickedEvent();
+            button.onClick.AddListener(OnStartButtonClicked);
+        }
+    }
+
+    private bool HandleStartButtonClicked()
+    {
+        if (!EnsureLoggedInForMenuAction("Start"))
+            return true;
+
+        RefreshAllSaveSlotMenus();
+        Debug.Log($"{LogPrefix} Main_menu button flow: Start clicked. Save slot UI refreshed.");
+
+        if (AuthSession.IsOffline)
+        {
+            Debug.Log($"{LogPrefix} Offline mode: skipping entry type menu and opening save slot selection.");
+            SetPanelActiveByNameImmediate("Entry Type Menu", false);
+            ClosePanelContainingButtonImmediate(_hostButton);
+            SetPanelActiveByNameImmediate("Main Menu", false);
+            SetPanelActiveByNameImmediate("Start Game Menu", true);
+            BindHostFlowUi();
+            RefreshAllSaveSlotMenus();
+            _pendingHostSlot = -1;
+            return true;
+        }
+
+        SetPanelActiveByNameImmediate("Main Menu", false);
+        SetPanelActiveByNameImmediate("Entry Type Menu", true);
+        return true;
+    }
+
+    private static bool OpenPanelByName(string panelName)
+    {
+        UIPanelController panel = FindPanelByName(panelName);
+        if (panel == null)
+            return false;
+
+        panel.OpenPanel();
+        return true;
+    }
+
+    private static bool ClosePanelByName(string panelName)
+    {
+        UIPanelController panel = FindPanelByName(panelName);
+        if (panel == null)
+            return false;
+
+        panel.ClosePanel();
+        return true;
+    }
+
+    private static bool ClosePanelByNameImmediate(string panelName)
+    {
+        UIPanelController panel = FindPanelByName(panelName);
+        if (panel == null)
+            return false;
+
+        panel.ClosePanelImmediate();
+        return true;
+    }
+
+    private static bool SetPanelActiveByNameImmediate(string panelName, bool isActive)
+    {
+        UIPanelController panel = FindPanelByName(panelName);
+        if (panel == null)
+            return false;
+
+        panel.SetPanelActiveImmediate(isActive);
+        return true;
+    }
+
+    private static UIPanelController FindPanelByName(string panelName)
+    {
+        UIPanelController[] panels = FindObjectsOfType<UIPanelController>(true);
+        foreach (UIPanelController panel in panels)
+        {
+            if (panel != null && string.Equals(panel.gameObject.name, panelName, StringComparison.OrdinalIgnoreCase))
+                return panel;
+        }
+
+        return null;
+    }
+
+    private static void ClosePanelContainingButtonImmediate(Button button)
+    {
+        if (button == null)
+            return;
+
+        UIPanelController panel = button.GetComponentInParent<UIPanelController>(true);
+        if (panel != null)
+        {
+            panel.ClosePanelImmediate();
+            return;
+        }
+
+        RectTransform rectTransform = button.GetComponentInParent<RectTransform>();
+        if (rectTransform != null)
+            rectTransform.DOKill();
     }
 
     private void OnHostButtonClicked()
@@ -618,6 +783,12 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     private void OnJoinButtonClicked()
     {
+        if (AuthSession.IsOffline)
+        {
+            Debug.Log($"{LogPrefix} Offline mode: ignoring join button input.");
+            return;
+        }
+
         if (!EnsureLoggedInForMenuAction("참가"))
             return;
 
@@ -650,6 +821,12 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     private void OnEnterButtonClicked()
     {
+        if (AuthSession.IsOffline)
+        {
+            Debug.Log($"{LogPrefix} Offline mode: ignoring room enter input.");
+            return;
+        }
+
         if (!EnsureLoggedInForMenuAction("입장하기"))
             return;
 
@@ -750,6 +927,12 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         {
             Debug.LogWarning($"{LogPrefix} 이미 접속 시도 중입니다. code={roomCode}, mode={mode}");
             return;
+        }
+
+        if (AuthSession.IsOffline)
+        {
+            mode = GameMode.Single;
+            Debug.Log($"{LogPrefix} 오프라인 모드 감지: GameMode를 Single로 강제 전환합니다.");
         }
 
         _isConnecting = true;
