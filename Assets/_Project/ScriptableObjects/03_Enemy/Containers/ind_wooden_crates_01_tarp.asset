@@ -22,8 +22,6 @@ MonoBehaviour:
     m_FallbackState: 0
     m_WaitForCompletion: 0
     m_LocalVariables: []
-  lootWidth: 9
-  lootHeight: 18
   minItemRolls: 2
   maxItemRolls: 4
   placementAttemptsPerRoll: 8
@@ -32,16 +30,16 @@ MonoBehaviour:
     frequency: 10
     minQuantity: 1
     maxQuantity: 1
-  - itemData: {fileID: 11400000, guid: 12540fc858566414394b4256b1b5a5d5, type: 2}
+  - itemData: {fileID: 11400000, guid: 4ef2454dda3bc164cbcb82a323029e82, type: 2}
+    frequency: 10
+    minQuantity: 1
+    maxQuantity: 1
+  - itemData: {fileID: 11400000, guid: 1a02a01293dafa24b86d5ceb94e63492, type: 2}
     frequency: 8
     minQuantity: 1
     maxQuantity: 1
-  - itemData: {fileID: 11400000, guid: 4ef2454dda3bc164cbcb82a323029e82, type: 2}
-    frequency: 5
-    minQuantity: 1
-    maxQuantity: 1
-  - itemData: {fileID: 11400000, guid: 0f32383fddacd4945b4d24066c52ee9e, type: 2}
-    frequency: 3
+  - itemData: {fileID: 11400000, guid: 12540fc858566414394b4256b1b5a5d5, type: 2}
+    frequency: 6
     minQuantity: 1
     maxQuantity: 1
   references:
