@@ -90,6 +90,17 @@ public static class LocalPlayerReferenceResolver
         return noiseEmitter != null;
     }
 
+    public static bool TryGetLocalNoiseListener(out PlayerNoiseListener noiseListener)
+    {
+        noiseListener = null;
+
+        if (!TryGetLocalPlayer(out PlayerController player) || player == null)
+            return false;
+
+        noiseListener = player.NoiseListener != null ? player.NoiseListener : player.GetComponent<PlayerNoiseListener>();
+        return noiseListener != null;
+    }
+
     private static bool IsCachedPlayerValid()
     {
         if (cachedPlayer == null)

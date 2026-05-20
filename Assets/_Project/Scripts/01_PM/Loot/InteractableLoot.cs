@@ -122,7 +122,7 @@ namespace Systems.Loot
                     lootConfiguration.PopulateModel(model, resolvedStorageId);
 
                     LootNetworkSync.Instance.SubmitLootSnapshot(resolvedStorageId,
-                        LootGridSerializer.ToSaveData(resolvedStorageId, model));
+                    LootGridSerializer.ToSaveData(resolvedStorageId, model));
                 }
             }
         }
@@ -210,6 +210,7 @@ namespace Systems.Loot
                 ? player.transform.position
                 : soundOrigin != null ? soundOrigin.position : transform.position;
             RuntimeManager.PlayOneShot(interactionSoundEvent, position);
+            NoiseManager.Instance.GenerateNoise(position, NoiseData.NoiseType.Box);
         }
 
         public void SaveRemainingItems()

@@ -27,7 +27,6 @@ namespace Systems.Loot
         private Label headerLabel;
 
         private Label capacityLabel;
-
         private Label invCapacityLabel;
 
         
@@ -98,12 +97,6 @@ namespace Systems.Loot
 
             headerLabel = root.Q<Label>("loot-header");
 
-            capacityLabel = root.Q<Label>("loot-capacity");
-
-            invCapacityLabel = root.Q<Label>("inventory-capacity");
-
-            
-
             lootScrollView = root.Q<ScrollView>("loot-scroll-view");
 
             lootSlotsContainer = root.Q<VisualElement>("lootSlotsContainer");
@@ -169,13 +162,7 @@ namespace Systems.Loot
 
 
         public void UpdateCapacities(int lootUsed, int lootMax, int invUsed, int invMax)
-
         {
-
-            if (capacityLabel != null) capacityLabel.text = $"{lootUsed} / {lootMax}";
-
-            if (invCapacityLabel != null) invCapacityLabel.text = $"{invUsed} / {invMax}";
-
         }
 
 

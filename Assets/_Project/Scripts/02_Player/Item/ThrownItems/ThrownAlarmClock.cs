@@ -1,6 +1,7 @@
 using DG.Tweening;
 using FMOD.Studio;
 using FMODUnity;
+using System.Collections;
 using UnityEngine;
 
 public class ThrownAlarmClock : ThrownItem
@@ -59,6 +60,8 @@ public class ThrownAlarmClock : ThrownItem
     {
         isAlarmActive = true;
 
+        StartCoroutine(GenerateAlarmNoise());
+
         alarmSoundInstance = RuntimeManager.CreateInstance(alarmSoundEvent);
         RuntimeManager.AttachInstanceToGameObject(alarmSoundInstance, gameObject);
         alarmSoundInstance.start();
@@ -70,6 +73,15 @@ public class ThrownAlarmClock : ThrownItem
 
             visualModel.DOShakeRotation(duration: 0.1f, strength: new Vector3(0, 0, 15f), vibrato: 20)
                        .SetLoops(-1, LoopType.Restart);
+        }
+    }
+
+    private IEnumerator GenerateAlarmNoise()
+    {
+        while (isAlarmActive)
+        {
+            NoiseManager.Instance.GenerateNoise(transform.position, NoiseData.NoiseType.Alarm);
+            yield return new WaitForSeconds(1f);
         }
     }
 }

@@ -82,6 +82,16 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
         satiety.Initialize();
         coldness.Initialize();
         statsInitialized = true;
+
+        Collider[] overlappingColliders = Physics.OverlapSphere(transform.position, 0.1f);
+        foreach (var collider in overlappingColliders)
+        {
+            if (collider.CompareTag("IndoorsTrigger"))
+            {
+                SetIndoors(true);
+                break;
+            }
+        }
     }
 
     private void Update()

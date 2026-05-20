@@ -33,6 +33,7 @@ public class FlashlightBehaviour : EquippedItemBehaviour
         if (flashlightLight != null)
         {
             flashlightLight.enabled = !flashlightLight.enabled;
+            NoiseManager.Instance.GenerateNoise(player.transform.position, NoiseData.NoiseType.ButtonPress);
         }
         return true;
     }

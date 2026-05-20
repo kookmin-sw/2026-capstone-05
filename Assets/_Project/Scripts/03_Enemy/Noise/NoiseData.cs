@@ -13,7 +13,10 @@ public class NoiseData : ScriptableObject
         // Interaction
         ItemPickup, ItemDrop, Door, Container, Box,
         // Status
-        Eat, Drink, Hunger, Cough, Pain
+        Eat, Drink, Hunger, Cough, Pain,
+        UnarmedSwing, UnarmedHit,
+        Throw, Explosion, Alarm, ThrowImpact,
+        Consume, ButtonPress
     }
 
     [System.Serializable]

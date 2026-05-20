@@ -22,8 +22,8 @@ namespace Systems.Loot
         [Header("Container Definition")]
         [SerializeField] private string storageIdPrefix = "Loot";
         [SerializeField] private LocalizedString lootTitle;
-        [SerializeField, Min(1)] private int lootWidth = 9;
-        [SerializeField, Min(1)] private int lootHeight = 18;
+        private int lootWidth = 5;
+        private int lootHeight = 8;
 
         [Header("Generated Items")]
         [SerializeField, Min(0)] private int minItemRolls = 1;
@@ -33,8 +33,8 @@ namespace Systems.Loot
 
         public string StorageIdPrefix => string.IsNullOrWhiteSpace(storageIdPrefix) ? "Loot" : storageIdPrefix.Trim();
         public string LootTitle => lootTitle.GetLocalizedString();
-        public int Width => Mathf.Max(1, lootWidth);
-        public int Height => Mathf.Max(1, lootHeight);
+        public int Width => 5;
+        public int Height => 8;
 
         public List<ItemInstance> RollItems(string storageId)
         {

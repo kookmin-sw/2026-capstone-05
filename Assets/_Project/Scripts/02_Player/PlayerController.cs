@@ -21,6 +21,7 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
     public PlayerAnimator Animator { get; private set; }
     public PlayerCondition Condition { get; private set; }
     public PlayerNoiseEmitter NoiseEmitter { get; private set; }
+    public PlayerNoiseListener NoiseListener { get; private set; }
     public PlayerEquipment Equipment { get; private set; }
     public PlayerViewmodelController ViewmodelController { get; private set; }
     public DeathCameraDirector DeathCameraDirector { get; private set; }
@@ -89,6 +90,7 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
         Animator = GetComponent<PlayerAnimator>();
         Condition = GetComponent<PlayerCondition>();
         NoiseEmitter = GetComponent<PlayerNoiseEmitter>();
+        NoiseListener = GetComponent<PlayerNoiseListener>();
         Equipment = GetComponent<PlayerEquipment>();
         ViewmodelController = GetComponentInChildren<PlayerViewmodelController>();
         DeathCameraDirector = GetComponentInChildren<DeathCameraDirector>();

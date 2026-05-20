@@ -160,6 +160,7 @@ public class DoorInteractable : MonoBehaviour, IInteractable
         if (stateChanged)
         {
             PlayDoorSound(shouldOpen);
+            NoiseManager.Instance.GenerateNoise(doorTransform.position, NoiseData.NoiseType.Door);
         }
 
         RefreshInteractionPrompt();
