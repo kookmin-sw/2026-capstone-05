@@ -20,6 +20,7 @@ namespace Systems.Shop
         public event Action<int, int> OnGridCellClicked; // x, y
         
         private VisualElement root;
+        private Label shopTitle;
         private Label goldLabel;
         private VisualElement catalogContainer;
         private ScrollView catalogScroll;
@@ -30,6 +31,7 @@ namespace Systems.Shop
         private VisualElement popupOverlay;
         private Label popupItemName;
         private Label popupItemPrice;
+        private Label popupItemMaxQuantity;
         private Label popupItemDesc;
         private Button btnPopupConfirm;
         private Button btnPopupCancel;
@@ -52,6 +54,7 @@ namespace Systems.Shop
         private Label labelQuantity;
         private int currentQuantity = 1;
         private int maxQuantity = 1;
+        private int currentGold;
 
         private void Awake()
         {
@@ -90,6 +93,7 @@ namespace Systems.Shop
                 Debug.LogWarning("ShopView: mascotCanvas가 할당되지 않았습니다! Inspector를 확인해주세요.");
             }
 
+            shopTitle = root.Q<Label>("shop-title");
             goldLabel = root.Q<Label>("gold-label");
             catalogContainer = root.Q<VisualElement>("catalog-container");
             catalogScroll = root.Q<ScrollView>("catalog-scroll");
@@ -100,6 +104,7 @@ namespace Systems.Shop
             popupOverlay = root.Q<VisualElement>("item-detail-popup");
             popupItemName = root.Q<Label>("popup-item-name");
             popupItemPrice = root.Q<Label>("popup-item-price");
+            popupItemMaxQuantity = root.Q<Label>("popup-item-max-quantity");
             popupItemDesc = root.Q<Label>("popup-item-desc");
             btnPopupConfirm = root.Q<Button>("btn-popup-confirm");
             btnPopupCancel = root.Q<Button>("btn-popup-cancel");
@@ -155,15 +160,13 @@ namespace Systems.Shop
 
             btnTabBuy.clicked += () => 
             {
-                btnTabBuy.AddToClassList("active");
-                btnTabSell.RemoveFromClassList("active");
+                SetShopModeVisuals(false);
                 OnBuyTabClicked?.Invoke();
             };
 
             btnTabSell.clicked += () => 
             {
-                btnTabSell.AddToClassList("active");
-                btnTabBuy.RemoveFromClassList("active");
+                SetShopModeVisuals(true);
                 OnSellTabClicked?.Invoke();
             };
 
@@ -179,6 +182,7 @@ namespace Systems.Shop
         public void ShowShop()
         {
             root.style.display = DisplayStyle.Flex;
+            SetShopModeVisuals(false);
             
             if (backgroundDocument != null)
             {
@@ -236,8 +240,18 @@ namespace Systems.Shop
 
         public void UpdateGold(int gold)
         {
+            currentGold = gold;
+
             if (goldLabel != null)
-                goldLabel.text = $"Gold: {gold}g";
+                goldLabel.text = $"Gold: {gold}G";
+
+            if (popupOverlay != null &&
+                popupOverlay.style.display == DisplayStyle.Flex &&
+                !isCurrentlySelling &&
+                currentSelectedItem != null)
+            {
+                RefreshBuyQuantityLimit();
+            }
         }
 
         public void SetDialogue(string text)
@@ -268,7 +282,7 @@ namespace Systems.Shop
                 Label nameLabel = new Label(displayName);
                 nameLabel.AddToClassList("card-name");
                 
-                Label priceLabel = new Label($"{item.BuyPrice}g");
+                Label priceLabel = new Label($"{item.BuyPrice}G");
                 priceLabel.AddToClassList("card-price");
 
                 card.Add(icon);
@@ -291,12 +305,13 @@ namespace Systems.Shop
         {
             isCurrentlySelling = false;
             currentSelectedItem = item;
-            currentQuantity = 1;
-            maxQuantity = item.ItemData.maxStackSize;
+            maxQuantity = CalculateMaxBuyQuantity(item);
+            currentQuantity = maxQuantity > 0 ? 1 : 0;
             
             popupItemName.text = item.ItemData.ItemNameString;
             popupItemPrice.text = $"{item.BuyPrice} Gold";
             popupItemDesc.text = item.ItemData.DescriptionString;
+            UpdateMaxQuantityLabel();
             
             UpdateQuantityUI();
             
@@ -316,6 +331,10 @@ namespace Systems.Shop
             popupItemName.text = item.ItemData.ItemNameString;
             popupItemPrice.text = $"{item.BuyPrice} Gold"; // Adjust for sell price logic
             popupItemDesc.text = item.ItemData.DescriptionString;
+            if (popupItemMaxQuantity != null)
+            {
+                popupItemMaxQuantity.style.display = DisplayStyle.None;
+            }
             
             UpdateQuantityUI();
             
@@ -329,6 +348,9 @@ namespace Systems.Shop
             {
                 labelQuantity.text = currentQuantity.ToString();
             }
+
+            btnQuantityMinus?.SetEnabled(currentQuantity > 1);
+            btnQuantityPlus?.SetEnabled(currentQuantity < maxQuantity);
             
             if (currentSelectedItem != null)
             {
@@ -336,9 +358,60 @@ namespace Systems.Shop
                 string actionText = isCurrentlySelling ? "SELL" : "BUY";
                 if (btnPopupConfirm != null)
                 {
-                    btnPopupConfirm.text = $"[{actionText}]\nConfirm {totalPrice}g";
+                    btnPopupConfirm.text = $"[{actionText}]\nConfirm {totalPrice}G";
+                    btnPopupConfirm.SetEnabled(currentQuantity > 0);
                 }
             }
+        }
+
+        private void SetShopModeVisuals(bool isSellMode)
+        {
+            if (shopTitle != null)
+            {
+                shopTitle.text = isSellMode ? "SDI SHOP - SELL" : "SDI SHOP - BUY";
+            }
+
+            if (btnTabBuy != null && btnTabSell != null)
+            {
+                if (isSellMode)
+                {
+                    btnTabSell.AddToClassList("active");
+                    btnTabBuy.RemoveFromClassList("active");
+                }
+                else
+                {
+                    btnTabBuy.AddToClassList("active");
+                    btnTabSell.RemoveFromClassList("active");
+                }
+            }
+        }
+
+        private int CalculateMaxBuyQuantity(ShopItemEntry item)
+        {
+            if (item == null || item.ItemData == null)
+                return 0;
+
+            int stackLimit = Mathf.Max(1, item.ItemData.maxStackSize);
+            int affordableLimit = item.BuyPrice > 0 ? currentGold / item.BuyPrice : stackLimit;
+
+            return Mathf.Min(stackLimit, Mathf.Max(0, affordableLimit));
+        }
+
+        private void RefreshBuyQuantityLimit()
+        {
+            maxQuantity = CalculateMaxBuyQuantity(currentSelectedItem);
+            currentQuantity = maxQuantity > 0 ? Mathf.Clamp(currentQuantity, 1, maxQuantity) : 0;
+            UpdateMaxQuantityLabel();
+            UpdateQuantityUI();
+        }
+
+        private void UpdateMaxQuantityLabel()
+        {
+            if (popupItemMaxQuantity == null)
+                return;
+
+            popupItemMaxQuantity.style.display = DisplayStyle.Flex;
+            popupItemMaxQuantity.text = $"1회 최대 구매 : {maxQuantity}";
         }
         
         public void SwitchToPlacementMode()
