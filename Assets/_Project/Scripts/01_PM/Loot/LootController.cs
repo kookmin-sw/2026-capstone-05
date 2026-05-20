@@ -245,7 +245,7 @@ namespace Systems.Loot
             if (IsOpen && Time.time - openedTime > 0.1f && UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.eKey.wasPressedThisFrame)
             {
                 if (PauseMenuManager.isPaused) return; // 일시정지 중 무시
-                CloseLoot();
+                PauseMenuManager.CloseOpenInGameUI();
             }
 
             if (snapshotPending && Time.time - lastSnapshotTime >= SnapshotCooldown)
