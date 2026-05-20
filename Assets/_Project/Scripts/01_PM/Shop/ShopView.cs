@@ -15,14 +15,12 @@ namespace Systems.Shop
         // Expose events for Controller
         public event Action<ShopItemEntry, int> OnBuyItemClicked;
         public event Action<ShopItemEntry, int> OnSellItemClicked;
-        public event Action OnExitClicked;
         public event Action OnBuyTabClicked;
         public event Action OnSellTabClicked;
         public event Action<int, int> OnGridCellClicked; // x, y
         
         private VisualElement root;
         private Label goldLabel;
-        private Label dialogueText;
         private VisualElement catalogContainer;
         private ScrollView catalogScroll;
         private VisualElement placementGridContainer;
@@ -40,8 +38,6 @@ namespace Systems.Shop
         // Tabs
         private Button btnTabBuy;
         private Button btnTabSell;
-        private Button btnTabTalk;
-        private Button btnTabExit;
         
         // Placement Actions
         private VisualElement mainActionButtons;
@@ -95,7 +91,6 @@ namespace Systems.Shop
             }
 
             goldLabel = root.Q<Label>("gold-label");
-            dialogueText = root.Q<Label>("dialogue-text");
             catalogContainer = root.Q<VisualElement>("catalog-container");
             catalogScroll = root.Q<ScrollView>("catalog-scroll");
             placementGridContainer = root.Q<VisualElement>("placement-grid-container");
@@ -157,10 +152,6 @@ namespace Systems.Shop
             // Tabs
             btnTabBuy = root.Q<Button>("btn-tab-buy");
             btnTabSell = root.Q<Button>("btn-tab-sell");
-            btnTabTalk = root.Q<Button>("btn-tab-talk");
-            btnTabExit = root.Q<Button>("btn-tab-exit");
-
-            btnTabExit.clicked += () => OnExitClicked?.Invoke();
 
             btnTabBuy.clicked += () => 
             {
@@ -251,8 +242,6 @@ namespace Systems.Shop
 
         public void SetDialogue(string text)
         {
-            if (dialogueText != null)
-                dialogueText.text = text;
         }
 
         public void RenderCatalog(List<ShopItemEntry> items, bool isSellMode = false)

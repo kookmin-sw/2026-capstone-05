@@ -35,6 +35,8 @@ public class QuickslotUIController : MonoBehaviour
     private int activeQuickslotPointerId = -1;
     private bool isDragging = false;
     private bool uiReady = false;
+    private readonly List<int> highlightedSlotIndexes = new List<int>();
+    private readonly HashSet<int> highlightedSlotSet = new HashSet<int>();
     private Vector2 lastPointerPos;
     private ItemRotation originalDragRotation;
 
@@ -253,6 +255,7 @@ public class QuickslotUIController : MonoBehaviour
         evt.StopPropagation();
         
         OnItemDragUpdateGlobal?.Invoke(itemInstance, evt.position);
+        UpdateDropHighlight(itemInstance, DragSource.Quickslot, slotIndex, null, evt.position);
     }
 
     private void OnPointerMove(PointerMoveEvent evt)
@@ -266,6 +269,7 @@ public class QuickslotUIController : MonoBehaviour
         var itemInstance = draggingSlotIndex >= 0 ? model.Get(draggingSlotIndex) : null;
         if (itemInstance != null) {
             OnItemDragUpdateGlobal?.Invoke(itemInstance, evt.position);
+            UpdateDropHighlight(itemInstance, DragSource.Quickslot, draggingSlotIndex, null, evt.position);
         }
     }
 
@@ -290,21 +294,28 @@ public class QuickslotUIController : MonoBehaviour
             if (targetItem != null && targetItem.Data == item.Data && item.Data.maxStackSize > 1)
             {
                 // Stack
-                int total = item.currentStackCount + targetItem.currentStackCount;
-                if (total <= item.Data.maxStackSize)
+                int spaceLeft = item.Data.maxStackSize - targetItem.currentStackCount;
+                if (spaceLeft <= 0)
                 {
-                    targetItem.currentStackCount = total;
+                    GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
+                    return;
+                }
+
+                int moveQty = Mathf.Min(item.currentStackCount, spaceLeft);
+                targetItem.currentStackCount += moveQty;
+                item.currentStackCount -= moveQty;
+
+                if (item.currentStackCount <= 0)
+                {
                     sourceModel.TryRemove(item);
-                    sourceModel.Items.Invoke();
-                    RefreshSlotVisual(targetQuickslotIndex);
                 }
                 else
                 {
-                    targetItem.currentStackCount = item.Data.maxStackSize;
-                    item.currentStackCount = total - item.Data.maxStackSize;
                     sourceModel.Items.Invoke();
-                    RefreshSlotVisual(targetQuickslotIndex);
+                    GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
                 }
+
+                RefreshSlotVisual(targetQuickslotIndex);
             }
             else
             {
@@ -363,6 +374,7 @@ public class QuickslotUIController : MonoBehaviour
             dragGhostIcon.style.visibility = Visibility.Hidden;
         }
 
+        ResetDropHighlights();
         OnItemDragEndGlobal?.Invoke();
 
         if (draggingSlotIndex >= 0 && draggingSlotIndex < MaxSlots)
@@ -405,6 +417,7 @@ public class QuickslotUIController : MonoBehaviour
         if (dragGhostIcon != null)
             dragGhostIcon.style.visibility = Visibility.Hidden;
 
+        ResetDropHighlights();
         OnItemDragEndGlobal?.Invoke();
 
         if (item != null && item.currentStackCount > 1)
@@ -445,6 +458,7 @@ public class QuickslotUIController : MonoBehaviour
                     
                     GridInventoryDragHelper.UpdateGhostPosition(dragGhostIcon, lastPointerPos);
                     OnItemDragUpdateGlobal?.Invoke(itemInstance, lastPointerPos);
+                    UpdateDropHighlight(itemInstance, DragSource.Quickslot, draggingSlotIndex, null, lastPointerPos);
                 }
             }
         }
@@ -512,6 +526,79 @@ public class QuickslotUIController : MonoBehaviour
             }
         }
         return -1;
+    }
+
+    public void ResetDropHighlights()
+    {
+        if (!uiReady) return;
+
+        for (int i = 0; i < highlightedSlotIndexes.Count; i++)
+        {
+            int index = highlightedSlotIndexes[i];
+            if (index >= 0 && index < slotViews.Count && slotViews[index].Root != null)
+            {
+                slotViews[index].Root.style.backgroundColor = new StyleColor(StyleKeyword.Null);
+            }
+        }
+
+        highlightedSlotIndexes.Clear();
+        highlightedSlotSet.Clear();
+    }
+
+    public void UpdateDropHighlight(ItemInstance item, DragSource source, int sourceIndex, GridInventoryModel sourceModel,
+        Vector2 screenPosition)
+    {
+        ResetDropHighlights();
+
+        int targetQuickslotIndex = GetSlotIndexAtPosition(screenPosition);
+        if (targetQuickslotIndex < 0) return;
+
+        bool isValid = CanDropOnQuickslot(item, source, sourceIndex, targetQuickslotIndex, sourceModel);
+        Color color = isValid ? new Color(0f, 1f, 0f, 0.3f) : new Color(1f, 0f, 0f, 0.3f);
+        SetDropHighlight(targetQuickslotIndex, color);
+    }
+
+    private void SetDropHighlight(int index, Color color)
+    {
+        if (!uiReady || index < 0 || index >= slotViews.Count || slotViews[index].Root == null) return;
+
+        slotViews[index].Root.style.backgroundColor = new StyleColor(color);
+        if (highlightedSlotSet.Add(index))
+        {
+            highlightedSlotIndexes.Add(index);
+        }
+    }
+
+    private bool CanDropOnQuickslot(ItemInstance item, DragSource source, int sourceIndex, int targetQuickslotIndex,
+        GridInventoryModel sourceModel)
+    {
+        if (item == null || item.Data == null) return false;
+
+        var targetItem = model.Get(targetQuickslotIndex);
+        if (source == DragSource.Quickslot)
+        {
+            if (sourceIndex == targetQuickslotIndex) return true;
+            if (targetItem == null) return true;
+            if (targetItem.Data == item.Data && item.Data.maxStackSize > 1)
+            {
+                return targetItem.currentStackCount < targetItem.Data.maxStackSize;
+            }
+
+            return true;
+        }
+
+        if (sourceModel == null) return false;
+        if (targetItem == null) return true;
+
+        if (targetItem.Data == item.Data && item.Data.maxStackSize > 1)
+        {
+            return targetItem.currentStackCount < targetItem.Data.maxStackSize;
+        }
+
+        var sourceOldPos = sourceModel.GetItemAnchorPosition(item);
+        if (sourceOldPos.x == -1 || sourceOldPos.y == -1) return false;
+
+        return sourceModel.CanPlaceItem(targetItem, sourceOldPos.x, sourceOldPos.y, item);
     }
 
     public void SetItemInSlot(int index, ItemInstance item)

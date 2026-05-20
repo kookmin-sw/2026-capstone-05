@@ -36,6 +36,8 @@ namespace Systems.GridInventory {
 
         protected float SlotTotalSize => slotSize + slotSpacing;
 
+        public DragSource SourceType { get; set; } = DragSource.Inventory;
+
         public int ModelColumns { get; set; } = 8;
         protected int currentColumns = 8;
         private readonly List<int> coloredSlotIndexes = new List<int>();

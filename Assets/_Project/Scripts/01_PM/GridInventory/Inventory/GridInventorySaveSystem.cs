@@ -283,7 +283,14 @@ namespace Systems.GridInventory {
                         // 위치 배치
                         if (!model.PlaceItem(newItem, itemDataSave.slot_x, itemDataSave.slot_y))
                         {
-                            Debug.LogWarning($"[Inventory] Failed to place loaded item {matchedData.itemID} at {itemDataSave.slot_x},{itemDataSave.slot_y}");
+                            if (model.TryAdd(newItem))
+                            {
+                                Debug.LogWarning($"[Inventory] Relocated loaded item {matchedData.itemID} from {itemDataSave.slot_x},{itemDataSave.slot_y}.");
+                            }
+                            else
+                            {
+                                Debug.LogWarning($"[Inventory] Failed to place loaded item {matchedData.itemID} at {itemDataSave.slot_x},{itemDataSave.slot_y}");
+                            }
                         }
                     }
                 }

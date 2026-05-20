@@ -95,6 +95,45 @@ namespace Systems.GridInventory {
             return removed;
         }
 
+        public void EnsureDimensions(int width, int height) {
+            width = Mathf.Max(1, width);
+            height = Mathf.Max(1, height);
+            if (Width == width && Height == height) return;
+
+            if (Items.Length != width * height) {
+                Debug.LogWarning($"[Inventory] Cannot resize grid from {Width}x{Height} to {width}x{height}: capacity differs.");
+                return;
+            }
+
+            var oldItems = new List<ItemInstance>();
+            var processedItems = new HashSet<ItemInstance>();
+            for (int i = 0; i < Items.Length; i++) {
+                var item = Items[i];
+                if (item != null && processedItems.Add(item)) {
+                    oldItems.Add(item);
+                }
+                Items.SetSilent(i, null);
+            }
+
+            var oldAnchors = new Dictionary<ItemInstance, Vector2Int>(itemAnchors);
+            itemAnchors.Clear();
+            Width = width;
+            Height = height;
+
+            foreach (var item in oldItems) {
+                if (item == null) continue;
+
+                if (oldAnchors.TryGetValue(item, out var oldAnchor) && CanPlaceItem(item, oldAnchor.x, oldAnchor.y)) {
+                    PlaceItem(item, oldAnchor.x, oldAnchor.y);
+                }
+                else if (!TryAdd(item)) {
+                    Debug.LogWarning($"[Inventory] Failed to relocate item while resizing grid: {item.Data?.itemID}");
+                }
+            }
+
+            Items.Invoke();
+        }
+
         public void Transpose(bool clockwise) {
             var oldItems = new List<ItemInstance>();
             var processedItems = new HashSet<ItemInstance>();
