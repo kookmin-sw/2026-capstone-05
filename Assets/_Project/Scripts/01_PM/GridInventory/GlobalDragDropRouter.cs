@@ -46,7 +46,7 @@ namespace Systems.GridInventory
             }
 
             // 3. Check Inventory
-            if (GridInventoryView.Instance != null && GridInventoryView.Instance.isActiveAndEnabled)
+            if (GridInventoryView.Instance != null && GridInventoryView.Instance.isActiveAndEnabled && GridInventoryView.Instance.IsOpen)
             {
                 var invSlot = GridInventoryView.Instance.GetGridSlotAtPosition(screenPos);
                 if (invSlot != null)
@@ -119,9 +119,12 @@ namespace Systems.GridInventory
             }
             else if (sourceModel != null)
             {
-                // We don't need to do anything for grid models because the item was never removed during drag,
-                // just hidden. We just need to make sure the view makes it visible again.
-                // This is typically handled by the view when drag ends without a successful drop.
+                var draggedView = GridStorageView.CurrentDraggedItemView;
+                if (draggedView != null && draggedView.ItemInst == item)
+                {
+                    draggedView.RevertRotation(draggedView.OriginalRotation);
+                    draggedView.style.visibility = UnityEngine.UIElements.Visibility.Visible;
+                }
             }
         }
     }

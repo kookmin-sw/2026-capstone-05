@@ -16,6 +16,8 @@ public static class MascotEventManager
 
     // 5. 거부 (예: 판매 불가 아이템이거나, 잘못된 조작을 할 때)
     public static Action OnReject;
+    public static Action OnPlacementFailed;
+    public static Action OnHideDialogue;
 
 
     // --- 이벤트를 실행하는 Trigger 함수들 ---
@@ -24,4 +26,6 @@ public static class MascotEventManager
     public static void TriggerSurprise() => OnSurprise?.Invoke();
     public static void TriggerLaugh()    => OnLaugh?.Invoke();
     public static void TriggerReject()   => OnReject?.Invoke();
+    public static void TriggerPlacementFailed() => OnPlacementFailed?.Invoke();
+    public static void TriggerHideDialogue() => OnHideDialogue?.Invoke();
 }

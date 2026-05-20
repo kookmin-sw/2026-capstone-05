@@ -12,6 +12,9 @@ namespace Systems.Loot
     {
         public static LootController Instance { get; private set; }
         public bool IsOpen { get; private set; }
+        public bool IsInventoryOnlyOpen => IsOpen && isInventoryOnlyMode;
+        private const int PlayerInventoryColumns = 5;
+        private const int PlayerInventoryRows = 8;
 
         [SerializeField] private LootView lootView;
 
@@ -26,6 +29,7 @@ namespace Systems.Loot
         private InteractableLoot currentLootSource;
         private string currentStorageId;
         private LootNetworkSync currentNetworkSync;
+        private bool isInventoryOnlyMode;
 
         private UnityEngine.UIElements.VisualElement originalInventoryParent;
 
@@ -56,8 +60,8 @@ namespace Systems.Loot
             if (root == null || root.style.display == DisplayStyle.None) return false;
 
             // Check if the position is inside the loot panel or player inventory panel within the loot view
-            var lootPanel = root.Q<VisualElement>(className: "left-panel");
-            var playerPanel = root.Q<VisualElement>(className: "right-panel");
+            var lootPanel = root.Q<VisualElement>(className: "loot-left-panel");
+            var playerPanel = root.Q<VisualElement>(className: "loot-right-panel");
 
             if (lootPanel != null && lootPanel.worldBound.Contains(screenPosition)) return true;
             if (playerPanel != null && playerPanel.worldBound.Contains(screenPosition)) return true;
@@ -158,14 +162,43 @@ namespace Systems.Loot
 
         private float openedTime;
 
+        public void OpenInventoryOnly()
+        {
+            if (IsOpen) return;
+            if (lootView == null || GridInventoryClass.Instance == null || GridInventoryClass.Instance.Controller == null)
+            {
+                return;
+            }
+
+            IsOpen = true;
+            isInventoryOnlyMode = true;
+            openedTime = Time.time;
+            lootView.Initialize();
+
+            if (GridInventoryView.Instance != null)
+            {
+                originalInventoryGhostIcon = GridInventoryView.Instance.GhostIcon;
+                GridInventoryView.Instance.GhostIcon = lootView.GhostIcon;
+            }
+
+            lootView.SetInventoryOnlyMode(true);
+            lootView.Show();
+            AttachPlayerInventory();
+
+            GridInventoryView.IsAnyInventoryOpen = true;
+            PauseMenuManager.UpdateCursorAndInputState();
+        }
+
         private void OpenLoot(InteractableLoot source, string storageId, string title, LootNetworkSync networkSync)
         {
             if (IsOpen) return;
             IsOpen = true;
+            isInventoryOnlyMode = false;
             openedTime = Time.time;
             currentLootSource = source;
             currentStorageId = storageId;
             currentNetworkSync = networkSync;
+            lootView.Initialize();
 
             // Share ghost icon
             if (GridInventoryView.Instance != null)
@@ -190,6 +223,7 @@ namespace Systems.Loot
             lootInventoryController.Model.OnModelChanged -= HandleModelChanged;
             lootInventoryController.Model.OnModelChanged += HandleModelChanged;
 
+            lootView.SetLootMode();
             lootView.SetLootHeader(title);
             lootView.Show();
 
@@ -226,6 +260,7 @@ namespace Systems.Loot
             }
 
             DetachPlayerInventory();
+            lootView.SetLootMode();
             lootView.Hide();
 
             if (dummyLootGridView != null)
@@ -236,6 +271,8 @@ namespace Systems.Loot
             currentLootSource = null;
             currentStorageId = null;
             currentNetworkSync = null;
+            isInventoryOnlyMode = false;
+            GridInventoryView.IsAnyInventoryOpen = false;
 
             PauseMenuManager.UpdateCursorAndInputState();
         }
@@ -265,9 +302,12 @@ namespace Systems.Loot
         {
             if (GridInventoryClass.Instance == null || GridInventoryClass.Instance.Controller == null) return;
             var playerModel = GridInventoryClass.Instance.Controller.Model;
-            playerModel.Transpose(true);
+            if (playerModel == null) return;
+            playerModel.EnsureDimensions(PlayerInventoryColumns, PlayerInventoryRows);
 
             var container = lootView.GetPlayerInventoryContainer();
+            if (container == null) return;
+            container.Clear();
 
             // 1. 스크롤 뷰 동적 생성
             var scrollView = new UnityEngine.UIElements.ScrollView();
@@ -277,6 +317,8 @@ namespace Systems.Loot
             scrollView.style.width = new UnityEngine.UIElements.StyleLength(new UnityEngine.UIElements.Length(100, UnityEngine.UIElements.LengthUnit.Percent));
             scrollView.style.height = new UnityEngine.UIElements.StyleLength(new UnityEngine.UIElements.Length(100, UnityEngine.UIElements.LengthUnit.Percent));
             scrollView.style.display = UnityEngine.UIElements.DisplayStyle.Flex;
+            scrollView.horizontalScrollerVisibility = UnityEngine.UIElements.ScrollerVisibility.Hidden;
+            scrollView.verticalScrollerVisibility = UnityEngine.UIElements.ScrollerVisibility.Auto;
 
             var slotsContainer = new UnityEngine.UIElements.VisualElement();
             slotsContainer.name = "lootSlotsContainer";
@@ -287,8 +329,8 @@ namespace Systems.Loot
             // 핵심 수정: FlexLayout 속성 명시적 지정
             slotsContainer.style.flexDirection = UnityEngine.UIElements.FlexDirection.Row;
             slotsContainer.style.flexWrap = UnityEngine.UIElements.Wrap.Wrap;
-            slotsContainer.style.width = (5 * 100f) + 20f + 4f; // visualCols * SlotTotalSize + padding + margin
-            slotsContainer.style.height = (8 * 100f) + 20f + 4f; // visualRows * SlotTotalSize + padding + margin
+            slotsContainer.style.width = (PlayerInventoryColumns * 100f) + 20f + 4f; // visualCols * SlotTotalSize + padding + margin
+            slotsContainer.style.height = (PlayerInventoryRows * 100f) + 20f + 4f; // visualRows * SlotTotalSize + padding + margin
             
             scrollView.Add(slotsContainer);
             container.Add(scrollView);
@@ -305,25 +347,20 @@ namespace Systems.Loot
 
             // 4. Dummy View 초기화 (이제 ScrollView를 넘겨주므로 에러 없음)
             dummyPlayerGridView = gameObject.AddComponent<DummyLootGridView>();
-            dummyPlayerGridView.Init(scrollView, 5, lootView.GhostIcon);
+            dummyPlayerGridView.Init(scrollView, PlayerInventoryColumns, lootView.GhostIcon, Systems.GridInventory.DragSource.Inventory);
             
             // 코루틴 수동 호출로 GridStorageView.InitializeView를 동기식으로 실행 (슬롯 생성 등 보장)
-            var initRoutine = dummyPlayerGridView.InitializeView(40);
+            var initRoutine = dummyPlayerGridView.InitializeView(playerModel.Items.Length);
             while (initRoutine.MoveNext()) { }
             
             dummyPlayerInventoryController = new GridInventoryController.Builder(dummyPlayerGridView)
+                .WithDimensions(PlayerInventoryColumns, PlayerInventoryRows)
                 .WithExistingModel(playerModel)
                 .Build();
         }
 
         private void DetachPlayerInventory()
         {
-            if (GridInventoryClass.Instance != null && GridInventoryClass.Instance.Controller != null)
-            {
-                var playerModel = GridInventoryClass.Instance.Controller.Model;
-                playerModel.Transpose(false);
-            }
-
             if (dummyPlayerInventoryController != null)
             {
                 dummyPlayerInventoryController = null;
@@ -331,7 +368,10 @@ namespace Systems.Loot
             if (dummyPlayerGridView != null)
             {
                 var container = lootView.GetPlayerInventoryContainer();
-                container.Clear(); // Removes the dynamically created scroll view
+                if (container != null)
+                {
+                    container.Clear(); // Removes the dynamically created scroll view
+                }
                 Destroy(dummyPlayerGridView);
                 dummyPlayerGridView = null;
             }
@@ -351,7 +391,31 @@ namespace Systems.Loot
 
             var lootModel = lootInventoryController.Model;
             var targetCoords = lootModel.GetCoordinates(lootSlot.Index);
-            var baseTargetItem = lootModel.Get(targetCoords.x, targetCoords.y);
+            var draggedNew = new Vector2Int(targetCoords.x, targetCoords.y);
+            var overlappingItems = new HashSet<ItemInstance>();
+            bool outOfBounds = false;
+
+            foreach (var pos in item.Data.gridShape.GetRotatedPositions(item.currentRotation))
+            {
+                int checkX = draggedNew.x + pos.x;
+                int checkY = draggedNew.y + pos.y;
+
+                if (checkX < 0 || checkY < 0 || checkX >= lootModel.Width || checkY >= lootModel.Height)
+                {
+                    outOfBounds = true;
+                    break;
+                }
+
+                var foundItem = lootModel.Get(checkX, checkY);
+                if (foundItem != null && foundItem != item)
+                {
+                    overlappingItems.Add(foundItem);
+                }
+            }
+
+            if (outOfBounds || overlappingItems.Count > 1) return;
+
+            var baseTargetItem = overlappingItems.Count == 1 ? GetSingleItem(overlappingItems) : null;
 
             bool isSwap = baseTargetItem != null && baseTargetItem.Data != item.Data;
             if (isSwap) return;
@@ -388,7 +452,31 @@ namespace Systems.Loot
 
             var lootModel = lootInventoryController.Model;
             var targetCoords = lootModel.GetCoordinates(lootSlot.Index);
-            var baseTargetItem = lootModel.Get(targetCoords.x, targetCoords.y);
+            var draggedNew = new Vector2Int(targetCoords.x, targetCoords.y);
+            var overlappingItems = new HashSet<ItemInstance>();
+            bool outOfBounds = false;
+
+            foreach (var pos in item.Data.gridShape.GetRotatedPositions(item.currentRotation))
+            {
+                int checkX = draggedNew.x + pos.x;
+                int checkY = draggedNew.y + pos.y;
+
+                if (checkX < 0 || checkY < 0 || checkX >= lootModel.Width || checkY >= lootModel.Height)
+                {
+                    outOfBounds = true;
+                    break;
+                }
+
+                var foundItem = lootModel.Get(checkX, checkY);
+                if (foundItem != null && foundItem != item)
+                {
+                    overlappingItems.Add(foundItem);
+                }
+            }
+
+            if (outOfBounds || overlappingItems.Count > 1) return;
+
+            var baseTargetItem = overlappingItems.Count == 1 ? GetSingleItem(overlappingItems) : null;
 
             bool isHost = currentNetworkSync.HasStateAuthority;
             bool isOffline = AuthSession.IsOffline;
@@ -461,7 +549,36 @@ namespace Systems.Loot
 
             var lootModel = lootInventoryController.Model;
             var targetCoords = lootModel.GetCoordinates(lootSlot.Index);
-            var baseTargetItem = lootModel.Get(targetCoords.x, targetCoords.y);
+            var draggedNew = new Vector2Int(targetCoords.x, targetCoords.y);
+            var overlappingItems = new HashSet<ItemInstance>();
+            bool outOfBounds = false;
+
+            foreach (var pos in item.Data.gridShape.GetRotatedPositions(item.currentRotation))
+            {
+                int checkX = draggedNew.x + pos.x;
+                int checkY = draggedNew.y + pos.y;
+
+                if (checkX < 0 || checkY < 0 || checkX >= lootModel.Width || checkY >= lootModel.Height)
+                {
+                    outOfBounds = true;
+                    break;
+                }
+
+                var foundItem = lootModel.Get(checkX, checkY);
+                if (foundItem != null && foundItem != item)
+                {
+                    overlappingItems.Add(foundItem);
+                }
+            }
+
+            if (outOfBounds || overlappingItems.Count > 1)
+            {
+                item.currentRotation = originalRotation;
+                Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
+                return;
+            }
+
+            var baseTargetItem = overlappingItems.Count == 1 ? GetSingleItem(overlappingItems) : null;
 
             bool isHost = currentNetworkSync.HasStateAuthority;
             bool isOffline = AuthSession.IsOffline;
@@ -469,32 +586,36 @@ namespace Systems.Loot
             if (baseTargetItem != null && baseTargetItem.Data == item.Data && item.Data.maxStackSize > 1)
             {
                 // 스택 병합
-                int total = item.currentStackCount + baseTargetItem.currentStackCount;
-                int moveQty = 0;
-                if (total <= item.Data.maxStackSize)
+                int spaceLeft = item.Data.maxStackSize - baseTargetItem.currentStackCount;
+                if (spaceLeft <= 0)
                 {
-                    moveQty = item.currentStackCount;
+                    item.currentRotation = originalRotation;
+                    Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
+                    return;
+                }
+
+                int moveQty = Mathf.Min(item.currentStackCount, spaceLeft);
+                item.currentStackCount -= moveQty;
+
+                if (item.currentStackCount <= 0)
+                {
                     if (source == Systems.GridInventory.DragSource.Quickslot) QuickslotUIController.Instance.RemoveItemFromSlot(sourceIndex);
                     else if (sourceModel != null) sourceModel.TryRemove(item);
-
-                    if (!isHost || isOffline)
-                    {
-                        baseTargetItem.currentStackCount = total;
-                        lootModel.Items.Invoke();
-                    }
                 }
                 else
                 {
-                    moveQty = item.Data.maxStackSize - baseTargetItem.currentStackCount;
-                    item.currentStackCount = total - item.Data.maxStackSize;
                     if (source == Systems.GridInventory.DragSource.Quickslot) QuickslotUIController.Instance.RefreshSlotVisual(sourceIndex);
-                    else if (sourceModel != null) sourceModel.Items.Invoke();
-
-                    if (!isHost || isOffline)
+                    else if (sourceModel != null)
                     {
-                        baseTargetItem.currentStackCount = item.Data.maxStackSize;
-                        lootModel.Items.Invoke();
+                        sourceModel.Items.Invoke();
+                        Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
                     }
+                }
+
+                if (!isHost || isOffline)
+                {
+                    baseTargetItem.currentStackCount += moveQty;
+                    lootModel.Items.Invoke();
                 }
 
                 if (moveQty > 0)
@@ -550,21 +671,40 @@ namespace Systems.Loot
             {
                 // 1:1 스왑
                 var baseTargetPos = lootModel.GetItemAnchorPosition(baseTargetItem);
-                lootModel.TryRemove(baseTargetItem);
+                var sourceOld = sourceModel != null ? sourceModel.GetItemAnchorPosition(item) : (x: -1, y: -1);
+                var sourceOldPos = new Vector2Int(sourceOld.x, sourceOld.y);
+                bool sameModel = sourceModel != null && ReferenceEquals(sourceModel, lootModel);
+                int oldIndex = sameModel && sourceOldPos.x != -1 ? sourceModel.GetIndex(sourceOldPos.x, sourceOldPos.y) : -1;
+                var draggedOld = new Vector2Int(sourceOldPos.x, sourceOldPos.y);
+                var targetOld = new Vector2Int(baseTargetPos.x, baseTargetPos.y);
+                var targetNew = GetRelativeSwapPosition(draggedOld, draggedNew, targetOld);
+                bool canSwapTarget = source == Systems.GridInventory.DragSource.Quickslot ||
+                    (sourceModel != null && sourceOldPos.x != -1 && sourceOldPos.y != -1 &&
+                     sourceModel.CanPlaceItem(baseTargetItem, targetNew.x, targetNew.y, item, sameModel ? baseTargetItem : null));
+                bool finalShapesOverlap = sameModel && ItemShapesOverlap(item, draggedNew, baseTargetItem, targetNew);
 
-                if (lootModel.CanPlaceItem(item, targetCoords.x, targetCoords.y))
+                if (lootModel.CanPlaceItem(item, targetCoords.x, targetCoords.y, baseTargetItem) && canSwapTarget && !finalShapesOverlap)
                 {
-                    int oldIndex = -1;
-                    if (source == Systems.GridInventory.DragSource.Loot && sourceModel == lootModel)
+                    if (sameModel && isHost && !isOffline)
                     {
-                        var oldPos = sourceModel.GetItemAnchorPosition(item);
-                        if (oldPos.x != -1) oldIndex = sourceModel.GetIndex(oldPos.x, oldPos.y);
+                        if (currentNetworkSync.Runner != null && oldIndex != -1)
+                        {
+                            currentNetworkSync.Rpc_RequestMoveItem(currentNetworkSync.Runner.LocalPlayer, currentStorageId,
+                                oldIndex, lootSlot.Index, (int)item.currentRotation);
+                        }
+                        SubmitSnapshot(force: true);
+                        return;
                     }
+
+                    lootModel.TryRemove(baseTargetItem);
 
                     if (source == Systems.GridInventory.DragSource.Quickslot) QuickslotUIController.Instance.RemoveItemFromSlot(sourceIndex);
                     else if (sourceModel != null) sourceModel.TryRemove(item);
 
-                    baseTargetItem.currentRotation = ItemRotation.Deg0;
+                    if (source == Systems.GridInventory.DragSource.Quickslot)
+                    {
+                        baseTargetItem.currentRotation = ItemRotation.Deg0;
+                    }
                     
                     if (source == Systems.GridInventory.DragSource.Quickslot)
                     {
@@ -572,10 +712,9 @@ namespace Systems.Loot
                     }
                     else if (sourceModel != null)
                     {
-                        var sourceOldPos = sourceModel.GetItemAnchorPosition(item);
-                        if (sourceOldPos.x != -1 && sourceModel.CanPlaceItem(baseTargetItem, sourceOldPos.x, sourceOldPos.y))
+                        if (sourceModel.CanPlaceItem(baseTargetItem, targetNew.x, targetNew.y, item, sameModel ? baseTargetItem : null))
                         {
-                            sourceModel.PlaceItem(baseTargetItem, sourceOldPos.x, sourceOldPos.y);
+                            sourceModel.PlaceItem(baseTargetItem, targetNew.x, targetNew.y);
                         }
                         else
                         {
@@ -615,11 +754,48 @@ namespace Systems.Loot
                 }
                 else
                 {
-                    lootModel.PlaceItem(baseTargetItem, baseTargetPos.x, baseTargetPos.y);
                     item.currentRotation = originalRotation;
                     Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
                 }
             }
+        }
+
+        private static Vector2Int GetRelativeSwapPosition(Vector2Int draggedOld, Vector2Int draggedNew, Vector2Int targetOld)
+        {
+            var delta = draggedNew - draggedOld;
+            return targetOld - delta;
+        }
+
+        private static bool ItemShapesOverlap(ItemInstance first, Vector2Int firstAnchor, ItemInstance second, Vector2Int secondAnchor)
+        {
+            if (first == null || second == null) return false;
+
+            var firstPositions = first.Data.gridShape.GetRotatedPositions(first.currentRotation);
+            var secondPositions = second.Data.gridShape.GetRotatedPositions(second.currentRotation);
+
+            foreach (var firstPos in firstPositions)
+            {
+                var firstAbs = firstAnchor + firstPos;
+                foreach (var secondPos in secondPositions)
+                {
+                    if (firstAbs == secondAnchor + secondPos)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static ItemInstance GetSingleItem(HashSet<ItemInstance> items)
+        {
+            foreach (var item in items)
+            {
+                return item;
+            }
+
+            return null;
         }
 
         private void HandleItemSplitDroppedGlobal(GridItemView itemView, Vector2 screenPos)
@@ -632,6 +808,15 @@ namespace Systems.Loot
             GridInventoryController playerCtrl = GridInventoryClass.Instance?.Controller;
 
             if (!IsOpen)
+            {
+                if (playerCtrl != null && playerCtrl.TryConsumeGridSplitToQuickslot(itemView, screenPos))
+                    return;
+
+                playerCtrl?.TrySplitAfterRightClick(itemView, screenPos);
+                return;
+            }
+
+            if (isInventoryOnlyMode)
             {
                 if (playerCtrl != null && playerCtrl.TryConsumeGridSplitToQuickslot(itemView, screenPos))
                     return;
@@ -986,10 +1171,12 @@ namespace Systems.Loot
     // Dummy View to reuse GridInventory logic for the Loot Box
     public class DummyLootGridView : GridStorageView
     {
-        public void Init(UnityEngine.UIElements.ScrollView targetScrollView, int cols, UnityEngine.UIElements.VisualElement sharedGhostIcon)
+        public void Init(UnityEngine.UIElements.ScrollView targetScrollView, int cols, UnityEngine.UIElements.VisualElement sharedGhostIcon,
+            Systems.GridInventory.DragSource sourceType = Systems.GridInventory.DragSource.Loot)
         {
             this.currentColumns = cols;
             this.ModelColumns = cols;
+            this.SourceType = sourceType;
             this.container = targetScrollView;
             this.itemsContainer = targetScrollView.Q<UnityEngine.UIElements.VisualElement>("lootSlotsContainer");
             

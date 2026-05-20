@@ -13,6 +13,7 @@ public class Live2DController : MonoBehaviour
         MascotEventManager.OnSurprise  += PlaySurpriseAnimation;
         MascotEventManager.OnLaugh     += PlayLaughAnimation;
         MascotEventManager.OnReject    += PlayRejectAnimation;
+        MascotEventManager.OnPlacementFailed += PlayRejectAnimation;
     }
 
     private void OnDisable()
@@ -23,6 +24,7 @@ public class Live2DController : MonoBehaviour
         MascotEventManager.OnSurprise  -= PlaySurpriseAnimation;
         MascotEventManager.OnLaugh     -= PlayLaughAnimation;
         MascotEventManager.OnReject    -= PlayRejectAnimation;
+        MascotEventManager.OnPlacementFailed -= PlayRejectAnimation;
     }
 
     // --- 각 상황에 맞는 애니메이션 실행 함수 ---

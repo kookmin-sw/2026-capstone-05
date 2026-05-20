@@ -215,6 +215,11 @@ namespace Systems.GridInventory {
 
                 if (PauseMenuManager.CloseOpenInGameUI()) return;
 
+                if (Systems.Loot.LootController.Instance != null) {
+                    Systems.Loot.LootController.Instance.OpenInventoryOnly();
+                    return;
+                }
+
                 bool isHidden = container.style.display == DisplayStyle.None;
                 container.style.display = isHidden ? DisplayStyle.Flex : DisplayStyle.None;
 

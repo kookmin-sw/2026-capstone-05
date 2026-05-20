@@ -64,23 +64,17 @@
                 </ui:VisualElement>
             </ui:VisualElement>
 
-            <!-- Right Panel (NPC, Dialog, Buttons) -->
+            <!-- Right Panel (NPC, Buttons) -->
             <ui:VisualElement class="right-panel">
                 <ui:VisualElement class="npc-container">
                     <!-- Placeholder for Duck Image -->
                     <ui:VisualElement name="npc-image" class="npc-image" />
                 </ui:VisualElement>
                 
-                <ui:VisualElement class="dialogue-container">
-                    <ui:Label name="dialogue-text" text="* &quot;Welcome to Pokopia, where every item has a tale!&quot;" class="dialogue-text" />
-                </ui:VisualElement>
-                
                 <!-- Main Action Buttons -->
                 <ui:VisualElement name="main-action-buttons" class="action-buttons">
                     <ui:Button name="btn-tab-buy" text="* Buy" class="action-btn active" />
                     <ui:Button name="btn-tab-sell" text="* Sell" class="action-btn" />
-                    <ui:Button name="btn-tab-talk" text="* Talk" class="action-btn" />
-                    <ui:Button name="btn-tab-exit" text="* Exit" class="action-btn" />
                 </ui:VisualElement>
 
                 <!-- Placement Action Buttons -->

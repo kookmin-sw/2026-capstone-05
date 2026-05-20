@@ -5,6 +5,8 @@ using UnityEngine;
 
 namespace Systems.GridInventory {
     public class GridInventoryController {
+        static readonly List<GridInventoryController> activeControllers = new List<GridInventoryController>();
+
         readonly GridStorageView view;
         readonly GridInventoryModel model;
         
@@ -23,6 +25,10 @@ namespace Systems.GridInventory {
             Debug.Assert(model != null, "Model is null");
             this.view = view;
             this.model = model;
+
+            if (!activeControllers.Contains(this)) {
+                activeControllers.Add(this);
+            }
 
             view.StartCoroutine(Initialize());
         }
@@ -161,104 +167,78 @@ namespace Systems.GridInventory {
 
 
         void HandleDragEnd() {
-            view.ResetAllSlotColors();
+            ResetAllGridDropHighlights();
         }
 
         void HandleRouteDropRequested(ItemInstance item, Vector2 position) {
-            DragSource source = view is GridInventoryView ? DragSource.Inventory : DragSource.Loot;
-            GlobalDragDropRouter.ProcessDrop(item, source, -1, position, model);
+            GlobalDragDropRouter.ProcessDrop(item, view.SourceType, -1, position, model);
         }
 
         void HandleQuickslotItemDragUpdate(ItemInstance sourceItem, Vector2 screenPosition) {
-            if (GridInventoryView.Instance == null || !GridInventoryView.Instance.isActiveAndEnabled) return;
-            
             view.ResetAllSlotColors();
-            if (sourceItem == null) return;
-            
-            GridSlot closestGridSlot = view.GetGridSlotAtPosition(screenPosition);
-            if (closestGridSlot == null) return;
-
-            var targetCoords = model.GetCoordinates(closestGridSlot.Index);
-            var aNew = new Vector2Int(targetCoords.x, targetCoords.y);
-            
-            overlappingItems.Clear();
-            var positions = sourceItem.Data.gridShape.GetRotatedPositions(sourceItem.currentRotation);
-            bool outOfBounds = false;
-
-            Color defaultOccupiedColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
-            for (int i = 0; i < Capacity; i++) {
-                var item = model.Get(i);
-                if (item != null && item != sourceItem) {
-                    view.SetSlotColor(i, defaultOccupiedColor);
-                }
-            }
-
-            foreach (var pos in positions) {
-                int checkX = aNew.x + pos.x;
-                int checkY = aNew.y + pos.y;
-                
-                if (checkX < 0 || checkY < 0 || checkX >= width || checkY >= height) {
-                    outOfBounds = true;
-                    break;
-                }
-                
-                var foundItem = model.Get(checkX, checkY);
-                if (foundItem != null) {
-                    overlappingItems.Add(foundItem);
-                }
-            }
-
-            bool isValid = false;
-
-            if (!outOfBounds) {
-                if (overlappingItems.Count == 0) {
-                    isValid = true;
-                } else if (overlappingItems.Count == 1) {
-                    var targetItem = GetSingleItem(overlappingItems);
-                    if (sourceItem.Data == targetItem.Data && targetItem.Data.maxStackSize > 1) {
-                        isValid = true; 
-                    } else {
-                        // 1:1 스왑
-                        // 퀵슬롯이므로 항상 targetItem 1개를 가져올 공간은 있음 (현재 퀵슬롯 빈자리와 무관하게 허용하도록 설계됨)
-                        bool canPlaceA = model.CanPlaceItem(sourceItem, aNew.x, aNew.y, targetItem);
-                        if (canPlaceA) {
-                            isValid = true;
-                        }
-                    }
-                }
-            }
-
-            Color highlightColor = isValid ? new Color(0f, 1f, 0f, 0.3f) : new Color(1f, 0f, 0f, 0.3f);
-
-            foreach (var pos in positions) {
-                int checkX = aNew.x + pos.x;
-                int checkY = aNew.y + pos.y;
-
-                if (checkX >= 0 && checkY >= 0 && checkX < width && checkY < height) {
-                    int slotIndex = model.GetIndex(checkX, checkY);
-                    view.SetSlotColor(slotIndex, highlightColor);
-                }
-            }
+            ShowGridDropHighlight(sourceItem, null, DragSource.Quickslot, screenPosition, null);
         }
 
         void HandleDragUpdate(GridItemView originalGridItemView, Vector2 screenPosition) {
-            view.ResetAllSlotColors();
-
             ItemInstance sourceItem = originalGridItemView?.ItemInst;
             if (sourceItem == null) return;
+
+            UpdateAllGridDropHighlights(sourceItem, model, view.SourceType, screenPosition, this);
+            QuickslotUIController.Instance?.UpdateDropHighlight(sourceItem, view.SourceType, -1, model, screenPosition);
+        }
+
+        static void RemoveStaleControllers() {
+            activeControllers.RemoveAll(controller => controller == null || controller.view == null);
+        }
+
+        static void ResetAllGridDropHighlights() {
+            RemoveStaleControllers();
+            foreach (var controller in activeControllers) {
+                controller.view.ResetAllSlotColors();
+            }
+
+            QuickslotUIController.Instance?.ResetDropHighlights();
+        }
+
+        static void UpdateAllGridDropHighlights(ItemInstance sourceItem, GridInventoryModel sourceModel,
+            DragSource source, Vector2 screenPosition, GridInventoryController sourceController) {
+            RemoveStaleControllers();
+
+            foreach (var controller in activeControllers) {
+                controller.view.ResetAllSlotColors();
+            }
+
+            foreach (var controller in activeControllers) {
+                controller.ShowGridDropHighlight(sourceItem, sourceModel, source, screenPosition, sourceController);
+            }
+        }
+
+        static GridInventoryController FindControllerForModel(GridInventoryModel targetModel, GridInventoryController preferred) {
+            if (targetModel == null) return null;
+            if (preferred != null && ReferenceEquals(preferred.model, targetModel) && preferred.view != null) {
+                return preferred;
+            }
+
+            RemoveStaleControllers();
+            foreach (var controller in activeControllers) {
+                if (ReferenceEquals(controller.model, targetModel)) {
+                    return controller;
+                }
+            }
+
+            return null;
+        }
+
+        void ShowGridDropHighlight(ItemInstance sourceItem, GridInventoryModel sourceModel, DragSource source,
+            Vector2 screenPosition, GridInventoryController sourceController) {
+            if (sourceItem == null || sourceItem.Data == null || sourceItem.Data.gridShape == null) return;
 
             GridSlot closestGridSlot = view.GetGridSlotAtPosition(screenPosition);
             if (closestGridSlot == null) return;
 
             var targetCoords = model.GetCoordinates(closestGridSlot.Index);
-            
-            var sourcePos = model.GetItemAnchorPosition(sourceItem);
-            var aOld = sourcePos;
             var aNew = new Vector2Int(targetCoords.x, targetCoords.y);
-
-            overlappingItems.Clear();
             var positions = sourceItem.Data.gridShape.GetRotatedPositions(sourceItem.currentRotation);
-            bool outOfBounds = false;
 
             Color defaultOccupiedColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
             for (int i = 0; i < Capacity; i++) {
@@ -268,15 +248,18 @@ namespace Systems.GridInventory {
                 }
             }
 
+            overlappingItems.Clear();
+            bool outOfBounds = false;
+
             foreach (var pos in positions) {
                 int checkX = aNew.x + pos.x;
                 int checkY = aNew.y + pos.y;
-                
+
                 if (checkX < 0 || checkY < 0 || checkX >= width || checkY >= height) {
                     outOfBounds = true;
                     break;
                 }
-                
+
                 var foundItem = model.Get(checkX, checkY);
                 if (foundItem != null && foundItem != sourceItem) {
                     overlappingItems.Add(foundItem);
@@ -285,76 +268,65 @@ namespace Systems.GridInventory {
 
             bool isValid = false;
             ItemInstance swapTargetItem = null;
-            Vector2Int? bExpectedPos = null;
+            Vector2Int? swapTargetNewPos = null;
 
             if (!outOfBounds) {
                 if (overlappingItems.Count == 0) {
-                    // 빈 공간
-                    isValid = true;
+                    isValid = model.CanPlaceItem(sourceItem, aNew.x, aNew.y);
                 } else if (overlappingItems.Count == 1) {
                     var targetItem = GetSingleItem(overlappingItems);
-                    // 스택 확인
                     if (sourceItem.Data == targetItem.Data && targetItem.Data.maxStackSize > 1) {
-                        isValid = true; // 스택 가능
-                    } else if (aOld.x != -1) { 
-                        // 1:1 스왑 확인
+                        isValid = targetItem.currentStackCount < targetItem.Data.maxStackSize;
+                    } else if (source == DragSource.Quickslot) {
                         swapTargetItem = targetItem;
-                        var delta = aNew - new Vector2Int(aOld.x, aOld.y);
-                        var bOld = model.GetItemAnchorPosition(targetItem);
-                        var bNew = new Vector2Int(bOld.x - delta.x, bOld.y - delta.y);
-                        bExpectedPos = bNew;
-                        
-                        bool canPlaceA = model.CanPlaceItem(sourceItem, aNew.x, aNew.y, targetItem);
-                        bool canPlaceB = model.CanPlaceItem(targetItem, bNew.x, bNew.y, targetItem, sourceItem);
-                        
-                        bool overlapEachOther = false;
-                        var aPositions = sourceItem.Data.gridShape.GetRotatedPositions(sourceItem.currentRotation);
-                        var bPositionsTarget = targetItem.Data.gridShape.GetRotatedPositions(targetItem.currentRotation);
-                        foreach (var a in aPositions) {
-                            var absA = new Vector2Int(aNew.x + a.x, aNew.y + a.y);
-                            foreach (var b in bPositionsTarget) {
-                                var absB = new Vector2Int(bNew.x + b.x, bNew.y + b.y);
-                                if (absA == absB) {
-                                    overlapEachOther = true;
-                                    break;
-                                }
-                            }
-                            if (overlapEachOther) break;
-                        }
-                        
-                        if (!overlapEachOther && canPlaceA && canPlaceB) {
-                            isValid = true;
+                        isValid = model.CanPlaceItem(sourceItem, aNew.x, aNew.y, targetItem);
+                    } else if (sourceModel != null) {
+                        var sourcePos = sourceModel.GetItemAnchorPosition(sourceItem);
+                        if (sourcePos.x != -1 && sourcePos.y != -1) {
+                            swapTargetItem = targetItem;
+                            var targetPos = model.GetItemAnchorPosition(targetItem);
+                            var draggedOld = new Vector2Int(sourcePos.x, sourcePos.y);
+                            var targetOld = new Vector2Int(targetPos.x, targetPos.y);
+                            var targetNew = GetRelativeSwapPosition(draggedOld, aNew, targetOld);
+                            swapTargetNewPos = targetNew;
+
+                            bool sameModel = ReferenceEquals(sourceModel, model);
+                            bool canPlaceDragged = model.CanPlaceItem(sourceItem, aNew.x, aNew.y, targetItem);
+                            bool canPlaceTarget = sourceModel.CanPlaceItem(targetItem, targetNew.x, targetNew.y,
+                                sourceItem, sameModel ? targetItem : null);
+                            bool finalShapesOverlap = sameModel && ItemShapesOverlap(sourceItem, aNew, targetItem, targetNew);
+
+                            isValid = canPlaceDragged && canPlaceTarget && !finalShapesOverlap;
                         }
                     }
                 }
             }
 
-            if (swapTargetItem != null && bExpectedPos.HasValue) {
-                Color whiteHighlight = new Color(1f, 1f, 1f, 0.4f);
-                var bPositionsTarget = swapTargetItem.Data.gridShape.GetRotatedPositions(swapTargetItem.currentRotation);
-                
-                foreach (var bPos in bPositionsTarget) {
-                    int bCheckX = bExpectedPos.Value.x + bPos.x;
-                    int bCheckY = bExpectedPos.Value.y + bPos.y;
-                    
-                    if (bCheckX >= 0 && bCheckY >= 0 && bCheckX < width && bCheckY < height) {
-                        int slotIndex = model.GetIndex(bCheckX, bCheckY);
-                        view.SetSlotColor(slotIndex, whiteHighlight);
-                    }
+            if (swapTargetItem != null && swapTargetNewPos.HasValue && sourceModel != null) {
+                var targetController = FindControllerForModel(sourceModel, sourceController);
+                if (targetController != null) {
+                    var expectedColor = isValid
+                        ? new Color(1f, 1f, 1f, 0.4f)
+                        : new Color(1f, 0f, 0f, 0.25f);
+                    targetController.HighlightShape(swapTargetItem, swapTargetNewPos.Value, expectedColor);
                 }
             }
 
-            // 하이라이트 색상 결정
             Color highlightColor = isValid ? new Color(0f, 1f, 0f, 0.3f) : new Color(1f, 0f, 0f, 0.3f);
+            HighlightShape(sourceItem, aNew, highlightColor);
+        }
 
-            // 해당 슬롯들에 색상 적용
+        void HighlightShape(ItemInstance item, Vector2Int anchor, Color color) {
+            if (item == null || item.Data == null || item.Data.gridShape == null) return;
+
+            var positions = item.Data.gridShape.GetRotatedPositions(item.currentRotation);
             foreach (var pos in positions) {
-                int checkX = aNew.x + pos.x;
-                int checkY = aNew.y + pos.y;
+                int checkX = anchor.x + pos.x;
+                int checkY = anchor.y + pos.y;
 
                 if (checkX >= 0 && checkY >= 0 && checkX < width && checkY < height) {
                     int slotIndex = model.GetIndex(checkX, checkY);
-                    view.SetSlotColor(slotIndex, highlightColor);
+                    view.SetSlotColor(slotIndex, color);
                 }
             }
         }
@@ -658,35 +630,69 @@ namespace Systems.GridInventory {
         public void ReceiveDrop(ItemInstance item, DragSource source, int sourceIndex, GridSlot targetSlot, GridInventoryModel sourceModel)
         {
             var targetCoords = model.GetCoordinates(targetSlot.Index);
-            var baseTargetItem = model.Get(targetCoords.x, targetCoords.y);
+            var draggedNew = new Vector2Int(targetCoords.x, targetCoords.y);
 
-            if (baseTargetItem == item)
+            overlappingItems.Clear();
+            var positions = item.Data.gridShape.GetRotatedPositions(item.currentRotation);
+            bool outOfBounds = false;
+
+            foreach (var pos in positions)
+            {
+                int checkX = draggedNew.x + pos.x;
+                int checkY = draggedNew.y + pos.y;
+
+                if (checkX < 0 || checkY < 0 || checkX >= width || checkY >= height)
+                {
+                    outOfBounds = true;
+                    break;
+                }
+
+                var foundItem = model.Get(checkX, checkY);
+                if (foundItem != null && foundItem != item)
+                {
+                    overlappingItems.Add(foundItem);
+                }
+            }
+
+            if (outOfBounds || overlappingItems.Count > 1)
             {
                 GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
                 return;
             }
 
+            var baseTargetItem = overlappingItems.Count == 1 ? GetSingleItem(overlappingItems) : null;
+
             // 겹쳤을 때 스택 합치기 로직
             if (baseTargetItem != null && baseTargetItem.Data == item.Data && item.Data.maxStackSize > 1)
             {
-                int total = item.currentStackCount + baseTargetItem.currentStackCount;
-                if (total <= item.Data.maxStackSize)
+                int spaceLeft = item.Data.maxStackSize - baseTargetItem.currentStackCount;
+                if (spaceLeft <= 0)
                 {
-                    baseTargetItem.currentStackCount = total;
+                    GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
+                    return;
+                }
+
+                int moveQty = Mathf.Min(item.currentStackCount, spaceLeft);
+                baseTargetItem.currentStackCount += moveQty;
+                item.currentStackCount -= moveQty;
+
+                if (item.currentStackCount <= 0)
+                {
                     if (source == DragSource.Quickslot) QuickslotUIController.Instance.RemoveItemFromSlot(sourceIndex);
                     else if (sourceModel != null) sourceModel.TryRemove(item);
-                    model.Items.Invoke();
-                    return;
                 }
                 else
                 {
-                    baseTargetItem.currentStackCount = item.Data.maxStackSize;
-                    item.currentStackCount = total - item.Data.maxStackSize;
                     if (source == DragSource.Quickslot) QuickslotUIController.Instance.RefreshSlotVisual(sourceIndex);
-                    else if (sourceModel != null) sourceModel.Items.Invoke();
-                    model.Items.Invoke();
-                    return;
+                    else if (sourceModel != null)
+                    {
+                        sourceModel.Items.Invoke();
+                        GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
+                    }
                 }
+
+                model.Items.Invoke();
+                return;
             }
 
             // Simple logic:
@@ -694,9 +700,21 @@ namespace Systems.GridInventory {
             {
                 if (model.CanPlaceItem(item, targetCoords.x, targetCoords.y))
                 {
+                    var sourceOldPos = sourceModel != null ? sourceModel.GetItemAnchorPosition(item) : (x: -1, y: -1);
+                    bool removedFromQuickslot = false;
+                    bool removedFromSource = false;
+
                     if (source == DragSource.Quickslot) QuickslotUIController.Instance.RemoveItemFromSlot(sourceIndex);
-                    else if (sourceModel != null) sourceModel.TryRemove(item);
-                    model.PlaceItem(item, targetCoords.x, targetCoords.y);
+                    if (source == DragSource.Quickslot) removedFromQuickslot = true;
+                    else if (sourceModel != null) removedFromSource = sourceModel.TryRemove(item);
+
+                    if (!model.PlaceItem(item, targetCoords.x, targetCoords.y))
+                    {
+                        if (removedFromQuickslot) QuickslotUIController.Instance.SetItemInSlot(sourceIndex, item);
+                        if (removedFromSource && sourceOldPos.x != -1 && sourceOldPos.y != -1)
+                            sourceModel.PlaceItem(item, sourceOldPos.x, sourceOldPos.y);
+                        GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
+                    }
                 }
                 else
                 {
@@ -705,48 +723,78 @@ namespace Systems.GridInventory {
             }
             else
             {
-                // For swapping, figure out its start pos
                 var baseTargetPos = model.GetItemAnchorPosition(baseTargetItem);
-                model.TryRemove(baseTargetItem); // Try taking out the grid item
 
-                if (model.CanPlaceItem(item, targetCoords.x, targetCoords.y))
+                if (source == DragSource.Quickslot)
                 {
-                    if (source == DragSource.Quickslot) QuickslotUIController.Instance.RemoveItemFromSlot(sourceIndex);
-                    else if (sourceModel != null) sourceModel.TryRemove(item);
-                    
-                    model.PlaceItem(item, targetCoords.x, targetCoords.y);
+                    model.TryRemove(baseTargetItem);
 
-                    // 퀵슬롯에 들어가는 아이템의 회전각은 0도로 초기화
-                    baseTargetItem.currentRotation = ItemRotation.Deg0;
-                    
-                    if (source == DragSource.Quickslot)
+                    if (model.CanPlaceItem(item, targetCoords.x, targetCoords.y))
                     {
+                        QuickslotUIController.Instance.RemoveItemFromSlot(sourceIndex);
+                        model.PlaceItem(item, targetCoords.x, targetCoords.y);
+
+                        baseTargetItem.currentRotation = ItemRotation.Deg0;
                         QuickslotUIController.Instance.SetItemInSlot(sourceIndex, baseTargetItem);
                     }
-                    else if (sourceModel != null)
+                    else
                     {
-                        // Swap with another grid
-                        var sourceOldPos = sourceModel.GetItemAnchorPosition(item);
-                        if (sourceOldPos.x != -1 && sourceModel.CanPlaceItem(baseTargetItem, sourceOldPos.x, sourceOldPos.y))
-                        {
-                            sourceModel.PlaceItem(baseTargetItem, sourceOldPos.x, sourceOldPos.y);
-                        }
-                        else
-                        {
-                            // If it doesn't fit in the old spot, we might need a more complex fallback.
-                            // For now, try auto-add or drop on ground.
-                            if (!sourceModel.TryAdd(baseTargetItem))
-                            {
-                                // Fallback: drop on ground
-                                GlobalDragDropRouter.ProcessDrop(baseTargetItem, DragSource.Inventory, -1, Vector2.zero, null); // Force drop
-                            }
-                        }
+                        model.PlaceItem(baseTargetItem, baseTargetPos.x, baseTargetPos.y);
+                        GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
                     }
+
+                    return;
                 }
-                else
+
+                if (sourceModel == null)
                 {
-                    // Revert taking out the grid item
+                    GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
+                    return;
+                }
+
+                var sourceOldPos = sourceModel.GetItemAnchorPosition(item);
+                if (sourceOldPos.x == -1 || sourceOldPos.y == -1)
+                {
+                    GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
+                    return;
+                }
+
+                bool sameModel = ReferenceEquals(sourceModel, model);
+                var draggedOld = new Vector2Int(sourceOldPos.x, sourceOldPos.y);
+                var targetOld = new Vector2Int(baseTargetPos.x, baseTargetPos.y);
+                var targetNew = GetRelativeSwapPosition(draggedOld, draggedNew, targetOld);
+
+                bool canPlaceDragged = model.CanPlaceItem(item, targetCoords.x, targetCoords.y, baseTargetItem);
+                bool canPlaceTarget = sourceModel.CanPlaceItem(baseTargetItem, targetNew.x, targetNew.y, item, sameModel ? baseTargetItem : null);
+                bool finalShapesOverlap = sameModel && ItemShapesOverlap(item, draggedNew, baseTargetItem, targetNew);
+
+                if (!canPlaceDragged || !canPlaceTarget || finalShapesOverlap)
+                {
+                    GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
+                    return;
+                }
+
+                bool removedTarget = model.TryRemove(baseTargetItem);
+                bool removedDragged = sourceModel.TryRemove(item);
+
+                if (!removedTarget || !removedDragged)
+                {
+                    if (removedTarget) model.PlaceItem(baseTargetItem, baseTargetPos.x, baseTargetPos.y);
+                    if (removedDragged) sourceModel.PlaceItem(item, sourceOldPos.x, sourceOldPos.y);
+                    GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
+                    return;
+                }
+
+                bool placedDragged = model.PlaceItem(item, targetCoords.x, targetCoords.y);
+                bool placedTarget = placedDragged && sourceModel.PlaceItem(baseTargetItem, targetNew.x, targetNew.y);
+
+                if (!placedDragged || !placedTarget)
+                {
+                    if (placedDragged) model.TryRemove(item);
+                    if (placedTarget) sourceModel.TryRemove(baseTargetItem);
+
                     model.PlaceItem(baseTargetItem, baseTargetPos.x, baseTargetPos.y);
+                    sourceModel.PlaceItem(item, sourceOldPos.x, sourceOldPos.y);
                     GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
                 }
             }
@@ -846,6 +894,29 @@ namespace Systems.GridInventory {
             return null;
         }
 
+        static Vector2Int GetRelativeSwapPosition(Vector2Int draggedOld, Vector2Int draggedNew, Vector2Int targetOld) {
+            var delta = draggedNew - draggedOld;
+            return targetOld - delta;
+        }
+
+        static bool ItemShapesOverlap(ItemInstance first, Vector2Int firstAnchor, ItemInstance second, Vector2Int secondAnchor) {
+            if (first == null || second == null) return false;
+
+            var firstPositions = first.Data.gridShape.GetRotatedPositions(first.currentRotation);
+            var secondPositions = second.Data.gridShape.GetRotatedPositions(second.currentRotation);
+
+            foreach (var firstPos in firstPositions) {
+                var firstAbs = firstAnchor + firstPos;
+                foreach (var secondPos in secondPositions) {
+                    if (firstAbs == secondAnchor + secondPos) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         void RefreshView() {
             currentItemsInModel.Clear();
 
@@ -910,8 +981,8 @@ namespace Systems.GridInventory {
 
         public class Builder {
             GridStorageView view;
-            int width = 8;
-            int height = 5;
+            int width = 5;
+            int height = 8;
             IEnumerable<GridInventory.StartingItem> startingItems;
             GridInventoryModel existingModel;
 

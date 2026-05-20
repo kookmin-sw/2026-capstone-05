@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Systems.GridInventory;
@@ -99,7 +98,6 @@ namespace Systems.Shop
             // 이벤트 연결
             shopView.OnBuyItemClicked += HandleBuyItemClicked;
             shopView.OnSellItemClicked += HandleSellItemClicked;
-            shopView.OnExitClicked += HandleExitShop;
             shopView.OnBuyTabClicked += HandleBuyTabClicked;
             shopView.OnSellTabClicked += HandleSellTabClicked;
             
@@ -213,14 +211,22 @@ namespace Systems.Shop
                             }
                         }
 
-                        if (!outOfBounds) {
-                            if (overlappingItems.Count == 0) {
+                        if (!outOfBounds)
+                        {
+                            if (overlappingItems.Count == 0)
+                            {
                                 canPlace = true;
-                            } else if (overlappingItems.Count == 1) {
-                                var targetItem = overlappingItems.First();
-                                if (targetItem.Data == ghostItemInstance.Data && targetItem.Data.maxStackSize >= targetItem.currentStackCount + ghostItemInstance.currentStackCount) {
-                                    canPlace = true;
-                                    stackTargetItem = targetItem;
+                            }
+                            else if (overlappingItems.Count == 1)
+                            {
+                                foreach (var overlappingItem in overlappingItems)
+                                {
+                                    if (CanStackPurchaseOnto(overlappingItem))
+                                    {
+                                        canPlace = true;
+                                        stackTargetItem = overlappingItem;
+                                    }
+                                    break;
                                 }
                             }
                         }
@@ -241,6 +247,12 @@ namespace Systems.Shop
                     // 좌클릭 시 배치 시도
                     if (UnityEngine.InputSystem.Mouse.current.leftButton.wasPressedThisFrame)
                     {
+                        if (closestSlot != null && !canPlace && !isWaitingForPurchaseApproval)
+                        {
+                            RejectPlacementAttempt();
+                            return;
+                        }
+
                         if (closestSlot != null && canPlace && !isWaitingForPurchaseApproval)
                         {
                             var invModel = global::Systems.GridInventory.GridInventory.Instance.Controller.Model;
@@ -254,20 +266,7 @@ namespace Systems.Shop
                             
                             if (AuthSession.IsOffline)
                             {
-                                // Offline fallback
-                                if (invModel.TrySpendGold(totalCost))
-                                {
-                                    OnSpendGoldResult(true);
-                                }
-                                else
-                                {
-                                    OnSpendGoldResult(false);
-                                }
-                                
-                                shopView.SetDialogue("* \"탁월한 선택이야!\"");
-                                HandleCancelPlacement(); // 배치 모드 종료 (돌아가기)
-                                // 👉 [추가] 판매 감사 애니메이션
-                                MascotEventManager.TriggerThankYou();
+                                OnSpendGoldResult(invModel.TrySpendGold(totalCost));
                             }
                             else
                             {
@@ -286,18 +285,40 @@ namespace Systems.Shop
         {
             if (!isWaitingForPurchaseApproval) return;
             isWaitingForPurchaseApproval = false;
+            int totalCost = currentPlacingItem != null && ghostItemInstance != null
+                ? currentPlacingItem.BuyPrice * ghostItemInstance.currentStackCount
+                : 0;
 
             if (success)
             {
+                if (!CanCompletePendingPurchase())
+                {
+                    RefundPurchase(totalCost);
+                    RejectPlacementAttempt();
+                    return;
+                }
+
+                bool didPlace = false;
                 if (global::Systems.GridInventory.GridInventory.Instance != null && global::Systems.GridInventory.GridInventory.Instance.Controller != null)
                 {
                     var invModel = global::Systems.GridInventory.GridInventory.Instance.Controller.Model;
-                    if (pendingStackTargetItem != null) {
+                    if (pendingStackTargetItem != null)
+                    {
                         pendingStackTargetItem.currentStackCount += ghostItemInstance.currentStackCount;
-                        invModel.Items.Invoke(); // UI 갱신
-                    } else {
-                        invModel.PlaceItem(ghostItemInstance, pendingPlacementCoords.x, pendingPlacementCoords.y);
+                        invModel.Items.Invoke();
+                        didPlace = true;
                     }
+                    else
+                    {
+                        didPlace = invModel.PlaceItem(ghostItemInstance, pendingPlacementCoords.x, pendingPlacementCoords.y);
+                    }
+                }
+
+                if (!didPlace)
+                {
+                    RefundPurchase(totalCost);
+                    RejectPlacementAttempt();
+                    return;
                 }
                 
                 shopView.SetDialogue("* \"탁월한 선택이야!\"");
@@ -305,10 +326,136 @@ namespace Systems.Shop
             }
             else
             {
-                shopView.SetDialogue("* \"앗! 골드가 부족하잖아!\"");
+                if (CanCompletePendingPurchase())
+                {
+                    ShowInsufficientGold();
+                }
+                else
+                {
+                    RejectPlacementAttempt();
+                }
             }
-            
+
             pendingStackTargetItem = null;
+        }
+
+        private bool CanCompletePendingPurchase()
+        {
+            if (global::Systems.GridInventory.GridInventory.Instance == null ||
+                global::Systems.GridInventory.GridInventory.Instance.Controller == null ||
+                ghostItemInstance == null)
+            {
+                return false;
+            }
+
+            var invModel = global::Systems.GridInventory.GridInventory.Instance.Controller.Model;
+            if (invModel == null) return false;
+
+            if (pendingStackTargetItem != null)
+            {
+                return CanStackPurchaseOnto(pendingStackTargetItem);
+            }
+
+            return invModel.CanPlaceItem(ghostItemInstance, pendingPlacementCoords.x, pendingPlacementCoords.y);
+        }
+
+        private bool CanStackPurchaseOnto(ItemInstance targetItem)
+        {
+            if (targetItem == null || ghostItemInstance == null) return false;
+            if (targetItem.Data != ghostItemInstance.Data) return false;
+            if (targetItem.Data == null || targetItem.Data.maxStackSize <= 1) return false;
+
+            return targetItem.currentStackCount + ghostItemInstance.currentStackCount <= targetItem.Data.maxStackSize;
+        }
+
+        private void RejectPlacementAttempt()
+        {
+            pendingStackTargetItem = null;
+            GridInventoryView.Instance?.ForceResetDrag();
+            shopView.SetDialogue("* \"빈 공간을 찾아 클릭해서 물건을 놓아봐!\"");
+            KeepPlacementItemInHand();
+            MascotEventManager.TriggerPlacementFailed();
+        }
+
+        private void ShowInsufficientGold()
+        {
+            shopView.SetDialogue("* \"앗! 골드가 부족하잖아!\"");
+            KeepPlacementItemInHand();
+            MascotEventManager.TriggerReject();
+        }
+
+        private void KeepPlacementItemInHand()
+        {
+            isWaitingForPurchaseApproval = false;
+
+            if (currentPlacingItem == null || ghostItemInstance == null)
+            {
+                return;
+            }
+
+            isPlacing = true;
+            SetPlacementInventoryItemsInteractive(false);
+
+            var ghostIcon = shopView.GetRootVisualElement().Q<UnityEngine.UIElements.VisualElement>(name: "ghostIcon");
+            if (ghostIcon == null)
+            {
+                return;
+            }
+
+            ghostIcon.style.backgroundImage = new StyleBackground(currentPlacingItem.ItemData.itemIcon);
+            ghostIcon.style.visibility = Visibility.Visible;
+            ghostIcon.pickingMode = PickingMode.Ignore;
+            ghostIcon.BringToFront();
+
+            float dragWidth, dragHeight, anchorXRatio, anchorYRatio;
+            GridInventoryDragHelper.GetGhostSizeAndPivot(ghostItemInstance, out dragWidth, out dragHeight, out anchorXRatio, out anchorYRatio);
+            ghostIcon.style.width = dragWidth;
+            ghostIcon.style.height = dragHeight;
+            ghostIcon.style.transformOrigin = new TransformOrigin(new Length(anchorXRatio * 100f, LengthUnit.Percent), new Length(anchorYRatio * 100f, LengthUnit.Percent));
+            ghostIcon.style.rotate = new Rotate(new Angle((int)ghostItemInstance.currentRotation * 90f));
+            ghostIcon.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Contain));
+        }
+
+        private void SetPlacementInventoryItemsInteractive(bool interactive)
+        {
+            VisualElement itemsContainer = null;
+
+            if (shopView != null && shopView.GetPlacementGridContainer() != null)
+            {
+                itemsContainer = shopView.GetPlacementGridContainer().Q<VisualElement>(name: "itemsContainer");
+            }
+
+            if (itemsContainer == null && GridInventoryView.Instance != null && GridInventoryView.Instance.Container != null)
+            {
+                itemsContainer = GridInventoryView.Instance.Container.Q<VisualElement>(name: "itemsContainer");
+            }
+
+            if (itemsContainer == null)
+            {
+                return;
+            }
+
+            itemsContainer.pickingMode = interactive ? PickingMode.Position : PickingMode.Ignore;
+
+            var itemViews = itemsContainer.Query<GridItemView>().ToList();
+            foreach (var itemView in itemViews)
+            {
+                itemView.pickingMode = interactive ? PickingMode.Position : PickingMode.Ignore;
+            }
+        }
+
+        private void RefundPurchase(int totalCost)
+        {
+            if (totalCost <= 0) return;
+
+            if (AuthSession.IsOffline)
+            {
+                global::Systems.GridInventory.GridInventory.Instance?.Controller?.Model?.AddGold(totalCost);
+            }
+            else if (BackendPlayerNetworkSync.LocalInstance != null)
+            {
+                BackendPlayerNetworkSync.LocalInstance.RpcRequestAddGold(totalCost);
+            }
         }
 
         private void HandleBuyTabClicked()
@@ -371,11 +518,6 @@ namespace Systems.Shop
             }
             
             shopView.RenderCatalog(inventoryItems, isSellMode: true);
-        }
-
-        private void HandleExitShop()
-        {
-            CloseShop();
         }
 
         private void HandleBuyItemClicked(ShopItemEntry itemToBuy, int quantity)
@@ -473,6 +615,13 @@ namespace Systems.Shop
                     {
                         itemsContainer.style.visibility = UnityEngine.UIElements.Visibility.Visible;
                         itemsContainer.style.display = UnityEngine.UIElements.DisplayStyle.Flex;
+                        itemsContainer.pickingMode = UnityEngine.UIElements.PickingMode.Ignore;
+
+                        var itemViews = itemsContainer.Query<GridItemView>().ToList();
+                        foreach (var itemView in itemViews)
+                        {
+                            itemView.pickingMode = UnityEngine.UIElements.PickingMode.Ignore;
+                        }
                     }
                     }
                     scrollView.style.alignSelf = UnityEngine.UIElements.Align.Center;
@@ -535,6 +684,7 @@ namespace Systems.Shop
             ghostItemInstance = null;
 
             if (GridInventoryView.Instance != null) {
+                GridInventoryView.Instance.ForceResetDrag();
                 GridInventoryView.Instance.ResetAllSlotColors();
             }
 
@@ -595,6 +745,13 @@ namespace Systems.Shop
                         {
                             itemsContainer.style.visibility = UnityEngine.UIElements.StyleKeyword.Null;
                             itemsContainer.style.display = UnityEngine.UIElements.StyleKeyword.Null;
+                            itemsContainer.pickingMode = UnityEngine.UIElements.PickingMode.Position;
+
+                            var itemViews = itemsContainer.Query<GridItemView>().ToList();
+                            foreach (var itemView in itemViews)
+                            {
+                                itemView.pickingMode = UnityEngine.UIElements.PickingMode.Position;
+                            }
                         }
                     }
 
