@@ -202,18 +202,18 @@ namespace Systems.GridInventory {
                 }
             }
 
+            if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame && IsOpen) {
+                if (PauseMenuManager.isPaused) return; // 일시정지 중일 때 입력 무시
+
+                PauseMenuManager.CloseOpenInGameUI();
+                return;
+            }
+
             // Tab 키를 누르면 인벤토리 토글 (표시/숨김)
             if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame && container != null) {
                 if (PauseMenuManager.isPaused) return; // 일시정지 중일 때 입력 무시
 
-                if (Systems.Loot.LootController.Instance != null && Systems.Loot.LootController.Instance.IsOpen) {
-                    return;
-                }
-
-                // 상점이 열려있을 때는 Tab으로 인벤토리를 열지 못하게 막음 (배치 모드에서만 스크립트로 열림)
-                if (Systems.Shop.ShopController.Instance != null && Systems.Shop.ShopController.Instance.IsOpen) {
-                    return;
-                }
+                if (PauseMenuManager.CloseOpenInGameUI()) return;
 
                 bool isHidden = container.style.display == DisplayStyle.None;
                 container.style.display = isHidden ? DisplayStyle.Flex : DisplayStyle.None;
