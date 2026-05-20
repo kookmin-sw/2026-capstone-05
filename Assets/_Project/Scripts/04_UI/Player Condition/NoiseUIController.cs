@@ -4,7 +4,7 @@ using UnityEngine.UI;
 public class NoiseUIController : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private PlayerNoiseEmitter noiseEmitter;
+    [SerializeField] private PlayerNoiseListener noiseListener;
     [SerializeField] private float playerSearchInterval = 0.5f;
     
     [Header("개별 블록 UI 연결 (1~30)")]
@@ -25,7 +25,6 @@ public class NoiseUIController : MonoBehaviour
     public float minNeonAlpha = 0.2f;   // 위험할 때 네온 최소 밝기
     public float normalNeonAlpha = 0.0f;// 평소 안전할 때 네온 밝기 (0 = 안 보임)
     
-    private CharacterController controller; 
     private float targetFill = 0f;          
     private float currentFill = 0f; 
     private float playerSearchTimer;
@@ -33,16 +32,11 @@ public class NoiseUIController : MonoBehaviour
     private void Start()
     {
         TryBindLocalPlayer();
-
-        if (noiseEmitter != null)
-        {
-            controller = noiseEmitter.GetComponent<CharacterController>();
-        }
     }
 
     private void Update()
     {
-        if (noiseEmitter == null || controller == null)
+        if (noiseListener == null)
         {
             TryBindLocalPlayerByInterval();
         }
@@ -103,29 +97,13 @@ public class NoiseUIController : MonoBehaviour
 
     private void UpdateNoiseLogic()
     {
-        if (controller == null) return;
-
-        Vector3 horizontalVel = new Vector3(controller.velocity.x, 0, controller.velocity.z);
-        float speed = horizontalVel.magnitude;
-
-        if (speed > 0.1f)
+        if (noiseListener == null)
         {
-            targetFill = Mathf.Clamp(speed / 7f, 0.1f, 0.9f);
+            return;
         }
-        else
-        {
-            targetFill = 0f;
-        }
-
-        if (Mathf.Abs(controller.velocity.y) > 0.5f)
-        {
-            targetFill = Mathf.Max(targetFill, 0.7f);
-        }
-
-        if (noiseEmitter != null)
-        {
-            targetFill = Mathf.Max(targetFill, noiseEmitter.ConditionNoiseUiLevel);
-        }
+        float currentDecibel = noiseListener.CurrentDecibel;
+        float maxDecibel = NoiseManager.Instance.MaxDecibel; 
+        targetFill = Mathf.Clamp01(currentDecibel / maxDecibel);
     }
 
     private void TryBindLocalPlayerByInterval()
@@ -139,9 +117,8 @@ public class NoiseUIController : MonoBehaviour
 
     private void TryBindLocalPlayer()
     {
-        if (!LocalPlayerReferenceResolver.TryGetLocalNoiseEmitter(out PlayerNoiseEmitter localEmitter)) return;
+        if (!LocalPlayerReferenceResolver.TryGetLocalNoiseListener(out PlayerNoiseListener localListener)) return;
 
-        noiseEmitter = localEmitter;
-        controller = noiseEmitter.GetComponent<CharacterController>();
+        noiseListener = localListener;
     }
 }

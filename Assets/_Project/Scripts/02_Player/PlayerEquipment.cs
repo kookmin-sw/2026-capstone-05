@@ -243,10 +243,12 @@ public class PlayerEquipment : MonoBehaviour
                 }
             }
             RuntimeManager.PlayOneShot(unarmedHitEvent, checkCenter);
+            NoiseManager.Instance.GenerateNoise(checkCenter, NoiseData.NoiseType.UnarmedHit);
         }
         else
         {
             RuntimeManager.PlayOneShot(unarmedSwingEvent, checkCenter);
+            NoiseManager.Instance.GenerateNoise(checkCenter, NoiseData.NoiseType.UnarmedSwing);
         }
     }
 }
