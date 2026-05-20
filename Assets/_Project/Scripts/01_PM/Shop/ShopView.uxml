@@ -10,7 +10,7 @@
                 <ui:Label name="shop-title" text="SDI SHOP - BUY" class="shop-title" />
             </ui:VisualElement>
             <ui:VisualElement class="gold-container">
-                <ui:Label name="gold-label" text="Gold: 500g" class="gold-text" />
+                <ui:Label name="gold-label" text="Gold: 500G" class="gold-text" />
             </ui:VisualElement>
         </ui:VisualElement>
 
@@ -47,6 +47,7 @@
                                 <ui:VisualElement name="popup-shape-grid" class="shape-grid" />
                             </ui:VisualElement>
                             
+                            <ui:Label name="popup-item-max-quantity" text="1회 최대 구매 : 1" class="popup-item-max-quantity" />
                             <ui:Label name="popup-item-desc" text="Item description goes here." class="popup-desc" />
                             
                             <!-- Quantity Selector -->
@@ -91,6 +92,6 @@
         <ui:VisualElement name="card-shape-preview" class="card-shape-preview" />
         <ui:VisualElement name="card-icon" class="card-icon" />
         <ui:Label name="card-name" text="HP Pot" class="card-name" />
-        <ui:Label name="card-price" text="10g" class="card-price" />
+        <ui:Label name="card-price" text="10G" class="card-price" />
     </ui:VisualElement>
 </ui:UXML>
