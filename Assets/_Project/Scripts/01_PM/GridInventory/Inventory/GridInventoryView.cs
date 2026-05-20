@@ -285,7 +285,7 @@ namespace Systems.GridInventory {
             // 로드 버튼은 사용하지 않으므로 항상 숨김
             // if (btnLoad != null) btnLoad.style.display = DisplayStyle.None;
 
-            if (PlayerNetworkSetup.IsOfflineTestMode)
+            if (AuthSession.IsOffline)
             {
                 if (btnSave != null) btnSave.style.display = DisplayStyle.Flex;
             }

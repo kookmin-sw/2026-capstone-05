@@ -73,7 +73,7 @@ namespace Systems.GridInventory {
             InventorySaveData saveData = new InventorySaveData();
             
             bool shouldSaveGold = false;
-            if (PlayerNetworkSetup.IsOfflineTestMode)
+            if (AuthSession.IsOffline)
             {
                 shouldSaveGold = true;
             }
@@ -227,7 +227,7 @@ namespace Systems.GridInventory {
             model.Clear();
             
             bool shouldLoadGold = false;
-            if (PlayerNetworkSetup.IsOfflineTestMode)
+            if (AuthSession.IsOffline)
             {
                 shouldLoadGold = true;
             }

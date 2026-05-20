@@ -29,8 +29,7 @@ public class PlayerAdapter : MonoBehaviour
             return;
         }
 
-        _networkSetup.isLocalPlayerTest = isLocalPlayer;
-        Debug.Log($"{LogPrefix} isLocalPlayerTest 값 설정 완료. name={name}, value={isLocalPlayer}, reason={reason}");
+        Debug.Log($"{LogPrefix} 로컬 플레이어 여부 확인. name={name}, isLocalPlayer={isLocalPlayer}, reason={reason}");
 
         Debug.Log($"{LogPrefix} InitializeNetworkState() 호출 시점 진입. name={name}, reason={reason}");
         InvokeInitializeNetworkState(_networkSetup, isLocalPlayer);
