@@ -313,7 +313,7 @@ public class DayNightCycle : MonoBehaviour
             return;
         }
 
-        if (!PlayerNetworkSetup.IsOfflineTestMode && !roundManager.HasStateAuthority)
+        if (!AuthSession.IsOffline && !roundManager.HasStateAuthority)
         {
             return;
         }
