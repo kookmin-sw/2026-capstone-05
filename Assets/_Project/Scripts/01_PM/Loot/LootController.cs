@@ -100,7 +100,7 @@ namespace Systems.Loot
         /// </summary>
         static bool ShouldOpenLootImmediately(LootNetworkSync networkSync)
         {
-            if (PlayerNetworkSetup.IsOfflineTestMode)
+            if (AuthSession.IsOffline)
                 return true;
 
             var runner = networkSync != null ? networkSync.Runner : null;
@@ -213,7 +213,7 @@ namespace Systems.Loot
 
             SubmitSnapshot(force: true);
 
-            if (currentNetworkSync != null && !PlayerNetworkSetup.IsOfflineTestMode && currentNetworkSync.Runner != null)
+            if (currentNetworkSync != null && !AuthSession.IsOffline && currentNetworkSync.Runner != null)
             {
                 currentNetworkSync.Rpc_NotifyCloseLoot(currentNetworkSync.Runner.LocalPlayer, currentStorageId);
             }
@@ -391,7 +391,7 @@ namespace Systems.Loot
             var baseTargetItem = lootModel.Get(targetCoords.x, targetCoords.y);
 
             bool isHost = currentNetworkSync.HasStateAuthority;
-            bool isOffline = PlayerNetworkSetup.IsOfflineTestMode;
+            bool isOffline = AuthSession.IsOffline;
 
             if (baseTargetItem != null && baseTargetItem.Data == item.Data && item.Data.maxStackSize > 1)
             {
@@ -464,7 +464,7 @@ namespace Systems.Loot
             var baseTargetItem = lootModel.Get(targetCoords.x, targetCoords.y);
 
             bool isHost = currentNetworkSync.HasStateAuthority;
-            bool isOffline = PlayerNetworkSetup.IsOfflineTestMode;
+            bool isOffline = AuthSession.IsOffline;
 
             if (baseTargetItem != null && baseTargetItem.Data == item.Data && item.Data.maxStackSize > 1)
             {
@@ -740,7 +740,7 @@ namespace Systems.Loot
             int lootY, int lootSlotIndex, int sourceInventorySlotIndex)
         {
             bool isHost = currentNetworkSync.HasStateAuthority;
-            bool isOffline = PlayerNetworkSetup.IsOfflineTestMode;
+            bool isOffline = AuthSession.IsOffline;
 
             var playerModel = GridInventoryClass.Instance.Controller.Model;
             var lootModel = lootInventoryController.Model;
@@ -821,7 +821,7 @@ namespace Systems.Loot
             int lootSourceIndex, int targetInventorySlotIndex)
         {
             bool isHost = currentNetworkSync.HasStateAuthority;
-            bool isOffline = PlayerNetworkSetup.IsOfflineTestMode;
+            bool isOffline = AuthSession.IsOffline;
 
             var playerModel = GridInventoryClass.Instance.Controller.Model;
             var lootModel = lootInventoryController.Model;
@@ -905,7 +905,7 @@ namespace Systems.Loot
             int lootOldY, int lootSourceIndex)
         {
             bool isHost = currentNetworkSync.HasStateAuthority;
-            bool isOffline = PlayerNetworkSetup.IsOfflineTestMode;
+            bool isOffline = AuthSession.IsOffline;
 
             var lootModel = lootInventoryController.Model;
             var qs = QuickslotUIController.Instance;
@@ -967,7 +967,7 @@ namespace Systems.Loot
         private void SubmitSnapshot(bool force = false)
         {
             if (currentNetworkSync == null || currentStorageId == null || lootInventoryController == null) return;
-            if (!currentNetworkSync.HasStateAuthority && !PlayerNetworkSetup.IsOfflineTestMode) return;
+            if (!currentNetworkSync.HasStateAuthority && !AuthSession.IsOffline) return;
 
             if (!force && Time.time - lastSnapshotTime < SnapshotCooldown)
             {
