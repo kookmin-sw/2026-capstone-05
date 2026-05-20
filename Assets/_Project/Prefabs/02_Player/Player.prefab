@@ -466,6 +466,7 @@ GameObject:
   - component: {fileID: -1790409643959626491}
   - component: {fileID: -6851899960745548226}
   - component: {fileID: 3993721557676340526}
+  - component: {fileID: 8618356426795578522}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -871,6 +872,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbd68b50b9ec29744b3330893fcd5d30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSensitivityModifier
+--- !u!114 &8618356426795578522
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3438671979807047463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1da7c60e54d233645961fc3405820e6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerNoiseListener
+  decayRate: 30
+  showDebugLog: 1
 --- !u!1 &4209545890320065660
 GameObject:
   m_ObjectHideFlags: 0

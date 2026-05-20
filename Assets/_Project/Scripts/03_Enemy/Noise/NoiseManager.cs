@@ -34,6 +34,9 @@ public class NoiseManager : MonoBehaviour
     private Collider[] overlapBuffer = new Collider[InitialOverlapBufferSize];
     private readonly HashSet<INoiseListener> notifiedListeners = new HashSet<INoiseListener>();
 
+    private float maxDecibel;
+    public float MaxDecibel => maxDecibel;
+
 #if UNITY_EDITOR
     private List<ActiveNoise> activeNoises = new List<ActiveNoise>();
 
@@ -74,7 +77,13 @@ public class NoiseManager : MonoBehaviour
         foreach (var noise in noiseData.noiseInfo)
         {
             if (!noiseDict.ContainsKey(noise.type))
+            {
                 noiseDict.Add(noise.type, noise.decibel);
+                if (noise.decibel > maxDecibel)
+                {
+                    maxDecibel = noise.decibel;
+                }
+            }
         }
     }
     
