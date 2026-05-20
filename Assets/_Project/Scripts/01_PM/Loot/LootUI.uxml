@@ -6,23 +6,18 @@
         <engine:VisualElement class="split-container">
                 
                 <!-- Left Panel : Loot / Chest -->
-                <engine:VisualElement class="left-panel">
+                <engine:VisualElement class="loot-left-panel">
                     <engine:VisualElement class="header-container">
-                        <engine:VisualElement class="chest-icon" />
                         <engine:Label name="loot-header" text="Supply Chest" class="header-text"/>
                     </engine:VisualElement>
                     
                     <engine:ScrollView class="slots-scroll-view" name="loot-scroll-view">
                         <engine:VisualElement name="lootSlotsContainer" class="slotsContainer" />
                     </engine:ScrollView>
-                    
-                    <engine:VisualElement class="footer-container">
-                        <engine:Label name="loot-capacity" text="0 / 50" class="capacity-text"/>
-                    </engine:VisualElement>
                 </engine:VisualElement>
 
                 <!-- Center Panel : Item Description -->
-                <engine:VisualElement class="center-panel">
+                <engine:VisualElement class="loot-center-panel">
                     <engine:VisualElement name="item-detail-container" class="item-detail-container" style="display: none;">
                         <engine:Label name="detail-name" text="Item Name" class="detail-name"/>
                         <engine:Label name="detail-type" text="Type" class="detail-type"/>
@@ -32,17 +27,13 @@
                 </engine:VisualElement>
 
                 <!-- Right Panel : Player Inventory -->
-                <engine:VisualElement class="right-panel">
+                <engine:VisualElement class="loot-right-panel">
                     <engine:VisualElement class="header-container">
                         <engine:Label name="inventory-header" text="Inventory" class="header-text"/>
                     </engine:VisualElement>
 
                     <!-- The player inventory grid will be injected here via code -->
                     <engine:VisualElement name="player-inventory-container" class="player-inventory-container" />
-                    
-                    <engine:VisualElement class="footer-container">
-                        <engine:Label name="inventory-capacity" text="0 / 100" class="capacity-text"/>
-                    </engine:VisualElement>
                 </engine:VisualElement>
                 
             </engine:VisualElement>

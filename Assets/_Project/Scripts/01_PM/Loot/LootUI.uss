@@ -9,6 +9,8 @@
     align-items: stretch;
     justify-content: stretch;
     color: rgb(220, 220, 220);
+    -unity-font: url("project://database/Assets/_Project/Assets/04_UI/Fonts/NEXON%20Lv2%20Gothic%20OTF%20Bold.otf?fileID=12800000&guid=24429f7fd4d47fd4f9488bfd2ea0de38&type=3#NEXON Lv2 Gothic OTF Bold");
+    -unity-font-definition: initial;
 }
 
 .split-container {
@@ -19,29 +21,27 @@
     height: 100%;
 }
 
-.left-panel {
+.loot-left-panel {
     width: 35%;
-    background-color: rgba(20, 25, 30, 0.95);
+    background-color: transparent;
+    background-image: url("project://database/Assets/_Project/Assets/04_UI/UI/popup.png?fileID=21300000&guid=d377e82806aac4a4088e123845017d41&type=3#popup");
     border-width: 0;
-    border-right-width: 2px;
-    border-right-color: rgba(255, 255, 255, 0.1);
     padding: 40px;
     flex-direction: column;
     height: 100%;
 }
 
-.center-panel {
+.loot-center-panel {
     flex-grow: 1;
     align-items: center;
     justify-content: center;
 }
 
-.right-panel {
+.loot-right-panel {
     width: 35%;
-    background-color: rgba(20, 25, 30, 0.95);
+    background-color: transparent;
+    background-image: url("project://database/Assets/_Project/Assets/04_UI/UI/popup.png?fileID=21300000&guid=d377e82806aac4a4088e123845017d41&type=3#popup");
     border-width: 0;
-    border-left-width: 2px;
-    border-left-color: rgba(255, 255, 255, 0.1);
     padding: 40px;
     flex-direction: column;
     height: 100%;
@@ -50,31 +50,32 @@
 .header-container {
     flex-direction: row;
     align-items: center;
-    margin-bottom: 24px;
-    border-bottom-width: 1px;
-    border-bottom-color: rgba(255, 255, 255, 0.2);
-    padding-bottom: 16px;
+    justify-content: center;
+    margin-bottom: 16px;
+    padding-bottom: 0px;
 }
 
 .header-text {
     font-size: 28px;
     color: white;
     letter-spacing: 1px;
-}
-
-.chest-icon {
-    width: 24px;
-    height: 24px;
-    background-color: #8c5b3f; /* Placeholder */
-    margin-right: 8px;
+    -unity-text-align: middle-center;
 }
 
 .slots-scroll-view {
     flex-grow: 1;
     margin-bottom: 16px;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: transparent;
     border-radius: 8px;
-    padding: 16px;
+    padding: 8px 16px 16px 16px;
+}
+
+.slots-scroll-view .unity-scroll-view__content-container {
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 0px;
+    min-width: 100%;
+    min-height: 100%;
 }
 
 .slotsContainer {
@@ -108,7 +109,7 @@
 /* Item Detail Panel */
 .item-detail-container {
     width: 100%;
-    background-color: rgba(20, 20, 20, 0.9);
+    background-color: transparent;
     border-width: 1px;
     border-color: rgb(100, 100, 100);
     padding: 16px;
