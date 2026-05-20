@@ -44,6 +44,7 @@ public class ThrownDynamite : ThrownItem
     private void Explode()
     {
         RuntimeManager.PlayOneShot(explosionSoundEvent, transform.position);
+        NoiseManager.Instance.GenerateNoise(transform.position, NoiseData.NoiseType.Explosion);
 
         if (explosionVFXPrefab != null)
         {

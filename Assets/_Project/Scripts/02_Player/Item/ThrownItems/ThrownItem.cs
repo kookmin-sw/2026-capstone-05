@@ -35,7 +35,10 @@ public abstract class ThrownItem : MonoBehaviour
         }
     }
 
-    protected virtual void OnCollisionEnter(Collision collision) { }
+    protected virtual void OnCollisionEnter(Collision collision)
+    { 
+        NoiseManager.Instance.GenerateNoise(transform.position, NoiseData.NoiseType.ThrowImpact);
+    }
 
     /// <summary>
     /// 수명이 다했을 때 실행되는 함수 (기본값: 조용히 파괴)

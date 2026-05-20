@@ -12,5 +12,6 @@ public class FlashlightData : ToolItemData
     {
         useAnimationType = ItemUseAnimationType.None;
         poseType = ItemPoseType.RaiseOneHand;
+        useNoiseType = NoiseData.NoiseType.ButtonPress;
     }
 }

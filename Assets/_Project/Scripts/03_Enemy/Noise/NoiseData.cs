@@ -15,7 +15,8 @@ public class NoiseData : ScriptableObject
         // Status
         Eat, Drink, Hunger, Cough, Pain,
         UnarmedSwing, UnarmedHit,
-        Throw, Explosion, Alarm, ThrowImpact
+        Throw, Explosion, Alarm, ThrowImpact,
+        Consume, ButtonPress
     }
 
     [System.Serializable]
