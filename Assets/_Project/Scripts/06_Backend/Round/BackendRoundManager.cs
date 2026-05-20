@@ -10,6 +10,9 @@ public class BackendRoundManager : NetworkBehaviour
 
     [Header("Round")]
     [SerializeField] private float roundDurationSeconds = 300f;
+    [SerializeField] private float roundEndFadeInSeconds = 0.65f;
+    [SerializeField] private float roundEndBlackHoldSeconds = 0.15f;
+    [SerializeField] private float roundEndFadeOutSeconds = 0.65f;
     public float RoundDurationSeconds => roundDurationSeconds;
 
     [Header("Weather")]
@@ -98,6 +101,7 @@ public class BackendRoundManager : NetworkBehaviour
     
     private Coroutine _offlineTimerCoroutine;
     private float _offlineTimeRemaining;
+    private bool isEndingRound;
 
     public NetworkWeatherState CurrentWeatherState 
     {
@@ -346,6 +350,11 @@ public class BackendRoundManager : NetworkBehaviour
 
     private void StartRound(string reason)
     {
+        if (isEndingRound)
+        {
+            return;
+        }
+
         IsRoundRunning = true;
         RoundTimer = TickTimer.CreateFromSeconds(Runner, roundDurationSeconds);
 
@@ -373,7 +382,19 @@ public class BackendRoundManager : NetworkBehaviour
 
     private void EndRound(string reason)
     {
+        if (isEndingRound)
+        {
+            return;
+        }
+
+        StartCoroutine(EndRoundRoutine(reason));
+    }
+
+    private System.Collections.IEnumerator EndRoundRoutine(string reason)
+    {
         IsRoundRunning = false;
+        isEndingRound = true;
+
         if (!PlayerNetworkSetup.IsOfflineTestMode)
         {
             RoundTimer = TickTimer.None;
@@ -389,6 +410,9 @@ public class BackendRoundManager : NetworkBehaviour
         PlayerPrefs.SetInt(_hostRoundCountPrefKey, CurrentRoundNumber);
         PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(_activeHostSlot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         PlayerPrefs.Save();
+
+        PlayRoundEndFade();
+        yield return new WaitForSecondsRealtime(Mathf.Max(0f, roundEndFadeInSeconds));
 
         RespawnAllPlayersAtSpawner();
         
@@ -409,6 +433,28 @@ public class BackendRoundManager : NetworkBehaviour
         }
 
         Debug.Log($"[BackendRoundManager] 라운드 종료. slot={_activeHostSlot}, round={CurrentRoundNumber}, reason={reason}");
+        yield return new WaitForSecondsRealtime(Mathf.Max(0f, roundEndBlackHoldSeconds + roundEndFadeOutSeconds));
+        isEndingRound = false;
+    }
+
+    private void PlayRoundEndFade()
+    {
+        if (PlayerNetworkSetup.IsOfflineTestMode)
+        {
+            RoundTeleportFade.Play(roundEndFadeInSeconds, roundEndBlackHoldSeconds, roundEndFadeOutSeconds);
+            return;
+        }
+
+        if (Runner != null && Runner.IsRunning)
+        {
+            RpcPlayRoundEndFade(roundEndFadeInSeconds, roundEndBlackHoldSeconds, roundEndFadeOutSeconds);
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcPlayRoundEndFade(float fadeInSeconds, float holdSeconds, float fadeOutSeconds)
+    {
+        RoundTeleportFade.Play(fadeInSeconds, holdSeconds, fadeOutSeconds);
     }
 
     public void RequestSetWeatherState(NetworkWeatherState weatherState)
