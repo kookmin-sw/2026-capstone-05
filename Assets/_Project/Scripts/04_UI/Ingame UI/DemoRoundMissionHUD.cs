@@ -7,7 +7,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
 {
     private const string DemoScenePath = "Assets/_Project/Scenes/00_General/SingleDemoScene_StaticMap.unity";
     private const int MissionTargetKills = 3;
-    private const int CanvasSortingOrder = -1;
+    private const int CanvasSortingOrder = 15;
     private const float TextRefreshInterval = 0.1f;
 
     private static DemoRoundMissionHUD instance;

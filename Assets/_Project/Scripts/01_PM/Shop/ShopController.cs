@@ -151,7 +151,7 @@ namespace Systems.Shop
                 if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.eKey.wasPressedThisFrame)
                 {
                     if (PauseMenuManager.isPaused) return; // 일시정지 중 무시
-                    PauseMenuManager.CloseOpenInGameUI();
+                    CloseShop();
                     return;
                 }
             }

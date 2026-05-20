@@ -40,7 +40,26 @@ public class PauseMenuManager : MonoBehaviour
                 (mainMenuConfirmPanel != null && mainMenuConfirmPanel.activeSelf)) 
                 return;
 
-            if (CloseOpenInGameUI())
+            // 1순위: 인게임 UI(인벤토리, 상점, 루팅)가 열려있다면 해당 UI들을 모두 닫음
+            bool anyInGameUIOpen = false;
+
+            if (Systems.Loot.LootController.Instance != null && Systems.Loot.LootController.Instance.IsOpen)
+            {
+                Systems.Loot.LootController.Instance.CloseLoot();
+                anyInGameUIOpen = true;
+            }
+            if (Systems.Shop.ShopController.Instance != null && Systems.Shop.ShopController.Instance.IsOpen)
+            {
+                Systems.Shop.ShopController.Instance.CloseShop();
+                anyInGameUIOpen = true;
+            }
+            if (Systems.GridInventory.GridInventoryView.Instance != null && Systems.GridInventory.GridInventoryView.Instance.IsOpen)
+            {
+                Systems.GridInventory.GridInventoryView.Instance.CloseInventory(); 
+                anyInGameUIOpen = true;
+            }
+
+            if (anyInGameUIOpen)
             {
                 return; // 인게임 UI만 닫고 일시정지는 띄우지 않음
             }
@@ -49,32 +68,6 @@ public class PauseMenuManager : MonoBehaviour
             if (isPaused) ResumeGame();
             else PauseGame();
         }
-    }
-
-    // Pause menu is intentionally excluded here; only Esc toggles pause.
-    public static bool CloseOpenInGameUI()
-    {
-        bool anyInGameUIOpen = false;
-
-        if (Systems.Loot.LootController.Instance != null && Systems.Loot.LootController.Instance.IsOpen)
-        {
-            Systems.Loot.LootController.Instance.CloseLoot();
-            anyInGameUIOpen = true;
-        }
-
-        if (Systems.Shop.ShopController.Instance != null && Systems.Shop.ShopController.Instance.IsOpen)
-        {
-            Systems.Shop.ShopController.Instance.CloseShop();
-            anyInGameUIOpen = true;
-        }
-
-        if (Systems.GridInventory.GridInventoryView.Instance != null && Systems.GridInventory.GridInventoryView.Instance.IsOpen)
-        {
-            Systems.GridInventory.GridInventoryView.Instance.CloseInventory();
-            anyInGameUIOpen = true;
-        }
-
-        return anyInGameUIOpen;
     }
 
     public static bool IsAnyUIOpen()
