@@ -5,18 +5,10 @@ public static class AuthSession
     private const string LogPrefix = "[06_Backend][AuthSession]";
 
     public static bool IsLoggedIn { get; private set; }
-    public static bool IsOfflineMode { get; private set; }
-    public static bool IsOffline => IsOfflineMode || RoomLauncher.IsDirectScenePlay;
     public static string CurrentUserId { get; private set; } = string.Empty;
     public static string CurrentUsername { get; private set; } = string.Empty;
 
     public static event Action<bool> AuthStateChanged;
-
-    public static void SetOfflineMode()
-    {
-        IsOfflineMode = true;
-        UnityEngine.Debug.Log($"{LogPrefix} 오프라인 모드 활성화됨.");
-    }
 
     public static void SetAuthenticated(UserAccount user)
     {
@@ -31,7 +23,6 @@ public static class AuthSession
     public static void Clear()
     {
         IsLoggedIn = false;
-        IsOfflineMode = false;
         CurrentUserId = string.Empty;
         CurrentUsername = string.Empty;
 

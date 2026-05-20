@@ -24,12 +24,12 @@ public class BackendRoundManager : NetworkBehaviour
     {
         get 
         {
-            if (AuthSession.IsOffline) return _offlineIsRoundRunning;
+            if (PlayerNetworkSetup.IsOfflineTestMode) return _offlineIsRoundRunning;
             return Object != null && Object.IsValid && NetworkIsRoundRunning;
         }
         private set
         {
-            if (AuthSession.IsOffline) _offlineIsRoundRunning = value;
+            if (PlayerNetworkSetup.IsOfflineTestMode) _offlineIsRoundRunning = value;
             else NetworkIsRoundRunning = value;
         }
     }
@@ -40,10 +40,10 @@ public class BackendRoundManager : NetworkBehaviour
     private int _offlineCurrentRoundNumber;
     public int CurrentRoundNumber 
     {
-        get => AuthSession.IsOffline ? _offlineCurrentRoundNumber : NetworkCurrentRoundNumber;
+        get => PlayerNetworkSetup.IsOfflineTestMode ? _offlineCurrentRoundNumber : NetworkCurrentRoundNumber;
         private set
         {
-            if (AuthSession.IsOffline) _offlineCurrentRoundNumber = value;
+            if (PlayerNetworkSetup.IsOfflineTestMode) _offlineCurrentRoundNumber = value;
             else NetworkCurrentRoundNumber = value;
         }
     }
@@ -52,10 +52,10 @@ public class BackendRoundManager : NetworkBehaviour
     private int _offlineWeatherStateRaw;
     private int WeatherStateRaw
     {
-        get => AuthSession.IsOffline ? _offlineWeatherStateRaw : NetworkWeatherStateRaw;
+        get => PlayerNetworkSetup.IsOfflineTestMode ? _offlineWeatherStateRaw : NetworkWeatherStateRaw;
         set
         {
-            if (AuthSession.IsOffline) _offlineWeatherStateRaw = value;
+            if (PlayerNetworkSetup.IsOfflineTestMode) _offlineWeatherStateRaw = value;
             else NetworkWeatherStateRaw = value;
         }
     }
@@ -64,10 +64,10 @@ public class BackendRoundManager : NetworkBehaviour
     private int _offlineSharedGold;
     public int SharedGold 
     {
-        get => AuthSession.IsOffline ? _offlineSharedGold : NetworkSharedGold;
+        get => PlayerNetworkSetup.IsOfflineTestMode ? _offlineSharedGold : NetworkSharedGold;
         set
         {
-            if (AuthSession.IsOffline) 
+            if (PlayerNetworkSetup.IsOfflineTestMode) 
             {
                 _offlineSharedGold = value;
                 OnSharedGoldChanged();
@@ -107,7 +107,7 @@ public class BackendRoundManager : NetworkBehaviour
     {
         get
         {
-            if (AuthSession.IsOffline) return (NetworkWeatherState)WeatherStateRaw;
+            if (PlayerNetworkSetup.IsOfflineTestMode) return (NetworkWeatherState)WeatherStateRaw;
             if (Runner == null || !Runner.IsRunning || Object == null || !Object.IsValid)
             {
                 return initialWeatherState;
@@ -120,7 +120,7 @@ public class BackendRoundManager : NetworkBehaviour
     {
         get
         {
-            if (AuthSession.IsOffline) return _offlineTimeRemaining;
+            if (PlayerNetworkSetup.IsOfflineTestMode) return _offlineTimeRemaining;
             if (Runner == null || !Runner.IsRunning || Object == null || !Object.IsValid)
             {
                 return 0f;
@@ -137,7 +137,7 @@ public class BackendRoundManager : NetworkBehaviour
 
     private void Start()
     {
-        if (AuthSession.IsOffline)
+        if (PlayerNetworkSetup.IsOfflineTestMode)
         {
             if (Instance == null)
             {
@@ -220,7 +220,7 @@ public class BackendRoundManager : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
-        if (AuthSession.IsOffline) return; // 싱글 모드에서는 무시
+        if (PlayerNetworkSetup.IsOfflineTestMode) return; // 싱글 모드에서는 무시
         
         if (Instance != this || Object == null || !Object.IsValid)
         {
@@ -287,7 +287,7 @@ public class BackendRoundManager : NetworkBehaviour
 
     public void StartRoundOfflineFallback()
     {
-        if (!AuthSession.IsOffline) return;
+        if (!PlayerNetworkSetup.IsOfflineTestMode) return;
         
         // 싱글 모드에서는 IsRoundRunning 프로퍼티를 통해 로컬 변수에 할당됨
         IsRoundRunning = true;
@@ -322,7 +322,7 @@ public class BackendRoundManager : NetworkBehaviour
 
     public void ForceEndRoundSoon()
     {
-        if (AuthSession.IsOffline)
+        if (PlayerNetworkSetup.IsOfflineTestMode)
         {
             if (IsRoundRunning)
             {
@@ -395,7 +395,7 @@ public class BackendRoundManager : NetworkBehaviour
         IsRoundRunning = false;
         isEndingRound = true;
 
-        if (!AuthSession.IsOffline)
+        if (!PlayerNetworkSetup.IsOfflineTestMode)
         {
             RoundTimer = TickTimer.None;
         }
@@ -416,7 +416,7 @@ public class BackendRoundManager : NetworkBehaviour
 
         RespawnAllPlayersAtSpawner();
         
-        if (AuthSession.IsOffline)
+        if (PlayerNetworkSetup.IsOfflineTestMode)
         {
             if (Systems.GridInventory.GridInventory.Instance != null && Systems.GridInventory.GridInventory.Instance.Controller != null)
             {
@@ -439,7 +439,7 @@ public class BackendRoundManager : NetworkBehaviour
 
     private void PlayRoundEndFade()
     {
-        if (AuthSession.IsOffline)
+        if (PlayerNetworkSetup.IsOfflineTestMode)
         {
             RoundTeleportFade.Play(roundEndFadeInSeconds, roundEndBlackHoldSeconds, roundEndFadeOutSeconds);
             return;
@@ -459,7 +459,7 @@ public class BackendRoundManager : NetworkBehaviour
 
     public void RequestSetWeatherState(NetworkWeatherState weatherState)
     {
-        if (AuthSession.IsOffline)
+        if (PlayerNetworkSetup.IsOfflineTestMode)
         {
             SetWeatherStateInternal(weatherState);
             return;
@@ -583,7 +583,7 @@ public class BackendRoundManager : NetworkBehaviour
 
     private void BroadcastWeatherState(bool force = false)
     {
-        if (!AuthSession.IsOffline && (Runner == null || !Runner.IsRunning || Object == null || !Object.IsValid)) return;
+        if (!PlayerNetworkSetup.IsOfflineTestMode && (Runner == null || !Runner.IsRunning || Object == null || !Object.IsValid)) return;
 
         NetworkWeatherState weatherState = CurrentWeatherState;
         if (!force && _lastBroadcastWeatherState == weatherState)
