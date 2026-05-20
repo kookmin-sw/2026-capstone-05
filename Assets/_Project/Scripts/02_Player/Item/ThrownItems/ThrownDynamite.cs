@@ -68,7 +68,7 @@ public class ThrownDynamite : ThrownItem
                     damageAmount = explosionDamage,
                     hitPoint = hit.ClosestPoint(transform.position),
                     hitNormal = (hit.transform.position - transform.position).normalized,
-                    attacker = gameObject
+                    attacker = owner != null ? owner : gameObject
                 };
                 damageable.TakeDamage(damageInfo);
             }

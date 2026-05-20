@@ -42,6 +42,7 @@ public class ThrowableBehaviour : EquippedItemBehaviour
                     currentRotation = itemInstance.currentRotation
                 };
                 thrownItem.Initialize(instanceCopy);
+                thrownItem.SetOwner(player.gameObject);
             }
             if (projectile.TryGetComponent(out Rigidbody rb))
             {

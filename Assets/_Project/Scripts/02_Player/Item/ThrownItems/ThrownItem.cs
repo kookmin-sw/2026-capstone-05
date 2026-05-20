@@ -7,6 +7,7 @@ using UnityEngine;
 public abstract class ThrownItem : MonoBehaviour
 {
     protected ItemInstance itemInstance;
+    protected GameObject owner;
 
     [Header("Thrown Item Settings")]
     [SerializeField] protected float lifeTime = 5f;
@@ -17,8 +18,14 @@ public abstract class ThrownItem : MonoBehaviour
     public virtual void Initialize(ItemInstance instance)
     {
         itemInstance = instance;
+        owner = null;
         currentLifeTimer = 0f;
         isTriggered = false;
+    }
+
+    public void SetOwner(GameObject ownerObject)
+    {
+        owner = ownerObject;
     }
 
     protected virtual void Update()

@@ -20,6 +20,7 @@ public class EnemyHealth : NetworkBehaviour, IDamageable
     [Networked] private float NetworkCurrentHealth { get; set; }
 
     public event Action<EnemyHealth> Died;
+    public static event Action<EnemyHealth, GameObject> AnyDied;
 
     public float CurrentHealth => enemy != null && enemy.IsLocalSimulationActive
         ? localCurrentHealth
@@ -66,6 +67,7 @@ public class EnemyHealth : NetworkBehaviour, IDamageable
         {
             NetworkCurrentHealth = 0f;
             Died?.Invoke(this);
+            AnyDied?.Invoke(this, info.attacker);
             enemy.StateMachine.ChangeState(enemy.DeadState);
             return;
         }
@@ -85,6 +87,7 @@ public class EnemyHealth : NetworkBehaviour, IDamageable
         {
             localCurrentHealth = 0f;
             Died?.Invoke(this);
+            AnyDied?.Invoke(this, info.attacker);
             enemy.StateMachine.ChangeState(enemy.DeadState);
             return;
         }

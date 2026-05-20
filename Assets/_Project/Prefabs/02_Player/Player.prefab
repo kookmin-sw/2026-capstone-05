@@ -555,11 +555,11 @@ MonoBehaviour:
   staminaCrouchWalkRegenRate: 15
   staminaWalkRegenRate: 5
   staminaAirborneRegenRate: 0
-  satietyIdleDecayRate: 0.1
-  satietyWalkDecayRate: 0.15
-  satietySprintDecayRate: 0.25
-  satietyCrouchWalkDecayRate: 0.12
-  satietyAirborneDecayRate: 0.1
+  satietyIdleDecayRate: 0.3
+  satietyWalkDecayRate: 0.45
+  satietySprintDecayRate: 0.75
+  satietyCrouchWalkDecayRate: 0.36
+  satietyAirborneDecayRate: 0.3
   recoilReturnSpeed: 3
 --- !u!114 &1374220835064663929
 MonoBehaviour:
@@ -587,7 +587,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCondition
   health:
     maxValue: 100
-    startValue: 50
+    startValue: 80
     increaseRate: 0
     decreaseRate: 0
     currentValue: 0
@@ -612,8 +612,8 @@ MonoBehaviour:
   conditionDamageInterval: 2
   hungerDamageRate: 1
   coldDamageRate: 1
-  indoorColdnessDecreaseRate: 0.4
-  outdoorColdnessIncreaseRate: 0.2
+  indoorColdnessDecreaseRate: 1.5
+  outdoorColdnessIncreaseRate: 1
   damageVFXPrefab: {fileID: 2738786527308404416, guid: c5173e1e6866d4e468abd600a7a4879d, type: 3}
   damageSound:
     Guid:

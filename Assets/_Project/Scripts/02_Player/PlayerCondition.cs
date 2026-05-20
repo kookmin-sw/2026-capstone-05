@@ -86,7 +86,7 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
         Collider[] overlappingColliders = Physics.OverlapSphere(transform.position, 0.1f);
         foreach (var collider in overlappingColliders)
         {
-            if (collider.CompareTag("IndoorsTrigger"))
+            if (collider.TryGetComponent<IndoorsTrigger>(out var indoorsTrigger))
             {
                 SetIndoors(true);
                 break;
