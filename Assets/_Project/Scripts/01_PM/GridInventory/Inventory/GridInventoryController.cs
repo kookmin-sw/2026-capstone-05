@@ -139,7 +139,7 @@ namespace Systems.GridInventory {
 
                 if (BackendPlayerNetworkSync.LocalInstance != null && BackendPlayerNetworkSync.LocalInstance.IsNetworkReady) {
                     BackendPlayerNetworkSync.LocalInstance.RequestDropItem(item.Data.itemID, item.currentStackCount, dropPosition);
-                } else if (AuthSession.IsOffline) {
+                } else if (PlayerNetworkSetup.IsOfflineTestMode) {
                     if (item.Data.pickupPrefab != null) {
                         var obj = UnityEngine.Object.Instantiate(item.Data.pickupPrefab, dropPosition, Quaternion.identity);
                         
@@ -368,7 +368,7 @@ namespace Systems.GridInventory {
 
         /* 수동 저장/로드 주석 처리 (라운드 단위 자동 저장으로 변경)
         void HandleLoad() {
-            if (AuthSession.IsOffline) {
+            if (PlayerNetworkSetup.IsOfflineTestMode) {
                 // 싱글플레이어 오프라인 모드에서는 로컬 불러오기
                 GridInventorySaveSystem.LoadInventory(model);
             } else if (BackendPlayerNetworkSync.LocalInstance != null) {

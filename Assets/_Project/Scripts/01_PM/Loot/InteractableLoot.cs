@@ -84,7 +84,7 @@ namespace Systems.Loot
 
             if (LootNetworkSync.Instance == null)
             {
-                if (AuthSession.IsOffline)
+                if (PlayerNetworkSetup.IsOfflineTestMode)
                 {
                     var instance = LootNetworkSync.Instance; // Property getter handles creation
                     if (instance == null) return;
@@ -108,7 +108,7 @@ namespace Systems.Loot
                 }
             }
 
-            bool canSeedLoot = LootNetworkSync.Instance.HasStateAuthority || AuthSession.IsOffline;
+            bool canSeedLoot = LootNetworkSync.Instance.HasStateAuthority || PlayerNetworkSetup.IsOfflineTestMode;
             if (isEmpty && canSeedLoot)
             {
                 bool shouldPopulate = true;
@@ -139,7 +139,7 @@ namespace Systems.Loot
                 return false;
             }
 
-            if (LootNetworkSync.Instance != null && !AuthSession.IsOffline)
+            if (LootNetworkSync.Instance != null && !PlayerNetworkSetup.IsOfflineTestMode)
             {
                 if (LootNetworkSync.Instance.ActiveLootUsers.TryGet(StorageId, out Fusion.PlayerRef currentUser))
                 {
@@ -175,7 +175,7 @@ namespace Systems.Loot
             {
                 Debug.LogWarning("[InteractableLoot] LootNetworkSync is missing.");
                 // 오프라인 모드일 때 인스턴스 강제 생성 시도
-                if (AuthSession.IsOffline)
+                if (PlayerNetworkSetup.IsOfflineTestMode)
                 {
                     var instance = LootNetworkSync.Instance; // Property getter handles creation
                     if (instance == null) return;

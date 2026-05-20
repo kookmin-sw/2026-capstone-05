@@ -91,19 +91,6 @@ public sealed class MainMenuAuthController : MonoBehaviour
             SetStatus(result.IsSuccess
                 ? "서버/DB 연결 확인 완료"
                 : $"서버/DB 연결 실패: {BuildUserMessage(result)}", result.IsSuccess ? successStatusColor : errorStatusColor);
-
-            if (!result.IsSuccess && result.Code == AuthResultCode.NetworkError)
-            {
-                Debug.LogWarning($"{LogPrefix} 서버 연결 불가로 오프라인 모드로 자동 진입합니다.");
-                AuthSession.SetOfflineMode();
-                AuthSession.SetAuthenticated(new UserAccount 
-                { 
-                    Id = "offline-user", 
-                    Username = "OfflinePlayer", 
-                    CreatedAt = System.DateTime.Now 
-                });
-                ExecutePostLoginFlow();
-            }
         }));
 
         Debug.Log($"{LogPrefix} 초기화 완료. api={normalizedApiBaseUrl}");

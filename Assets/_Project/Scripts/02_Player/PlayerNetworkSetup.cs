@@ -11,8 +11,6 @@ public interface IPlayerNetworkConfigurable
 public class PlayerNetworkSetup : MonoBehaviour
 {
     private bool isLocalPlayer = false;
-
-    /*
     [Header("Network Test")]
     public bool isLocalPlayerTest = true;
 
@@ -33,7 +31,6 @@ public class PlayerNetworkSetup : MonoBehaviour
             GetComponent<PlayerCameraHandler>().TestLocalCameraSetup();
         }
     }
-    */
 
     public void InitializeNetworkState(bool _isLocalPlayer)
     {
