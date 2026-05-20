@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using DG.Tweening;
 
 [DefaultExecutionOrder(-10000)]
 public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
@@ -91,32 +92,13 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         DontDestroyOnLoad(gameObject);
         SceneManager.sceneLoaded += OnSceneLoaded;
         Debug.Log($"{LogPrefix} Awake 완료. sceneLoaded 콜백 등록.");
-
-        Scene activeScene = SceneManager.GetActiveScene();
-        if (IsGameScene(activeScene.name))
-        {
-            if (!AuthSession.IsLoggedIn && !AuthSession.IsOfflineMode)
-            {
-                IsDirectScenePlay = true;
-                Debug.LogWarning($"{LogPrefix} 게임 씬 직접 실행 감지. 오프라인 모드로 확정합니다.");
-            }
-        }
     }
 
     private void Start()
     {
         Scene activeScene = SceneManager.GetActiveScene();
         Debug.Log($"{LogPrefix} Start 진입. 현재 씬에서 즉시 메뉴 바인딩 시도. scene={activeScene.name}");
-        if (TryBindMenuUi(activeScene.name))
-        {
-            UnlockCursorForMenu();
-        }
-
-        if (IsDirectScenePlay && _runner == null)
-        {
-            Debug.LogWarning($"{LogPrefix} 게임 씬 직접 실행 감지. GameMode.Single로 자동 접속합니다.");
-            _ = StartGameAsync("DirectPlay", "DirectSession", GameMode.Single);
-        }
+        HandleSceneReady(activeScene, "Start");
     }
 
     private void OnDestroy()
@@ -159,12 +141,33 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        HandleSceneReady(scene, $"sceneLoaded({mode})");
+    }
+
+    private void HandleSceneReady(Scene scene, string reason)
+    {
         EnsureRoomCodeOverlay(scene);
 
         if (TryBindMenuUi(scene.name))
         {
             UnlockCursorForMenu();
         }
+
+        TryStartDirectScenePlay(scene, reason);
+    }
+
+    private void TryStartDirectScenePlay(Scene scene, string reason)
+    {
+        if (!IsGameScene(scene.name))
+            return;
+
+        if (_isConnecting || (_runner != null && _runner.IsRunning))
+            return;
+
+        // 메인 메뉴를 거치지 않고 게임 씬을 직접 실행한 경우 자동 Single 모드 시작
+        IsDirectScenePlay = true;
+        Debug.LogWarning($"{LogPrefix} 게임 씬 직접 실행 감지. GameMode.Single로 자동 접속합니다. reason={reason}, scene={scene.name}");
+        _ = StartGameAsync("DirectPlay", "DirectSession", GameMode.Single);
     }
 
     private static void UnlockCursorForMenu()
@@ -566,6 +569,13 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         {
             Debug.Log($"{LogPrefix} 오프라인 모드: 호스트/참가 선택 창을 건너뛰고 호스트 모드로 자동 진입합니다.");
             _hostButton.onClick.Invoke();
+
+            UIPanelController hostJoinPanel = _hostButton.GetComponentInParent<UIPanelController>();
+            if (hostJoinPanel != null)
+            {
+                hostJoinPanel.GetComponent<RectTransform>().DOKill();
+                hostJoinPanel.gameObject.SetActive(false);
+            }
         }
     }
 
@@ -776,7 +786,7 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
             return;
         }
 
-        if (AuthSession.IsOfflineMode)
+        if (AuthSession.IsOffline)
         {
             mode = GameMode.Single;
             Debug.Log($"{LogPrefix} 오프라인 모드 감지: GameMode를 Single로 강제 전환합니다.");
