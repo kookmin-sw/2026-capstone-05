@@ -84,6 +84,7 @@ public class PlayerRelativeParticleFollower : MonoBehaviour, IPlayerNetworkConfi
         ResolveFollowTarget();
         if (followTarget == null)
         {
+            UpdateEmissionFade();
             return;
         }
 
