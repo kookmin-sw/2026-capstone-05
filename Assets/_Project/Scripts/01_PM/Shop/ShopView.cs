@@ -306,7 +306,7 @@ namespace Systems.Shop
             isCurrentlySelling = false;
             currentSelectedItem = item;
             maxQuantity = CalculateMaxBuyQuantity(item);
-            currentQuantity = maxQuantity > 0 ? 1 : 0;
+            currentQuantity = 1;
             
             popupItemName.text = item.ItemData.ItemNameString;
             popupItemPrice.text = $"{item.BuyPrice} Gold";
@@ -391,16 +391,13 @@ namespace Systems.Shop
             if (item == null || item.ItemData == null)
                 return 0;
 
-            int stackLimit = Mathf.Max(1, item.ItemData.maxStackSize);
-            int affordableLimit = item.BuyPrice > 0 ? currentGold / item.BuyPrice : stackLimit;
-
-            return Mathf.Min(stackLimit, Mathf.Max(0, affordableLimit));
+            return Mathf.Max(1, item.ItemData.maxStackSize);
         }
 
         private void RefreshBuyQuantityLimit()
         {
             maxQuantity = CalculateMaxBuyQuantity(currentSelectedItem);
-            currentQuantity = maxQuantity > 0 ? Mathf.Clamp(currentQuantity, 1, maxQuantity) : 0;
+            currentQuantity = Mathf.Clamp(currentQuantity, 1, maxQuantity);
             UpdateMaxQuantityLabel();
             UpdateQuantityUI();
         }

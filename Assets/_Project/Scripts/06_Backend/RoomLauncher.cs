@@ -944,7 +944,7 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
             EnsureRunnerReady();
 
-            ClearNetworkRuntimeState();
+            ClearNetworkRuntimeState(!IsGameScene(SceneManager.GetActiveScene().name));
 
             int gameSceneBuildIndex = ResolveGameSceneBuildIndex();
             if (gameSceneBuildIndex < 0)
@@ -1141,13 +1141,19 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
         Destroy(runnerGo);
     }
 
-    private void ClearNetworkRuntimeState()
+    private void ClearNetworkRuntimeState(bool clearSceneRegistries = true)
     {
         _spawnedPlayers.Clear();
         _configuredLocalStates.Clear();
         _pendingAuthorityChecks.Clear();
         _cachedLocalPlayerObject = null;
         _cachedLocalInputHandler = null;
+        BackendPlayerNetworkSync.ClearRuntimeState();
+
+        if (clearSceneRegistries)
+        {
+            ItemPickup.ClearRuntimeState();
+        }
     }
 
     private NetworkProjectConfig BuildStartGameConfig()

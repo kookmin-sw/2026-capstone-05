@@ -130,13 +130,26 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
             }
             else
             {
+                float conditionDamage = 0f;
+
                 if (satiety.currentValue <= 0f)
                 {
-                    health.Subtract(hungerDamageRate);
+                    conditionDamage += hungerDamageRate;
                 }
+
                 if (coldness.currentValue >= coldness.maxValue)
                 {
-                    health.Subtract(coldDamageRate);
+                    conditionDamage += coldDamageRate;
+                }
+
+                if (conditionDamage > 0f)
+                {
+                    health.Subtract(conditionDamage);
+
+                    if (!IsAlive)
+                    {
+                        RaiseDeathEvent();
+                    }
                 }
 
                 conditionDamageTimer = conditionDamageInterval;
@@ -166,14 +179,7 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
 
             if (!IsAlive)
             {
-                if (!hasRaisedDeathEvent)
-                {
-                    hasRaisedDeathEvent = true;
-                    OnDiedEvent?.Invoke();
-                }
-                Debug.Log("Player has died.");
-
-                RuntimeManager.PlayOneShot(deathSound, transform.position);
+                RaiseDeathEvent();
             }
             else
             {
@@ -265,6 +271,20 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
             coldness.increaseRate = outdoorColdnessIncreaseRate;
             coldness.decreaseRate = 0f;
         }
+    }
+
+    private void RaiseDeathEvent()
+    {
+        if (hasRaisedDeathEvent)
+        {
+            return;
+        }
+
+        hasRaisedDeathEvent = true;
+        OnDiedEvent?.Invoke();
+
+        Debug.Log("Player has died.");
+        RuntimeManager.PlayOneShot(deathSound, transform.position);
     }
 
     private IEnumerator ReturnVFXToPoolAfterDelay(GameObject vfx, float delay)

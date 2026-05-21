@@ -19,6 +19,17 @@ public class ItemPickup : MonoBehaviour, IInteractable
     private readonly string interactPromptTable = "InteractPrompts";
     private readonly string interactPromptKey = "PickUp";
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStaticRuntimeState()
+    {
+        ClearRuntimeState();
+    }
+
+    public static void ClearRuntimeState()
+    {
+        PickupsByKey.Clear();
+    }
+
     private void Awake()
     {
         _pickupKey = BuildStablePickupKey();

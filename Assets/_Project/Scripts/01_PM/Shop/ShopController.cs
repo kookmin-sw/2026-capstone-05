@@ -321,8 +321,9 @@ namespace Systems.Shop
                     return;
                 }
                 
-                shopView.SetDialogue("* \"탁월한 선택이야!\"");
                 HandleCancelPlacement(); // 배치 모드 종료 (돌아가기)
+                shopView.SetDialogue("* \"탁월한 선택이야!\"");
+                MascotEventManager.TriggerThankYou();
             }
             else
             {

@@ -44,6 +44,19 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
 
     public bool IsNetworkReady => Runner != null && Object != null;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStaticRuntimeState()
+    {
+        ClearRuntimeState();
+    }
+
+    public static void ClearRuntimeState()
+    {
+        LocalInstance = null;
+        ClaimedPickupKeys.Clear();
+        ClaimedDoorKeys.Clear();
+    }
+
     public override void Spawned()
     {
         if (HasInputAuthority)
