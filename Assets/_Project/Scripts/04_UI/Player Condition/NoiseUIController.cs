@@ -3,6 +3,8 @@ using UnityEngine.UI;
 
 public class NoiseUIController : MonoBehaviour
 {
+    private const int SpeakerLevelCount = 4;
+
     [Header("References")]
     [SerializeField] private PlayerNoiseListener noiseListener;
     [SerializeField] private float playerSearchInterval = 0.5f;
@@ -10,6 +12,12 @@ public class NoiseUIController : MonoBehaviour
     [Header("개별 블록 UI 연결 (1~30)")]
     public Image[] noiseBars; 
     public Image[] neonBars;
+
+    [Header("Speaker Icon UI")]
+    [SerializeField] private Image[] speakerIconLevels = new Image[SpeakerLevelCount];
+    [SerializeField, Range(0f, 1f)] private float speakerLevel1Threshold = 0.2f;
+    [SerializeField, Range(0f, 1f)] private float speakerLevel2Threshold = 0.5f;
+    [SerializeField, Range(0f, 1f)] private float speakerLevel3Threshold = 0.8f;
 
     [Header("Settings")]
     [SerializeField] private float smoothSpeed = 8f; 
@@ -28,10 +36,13 @@ public class NoiseUIController : MonoBehaviour
     private float targetFill = 0f;          
     private float currentFill = 0f; 
     private float playerSearchTimer;
+    private int currentSpeakerLevel = -1;
 
     private void Start()
     {
         TryBindLocalPlayer();
+        TryAutoBindSpeakerIcons();
+        UpdateSpeakerIcon(0f);
     }
 
     private void Update()
@@ -63,6 +74,8 @@ public class NoiseUIController : MonoBehaviour
             currentNeonAlpha = Mathf.Lerp(minNeonAlpha, maxNeonAlpha, wave);
             currentNoiseAlpha = Mathf.Lerp(minNoiseAlpha, 1.0f, wave);
         }
+
+        UpdateSpeakerIcon(currentFill);
 
         // 4. 1번부터 30번까지 루프를 돌며 각 블록 켜고 끄기 및 색상 적용
         for (int i = 0; i < totalBars; i++)
@@ -101,9 +114,93 @@ public class NoiseUIController : MonoBehaviour
         {
             return;
         }
+
+        if (NoiseManager.Instance == null || NoiseManager.Instance.MaxDecibel <= 0f)
+        {
+            targetFill = 0f;
+            return;
+        }
+
         float currentDecibel = noiseListener.CurrentDecibel;
         float maxDecibel = NoiseManager.Instance.MaxDecibel; 
         targetFill = Mathf.Clamp01(currentDecibel / maxDecibel);
+    }
+
+    private void UpdateSpeakerIcon(float normalizedDecibel)
+    {
+        if (speakerIconLevels == null || speakerIconLevels.Length == 0)
+            return;
+
+        int nextLevel = GetSpeakerLevel(normalizedDecibel);
+        if (currentSpeakerLevel == nextLevel)
+            return;
+
+        currentSpeakerLevel = nextLevel;
+        for (int i = 0; i < speakerIconLevels.Length; i++)
+        {
+            if (speakerIconLevels[i] != null)
+            {
+                speakerIconLevels[i].enabled = i == currentSpeakerLevel;
+            }
+        }
+    }
+
+    private int GetSpeakerLevel(float normalizedDecibel)
+    {
+        if (normalizedDecibel <= 0f)
+            return 0;
+
+        if (normalizedDecibel >= speakerLevel3Threshold)
+            return 3;
+
+        if (normalizedDecibel >= speakerLevel2Threshold)
+            return 2;
+
+        if (normalizedDecibel >= speakerLevel1Threshold)
+            return 1;
+
+        return 0;
+    }
+
+    private void TryAutoBindSpeakerIcons()
+    {
+        EnsureSpeakerIconArray();
+
+        Transform searchRoot = transform.parent != null ? transform.parent : transform;
+        Image[] candidateImages = searchRoot.GetComponentsInChildren<Image>(true);
+
+        for (int level = 0; level < SpeakerLevelCount; level++)
+        {
+            if (speakerIconLevels[level] != null)
+                continue;
+
+            string expectedName = $"Speaker_Icon_{level}";
+            foreach (Image candidate in candidateImages)
+            {
+                if (candidate != null && candidate.name == expectedName)
+                {
+                    speakerIconLevels[level] = candidate;
+                    break;
+                }
+            }
+        }
+    }
+
+    private void EnsureSpeakerIconArray()
+    {
+        if (speakerIconLevels != null && speakerIconLevels.Length >= SpeakerLevelCount)
+            return;
+
+        Image[] resizedIcons = new Image[SpeakerLevelCount];
+        if (speakerIconLevels != null)
+        {
+            for (int i = 0; i < speakerIconLevels.Length; i++)
+            {
+                resizedIcons[i] = speakerIconLevels[i];
+            }
+        }
+
+        speakerIconLevels = resizedIcons;
     }
 
     private void TryBindLocalPlayerByInterval()
