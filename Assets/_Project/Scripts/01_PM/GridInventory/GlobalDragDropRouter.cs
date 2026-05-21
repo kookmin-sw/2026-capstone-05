@@ -1,6 +1,5 @@
 using UnityEngine;
 using Systems.Loot;
-using System.Collections.Generic;
 
 namespace Systems.GridInventory
 {
@@ -13,9 +12,6 @@ namespace Systems.GridInventory
 
     public static class GlobalDragDropRouter
     {
-        private const float GroundDropScatterRadius = 0.5f;
-        private const int QuickslotCount = 4;
-
         public static void ProcessDrop(ItemInstance item, DragSource source, int sourceIndex, Vector2 screenPos, GridInventoryModel sourceModel = null)
         {
             if (item == null) return;
@@ -64,25 +60,6 @@ namespace Systems.GridInventory
             DropOnGround(item, source, sourceIndex, sourceModel);
         }
 
-        public static void DropAllPlayerItemsAt(Vector3 originPosition)
-        {
-            var droppedItems = new HashSet<ItemInstance>();
-
-            DropQuickslotItems(originPosition, droppedItems);
-            DropInventoryGridItems(originPosition, droppedItems);
-        }
-
-        public static void DropItemOnGround(ItemInstance item, Vector3 originPosition)
-        {
-            if (item == null || item.Data == null)
-                return;
-
-            Vector2 randomOffset = UnityEngine.Random.insideUnitCircle * GroundDropScatterRadius;
-            Vector3 dropPosition = originPosition + new Vector3(randomOffset.x, 0, randomOffset.y);
-
-            SpawnDroppedItem(item, dropPosition);
-        }
-
         private static void DropOnGround(ItemInstance item, DragSource source, int sourceIndex, GridInventoryModel sourceModel)
         {
             if (!LocalPlayerReferenceResolver.TryGetLocalPlayer(out PlayerController player))
@@ -91,6 +68,9 @@ namespace Systems.GridInventory
                 RevertDrop(item, source, sourceIndex, sourceModel);
                 return;
             }
+
+            Vector2 randomOffset = UnityEngine.Random.insideUnitCircle * 0.5f;
+            Vector3 dropPosition = player.transform.position + new Vector3(randomOffset.x, 0, randomOffset.y);
 
             // Remove from source
             if (source == DragSource.Quickslot)
@@ -103,58 +83,7 @@ namespace Systems.GridInventory
                 sourceModel.Items.Invoke();
             }
 
-            DropItemOnGround(item, player.transform.position);
-        }
-
-        private static void DropQuickslotItems(Vector3 originPosition, HashSet<ItemInstance> droppedItems)
-        {
-            if (QuickslotUIController.Instance == null)
-                return;
-
-            for (int i = 0; i < QuickslotCount; i++)
-            {
-                ItemInstance item = QuickslotUIController.Instance.GetItem(i);
-                if (item == null || item.Data == null)
-                    continue;
-
-                QuickslotUIController.Instance.RemoveItemFromSlot(i);
-                if (droppedItems.Add(item))
-                {
-                    DropItemOnGround(item, originPosition);
-                }
-            }
-        }
-
-        private static void DropInventoryGridItems(Vector3 originPosition, HashSet<ItemInstance> droppedItems)
-        {
-            GridInventoryModel model = GridInventory.Instance?.Controller?.Model;
-            if (model == null)
-                return;
-
-            var items = new List<ItemInstance>();
-            var uniqueItems = new HashSet<ItemInstance>();
-
-            for (int i = 0; i < model.Items.Length; i++)
-            {
-                ItemInstance item = model.Get(i);
-                if (item != null && item.Data != null && uniqueItems.Add(item))
-                {
-                    items.Add(item);
-                }
-            }
-
-            foreach (ItemInstance item in items)
-            {
-                model.TryRemove(item);
-                if (droppedItems.Add(item))
-                {
-                    DropItemOnGround(item, originPosition);
-                }
-            }
-        }
-
-        private static void SpawnDroppedItem(ItemInstance item, Vector3 dropPosition)
-        {
+            // Spawn item
             if (BackendPlayerNetworkSync.LocalInstance != null && BackendPlayerNetworkSync.LocalInstance.IsNetworkReady)
             {
                 BackendPlayerNetworkSync.LocalInstance.RequestDropItem(item.Data.itemID, item.currentStackCount, dropPosition);

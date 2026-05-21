@@ -1,5 +1,4 @@
 using System.Collections;
-using Systems.GridInventory;
 using UnityEngine;
 
 [RequireComponent(typeof(PlayerCondition))]
@@ -11,14 +10,12 @@ public class PlayerRespawn : MonoBehaviour
 
     private PlayerCondition condition;
     private PlayerController controller;
-    private BackendPlayerNetworkSync networkSync;
     private bool isRespawning;
 
     private void Awake()
     {
         condition = GetComponent<PlayerCondition>();
         controller = GetComponent<PlayerController>();
-        networkSync = GetComponent<BackendPlayerNetworkSync>();
     }
 
     private void Start()
@@ -55,13 +52,10 @@ public class PlayerRespawn : MonoBehaviour
     private IEnumerator RespawnRoutine()
     {
         isRespawning = true;
-        Vector3 deathPosition = transform.position;
 
         controller.canAction = false;
         controller.canLook = false;
         controller.currentVelocity = Vector3.zero;
-
-        DropInventoryAtDeathPosition(deathPosition);
 
         yield return new WaitForSeconds(respawnDelaySeconds);
 
@@ -73,20 +67,6 @@ public class PlayerRespawn : MonoBehaviour
         controller.canLook = true;
 
         isRespawning = false;
-    }
-
-    private void DropInventoryAtDeathPosition(Vector3 deathPosition)
-    {
-        if (!ShouldDropLocalInventoryOnDeath())
-            return;
-
-        GlobalDragDropRouter.DropAllPlayerItemsAt(deathPosition);
-        controller.Equipment?.UnequipItem();
-    }
-
-    private bool ShouldDropLocalInventoryOnDeath()
-    {
-        return networkSync == null || networkSync.Object == null || networkSync.Object.HasInputAuthority;
     }
 
     [ContextMenu("Spawn At Spawner")]
