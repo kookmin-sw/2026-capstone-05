@@ -4805,7 +4805,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorInteractable
   doorTransform: {fileID: 5283433590606487003}
-  objectName: "\uBB38"
   openAngle: 90
   rotationSpeed: 180
   panelLocalDirection: {x: -1, y: 0, z: 0}
@@ -4825,8 +4824,6 @@ MonoBehaviour:
       Data3: 988873377
       Data4: -1806667531
     Path: event:/SFX/Player/Door_Close
-  openPrompt: "[E] \uC5F4\uAE30"
-  closePrompt: "[E] \uB2EB\uAE30"
   refreshPromptAfterInteract: 1
 --- !u!1 &6026783628538313846 stripped
 GameObject:
@@ -5789,8 +5786,6 @@ MonoBehaviour:
   bunkerDoorPath: Bunker_door
   exitWorldOffset: {x: 0, y: 0, z: 0}
   exitGroundClearance: 0.05
-  objectName: "\uB098\uAC00\uAE30"
-  interactPrompt: "[E] \uB098\uAC00\uAE30"
   autoCreateInteractionCollider: 1
   assistColliderRadius: 3.5
   maxInteractDistance: 4
@@ -5798,6 +5793,13 @@ MonoBehaviour:
   outlineMode: 0
   outlineColor: {r: 1, g: 1, b: 1, a: 1}
   outlineWidth: 5
+  exitSound:
+    Guid:
+      Data1: -2033197568
+      Data2: 1149509609
+      Data3: 513533109
+      Data4: 406975583
+    Path: event:/SFX/Item/BunkerDoor
 --- !u!1 &7801118914046409794 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -9102167250338149227, guid: 2074f0c61c2576b44844fc773b718467, type: 3}

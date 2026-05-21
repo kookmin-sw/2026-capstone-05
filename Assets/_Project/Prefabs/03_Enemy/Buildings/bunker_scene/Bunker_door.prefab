@@ -146,8 +146,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d965143b0ff4a3f8f2f39dfc14f3c7a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BunkerEnterInteractable
-  objectName: "\uB4E4\uC5B4\uAC00\uAE30"
-  interactPrompt: "[E] \uB4E4\uC5B4\uAC00\uAE30"
   autoCreateInteractionCollider: 1
   assistColliderRadius: 3.5
   maxInteractDistance: 4
@@ -155,6 +153,13 @@ MonoBehaviour:
   outlineMode: 0
   outlineColor: {r: 1, g: 1, b: 1, a: 1}
   outlineWidth: 5
+  enterSound:
+    Guid:
+      Data1: -2033197568
+      Data2: 1149509609
+      Data3: 513533109
+      Data4: 406975583
+    Path: event:/SFX/Item/BunkerDoor
 --- !u!114 &2872762281268145750
 MonoBehaviour:
   m_ObjectHideFlags: 0

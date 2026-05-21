@@ -1,3 +1,4 @@
+using FMODUnity;
 using Fusion;
 using UnityEngine;
 
@@ -17,6 +18,9 @@ public class BackendRoundManager : NetworkBehaviour
 
     [Header("Weather")]
     [SerializeField] private NetworkWeatherState initialWeatherState = NetworkWeatherState.Snow;
+
+    [Header("Sound Settings")]
+    [SerializeField] private EventReference roundStartSound;
 
     [Networked] private NetworkBool NetworkIsRoundRunning { get; set; }
     private bool _offlineIsRoundRunning;
@@ -306,6 +310,7 @@ public class BackendRoundManager : NetworkBehaviour
         RoundDayOverlay.Show(CurrentRoundNumber);
 
         Debug.Log($"[BackendRoundManager] 싱글 오프라인 라운드 시작. round={CurrentRoundNumber}");
+        RuntimeManager.PlayOneShot(roundStartSound);
     }
 
     private System.Collections.IEnumerator OfflineTimerRoutine()
@@ -372,6 +377,7 @@ public class BackendRoundManager : NetworkBehaviour
         }
 
         Debug.Log($"[BackendRoundManager] 라운드 시작. round={CurrentRoundNumber}, reason={reason}, duration={roundDurationSeconds}s");
+        RuntimeManager.PlayOneShot(roundStartSound);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]

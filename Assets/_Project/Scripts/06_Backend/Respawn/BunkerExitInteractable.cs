@@ -1,3 +1,4 @@
+using FMODUnity;
 using Fusion;
 using UnityEngine;
 using UnityEngine.Localization.Settings;
@@ -26,6 +27,9 @@ public class BunkerExitInteractable : NetworkBehaviour, IInteractable
     [SerializeField] private Outline.Mode outlineMode = Outline.Mode.OutlineAll;
     [SerializeField] private Color outlineColor = Color.white;
     [SerializeField] private float outlineWidth = 5f;
+
+    [Header("Sound Settings")]
+    [SerializeField] private EventReference exitSound;
 
     private SphereCollider assistCollider;
     private Outline cachedOutline;
@@ -56,10 +60,14 @@ public class BunkerExitInteractable : NetworkBehaviour, IInteractable
         if (Runner != null)
         {
             RpcRequestTeleportToBunkerDoor(requester);
+
+            RuntimeManager.PlayOneShot(exitSound, player.transform.position);
             return;
         }
 
         TeleportPlayerToBunkerDoor(player);
+
+        RuntimeManager.PlayOneShot(exitSound, player.transform.position);
     }
 
     public string GetInteractPrompt()
