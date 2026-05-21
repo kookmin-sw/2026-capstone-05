@@ -81,6 +81,7 @@ public class InteractionUI : MonoBehaviour
         container.style.left = StyleKeyword.Null;
         container.style.top = StyleKeyword.Null;
         container.style.display = isShowing ? DisplayStyle.Flex : DisplayStyle.None;
+        FixedAspectRatioManager.RequestRefresh();
 
         if (objectNameLabel != null)
         {
@@ -127,6 +128,7 @@ public class InteractionUI : MonoBehaviour
         {
             container.style.display = DisplayStyle.Flex;
             isShowing = true;
+            FixedAspectRatioManager.RequestRefresh();
         }
     }
 
@@ -157,6 +159,7 @@ public class InteractionUI : MonoBehaviour
         if (container != null && isShowing)
         {
             container.style.display = DisplayStyle.None;
+            FixedAspectRatioManager.RequestRefresh();
         }
 
         isShowing = false;

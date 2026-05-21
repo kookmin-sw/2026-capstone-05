@@ -48,6 +48,7 @@ namespace Systems.Loot
             root = document.rootVisualElement;
             root.style.display = DisplayStyle.None;
             document.sortingOrder = 7;
+            FixedAspectRatioManager.RequestRefresh();
 
             splitContainer = root.Q<VisualElement>(className: "split-container");
             lootLeftPanel = root.Q<VisualElement>(className: "loot-left-panel");
@@ -55,6 +56,12 @@ namespace Systems.Loot
             lootRightPanel = root.Q<VisualElement>(className: "loot-right-panel");
             headerLabel = root.Q<Label>("loot-header");
             lootScrollView = root.Q<ScrollView>("loot-scroll-view");
+            if (lootScrollView != null)
+            {
+                lootScrollView.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+                lootScrollView.verticalScrollerVisibility = ScrollerVisibility.Hidden;
+            }
+
             playerInventoryContainer = root.Q<VisualElement>("player-inventory-container");
             itemDetailContainer = root.Q<VisualElement>("item-detail-container");
             detailName = root.Q<Label>("detail-name");
@@ -78,6 +85,7 @@ namespace Systems.Loot
 
             root.style.display = DisplayStyle.Flex;
             HideItemDetail();
+            FixedAspectRatioManager.RequestRefresh();
         }
 
         public void Hide()
@@ -85,6 +93,7 @@ namespace Systems.Loot
             if (root != null)
             {
                 root.style.display = DisplayStyle.None;
+                FixedAspectRatioManager.RequestRefresh();
             }
         }
 
@@ -116,6 +125,8 @@ namespace Systems.Loot
             {
                 splitContainer.style.justifyContent = inventoryOnly ? Justify.FlexEnd : Justify.SpaceBetween;
             }
+
+            FixedAspectRatioManager.RequestRefresh();
         }
 
         public void SetLootHeader(string title)
@@ -145,6 +156,10 @@ namespace Systems.Loot
 
         public VisualElement GetPlayerInventoryContainer() => playerInventoryContainer;
         public ScrollView GetLootScrollView() => lootScrollView;
-        public VisualElement GetRootVisualElement() => root;
+        public VisualElement GetRootVisualElement()
+        {
+            FixedAspectRatioManager.RequestRefresh();
+            return root;
+        }
     }
 }
