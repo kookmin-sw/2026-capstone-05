@@ -1,4 +1,5 @@
 // 총기류 (원체스터 등)
+using FMODUnity;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "New Firearm", menuName = "Item Data/Weapon/Firearm")]
@@ -14,6 +15,9 @@ public class FirearmItemData : WeaponItemData
     [Header("Noise Settings")]
     public NoiseData.NoiseType shootNoiseType = NoiseData.NoiseType.GunShot;
     public NoiseData.NoiseType reloadNoiseType = NoiseData.NoiseType.GunReload;
+
+    [Header("Sound Settings")]
+    public EventReference shootSound;
 
     private void Reset()
     {

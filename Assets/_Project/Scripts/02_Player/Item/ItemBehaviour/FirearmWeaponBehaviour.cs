@@ -1,3 +1,4 @@
+using FMODUnity;
 using UnityEngine;
 
 public class FirearmWeaponBehaviour : EquippedItemBehaviour
@@ -57,6 +58,7 @@ public class FirearmWeaponBehaviour : EquippedItemBehaviour
         }
 
         NoiseManager.Instance.GenerateNoise(transform.position, data.shootNoiseType);
+        RuntimeManager.PlayOneShot(data.shootSound, transform.position);
     }
 
     /// <summary>

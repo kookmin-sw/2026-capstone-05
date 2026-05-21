@@ -111,6 +111,33 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 0
+--- !u!114 &-7277260184208531751
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/SFX/Item/Shoot
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/SFX/Item/Shoot
+  Guid:
+    Data1: 904403427
+    Data2: 1263447750
+    Data3: 1353668018
+    Data4: 456764353
+  Banks:
+  - {fileID: 5550584238374082889}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 0
 --- !u!114 &-5889183787716351137
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -399,13 +426,14 @@ MonoBehaviour:
   - {fileID: -5112587166545575597}
   - {fileID: 4177942439703970762}
   - {fileID: 1727479062616481393}
+  - {fileID: -7277260184208531751}
   EditorParameters: []
   MasterBanks:
   - {fileID: 5550584238374082889}
   StringsBanks:
   - {fileID: 6573240060274684362}
   cacheVersion: 131858
-  cacheTime: 639148083390002187
+  cacheTime: 639149516825683948
   SerializableEventsDict:
   - key: event:/SFX/Player/Landing
     index: 0
@@ -467,6 +495,8 @@ MonoBehaviour:
     index: 28
   - key: event:/SFX/Player/Container_Interact
     index: 29
+  - key: event:/SFX/Item/Shoot
+    index: 30
 --- !u!114 &21226142621045747
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -996,10 +1026,10 @@ MonoBehaviour:
   Path: FMOD_Project/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639148083390002187
+  lastModified: 639149516825658818
   FileSizes:
   - Name: Desktop
-    Value: 3620608
+    Value: 3634464
   Exists: 1
 --- !u!114 &6573240060274684362
 MonoBehaviour:
@@ -1016,10 +1046,10 @@ MonoBehaviour:
   Path: FMOD_Project/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639148083390002187
+  lastModified: 639149516825683948
   FileSizes:
   - Name: Desktop
-    Value: 2696
+    Value: 2732
   Exists: 1
 --- !u!114 &7298204743422360799
 MonoBehaviour:
