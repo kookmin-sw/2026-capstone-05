@@ -16,7 +16,7 @@ public class NoiseData : ScriptableObject
         Eat, Drink, Hunger, Cough, Pain,
         UnarmedSwing, UnarmedHit,
         Throw, Explosion, Alarm, ThrowImpact,
-        Consume, ButtonPress
+        Consume, ButtonPress, DryFire
     }
 
     [System.Serializable]

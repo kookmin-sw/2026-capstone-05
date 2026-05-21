@@ -18,6 +18,7 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
     private bool _spawnGravityWasEnabled;
     private bool _spawnLockInitialized;
     private string _lastAppliedEquippedItemId = string.Empty;
+    private int _lastAppliedEquippedStackCount = -1;
     private int _lastAppliedUseAnimationCount;
 
     [Networked] private Vector3 NetworkPosition { get; set; }
@@ -346,6 +347,14 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         RpcRequestNoise((int)noiseType);
     }
 
+    public void RequestApplyConsumableEffects(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId) || !IsNetworkReady || HasStateAuthority)
+            return;
+
+        RpcRequestApplyConsumableEffects(itemId);
+    }
+
     public void RequestDropItem(string itemId, int stackCount, Vector3 position)
     {
         if (HasStateAuthority)
@@ -415,12 +424,42 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         GenerateAuthoritativeNoise(noiseType);
     }
 
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcRequestApplyConsumableEffects(string itemId)
+    {
+        ApplyConsumableEffectsAuthoritative(itemId);
+    }
+
     private void GenerateAuthoritativeNoise(int noiseType)
     {
         if (!HasStateAuthority || NoiseManager.Instance == null)
             return;
 
         NoiseManager.Instance.GenerateNoise(transform.position, (NoiseData.NoiseType)noiseType);
+    }
+
+    private void ApplyConsumableEffectsAuthoritative(string itemId)
+    {
+        if (!HasStateAuthority || _playerCondition == null || string.IsNullOrEmpty(itemId))
+            return;
+
+        if (ItemDataRegistry.Find(itemId) is not ConsumableItemData consumableData)
+        {
+            Debug.LogWarning($"[BackendPlayerNetworkSync] Cannot apply consumable effects. ItemData missing or not consumable for: {itemId}");
+            return;
+        }
+
+        _playerCondition.EnsureInitialized();
+
+        foreach (StatusEffectData effect in consumableData.effects)
+        {
+            if (effect == null)
+                continue;
+
+            _playerCondition.ApplyEffect(effect);
+        }
+
+        SyncConditionSnapshot();
     }
 
     private void TryApprovePickup(PlayerRef requestedBy, int pickupKey)
@@ -535,14 +574,16 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
 
     private void ApplyProxyEquipmentState()
     {
-        if (_playerEquipment == null)
+        if (_playerEquipment == null || Object == null || Object.HasInputAuthority)
             return;
 
         string itemId = NetworkEquippedItemId.ToString();
-        if (_lastAppliedEquippedItemId == itemId)
+        int stackCount = NetworkEquippedStackCount;
+        if (_lastAppliedEquippedItemId == itemId && _lastAppliedEquippedStackCount == stackCount)
             return;
 
         _lastAppliedEquippedItemId = itemId;
+        _lastAppliedEquippedStackCount = stackCount;
 
         if (string.IsNullOrEmpty(itemId))
         {
@@ -557,8 +598,7 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
             return;
         }
 
-        int stackCount = Mathf.Max(1, NetworkEquippedStackCount);
-        _playerEquipment.EquipItem(new ItemInstance(itemData, stackCount), false);
+        _playerEquipment.EquipItem(new ItemInstance(itemData, Mathf.Max(1, stackCount)), false);
     }
 
     private void HandleLocalUseAnimationRequested(ItemUseAnimationType animationType)

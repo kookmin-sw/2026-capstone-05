@@ -63,20 +63,35 @@ public class ConsumableBehaviour : EquippedItemBehaviour
             player.Condition.ApplyEffect(effect);
         }
 
+        RequestAuthoritativeEffects(data);
+
         NoiseManager.Instance.GenerateNoise(player.transform.position, data.consumeNoiseType);
         Debug.Log($"Consumed {itemInstance.Data.itemName}, remaining stack count: {itemInstance.currentStackCount}");
 
         if (itemInstance.currentStackCount <= 0)
         {
             ItemEventManager.TriggerItemDestroyed(itemInstance);
-            Destroy(gameObject);
+            player.Equipment.NotifyEquippedItemConsumed(itemInstance);
         }
         else
         {
             ItemEventManager.TriggerItemStackChanged(itemInstance);
+            player.Equipment.NotifyEquippedItemStackChanged(itemInstance);
         }
 
         return true;
+    }
+
+    private void RequestAuthoritativeEffects(ConsumableItemData data)
+    {
+        if (player == null || data == null)
+            return;
+
+        BackendPlayerNetworkSync networkSync = player.GetComponent<BackendPlayerNetworkSync>();
+        if (networkSync == null || !networkSync.IsNetworkReady || networkSync.HasStateAuthority)
+            return;
+
+        networkSync.RequestApplyConsumableEffects(data.itemID);
     }
 
     private IEnumerator ConsumeRoutine(ConsumableItemData data)

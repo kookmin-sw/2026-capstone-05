@@ -526,10 +526,75 @@ namespace Systems.Loot
 
         public void ReceivePlayerDrop(ItemInstance item, Systems.GridInventory.DragSource source, int sourceIndex, GridSlot playerSlot, GridInventoryModel sourceModel)
         {
+            bool shouldSyncLootTake =
+                !isInventoryOnlyMode &&
+                source == Systems.GridInventory.DragSource.Loot &&
+                lootInventoryController != null &&
+                currentNetworkSync != null &&
+                item != null &&
+                ReferenceEquals(sourceModel, lootInventoryController.Model);
+
+            int sourceLootIndex = -1;
+            int originalLootStack = 0;
+            ItemInstance originalPlayerItem = null;
+            int originalPlayerItemStack = 0;
+
+            if (shouldSyncLootTake)
+            {
+                var sourceAnchor = sourceModel.GetItemAnchorPosition(item);
+                if (sourceAnchor.x != -1 && sourceAnchor.y != -1)
+                {
+                    sourceLootIndex = sourceModel.GetIndex(sourceAnchor.x, sourceAnchor.y);
+                    originalLootStack = item.currentStackCount;
+                }
+
+                var playerModel = GridInventoryClass.Instance?.Controller?.Model;
+                if (playerModel != null && playerSlot != null)
+                {
+                    var targetCoords = playerModel.GetCoordinates(playerSlot.Index);
+                    originalPlayerItem = playerModel.Get(targetCoords.x, targetCoords.y);
+                    if (originalPlayerItem != null)
+                    {
+                        originalPlayerItemStack = originalPlayerItem.currentStackCount;
+                    }
+                }
+            }
+
             if (dummyPlayerInventoryController != null)
             {
                 dummyPlayerInventoryController.ReceiveDrop(item, source, sourceIndex, playerSlot, sourceModel);
             }
+
+            if (!shouldSyncLootTake || sourceLootIndex < 0)
+            {
+                return;
+            }
+
+            var remainingAnchor = sourceModel.GetItemAnchorPosition(item);
+            bool itemStillInLoot = remainingAnchor.x != -1 && remainingAnchor.y != -1;
+            int remainingLootStack = itemStillInLoot ? item.currentStackCount : 0;
+            int takenQuantity = originalLootStack - remainingLootStack;
+            if (takenQuantity <= 0)
+            {
+                return;
+            }
+
+            bool swappedDifferentItem =
+                originalPlayerItem != null &&
+                originalPlayerItem.Data != null &&
+                originalPlayerItem.Data != item.Data &&
+                sourceModel.GetItemAnchorPosition(originalPlayerItem).x != -1;
+
+            if (swappedDifferentItem)
+            {
+                RequestLootTakeWithSwap(sourceLootIndex, takenQuantity, originalPlayerItem.Data.itemID, originalPlayerItemStack);
+            }
+            else
+            {
+                RequestLootTake(sourceLootIndex, takenQuantity);
+            }
+
+            SubmitSnapshot(force: true);
         }
 
         public void NotifyLootModelChangedFromExternalDrop(GridInventoryModel sourceModel)
