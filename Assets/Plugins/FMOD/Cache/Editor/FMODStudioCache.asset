@@ -483,14 +483,14 @@ MonoBehaviour:
   - {fileID: -7277260184208531751}
   - {fileID: 8303237037684814046}
   - {fileID: -1638231887626609232}
-  - {fileID: -5265533760873097783}
+  - {fileID: 3093927701459181638}
   EditorParameters: []
   MasterBanks:
   - {fileID: 5550584238374082889}
   StringsBanks:
   - {fileID: 6573240060274684362}
   cacheVersion: 131858
-  cacheTime: 639149993704398228
+  cacheTime: 639150011534644720
   SerializableEventsDict:
   - key: event:/SFX/Player/Landing
     index: 0
@@ -858,6 +858,33 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 0
+--- !u!114 &3093927701459181638
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/SFX/Item/DryFire
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/SFX/Item/DryFire
+  Guid:
+    Data1: 1108426334
+    Data2: 1166641676
+    Data3: -868847486
+    Data4: 2050186330
+  Banks:
+  - {fileID: 5550584238374082889}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 0
 --- !u!114 &3147914164509502659
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1089,7 +1116,7 @@ MonoBehaviour:
   Path: FMOD_Project/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639149993704368207
+  lastModified: 639150011534568637
   FileSizes:
   - Name: Desktop
     Value: 3753952
@@ -1109,7 +1136,7 @@ MonoBehaviour:
   Path: FMOD_Project/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639149993704398228
+  lastModified: 639150011534644720
   FileSizes:
   - Name: Desktop
     Value: 2922
