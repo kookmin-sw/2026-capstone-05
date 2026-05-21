@@ -1,4 +1,5 @@
 using FMODUnity;
+using Systems.GridInventory;
 using UnityEngine;
 
 public class FirearmWeaponBehaviour : EquippedItemBehaviour
@@ -14,6 +15,16 @@ public class FirearmWeaponBehaviour : EquippedItemBehaviour
         }
 
         // 총알 확인
+        if (GridInventory.Instance != null)
+        {
+            if (!GridInventory.Instance.HasItem(data.requiredAmmoType))
+            {
+                Debug.Log("No ammo to shoot!");
+                RuntimeManager.PlayOneShot(data.dryFireSound, transform.position);
+                NoiseManager.Instance.GenerateNoise(transform.position, data.dryFireNoiseType);
+                return false;
+            }
+        }
 
         if (!base.Use())
         {
@@ -30,6 +41,10 @@ public class FirearmWeaponBehaviour : EquippedItemBehaviour
     private void Shoot(FirearmItemData data)
     {
         // 총알 감소 로직
+        if (GridInventory.Instance != null)
+        {
+            GridInventory.Instance.ConsumeItem(data.requiredAmmoType);
+        }
 
         //if (data.muzzleFlashPrefab != null && muzzlePoint != null)
         //{
