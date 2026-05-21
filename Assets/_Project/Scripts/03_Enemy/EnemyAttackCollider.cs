@@ -11,12 +11,25 @@ public class EnemyAttackCollider : MonoBehaviour
     private Collider attackCollider;
     private bool canDamage = false;
 
+    public bool IsBodyCollider => isBodyCollider;
+    public Collider Collider => attackCollider;
+
     private void Awake()
     {
         enemy = GetComponentInParent<EnemyAI>();
         attackCollider = GetComponent<Collider>();
         attackCollider.isTrigger = !isBodyCollider;
         attackCollider.enabled = isBodyCollider;
+    }
+
+    public void SetBodyColliderTrigger(bool value)
+    {
+        if (!isBodyCollider || attackCollider == null)
+        {
+            return;
+        }
+
+        attackCollider.isTrigger = value;
     }
 
     public void EnableAttackCollider()

@@ -67,7 +67,7 @@ public class EnemyHealth : NetworkBehaviour, IDamageable
         {
             NetworkCurrentHealth = 0f;
             Died?.Invoke(this);
-            AnyDied?.Invoke(this, info.attacker);
+            NotifyAnyDiedForNetwork(info);
             enemy.StateMachine.ChangeState(enemy.DeadState);
             return;
         }
@@ -124,6 +124,23 @@ public class EnemyHealth : NetworkBehaviour, IDamageable
         enemy.RegisterHitReaction();
     }
 
+    private void NotifyAnyDiedForNetwork(DamageInfo info)
+    {
+        if (!Runner || Object == null || !Object.IsValid)
+        {
+            AnyDied?.Invoke(this, info.attacker);
+            return;
+        }
+
+        RpcNotifyAnyDied(ResolveAttackerPlayerRef(info.attacker));
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcNotifyAnyDied(PlayerRef attackerRef)
+    {
+        AnyDied?.Invoke(this, ResolveAttacker(attackerRef));
+    }
+
     private GameObject ResolveAttacker(PlayerRef playerRef)
     {
         if (Runner != null &&
@@ -135,6 +152,20 @@ public class EnemyHealth : NetworkBehaviour, IDamageable
         }
 
         return null;
+    }
+
+    private PlayerRef ResolveAttackerPlayerRef(GameObject attacker)
+    {
+        if (attacker == null)
+        {
+            return PlayerRef.None;
+        }
+
+        NetworkObject attackerNetworkObject = attacker.GetComponent<NetworkObject>()
+            ?? attacker.GetComponentInParent<NetworkObject>()
+            ?? attacker.GetComponentInChildren<NetworkObject>();
+
+        return attackerNetworkObject != null ? attackerNetworkObject.InputAuthority : PlayerRef.None;
     }
 
     private void SpawnHitParticleForNetwork(DamageInfo info)

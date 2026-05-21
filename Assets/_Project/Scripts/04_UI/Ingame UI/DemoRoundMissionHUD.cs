@@ -129,7 +129,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
             return;
         }
 
-        if (defeatedMonsterCount >= MissionTargetKills || !IsPlayerAttacker(attacker))
+        if (defeatedMonsterCount >= MissionTargetKills || !IsLocalPlayerAttacker(attacker))
         {
             return;
         }
@@ -138,17 +138,31 @@ public class DemoRoundMissionHUD : MonoBehaviour
         UpdateMissionText();
     }
 
-    private static bool IsPlayerAttacker(GameObject attacker)
+    private static bool IsLocalPlayerAttacker(GameObject attacker)
     {
         if (attacker == null)
         {
             return false;
         }
 
-        return attacker.CompareTag("Player")
-            || attacker.GetComponent<PlayerController>() != null
-            || attacker.GetComponentInParent<PlayerController>() != null
-            || attacker.GetComponentInChildren<PlayerController>() != null;
+        PlayerController attackerPlayer = attacker.GetComponent<PlayerController>()
+            ?? attacker.GetComponentInParent<PlayerController>()
+            ?? attacker.GetComponentInChildren<PlayerController>();
+
+        if (attackerPlayer != null)
+        {
+            return attackerPlayer.IsLocalPlayer;
+        }
+
+        BackendPlayerNetworkSync localNetworkSync = BackendPlayerNetworkSync.LocalInstance;
+        if (localNetworkSync == null)
+        {
+            return false;
+        }
+
+        return attacker == localNetworkSync.gameObject
+            || attacker.transform.IsChildOf(localNetworkSync.transform)
+            || localNetworkSync.transform.IsChildOf(attacker.transform);
     }
 
     private void CreateUi()

@@ -2,7 +2,14 @@ using UnityEngine;
 
 public class EnemyAttackState : EnemyState
 {
+    private struct IgnoredCollisionPair
+    {
+        public Collider enemyCollider;
+        public Collider playerCollider;
+    }
+
     private EnemyAnimationEventHandler animationEventHandler;
+    private readonly System.Collections.Generic.List<IgnoredCollisionPair> ignoredPlayerCollisionPairs = new();
     private bool isRecovering;
     private float recoveryTimer;
     private float attackFailSafeTimer;
@@ -19,6 +26,7 @@ public class EnemyAttackState : EnemyState
     private Vector3 jumpLandingPosition;
     private float jumpMoveTimer;
     private float jumpMoveDuration;
+    private bool bodyCollidersAreTriggers;
 
     public bool BlocksHitReaction { get; private set; }
 
@@ -39,6 +47,7 @@ public class EnemyAttackState : EnemyState
         currentAttackIndex = -1;
         hasPendingJumpAttackMovement = false;
         isJumpAttackMoving = false;
+        SetBodyCollidersTrigger(false);
         hasPlayedJumpLandingSound = false;
 
         enemy.Agent.isStopped = true;
@@ -208,6 +217,8 @@ public class EnemyAttackState : EnemyState
     {
         hasPendingJumpAttackMovement = false;
         isJumpAttackMoving = true;
+        SetBodyCollidersTrigger(true);
+        SetPlayerCollisionIgnored(true);
         jumpStartPosition = enemy.transform.position;
 
         Vector3 direction = landingPosition - enemy.transform.position;
@@ -242,6 +253,8 @@ public class EnemyAttackState : EnemyState
             return;
 
         isJumpAttackMoving = false;
+        SetPlayerCollisionIgnored(false);
+        SetBodyCollidersTrigger(false);
         if (snapToLanding)
         {
             enemy.transform.position = jumpLandingPosition;
@@ -258,6 +271,88 @@ public class EnemyAttackState : EnemyState
             enemy.Agent.updatePosition = originalAgentUpdatePosition;
             enemy.Agent.updateRotation = originalAgentUpdateRotation;
         }
+    }
+
+    private void SetBodyCollidersTrigger(bool value)
+    {
+        if (bodyCollidersAreTriggers == value)
+            return;
+
+        foreach (var col in enemy.AttackColliders)
+        {
+            if (col == null)
+                continue;
+
+            col.SetBodyColliderTrigger(value);
+        }
+
+        bodyCollidersAreTriggers = value;
+    }
+
+    private void SetPlayerCollisionIgnored(bool value)
+    {
+        if (!value)
+        {
+            RestoreIgnoredPlayerCollisions();
+            return;
+        }
+
+        RestoreIgnoredPlayerCollisions();
+
+        Collider[] enemyColliders = enemy.GetComponentsInChildren<Collider>();
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+
+        foreach (Collider enemyCollider in enemyColliders)
+        {
+            if (!ShouldIgnoreEnemyCollider(enemyCollider))
+                continue;
+
+            foreach (GameObject player in players)
+            {
+                if (player == null)
+                    continue;
+
+                Collider[] playerColliders = player.GetComponentsInChildren<Collider>();
+                foreach (Collider playerCollider in playerColliders)
+                {
+                    if (playerCollider == null || !playerCollider.enabled)
+                        continue;
+
+                    Physics.IgnoreCollision(enemyCollider, playerCollider, true);
+                    ignoredPlayerCollisionPairs.Add(new IgnoredCollisionPair
+                    {
+                        enemyCollider = enemyCollider,
+                        playerCollider = playerCollider
+                    });
+                }
+            }
+        }
+    }
+
+    private bool ShouldIgnoreEnemyCollider(Collider enemyCollider)
+    {
+        if (enemyCollider == null || !enemyCollider.enabled)
+            return false;
+
+        EnemyAttackCollider attackCollider = enemyCollider.GetComponent<EnemyAttackCollider>();
+        if (attackCollider == null)
+            return !enemyCollider.isTrigger;
+
+        return attackCollider.IsBodyCollider;
+    }
+
+    private void RestoreIgnoredPlayerCollisions()
+    {
+        for (int i = 0; i < ignoredPlayerCollisionPairs.Count; i++)
+        {
+            IgnoredCollisionPair pair = ignoredPlayerCollisionPairs[i];
+            if (pair.enemyCollider != null && pair.playerCollider != null)
+            {
+                Physics.IgnoreCollision(pair.enemyCollider, pair.playerCollider, false);
+            }
+        }
+
+        ignoredPlayerCollisionPairs.Clear();
     }
 
     private void BeginRecovery()
