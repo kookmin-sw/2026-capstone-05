@@ -101,6 +101,7 @@ namespace Systems.GridInventory {
 
             wired = true;
             if (overlay != null) overlay.style.display = DisplayStyle.None;
+            FixedAspectRatioManager.RequestRefresh();
         }
 
         public static QuantityPopupView Instance => _instance;
@@ -119,6 +120,7 @@ namespace Systems.GridInventory {
             doc.panelSettings = seed.panelSettings;
             doc.sortingOrder = Mathf.Max(seed.sortingOrder + 500, 8);
             go.AddComponent<QuantityPopupView>();
+            FixedAspectRatioManager.RequestRefresh();
         }
 
         public static void Show(int maxQuantityInclusive, Action<int> onConfirm) {
@@ -141,10 +143,12 @@ namespace Systems.GridInventory {
             sliderQty.value = 1;
             if (lblQtyValue != null) lblQtyValue.text = "1";
             overlay.style.display = DisplayStyle.Flex;
+            FixedAspectRatioManager.RequestRefresh();
         }
 
         void Hide() {
             if (overlay != null) overlay.style.display = DisplayStyle.None;
+            FixedAspectRatioManager.RequestRefresh();
             pendingConfirm = null;
         }
     }

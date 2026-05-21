@@ -318,7 +318,7 @@ namespace Systems.Loot
             scrollView.style.height = new UnityEngine.UIElements.StyleLength(new UnityEngine.UIElements.Length(100, UnityEngine.UIElements.LengthUnit.Percent));
             scrollView.style.display = UnityEngine.UIElements.DisplayStyle.Flex;
             scrollView.horizontalScrollerVisibility = UnityEngine.UIElements.ScrollerVisibility.Hidden;
-            scrollView.verticalScrollerVisibility = UnityEngine.UIElements.ScrollerVisibility.Auto;
+            scrollView.verticalScrollerVisibility = UnityEngine.UIElements.ScrollerVisibility.Hidden;
 
             var slotsContainer = new UnityEngine.UIElements.VisualElement();
             slotsContainer.name = "lootSlotsContainer";
