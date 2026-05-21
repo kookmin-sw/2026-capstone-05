@@ -58,7 +58,7 @@ public class NoiseUIController : MonoBehaviour
         currentFill = Mathf.Lerp(currentFill, targetFill, Time.deltaTime * smoothSpeed);
 
         // 2. 0.0~1.0 사이의 값을 전체 블록 개수에 곱해 몇 칸을 켤지 계산
-        int totalBars = noiseBars.Length;
+        int totalBars = noiseBars != null ? noiseBars.Length : 0;
         int activeBarsCount = Mathf.RoundToInt(currentFill * totalBars);
 
         // 3. 알파값 계산 (위험 수치일 때 파동을 일으켜 깜빡임)
@@ -75,7 +75,8 @@ public class NoiseUIController : MonoBehaviour
             currentNoiseAlpha = Mathf.Lerp(minNoiseAlpha, 1.0f, wave);
         }
 
-        UpdateSpeakerIcon(currentFill);
+        float speakerFill = totalBars > 0 && activeBarsCount <= 0 ? 0f : currentFill;
+        UpdateSpeakerIcon(speakerFill);
 
         // 4. 1번부터 30번까지 루프를 돌며 각 블록 켜고 끄기 및 색상 적용
         for (int i = 0; i < totalBars; i++)
@@ -159,7 +160,7 @@ public class NoiseUIController : MonoBehaviour
         if (normalizedDecibel >= speakerLevel1Threshold)
             return 1;
 
-        return 0;
+        return 1;
     }
 
     private void TryAutoBindSpeakerIcons()

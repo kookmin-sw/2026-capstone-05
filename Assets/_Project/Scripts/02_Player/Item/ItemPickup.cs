@@ -94,12 +94,7 @@ public class ItemPickup : MonoBehaviour, IInteractable
 
         MarkPickedUp();
 
-        if (player != null && player.NoiseEmitter != null)
-        {
-            // Hook pickup noise here when the noise system is ready for item pickups.
-            RuntimeManager.PlayOneShot("event:/SFX/Player/Grab", player.transform.position);
-            NoiseManager.Instance.GenerateNoise(player.transform.position, NoiseData.NoiseType.ItemPickup);
-        }
+        PlayPickupFeedback(player);
 
         return true;
     }
@@ -168,10 +163,21 @@ public class ItemPickup : MonoBehaviour, IInteractable
         }
 
         MarkPickedUp();
+        PlayPickupFeedback(player);
+    }
 
-        if (player != null && player.NoiseEmitter != null)
+    private static void PlayPickupFeedback(PlayerController player)
+    {
+        if (player == null)
         {
-            // Hook pickup noise here when the noise system is ready for item pickups.
+            return;
+        }
+
+        RuntimeManager.PlayOneShot("event:/SFX/Player/Grab", player.transform.position);
+
+        if (player.NoiseEmitter != null && NoiseManager.Instance != null)
+        {
+            NoiseManager.Instance.GenerateNoise(player.transform.position, NoiseData.NoiseType.ItemPickup);
         }
     }
 
