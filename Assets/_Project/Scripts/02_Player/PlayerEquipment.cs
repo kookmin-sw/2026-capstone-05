@@ -124,40 +124,8 @@ public class PlayerEquipment : MonoBehaviour
     {
         CancelCurrentItemUse();
 
-        if (currentObj1P != null)
-        {
-            Destroy(currentObj1P);
-        }
-        else if (Item1P != null)
-        {
-            Destroy(Item1P.gameObject);
-        }
-
-        if (currentObj3P != null)
-        {
-            Destroy(currentObj3P);
-        }
-        else if (Item3P != null)
-        {
-            Destroy(Item3P.gameObject);
-        }
-
-        player.Animator.SetItemPose(ItemPoseType.Default);
-
-        currentObj1P = null;
-        currentObj3P = null;
-        Item1P = null;
-        Item3P = null;
+        ClearEquippedItemObjects();
         CurrentItemInstance = null;
-
-        if (ikManager1P != null)
-        {
-            ikManager1P.SetLeftHandWeaponGrip(null);
-        }
-        if (ikManager3P != null)
-        {
-            ikManager3P.SetLeftHandWeaponGrip(null);
-        }
 
         if (notifyNetwork)
             OnEquippedItemChanged?.Invoke(null);
@@ -200,6 +168,24 @@ public class PlayerEquipment : MonoBehaviour
         {
             Item3P.CancelUse();
         }
+    }
+
+    public void NotifyEquippedItemConsumed(ItemInstance consumedItem)
+    {
+        if (consumedItem == null || CurrentItemInstance != consumedItem)
+            return;
+
+        ClearEquippedItemObjects();
+        CurrentItemInstance = null;
+        OnEquippedItemChanged?.Invoke(null);
+    }
+
+    public void NotifyEquippedItemStackChanged(ItemInstance changedItem)
+    {
+        if (changedItem == null || CurrentItemInstance != changedItem)
+            return;
+
+        OnEquippedItemChanged?.Invoke(changedItem);
     }
 
     /// <summary>
@@ -249,6 +235,43 @@ public class PlayerEquipment : MonoBehaviour
         {
             RuntimeManager.PlayOneShot(unarmedSwingEvent, checkCenter);
             NoiseManager.Instance.GenerateNoise(checkCenter, NoiseData.NoiseType.UnarmedSwing);
+        }
+    }
+
+    private void ClearEquippedItemObjects()
+    {
+        if (currentObj1P != null)
+        {
+            Destroy(currentObj1P);
+        }
+        else if (Item1P != null)
+        {
+            Destroy(Item1P.gameObject);
+        }
+
+        if (currentObj3P != null)
+        {
+            Destroy(currentObj3P);
+        }
+        else if (Item3P != null)
+        {
+            Destroy(Item3P.gameObject);
+        }
+
+        player.Animator.SetItemPose(ItemPoseType.Default);
+
+        currentObj1P = null;
+        currentObj3P = null;
+        Item1P = null;
+        Item3P = null;
+
+        if (ikManager1P != null)
+        {
+            ikManager1P.SetLeftHandWeaponGrip(null);
+        }
+        if (ikManager3P != null)
+        {
+            ikManager3P.SetLeftHandWeaponGrip(null);
         }
     }
 }
