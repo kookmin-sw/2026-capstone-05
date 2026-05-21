@@ -71,7 +71,7 @@ namespace Systems.Loot
             EnsureStorageId();
         }
 
-        private void InitializeItemsIfNeeded()
+        public void InitializeItemsIfNeeded()
         {
             if (isInitialized) return;
             isInitialized = true;
