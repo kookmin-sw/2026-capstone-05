@@ -15,6 +15,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
     private CanvasGroup canvasGroup;
     private TextMeshProUGUI timerText;
     private TextMeshProUGUI missionText;
+    private TextMeshProUGUI hintText;
     private TMP_FontAsset sceneFont;
     private int defeatedMonsterCount;
     private bool wasRoundRunning;
@@ -176,6 +177,15 @@ public class DemoRoundMissionHUD : MonoBehaviour
         missionRect.pivot = new Vector2(1f, 1f);
         missionRect.anchoredPosition = new Vector2(-34f, -32f);
         missionRect.sizeDelta = new Vector2(640f, 48f);
+
+        hintText = CreateText("MissionHintText", 22f, TextAlignmentOptions.Right);
+        RectTransform hintRect = hintText.rectTransform;
+        hintRect.anchorMin = new Vector2(1f, 1f);
+        hintRect.anchorMax = new Vector2(1f, 1f);
+        hintRect.pivot = new Vector2(1f, 1f);
+        hintRect.anchoredPosition = new Vector2(-34f, -76f);
+        hintRect.sizeDelta = new Vector2(720f, 40f);
+        hintText.text = "힌트: 맵에 배치된 총을 획득해보세요.";
     }
 
     private TextMeshProUGUI CreateText(string objectName, float fontSize, TextAlignmentOptions alignment)
@@ -196,8 +206,8 @@ public class DemoRoundMissionHUD : MonoBehaviour
         text.enableWordWrapping = false;
         text.overflowMode = TextOverflowModes.Overflow;
         text.raycastTarget = false;
-        text.outlineColor = new Color(0f, 0f, 0f, 0.75f);
-        text.outlineWidth = 0.16f;
+        text.outlineColor = Color.black;
+        text.outlineWidth = 0.25f;
 
         Shadow shadow = textObject.AddComponent<Shadow>();
         shadow.effectColor = new Color(0f, 0f, 0f, 0.6f);

@@ -119,6 +119,7 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
         {
             holdProgressSeconds = 0f;
             holdTriggered = false;
+            RefreshCurrentInteractionPrompt();
             return;
         }
 
@@ -129,6 +130,7 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
 
         holdProgressSeconds += Time.deltaTime;
         float requiredSeconds = Mathf.Max(0.1f, holdInteractable.GetHoldDuration(player));
+        RefreshCurrentInteractionPrompt();
 
         if (holdProgressSeconds >= requiredSeconds)
         {
@@ -137,6 +139,7 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
             holdInteractable.OnHoldInteract(player);
             lastInteractionTime = Time.time;
             player.InputHandler.ConsumeInteract();
+            RefreshCurrentInteractionPrompt();
         }
     }
 
@@ -159,21 +162,44 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
         // UI 표시 (임시 이름 사용, 필요 시 IInteractable에 속성 추가해서 사용)
         if (InteractionUI.Instance != null)
         {
-            // 객체 이름과 상호작용 키 표시 (E키)
-            string keyPrefix = player.InputHandler.GetInteractKey();
             string objName = interactable.GetObjectName();
-            string prompt = interactable.GetInteractPrompt();
-            if (interactable is IHoldInteractable holdInteractable)
-            {
-                float holdSeconds = Mathf.Max(0.1f, holdInteractable.GetHoldDuration(player));
-                prompt = $"[{LocalizationSettings.StringDatabase.GetLocalizedString(interactPromptTable, holdPrefixKey)} {keyPrefix} {holdSeconds:0.0}s] {prompt}";
-            }
-            else
-            {
-                prompt = $"[{keyPrefix}] {prompt}";
-            }
+            string prompt = BuildInteractionPrompt(interactable);
             InteractionUI.Instance.Show(objName, prompt, obj.transform);
         }
+    }
+
+    private void RefreshCurrentInteractionPrompt()
+    {
+        if (currentInteractable == null || currentLookObject == null || InteractionUI.Instance == null)
+        {
+            return;
+        }
+
+        InteractionUI.Instance.RefreshPromptForTarget(
+            currentLookObject.transform,
+            currentInteractable.GetObjectName(),
+            BuildInteractionPrompt(currentInteractable));
+    }
+
+    private string BuildInteractionPrompt(IInteractable interactable)
+    {
+        string keyPrefix = player.InputHandler.GetInteractKey();
+        string prompt = interactable.GetInteractPrompt();
+
+        if (interactable is IHoldInteractable holdInteractable)
+        {
+            float holdSeconds = Mathf.Max(0.1f, holdInteractable.GetHoldDuration(player));
+            float displaySeconds = holdSeconds;
+            if (player.InputHandler.IsInteractPressed)
+            {
+                displaySeconds = holdTriggered ? 0f : Mathf.Max(0f, holdSeconds - holdProgressSeconds);
+            }
+
+            string holdPrefix = LocalizationSettings.StringDatabase.GetLocalizedString(interactPromptTable, holdPrefixKey);
+            return $"{holdPrefix} [{keyPrefix} {displaySeconds:0.0}s] {prompt}";
+        }
+
+        return $"[{keyPrefix}] {prompt}";
     }
 
     private void ClearCurrentInteractable()
