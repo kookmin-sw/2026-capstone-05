@@ -75,6 +75,35 @@ public class EnemyHealth : NetworkBehaviour, IDamageable
         enemy.RegisterHitReaction();
     }
 
+    public void RequestDamage(DamageInfo info)
+    {
+        if (enemy != null && enemy.IsLocalSimulationActive)
+        {
+            TakeLocalDamage(info);
+            return;
+        }
+
+        if (HasStateAuthority || !Runner || Object == null || !Object.IsValid)
+        {
+            TakeDamage(info);
+            return;
+        }
+
+        RpcRequestDamage(info.damageAmount, info.hitPoint, info.hitNormal);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RpcRequestDamage(float damageAmount, Vector3 hitPoint, Vector3 hitNormal, RpcInfo rpcInfo = default)
+    {
+        TakeDamage(new DamageInfo
+        {
+            damageAmount = damageAmount,
+            hitPoint = hitPoint,
+            hitNormal = hitNormal,
+            attacker = ResolveAttacker(rpcInfo.Source)
+        });
+    }
+
     private void TakeLocalDamage(DamageInfo info)
     {
         if (localCurrentHealth <= 0f) return;
@@ -93,6 +122,19 @@ public class EnemyHealth : NetworkBehaviour, IDamageable
         }
 
         enemy.RegisterHitReaction();
+    }
+
+    private GameObject ResolveAttacker(PlayerRef playerRef)
+    {
+        if (Runner != null &&
+            playerRef != PlayerRef.None &&
+            Runner.TryGetPlayerObject(playerRef, out NetworkObject playerObject) &&
+            playerObject != null)
+        {
+            return playerObject.gameObject;
+        }
+
+        return null;
     }
 
     private void SpawnHitParticleForNetwork(DamageInfo info)

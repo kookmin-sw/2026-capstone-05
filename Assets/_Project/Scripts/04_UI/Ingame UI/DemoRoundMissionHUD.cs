@@ -7,8 +7,12 @@ public class DemoRoundMissionHUD : MonoBehaviour
 {
     private const string DemoScenePath = "Assets/_Project/Scenes/00_General/SingleDemoScene_StaticMap.unity";
     private const int MissionTargetKills = 3;
-    private const int CanvasSortingOrder = -1;
+    private const int CanvasSortingOrder = 30;
     private const float TextRefreshInterval = 0.1f;
+    private const float TextOutlineWidth = 0.2f;
+    private const string MissionHintMessage = "힌트: 맵에 배치된 총을 획득해보세요.";
+    private const string MissionCompleteMessage = "맵을 탐험하며 계속해서 생존하세요.";
+    private const string MissionCompleteHintMessage = "제한시간 내에 기지로 복귀하세요.";
 
     private static DemoRoundMissionHUD instance;
 
@@ -185,7 +189,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
         hintRect.pivot = new Vector2(1f, 1f);
         hintRect.anchoredPosition = new Vector2(-34f, -76f);
         hintRect.sizeDelta = new Vector2(720f, 40f);
-        hintText.text = "힌트: 맵에 배치된 총을 획득해보세요.";
+        hintText.text = MissionHintMessage;
     }
 
     private TextMeshProUGUI CreateText(string objectName, float fontSize, TextAlignmentOptions alignment)
@@ -203,14 +207,20 @@ public class DemoRoundMissionHUD : MonoBehaviour
         text.color = Color.white;
         text.fontSize = fontSize;
         text.fontStyle = FontStyles.Bold;
+        text.fontWeight = FontWeight.Black;
         text.enableWordWrapping = false;
         text.overflowMode = TextOverflowModes.Overflow;
         text.raycastTarget = false;
         text.outlineColor = Color.black;
-        text.outlineWidth = 0.25f;
+        text.outlineWidth = TextOutlineWidth;
+
+        UnityEngine.UI.Outline outline = textObject.AddComponent<UnityEngine.UI.Outline>();
+        outline.effectColor = new Color(0f, 0f, 0f, 0.75f);
+        outline.effectDistance = new Vector2(1f, -1f);
+        outline.useGraphicAlpha = true;
 
         Shadow shadow = textObject.AddComponent<Shadow>();
-        shadow.effectColor = new Color(0f, 0f, 0f, 0.6f);
+        shadow.effectColor = new Color(0f, 0f, 0f, 0.7f);
         shadow.effectDistance = new Vector2(2f, -2f);
         shadow.useGraphicAlpha = true;
 
@@ -228,7 +238,22 @@ public class DemoRoundMissionHUD : MonoBehaviour
 
     private void UpdateMissionText()
     {
+        if (defeatedMonsterCount >= MissionTargetKills)
+        {
+            missionText.text = MissionCompleteMessage;
+            if (hintText != null)
+            {
+                hintText.text = MissionCompleteHintMessage;
+            }
+
+            return;
+        }
+
         missionText.text = $"미션: 몬스터 3마리 처치하기({defeatedMonsterCount}/{MissionTargetKills})";
+        if (hintText != null)
+        {
+            hintText.text = MissionHintMessage;
+        }
     }
 
     private void ResetMissionProgress()

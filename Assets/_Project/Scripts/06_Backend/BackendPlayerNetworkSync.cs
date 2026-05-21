@@ -87,6 +87,11 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
 
         if (HasStateAuthority)
         {
+            if (_playerCondition != null)
+            {
+                _playerCondition.enabled = true;
+            }
+
             BeginServerSpawnLock();
             NetworkPosition = transform.position;
             NetworkRotation = transform.rotation;
@@ -277,7 +282,11 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         _playerCondition.health.SetValue(NetworkHealth);
         _playerCondition.stamina.SetValue(NetworkStamina);
         _playerCondition.satiety.SetValue(NetworkSatiety);
-        _playerCondition.coldness.SetValue(NetworkColdness);
+
+        if (Object == null || !Object.HasInputAuthority)
+        {
+            _playerCondition.coldness.SetValue(NetworkColdness);
+        }
     }
 
     private void SyncInputOverrideState()

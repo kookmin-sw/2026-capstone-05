@@ -13,6 +13,7 @@ public class FrostEffectUI : MonoBehaviour
     public float maxColdness = 100f;   // 최대 추위 수치
     [Tooltip("추위 수치가 이 값 이상일 때부터 서리가 보이기 시작합니다.")]
     public float showThreshold = 20f;  // 예: 추위가 20 이상일 때부터 서리 발생
+    [SerializeField, Range(0f, 1f)] private float maxFrostAlpha = 0.68f;
 
     [Header("Shivering (진동) Settings")]
     [Tooltip("떨림의 속도 (높을수록 더 바들바들 떱니다)")]
@@ -62,7 +63,7 @@ public class FrostEffectUI : MonoBehaviour
 
         // 5. 최종 알파값 적용 (비례 알파값 + 진동값)
         // Mathf.Clamp01을 써서 혹시라도 계산된 알파값이 0 미만이거나 1을 초과하는 것을 막아줍니다.
-        float finalAlpha = Mathf.Clamp01(baseAlpha + vibration);
+        float finalAlpha = Mathf.Clamp(baseAlpha + vibration, 0f, maxFrostAlpha);
 
         // 이미지에 색상(알파값) 반영
         frostImage.color = new Color(1f, 1f, 1f, finalAlpha);

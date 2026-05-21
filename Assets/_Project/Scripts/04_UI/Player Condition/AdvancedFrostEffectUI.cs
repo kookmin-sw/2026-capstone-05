@@ -21,10 +21,12 @@ public class AdvancedFrostEffectUI : MonoBehaviour
     public float shiverSpeed = 15f;      
     public float shiverAmount = 0.05f;   
     public float baseTransitionSpeed = 5f;   
+    [SerializeField, Range(0f, 1f)] private float maxBaseAlpha = 0.62f;
 
     [Header("Scratch Crossfade Settings")]
     [Tooltip("스크래치가 차오르고 사라지는 전환 속도 (예: 0.5면 2초에 걸쳐 교체됨)")]
     public float scratchTransitionSpeed = 0.5f; 
+    [SerializeField, Range(0f, 1f)] private float maxScratchAlpha = 0.72f;
 
     // 스크래치 크로스페이드를 위한 상태 변수
     private float scratchProgress = 0f; 
@@ -65,7 +67,7 @@ public class AdvancedFrostEffectUI : MonoBehaviour
         float baseProportion = 0f;
         if (cold >= tier1Start) baseProportion = Mathf.InverseLerp(tier1Start, maxColdness, cold);
         
-        float targetBaseAlpha = (cold >= tier1Start) ? Mathf.Clamp01(baseProportion + vibration) : 0f;
+        float targetBaseAlpha = (cold >= tier1Start) ? Mathf.Clamp(baseProportion + vibration, 0f, maxBaseAlpha) : 0f;
 
         for (int i = 0; i < frostBaseImages.Length; i++)
         {
@@ -85,7 +87,7 @@ public class AdvancedFrostEffectUI : MonoBehaviour
             
             // 🔥 수정됨: 스크래치의 최대 알파값 한계치에도 진동(vibration)을 더해줍니다!
             // 베이스보다 약간 더 돋보이게 기본적으로 1.2배를 해준 뒤 진동을 섞습니다.
-            float maxScratchAlphaWithVibration = Mathf.Clamp01((scratchProportion * 1.2f) + vibration); 
+            float maxScratchAlphaWithVibration = Mathf.Clamp((scratchProportion * 1.2f) + vibration, 0f, maxScratchAlpha); 
 
             if (currentScratchIndex == -1)
             {

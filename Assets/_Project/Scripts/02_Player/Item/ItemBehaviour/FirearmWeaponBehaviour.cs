@@ -42,15 +42,20 @@ public class FirearmWeaponBehaviour : EquippedItemBehaviour
         if (Physics.Raycast(ray, out RaycastHit hit, data.attackRange, player.Equipment.hitLayerMask))
         {
             Debug.Log($"Hit: {hit.collider.name}");
-            if (hit.collider.TryGetComponent(out IDamageable target))
+            DamageInfo damageInfo = new DamageInfo
             {
-                DamageInfo damageInfo = new DamageInfo
-                {
-                    damageAmount = data.damage,
-                    hitPoint = hit.point,
-                    hitNormal = hit.normal,
-                    attacker = player.gameObject
-                };
+                damageAmount = data.damage,
+                hitPoint = hit.point,
+                hitNormal = hit.normal,
+                attacker = player.gameObject
+            };
+
+            if (hit.collider.GetComponentInParent<EnemyHealth>() is EnemyHealth enemyHealth)
+            {
+                enemyHealth.RequestDamage(damageInfo);
+            }
+            else if (hit.collider.GetComponentInParent<IDamageable>() is IDamageable target)
+            {
                 target.TakeDamage(damageInfo);
             }
 
