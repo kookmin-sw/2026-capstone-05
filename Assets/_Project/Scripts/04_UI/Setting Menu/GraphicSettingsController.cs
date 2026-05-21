@@ -1,5 +1,6 @@
-using UnityEngine;
+using System.Collections.Generic;
 using TMPro; // TextMeshPro 드롭다운을 사용하기 위한 필수 선언
+using UnityEngine;
 
 public class GraphicSettingsController : MonoBehaviour
 {
@@ -7,9 +8,9 @@ public class GraphicSettingsController : MonoBehaviour
     [SerializeField] private TMP_Dropdown resolutionDropdown;
     [SerializeField] private TMP_Dropdown windowModeDropdown;
 
-    // 인스펙터의 옵션 순서(0~4)와 일치하는 해상도 가로/세로 길이 배열
-    private readonly int[] widths = { 1280, 1600, 1920, 2560, 3840 };
-    private readonly int[] heights = { 720, 900, 1080, 1440, 2160 };
+    private readonly int[] widths = { 1280, 1600, 1920, 2560, 3840, 1280, 1440, 1680, 1920, 2560, 3840 };
+    private readonly int[] heights = { 720, 900, 1080, 1440, 2160, 800, 900, 1050, 1200, 1600, 2400 };
+    private readonly string[] aspectLabels = { "16:9", "16:9", "16:9", "16:9", "16:9", "16:10", "16:10", "16:10", "16:10", "16:10", "16:10" };
 
     void Start()
     {
@@ -17,10 +18,15 @@ public class GraphicSettingsController : MonoBehaviour
         // 저장된 값이 없다면 기본값으로 FHD(1920x1080, 인덱스 2), 전체화면(인덱스 0)을 사용합니다.
         int savedResIndex = PlayerPrefs.GetInt("ResolutionIndex", 2);
         int savedModeIndex = PlayerPrefs.GetInt("WindowModeIndex", 0);
+        if (savedResIndex < 0 || savedResIndex >= widths.Length)
+        {
+            savedResIndex = 2;
+        }
 
         // 2. 드롭다운 UI의 선택 항목을 저장된 값으로 맞춰줍니다.
-        resolutionDropdown.value = savedResIndex;
-        windowModeDropdown.value = savedModeIndex;
+        PopulateResolutionDropdown();
+        resolutionDropdown.SetValueWithoutNotify(savedResIndex);
+        windowModeDropdown.SetValueWithoutNotify(savedModeIndex);
 
         // 3. 불러온 설정으로 실제 화면을 즉시 변경합니다.
         ApplyGraphicSettings(savedResIndex, savedModeIndex);
@@ -73,5 +79,22 @@ public class GraphicSettingsController : MonoBehaviour
         
         // 즉시 로컬에 데이터 저장
         PlayerPrefs.Save();
+    }
+
+    private void PopulateResolutionDropdown()
+    {
+        if (resolutionDropdown == null)
+        {
+            return;
+        }
+
+        var options = new List<TMP_Dropdown.OptionData>(widths.Length);
+        for (var index = 0; index < widths.Length; index++)
+        {
+            options.Add(new TMP_Dropdown.OptionData($"{widths[index]} x {heights[index]} ({aspectLabels[index]})"));
+        }
+
+        resolutionDropdown.ClearOptions();
+        resolutionDropdown.AddOptions(options);
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Localization.Settings;
 using UnityEngine.SceneManagement;
+using Systems.GridInventory;
 
 public class ItemPickup : MonoBehaviour, IInteractable
 {
@@ -64,9 +65,9 @@ public class ItemPickup : MonoBehaviour, IInteractable
         if (_isPickedUp)
             return;
 
-        if (QuickslotUIController.Instance != null && !QuickslotUIController.Instance.HasEmptySlot())
+        if (!CanStorePickupItem(itemInstance))
         {
-            Debug.LogWarning("No empty quickslot is available.");
+            Debug.LogWarning("No empty quickslot or inventory space is available.");
             return;
         }
 
@@ -85,16 +86,9 @@ public class ItemPickup : MonoBehaviour, IInteractable
         if (_isPickedUp)
             return false;
 
-        if (QuickslotUIController.Instance == null)
+        if (!TryStorePickupItem(itemInstance))
         {
-            Debug.LogError("QuickslotUIController.Instance is missing. Item cannot be added to quickslot.");
-            return false;
-        }
-
-        bool added = QuickslotUIController.Instance.AddItemToEmptySlot(itemInstance);
-        if (!added)
-        {
-            Debug.LogWarning("No empty quickslot is available.");
+            Debug.LogWarning("No empty quickslot or inventory space is available.");
             return false;
         }
 
@@ -158,13 +152,6 @@ public class ItemPickup : MonoBehaviour, IInteractable
 
     private void GrantApprovedLocalPickup(PlayerController player, string itemId, int stackCount)
     {
-        if (QuickslotUIController.Instance == null)
-        {
-            Debug.LogError("QuickslotUIController.Instance is missing. Approved item cannot be added to quickslot.");
-            MarkPickedUp();
-            return;
-        }
-
         ItemData itemData = itemInstance?.Data != null ? itemInstance.Data : ItemDataRegistry.Find(itemId);
         if (itemData == null)
         {
@@ -175,10 +162,9 @@ public class ItemPickup : MonoBehaviour, IInteractable
 
         ItemDataRegistry.Register(itemData);
         ItemInstance grantedItem = new ItemInstance(itemData, Mathf.Max(1, stackCount));
-        bool added = QuickslotUIController.Instance.AddItemToEmptySlot(grantedItem);
-        if (!added)
+        if (!TryStorePickupItem(grantedItem))
         {
-            Debug.LogWarning("No empty quickslot is available for approved pickup.");
+            Debug.LogWarning("No empty quickslot or inventory space is available for approved pickup.");
         }
 
         MarkPickedUp();
@@ -187,6 +173,54 @@ public class ItemPickup : MonoBehaviour, IInteractable
         {
             // Hook pickup noise here when the noise system is ready for item pickups.
         }
+    }
+
+    private static bool TryStorePickupItem(ItemInstance item)
+    {
+        if (item == null || item.Data == null)
+        {
+            return false;
+        }
+
+        if (QuickslotUIController.Instance != null && QuickslotUIController.Instance.AddItemToEmptySlot(item))
+        {
+            return true;
+        }
+
+        var inventoryModel = GridInventory.Instance?.Controller?.Model;
+        return inventoryModel != null && inventoryModel.TryAdd(item);
+    }
+
+    private static bool CanStorePickupItem(ItemInstance item)
+    {
+        if (item == null || item.Data == null)
+        {
+            return false;
+        }
+
+        if (QuickslotUIController.Instance != null && QuickslotUIController.Instance.HasEmptySlot())
+        {
+            return true;
+        }
+
+        var inventoryModel = GridInventory.Instance?.Controller?.Model;
+        if (inventoryModel == null)
+        {
+            return false;
+        }
+
+        for (int y = 0; y < inventoryModel.Height; y++)
+        {
+            for (int x = 0; x < inventoryModel.Width; x++)
+            {
+                if (inventoryModel.CanPlaceItem(item, x, y))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private void RegisterPickup()
