@@ -115,23 +115,6 @@
     /* Set Duck sprite from code */
 }
 
-.dialogue-container {
-    width: 100%;
-    background-color: #000000;
-    border-width: 4px;
-    border-color: #ffffff;
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 8px;
-    min-height: 100px;
-}
-
-.dialogue-text {
-    color: white;
-    font-size: 18px;
-    white-space: normal;
-}
-
 .action-buttons {
     flex-direction: row;
     width: 100%;
@@ -262,6 +245,14 @@
 .popup-item-price {
     color: #000000;
     font-size: 14px;
+}
+
+.popup-item-max-quantity {
+    color: #000000;
+    font-size: 12px;
+    width: 100%;
+    margin-bottom: 4px;
+    -unity-text-align: middle-right;
 }
 
 .popup-shape-preview {

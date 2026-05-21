@@ -72,14 +72,14 @@ public class StartTriggerRoundInteractable : MonoBehaviour, IInteractable, IHold
 
         if (!activeRoundManager.IsRoundRunning)
         {
-            if (activeRoundManager.Object != null && activeRoundManager.Object.IsValid) {
-                activeRoundManager.RpcRequestSetRoundState(requester, true);
-            } else if (PlayerNetworkSetup.IsOfflineTestMode) {
-                // Offline fallback - we can't call RPCs, so we just log or handle it locally if needed
-                Debug.Log("[StartTriggerRoundInteractable] Offline mode: Pretending to start round locally.");
-                // In offline mode, BackendRoundManager doesn't have a Runner to start a TickTimer.
-                // We could implement a local fallback in BackendRoundManager, but for now we just skip the RPC.
+            if (AuthSession.IsOffline)
+            {
+                Debug.Log("[StartTriggerRoundInteractable] Offline mode: starting round locally.");
                 activeRoundManager.StartRoundOfflineFallback();
+            }
+            else if (activeRoundManager.Object != null && activeRoundManager.Object.IsValid)
+            {
+                activeRoundManager.RpcRequestSetRoundState(requester, true);
             }
         }
 

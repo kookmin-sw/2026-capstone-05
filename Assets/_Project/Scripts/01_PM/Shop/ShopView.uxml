@@ -10,7 +10,7 @@
                 <ui:Label name="shop-title" text="SDI SHOP - BUY" class="shop-title" />
             </ui:VisualElement>
             <ui:VisualElement class="gold-container">
-                <ui:Label name="gold-label" text="Gold: 500g" class="gold-text" />
+                <ui:Label name="gold-label" text="Gold: 500G" class="gold-text" />
             </ui:VisualElement>
         </ui:VisualElement>
 
@@ -47,6 +47,7 @@
                                 <ui:VisualElement name="popup-shape-grid" class="shape-grid" />
                             </ui:VisualElement>
                             
+                            <ui:Label name="popup-item-max-quantity" text="1회 최대 구매 : 1" class="popup-item-max-quantity" />
                             <ui:Label name="popup-item-desc" text="Item description goes here." class="popup-desc" />
                             
                             <!-- Quantity Selector -->
@@ -64,23 +65,17 @@
                 </ui:VisualElement>
             </ui:VisualElement>
 
-            <!-- Right Panel (NPC, Dialog, Buttons) -->
+            <!-- Right Panel (NPC, Buttons) -->
             <ui:VisualElement class="right-panel">
                 <ui:VisualElement class="npc-container">
                     <!-- Placeholder for Duck Image -->
                     <ui:VisualElement name="npc-image" class="npc-image" />
                 </ui:VisualElement>
                 
-                <ui:VisualElement class="dialogue-container">
-                    <ui:Label name="dialogue-text" text="* &quot;Welcome to Pokopia, where every item has a tale!&quot;" class="dialogue-text" />
-                </ui:VisualElement>
-                
                 <!-- Main Action Buttons -->
                 <ui:VisualElement name="main-action-buttons" class="action-buttons">
                     <ui:Button name="btn-tab-buy" text="* Buy" class="action-btn active" />
                     <ui:Button name="btn-tab-sell" text="* Sell" class="action-btn" />
-                    <ui:Button name="btn-tab-talk" text="* Talk" class="action-btn" />
-                    <ui:Button name="btn-tab-exit" text="* Exit" class="action-btn" />
                 </ui:VisualElement>
 
                 <!-- Placement Action Buttons -->
@@ -97,6 +92,6 @@
         <ui:VisualElement name="card-shape-preview" class="card-shape-preview" />
         <ui:VisualElement name="card-icon" class="card-icon" />
         <ui:Label name="card-name" text="HP Pot" class="card-name" />
-        <ui:Label name="card-price" text="10g" class="card-price" />
+        <ui:Label name="card-price" text="10G" class="card-price" />
     </ui:VisualElement>
 </ui:UXML>
