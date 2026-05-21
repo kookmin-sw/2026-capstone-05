@@ -50,11 +50,12 @@ namespace Systems.Loot
             if (AuthSession.IsOffline)
                 return; // 오프라인: Start()에서 InitializeOffline로 모델 로드
 
-            EnsureSceneLootModels();
+            EnsureSceneLootModels(false);
 
             if (HasStateAuthority)
             {
                 LoadAllLoots();
+                EnsureSceneLootModels();
                 BroadcastAllLoots(PlayerRef.None);
                 return;
             }
@@ -87,8 +88,9 @@ namespace Systems.Loot
         {
             isOfflineInitialized = true;
             _instance = this;
-            EnsureSceneLootModels();
+            EnsureSceneLootModels(false);
             LoadAllLoots();
+            EnsureSceneLootModels();
         }
 
         public void SubmitLootSnapshot(string lootId, LootSaveData snapshot)
@@ -171,6 +173,8 @@ namespace Systems.Loot
         {
             if (!HasStateAuthority && !AuthSession.IsOffline) return;
 
+            EnsureLootModelInitialized(lootId.ToString());
+
             if (ActiveLootUsers.TryGet(lootId, out PlayerRef currentUser))
             {
                 if (currentUser != requestedBy)
@@ -181,6 +185,7 @@ namespace Systems.Loot
             }
 
             ActiveLootUsers.Set(lootId, requestedBy);
+            BroadcastLoot(lootId.ToString(), requestedBy);
             Rpc_ApproveOpenLoot(requestedBy, lootId);
         }
 
@@ -272,7 +277,7 @@ namespace Systems.Loot
             if (overlappingItems.Count == 0) {
                 // Free space
                 model.PlaceItem(sourceItem, tx, ty);
-                dirtyLootIds.Add(lootId.ToString());
+                MarkLootDirty(lootId.ToString());
                 return;
             }
 
@@ -292,7 +297,7 @@ namespace Systems.Loot
                     sourceItem.currentStackCount = total - targetItem.Data.maxStackSize;
                     model.PlaceItem(sourceItem, sx, sy);
                 }
-                dirtyLootIds.Add(lootId.ToString());
+                MarkLootDirty(lootId.ToString());
                 return;
             }
 
@@ -323,7 +328,7 @@ namespace Systems.Loot
                 model.TryRemove(targetItem);
                 model.PlaceItem(sourceItem, tx, ty);
                 model.PlaceItem(targetItem, bNew.x, bNew.y);
-                dirtyLootIds.Add(lootId.ToString());
+                MarkLootDirty(lootId.ToString());
             } else {
                 sourceItem.currentRotation = oldRot;
                 model.PlaceItem(sourceItem, sx, sy);
@@ -364,7 +369,7 @@ namespace Systems.Loot
                 model.PlaceItem(swapItem, sx, sy);
             }
 
-            dirtyLootIds.Add(lootId.ToString());
+            MarkLootDirty(lootId.ToString());
         }
 
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
@@ -390,7 +395,7 @@ namespace Systems.Loot
             newItem.currentRotation = (ItemRotation)putRotation;
             model.PlaceItem(newItem, tx, ty);
             
-            dirtyLootIds.Add(lootId.ToString());
+            MarkLootDirty(lootId.ToString());
         }
 
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
@@ -426,7 +431,7 @@ namespace Systems.Loot
                 model.Items.Invoke();
             }
 
-            dirtyLootIds.Add(lootId.ToString());
+            MarkLootDirty(lootId.ToString());
         }
 
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
@@ -460,20 +465,20 @@ namespace Systems.Loot
                     existingItem.currentStackCount = itemDef.maxStackSize;
                 }
                 model.Items.Invoke();
-                dirtyLootIds.Add(lootId.ToString());
+                MarkLootDirty(lootId.ToString());
             }
             else if (existingItem == null)
             {
                 // 빈 자리 배치 통보 수락
                 model.PlaceItem(newItem, tx, ty);
-                dirtyLootIds.Add(lootId.ToString());
+                MarkLootDirty(lootId.ToString());
             }
             else
             {
                 // 1:1 스왑 통보 수락
                 model.TryRemove(existingItem);
                 model.PlaceItem(newItem, tx, ty);
-                dirtyLootIds.Add(lootId.ToString());
+                MarkLootDirty(lootId.ToString());
             }
         }
 
@@ -503,7 +508,7 @@ namespace Systems.Loot
 
             if (itemsToMove.Count > 0)
             {
-                dirtyLootIds.Add(lootId.ToString());
+                MarkLootDirty(lootId.ToString());
             }
         }
 
@@ -542,7 +547,7 @@ namespace Systems.Loot
                     model.Items.Invoke();
                 }
                 
-                dirtyLootIds.Add(lootId.ToString());
+                MarkLootDirty(lootId.ToString());
             }
             else
             {
@@ -554,7 +559,7 @@ namespace Systems.Loot
                 
                 if (model.TryAdd(newItem))
                 {
-                    dirtyLootIds.Add(lootId.ToString());
+                    MarkLootDirty(lootId.ToString());
                 }
             }
         }
@@ -575,8 +580,14 @@ namespace Systems.Loot
             data.lootId = NormalizeLootId(data.lootId);
             GridInventoryModel model = GetOrCreateModel(data.lootId, data.width, data.height);
             LootGridSerializer.ApplyToModel(data, model);
-            dirtyLootIds.Add(data.lootId);
-            BroadcastLoot(data.lootId, PlayerRef.None);
+            MarkLootDirty(data.lootId);
+        }
+
+        private void MarkLootDirty(string lootId)
+        {
+            string normalizedLootId = NormalizeLootId(lootId);
+            dirtyLootIds.Add(normalizedLootId);
+            BroadcastLoot(normalizedLootId, PlayerRef.None);
         }
 
         private void BroadcastLoot(string lootId, PlayerRef targetPlayer)
@@ -604,7 +615,7 @@ namespace Systems.Loot
                 return;
             }
 
-            EnsureSceneLootModels();
+            EnsureSceneLootModels(false);
             List<string> ids = new List<string>(modelsById.Keys);
             foreach (string lootId in ids)
             {
@@ -762,7 +773,7 @@ namespace Systems.Loot
             }
         }
 
-        private void EnsureSceneLootModels()
+        private void EnsureSceneLootModels(bool initializeItems = true)
         {
             InteractableLoot[] loots = FindObjectsByType<InteractableLoot>(FindObjectsSortMode.None);
             foreach (InteractableLoot loot in loots)
@@ -774,7 +785,34 @@ namespace Systems.Loot
                     {
                         baseStorageIds.Add(loot.StorageId);
                     }
+
+                    if (initializeItems && (HasStateAuthority || AuthSession.IsOffline))
+                    {
+                        loot.InitializeItemsIfNeeded();
+                    }
                 }
+            }
+        }
+
+        private void EnsureLootModelInitialized(string lootId)
+        {
+            string normalizedLootId = NormalizeLootId(lootId);
+            InteractableLoot[] loots = FindObjectsByType<InteractableLoot>(FindObjectsSortMode.None);
+            foreach (InteractableLoot loot in loots)
+            {
+                if (loot == null || !loot.HasConfiguration || NormalizeLootId(loot.StorageId) != normalizedLootId)
+                {
+                    continue;
+                }
+
+                GetOrCreateModel(loot.StorageId, loot.Width, loot.Height);
+                if (loot.IsBaseStorage)
+                {
+                    baseStorageIds.Add(loot.StorageId);
+                }
+
+                loot.InitializeItemsIfNeeded();
+                return;
             }
         }
 

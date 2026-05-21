@@ -574,7 +574,7 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
 
     private void ApplyProxyEquipmentState()
     {
-        if (_playerEquipment == null)
+        if (_playerEquipment == null || Object == null || Object.HasInputAuthority)
             return;
 
         string itemId = NetworkEquippedItemId.ToString();
