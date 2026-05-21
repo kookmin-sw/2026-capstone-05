@@ -22,6 +22,12 @@ namespace Systems.GridInventory
                 int targetQuickslot = QuickslotUIController.Instance.GetSlotIndexAtPosition(screenPos);
                 if (targetQuickslot >= 0)
                 {
+                    if (source == DragSource.Loot && LootController.Instance != null && LootController.Instance.IsOpen)
+                    {
+                        LootController.Instance.ReceiveQuickslotDrop(item, targetQuickslot);
+                        return;
+                    }
+
                     QuickslotUIController.Instance.ReceiveDrop(item, source, sourceIndex, targetQuickslot, sourceModel);
                     return;
                 }
@@ -43,6 +49,7 @@ namespace Systems.GridInventory
                     LootController.Instance.ReceivePlayerDrop(item, source, sourceIndex, playerSlot, sourceModel);
                     return;
                 }
+
             }
 
             // 3. Check Inventory
@@ -69,6 +76,12 @@ namespace Systems.GridInventory
                 return;
             }
 
+            if (item.Data == null || item.Data.pickupPrefab == null)
+            {
+                RevertDrop(item, source, sourceIndex, sourceModel);
+                return;
+            }
+
             Vector2 randomOffset = UnityEngine.Random.insideUnitCircle * 0.5f;
             Vector3 dropPosition = player.transform.position + new Vector3(randomOffset.x, 0, randomOffset.y);
 
@@ -81,6 +94,11 @@ namespace Systems.GridInventory
             {
                 sourceModel.TryRemove(item);
                 sourceModel.Items.Invoke();
+
+                if (source == DragSource.Loot && LootController.Instance != null)
+                {
+                    LootController.Instance.NotifyLootModelChangedFromExternalDrop(sourceModel);
+                }
             }
 
             // Spawn item
@@ -90,23 +108,20 @@ namespace Systems.GridInventory
             }
             else if (AuthSession.IsOffline)
             {
-                if (item.Data.pickupPrefab != null)
+                var obj = UnityEngine.Object.Instantiate(item.Data.pickupPrefab, dropPosition, Quaternion.identity);
+
+                // 바닥 높이 보정 로직
+                Collider col = obj.GetComponentInChildren<Collider>();
+                if (col != null)
                 {
-                    var obj = UnityEngine.Object.Instantiate(item.Data.pickupPrefab, dropPosition, Quaternion.identity);
+                    float bottomOffset = col.bounds.min.y - obj.transform.position.y;
+                    obj.transform.position = new Vector3(dropPosition.x, dropPosition.y - bottomOffset, dropPosition.z);
+                }
 
-                    // 바닥 높이 보정 로직
-                    Collider col = obj.GetComponentInChildren<Collider>();
-                    if (col != null)
-                    {
-                        float bottomOffset = col.bounds.min.y - obj.transform.position.y;
-                        obj.transform.position = new Vector3(dropPosition.x, dropPosition.y - bottomOffset, dropPosition.z);
-                    }
-
-                    var pickup = obj.GetComponent<ItemPickup>();
-                    if (pickup != null)
-                    {
-                        pickup.itemInstance = new ItemInstance(item.Data, item.currentStackCount);
-                    }
+                var pickup = obj.GetComponent<ItemPickup>();
+                if (pickup != null)
+                {
+                    pickup.itemInstance = new ItemInstance(item.Data, item.currentStackCount);
                 }
             }
         }

@@ -532,6 +532,110 @@ namespace Systems.Loot
             }
         }
 
+        public void NotifyLootModelChangedFromExternalDrop(GridInventoryModel sourceModel)
+        {
+            if (!IsOpen || lootInventoryController == null || !ReferenceEquals(sourceModel, lootInventoryController.Model))
+            {
+                return;
+            }
+
+            SubmitSnapshot(force: true);
+        }
+
+        public void ReceiveQuickslotDrop(ItemInstance item, int quickslotIndex)
+        {
+            if (!IsOpen || lootInventoryController == null || currentNetworkSync == null || item == null)
+            {
+                Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, Systems.GridInventory.DragSource.Loot, -1,
+                    lootInventoryController?.Model);
+                return;
+            }
+
+            var qs = QuickslotUIController.Instance;
+            if (qs == null)
+            {
+                Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, Systems.GridInventory.DragSource.Loot, -1,
+                    lootInventoryController.Model);
+                return;
+            }
+
+            var lootModel = lootInventoryController.Model;
+            var sourcePos = lootModel.GetItemAnchorPosition(item);
+            if (sourcePos.x == -1 || sourcePos.y == -1)
+            {
+                Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, Systems.GridInventory.DragSource.Loot, -1, lootModel);
+                return;
+            }
+
+            int sourceIndex = lootModel.GetIndex(sourcePos.x, sourcePos.y);
+            ItemInstance quickslotItem = qs.GetItem(quickslotIndex);
+
+            if (quickslotItem != null && quickslotItem.Data == item.Data && item.Data.maxStackSize > 1)
+            {
+                int spaceLeft = item.Data.maxStackSize - quickslotItem.currentStackCount;
+                if (spaceLeft <= 0)
+                {
+                    Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, Systems.GridInventory.DragSource.Loot, -1, lootModel);
+                    return;
+                }
+
+                int moveQty = Mathf.Min(item.currentStackCount, spaceLeft);
+                quickslotItem.currentStackCount += moveQty;
+                item.currentStackCount -= moveQty;
+
+                if (item.currentStackCount <= 0)
+                {
+                    lootModel.TryRemove(item);
+                }
+                else
+                {
+                    lootModel.Items.Invoke();
+                }
+
+                qs.RefreshSlotVisual(quickslotIndex);
+                RequestLootTake(sourceIndex, moveQty);
+                SubmitSnapshot(force: true);
+                return;
+            }
+
+            if (quickslotItem == null)
+            {
+                int movedCount = item.currentStackCount;
+                lootModel.TryRemove(item);
+
+                item.currentRotation = ItemRotation.Deg0;
+                qs.SetItemInSlot(quickslotIndex, item);
+                qs.RefreshSlotVisual(quickslotIndex);
+
+                RequestLootTake(sourceIndex, movedCount);
+                SubmitSnapshot(force: true);
+                return;
+            }
+
+            ItemRotation quickslotOriginalRotation = quickslotItem.currentRotation;
+            quickslotItem.currentRotation = ItemRotation.Deg0;
+
+            lootModel.TryRemove(item);
+            if (!lootModel.CanPlaceItem(quickslotItem, sourcePos.x, sourcePos.y))
+            {
+                quickslotItem.currentRotation = quickslotOriginalRotation;
+                lootModel.PlaceItem(item, sourcePos.x, sourcePos.y);
+                Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, Systems.GridInventory.DragSource.Loot, -1, lootModel);
+                return;
+            }
+
+            int movedItemCount = item.currentStackCount;
+            int swapItemCount = quickslotItem.currentStackCount;
+            lootModel.PlaceItem(quickslotItem, sourcePos.x, sourcePos.y);
+
+            item.currentRotation = ItemRotation.Deg0;
+            qs.SetItemInSlot(quickslotIndex, item);
+            qs.RefreshSlotVisual(quickslotIndex);
+
+            RequestLootTakeWithSwap(sourceIndex, movedItemCount, quickslotItem.Data.itemID, swapItemCount);
+            SubmitSnapshot(force: true);
+        }
+
         private ItemRotation GetTargetLogicalRotation(ItemInstance item, Systems.GridInventory.GridStorageView targetView) {
             return item.currentRotation;
         }
@@ -552,6 +656,7 @@ namespace Systems.Loot
             var draggedNew = new Vector2Int(targetCoords.x, targetCoords.y);
             var overlappingItems = new HashSet<ItemInstance>();
             bool outOfBounds = false;
+            bool sameLootModel = source == Systems.GridInventory.DragSource.Loot && ReferenceEquals(sourceModel, lootModel);
 
             foreach (var pos in item.Data.gridShape.GetRotatedPositions(item.currentRotation))
             {
@@ -582,6 +687,12 @@ namespace Systems.Loot
 
             bool isHost = currentNetworkSync.HasStateAuthority;
             bool isOffline = AuthSession.IsOffline;
+
+            if (sameLootModel)
+            {
+                MoveWithinOpenLoot(item, originalRotation, lootSlot, targetCoords, baseTargetItem);
+                return;
+            }
 
             if (baseTargetItem != null && baseTargetItem.Data == item.Data && item.Data.maxStackSize > 1)
             {
@@ -757,6 +868,134 @@ namespace Systems.Loot
                     item.currentRotation = originalRotation;
                     Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
                 }
+            }
+        }
+
+        private void MoveWithinOpenLoot(ItemInstance item, ItemRotation originalRotation, GridSlot lootSlot,
+            (int x, int y) targetCoords, ItemInstance baseTargetItem)
+        {
+            var lootModel = lootInventoryController.Model;
+            var sourceOld = lootModel.GetItemAnchorPosition(item);
+            if (sourceOld.x == -1 || sourceOld.y == -1)
+            {
+                item.currentRotation = originalRotation;
+                Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, Systems.GridInventory.DragSource.Loot, -1, lootModel);
+                return;
+            }
+
+            int oldIndex = lootModel.GetIndex(sourceOld.x, sourceOld.y);
+            if (oldIndex == lootSlot.Index && item.currentRotation == originalRotation)
+            {
+                Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, Systems.GridInventory.DragSource.Loot, -1, lootModel);
+                return;
+            }
+
+            var draggedNew = new Vector2Int(targetCoords.x, targetCoords.y);
+            var draggedOld = new Vector2Int(sourceOld.x, sourceOld.y);
+
+            if (baseTargetItem != null && baseTargetItem.Data == item.Data && item.Data.maxStackSize > 1)
+            {
+                int spaceLeft = item.Data.maxStackSize - baseTargetItem.currentStackCount;
+                if (spaceLeft <= 0)
+                {
+                    item.currentRotation = originalRotation;
+                    Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, Systems.GridInventory.DragSource.Loot, -1, lootModel);
+                    return;
+                }
+
+                int moveQty = Mathf.Min(item.currentStackCount, spaceLeft);
+                lootModel.TryRemove(item);
+                baseTargetItem.currentStackCount += moveQty;
+                item.currentStackCount -= moveQty;
+
+                if (item.currentStackCount > 0)
+                {
+                    lootModel.PlaceItem(item, sourceOld.x, sourceOld.y);
+                }
+
+                lootModel.Items.Invoke();
+                RequestLootMove(oldIndex, lootSlot.Index, item.currentRotation);
+                SubmitSnapshot(force: true);
+                return;
+            }
+
+            if (baseTargetItem == null)
+            {
+                lootModel.TryRemove(item);
+                if (!lootModel.PlaceItem(item, targetCoords.x, targetCoords.y))
+                {
+                    item.currentRotation = originalRotation;
+                    lootModel.PlaceItem(item, sourceOld.x, sourceOld.y);
+                    Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, Systems.GridInventory.DragSource.Loot, -1, lootModel);
+                    return;
+                }
+
+                RequestLootMove(oldIndex, lootSlot.Index, item.currentRotation);
+                SubmitSnapshot(force: true);
+                return;
+            }
+
+            var baseTargetPos = lootModel.GetItemAnchorPosition(baseTargetItem);
+            var targetOld = new Vector2Int(baseTargetPos.x, baseTargetPos.y);
+            var targetNew = GetRelativeSwapPosition(draggedOld, draggedNew, targetOld);
+
+            bool canPlaceDragged = lootModel.CanPlaceItem(item, targetCoords.x, targetCoords.y, baseTargetItem);
+            bool canPlaceTarget = lootModel.CanPlaceItem(baseTargetItem, targetNew.x, targetNew.y, item, baseTargetItem);
+            bool finalShapesOverlap = ItemShapesOverlap(item, draggedNew, baseTargetItem, targetNew);
+
+            if (!canPlaceDragged || !canPlaceTarget || finalShapesOverlap)
+            {
+                item.currentRotation = originalRotation;
+                Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, Systems.GridInventory.DragSource.Loot, -1, lootModel);
+                return;
+            }
+
+            lootModel.TryRemove(item);
+            lootModel.TryRemove(baseTargetItem);
+
+            bool placedItem = lootModel.PlaceItem(item, targetCoords.x, targetCoords.y);
+            bool placedTarget = placedItem && lootModel.PlaceItem(baseTargetItem, targetNew.x, targetNew.y);
+
+            if (!placedItem || !placedTarget)
+            {
+                if (placedItem) lootModel.TryRemove(item);
+                if (placedTarget) lootModel.TryRemove(baseTargetItem);
+
+                item.currentRotation = originalRotation;
+                lootModel.PlaceItem(item, sourceOld.x, sourceOld.y);
+                lootModel.PlaceItem(baseTargetItem, baseTargetPos.x, baseTargetPos.y);
+                Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, Systems.GridInventory.DragSource.Loot, -1, lootModel);
+                return;
+            }
+
+            RequestLootMove(oldIndex, lootSlot.Index, item.currentRotation);
+            SubmitSnapshot(force: true);
+        }
+
+        private void RequestLootMove(int oldIndex, int targetIndex, ItemRotation rotation)
+        {
+            if (!AuthSession.IsOffline && currentNetworkSync != null && currentNetworkSync.Runner != null)
+            {
+                currentNetworkSync.Rpc_RequestMoveItem(currentNetworkSync.Runner.LocalPlayer, currentStorageId,
+                    oldIndex, targetIndex, (int)rotation);
+            }
+        }
+
+        private void RequestLootTake(int sourceIndex, int quantity)
+        {
+            if (!AuthSession.IsOffline && currentNetworkSync != null && currentNetworkSync.Runner != null)
+            {
+                currentNetworkSync.Rpc_RequestTakeItem(currentNetworkSync.Runner.LocalPlayer, currentStorageId,
+                    sourceIndex, 0, quantity);
+            }
+        }
+
+        private void RequestLootTakeWithSwap(int sourceIndex, int takeQuantity, string swapItemId, int swapQuantity)
+        {
+            if (!AuthSession.IsOffline && currentNetworkSync != null && currentNetworkSync.Runner != null)
+            {
+                currentNetworkSync.Rpc_RequestTakeItemWithSwap(currentNetworkSync.Runner.LocalPlayer, currentStorageId,
+                    swapItemId, sourceIndex, 0, takeQuantity, swapQuantity);
             }
         }
 
