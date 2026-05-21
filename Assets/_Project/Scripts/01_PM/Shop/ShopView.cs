@@ -71,6 +71,7 @@ namespace Systems.Shop
 
             root = document.rootVisualElement;
             root.style.display = DisplayStyle.None; // Hide initially
+            FixedAspectRatioManager.RequestRefresh();
 
             document.sortingOrder = 6;
 
@@ -183,6 +184,7 @@ namespace Systems.Shop
         {
             root.style.display = DisplayStyle.Flex;
             SetShopModeVisuals(false);
+            FixedAspectRatioManager.RequestRefresh();
             
             if (backgroundDocument != null)
             {
@@ -204,18 +206,21 @@ namespace Systems.Shop
                 if (quickslotRoot != null)
                 {
                     quickslotRoot.style.display = DisplayStyle.None;
+                    FixedAspectRatioManager.RequestRefresh();
                 }
             }
 
             if (GridInventoryView.Instance != null && GridInventoryView.Instance.Container != null)
             {
                 GridInventoryView.Instance.Container.style.display = DisplayStyle.None;
+                FixedAspectRatioManager.RequestRefresh();
             }
         }
 
         public void HideShop()
         {
             root.style.display = DisplayStyle.None;
+            FixedAspectRatioManager.RequestRefresh();
 
             if (backgroundDocument != null)
             {
@@ -234,6 +239,7 @@ namespace Systems.Shop
                 if (quickslotRoot != null)
                 {
                     quickslotRoot.style.display = DisplayStyle.Flex;
+                    FixedAspectRatioManager.RequestRefresh();
                 }
             }
         }
@@ -318,6 +324,7 @@ namespace Systems.Shop
             // Render shape in popupShapeGrid if needed
             
             popupOverlay.style.display = DisplayStyle.Flex;
+            FixedAspectRatioManager.RequestRefresh();
             SetDialogue("* \"Ah, standard equipment! A solid choice. Let me know if you want it.\"");
         }
 
@@ -339,6 +346,7 @@ namespace Systems.Shop
             UpdateQuantityUI();
             
             popupOverlay.style.display = DisplayStyle.Flex;
+            FixedAspectRatioManager.RequestRefresh();
             SetDialogue("* \"What are you selling today? Let's see...\"");
         }
         
@@ -421,6 +429,7 @@ namespace Systems.Shop
             
             mainActionButtons.style.display = DisplayStyle.None;
             placementActionButtons.style.display = DisplayStyle.Flex;
+            FixedAspectRatioManager.RequestRefresh();
             
             SetDialogue("* \"Find a good spot in your bag! Just click where you want to put it.\"");
         }
@@ -432,12 +441,17 @@ namespace Systems.Shop
             
             mainActionButtons.style.display = DisplayStyle.Flex;
             placementActionButtons.style.display = DisplayStyle.None;
+            FixedAspectRatioManager.RequestRefresh();
         }
         
         public Button GetCancelPlaceButton() => btnCancelPlace;
         
         public VisualElement GetPlacementGridContainer() => placementGridContainer;
         
-        public VisualElement GetRootVisualElement() => root;
+        public VisualElement GetRootVisualElement()
+        {
+            FixedAspectRatioManager.RequestRefresh();
+            return root;
+        }
     }
 }

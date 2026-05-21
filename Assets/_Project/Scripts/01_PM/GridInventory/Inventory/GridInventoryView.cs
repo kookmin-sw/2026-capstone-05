@@ -51,6 +51,7 @@ namespace Systems.GridInventory {
             if (container == null) {
                 // UXML 구조가 비정상일 경우 코드로 기본 뼈대 동적 생성 (Fallback)
                 root.Clear();
+                FixedAspectRatioManager.RequestRefresh();
                 root.styleSheets.Add(styleSheet);
                 container = root.CreateChild("container");
                 var inv = container.CreateChild("inventory-window");
@@ -134,6 +135,7 @@ namespace Systems.GridInventory {
             container.style.display = DisplayStyle.None;
             IsAnyInventoryOpen = false;
             ResetStorageLayout();
+            FixedAspectRatioManager.RequestRefresh();
             
             yield return null; 
         }
@@ -154,6 +156,7 @@ namespace Systems.GridInventory {
             container.style.display = DisplayStyle.Flex;
             IsAnyInventoryOpen = true;
             ApplyStorageLayout();
+            FixedAspectRatioManager.RequestRefresh();
             
             UpdateSaveLoadButtonsVisibility(); // 테스트용 버튼 가시성 업데이트 복구
 
@@ -171,6 +174,7 @@ namespace Systems.GridInventory {
             container.style.display = DisplayStyle.None;
             IsAnyInventoryOpen = false;
             ResetStorageLayout();
+            FixedAspectRatioManager.RequestRefresh();
             
             PauseMenuManager.UpdateCursorAndInputState();
         }
@@ -181,6 +185,7 @@ namespace Systems.GridInventory {
             {
                 container.style.display = DisplayStyle.None;
                 IsAnyInventoryOpen = false;
+                FixedAspectRatioManager.RequestRefresh();
                 PauseMenuManager.UpdateCursorAndInputState();
             }
         }
@@ -224,6 +229,7 @@ namespace Systems.GridInventory {
                 container.style.display = isHidden ? DisplayStyle.Flex : DisplayStyle.None;
 
                 IsAnyInventoryOpen = isHidden;
+                FixedAspectRatioManager.RequestRefresh();
 
                 // 인벤토리가 열려있을 때(isHidden == true가 방금 열린 것)
                 if (isHidden) {
