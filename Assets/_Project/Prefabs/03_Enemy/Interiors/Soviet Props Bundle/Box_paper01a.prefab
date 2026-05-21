@@ -13,7 +13,8 @@ GameObject:
   - component: {fileID: 4137457308435303759}
   - component: {fileID: 1455941111905428637}
   - component: {fileID: 5688702955416406994}
-  m_Layer: 0
+  - component: {fileID: 4591251353201512587}
+  m_Layer: 6
   m_Name: Box_paper01a
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -30,8 +31,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 83.33333, y: 83.333336, z: 83.333336}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 100, y: 100, z: 100}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
@@ -125,4 +126,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce3c961714d0bc84d8aa58baaae41774, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Systems.Loot.InteractableLoot
-  lootConfiguration: {fileID: 0}
+  lootConfiguration: {fileID: 11400000, guid: 33b8dfe2f0cff2f4e940eed3f723565f, type: 2}
+  generatedStorageId: Loot_18d47e0b
+  isBaseStorage: 0
+  interactionSoundEvent:
+    Guid:
+      Data1: 2080370602
+      Data2: 1127050745
+      Data3: -1918770520
+      Data4: 2094078440
+    Path: event:/SFX/Player/Box_Interact
+  soundOrigin: {fileID: 0}
+--- !u!114 &4591251353201512587
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5854855963206162718}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66093baf508162644b91ffe96e76e165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceMaterial
+  surfaceType: 1
