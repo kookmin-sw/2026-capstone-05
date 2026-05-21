@@ -79,6 +79,12 @@ namespace Systems.GridInventory
             DropInventoryGridItems(originPosition, droppedItems);
         }
 
+        public static void ClearAllPlayerItemsWithoutDrop()
+        {
+            ClearQuickslotItemsWithoutDrop();
+            ClearInventoryGridItemsWithoutDrop();
+        }
+
         public static void DropItemOnGround(ItemInstance item, Vector3 originPosition)
         {
             if (item == null || item.Data == null)
@@ -143,6 +149,17 @@ namespace Systems.GridInventory
             }
         }
 
+        private static void ClearQuickslotItemsWithoutDrop()
+        {
+            if (QuickslotUIController.Instance == null)
+                return;
+
+            for (int i = 0; i < QuickslotCount; i++)
+            {
+                QuickslotUIController.Instance.RemoveItemFromSlot(i);
+            }
+        }
+
         private static void DropInventoryGridItems(Vector3 originPosition, HashSet<ItemInstance> droppedItems)
         {
             GridInventoryModel model = GridInventory.Instance?.Controller?.Model;
@@ -169,6 +186,15 @@ namespace Systems.GridInventory
                     DropItemOnGround(item, originPosition);
                 }
             }
+        }
+
+        private static void ClearInventoryGridItemsWithoutDrop()
+        {
+            GridInventoryModel model = GridInventory.Instance?.Controller?.Model;
+            if (model == null)
+                return;
+
+            model.Clear();
         }
 
         private static void SpawnDroppedItem(ItemInstance item, Vector3 dropPosition)

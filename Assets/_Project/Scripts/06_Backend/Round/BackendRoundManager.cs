@@ -413,6 +413,11 @@ public class BackendRoundManager : NetworkBehaviour
             _offlineTimerCoroutine = null;
         }
 
+        CloseRoundEndBunkerDoors();
+        yield return null;
+
+        ApplyRoundEndBunkerPenalties();
+
         PlayerPrefs.SetInt(_hostRoundCountPrefKey, CurrentRoundNumber);
         PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(_activeHostSlot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         PlayerPrefs.Save();
@@ -461,6 +466,92 @@ public class BackendRoundManager : NetworkBehaviour
     private void RpcPlayRoundEndFade(float fadeInSeconds, float holdSeconds, float fadeOutSeconds)
     {
         RoundTeleportFade.Play(fadeInSeconds, holdSeconds, fadeOutSeconds);
+    }
+
+    private void CloseRoundEndBunkerDoors()
+    {
+        if (AuthSession.IsOffline || Runner == null || !Runner.IsRunning)
+        {
+            CloseRoundEndBunkerDoorsLocal();
+            return;
+        }
+
+        if (HasStateAuthority)
+        {
+            RpcCloseRoundEndBunkerDoors();
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcCloseRoundEndBunkerDoors()
+    {
+        CloseRoundEndBunkerDoorsLocal();
+    }
+
+    private void CloseRoundEndBunkerDoorsLocal()
+    {
+        DoorInteractable[] doors = FindObjectsByType<DoorInteractable>(FindObjectsSortMode.None);
+        foreach (DoorInteractable door in doors)
+        {
+            if (door == null || !door.IsOpen || !IsBunkerDoor(door.transform))
+            {
+                continue;
+            }
+
+            door.ApplyState(false, 1);
+        }
+    }
+
+    private bool IsBunkerDoor(Transform target)
+    {
+        Transform current = target;
+        while (current != null)
+        {
+            if (current.GetComponent<BunkerExitInteractable>() != null)
+            {
+                return true;
+            }
+
+            if (current.name.IndexOf("bunker", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+
+            current = current.parent;
+        }
+
+        return false;
+    }
+
+    private void ApplyRoundEndBunkerPenalties()
+    {
+        if (AuthSession.IsOffline || Runner == null || !Runner.IsRunning)
+        {
+            ApplyRoundEndBunkerPenaltyToLocalPlayer();
+            return;
+        }
+
+        if (HasStateAuthority)
+        {
+            RpcApplyRoundEndBunkerPenaltyToLocalPlayer();
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcApplyRoundEndBunkerPenaltyToLocalPlayer()
+    {
+        ApplyRoundEndBunkerPenaltyToLocalPlayer();
+    }
+
+    private void ApplyRoundEndBunkerPenaltyToLocalPlayer()
+    {
+        if (!LocalPlayerReferenceResolver.TryGetLocalPlayer(out PlayerController player) || player == null)
+        {
+            return;
+        }
+
+        PlayerRespawn playerRespawn = player.GetComponent<PlayerRespawn>();
+        playerRespawn?.ApplyRoundEndBunkerPenaltyIfOutside();
     }
 
     public void RequestSetWeatherState(NetworkWeatherState weatherState)

@@ -132,6 +132,7 @@ public class BunkerExitInteractable : NetworkBehaviour, IInteractable
         }
 
         TeleportTransform(playerTransform, playerController, position, rotation);
+        SetPlayerInBunker(playerController, false);
     }
 
     private bool TryGetExitPose(out Vector3 position, out Quaternion rotation)
@@ -282,6 +283,20 @@ public class BunkerExitInteractable : NetworkBehaviour, IInteractable
     {
         NetworkObject playerNetworkObject = player != null ? player.GetComponent<NetworkObject>() : null;
         return playerNetworkObject != null ? playerNetworkObject.InputAuthority : PlayerRef.None;
+    }
+
+    private void SetPlayerInBunker(PlayerController playerController, bool value)
+    {
+        PlayerCondition condition = playerController != null
+            ? playerController.Condition
+            : null;
+
+        if (condition == null && playerController != null)
+        {
+            condition = playerController.GetComponent<PlayerCondition>();
+        }
+
+        condition?.SetInBunker(value);
     }
 
     private bool IsRoundRunning()

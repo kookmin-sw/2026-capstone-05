@@ -13,6 +13,7 @@ public class PlayerRespawn : MonoBehaviour
     private PlayerController controller;
     private BackendPlayerNetworkSync networkSync;
     private bool isRespawning;
+    private bool suppressNextDeathDrop;
 
     private void Awake()
     {
@@ -61,7 +62,15 @@ public class PlayerRespawn : MonoBehaviour
         controller.canLook = false;
         controller.currentVelocity = Vector3.zero;
 
-        DropInventoryAtDeathPosition(deathPosition);
+        if (suppressNextDeathDrop)
+        {
+            suppressNextDeathDrop = false;
+            controller.Equipment?.UnequipItem();
+        }
+        else
+        {
+            DropInventoryAtDeathPosition(deathPosition);
+        }
 
         yield return new WaitForSeconds(respawnDelaySeconds);
 
@@ -87,6 +96,18 @@ public class PlayerRespawn : MonoBehaviour
     private bool ShouldDropLocalInventoryOnDeath()
     {
         return networkSync == null || networkSync.Object == null || networkSync.Object.HasInputAuthority;
+    }
+
+    public void ApplyRoundEndBunkerPenaltyIfOutside()
+    {
+        if (condition == null || condition.IsInBunker)
+        {
+            return;
+        }
+
+        suppressNextDeathDrop = true;
+        GlobalDragDropRouter.ClearAllPlayerItemsWithoutDrop();
+        controller.Equipment?.UnequipItem();
     }
 
     [ContextMenu("Spawn At Spawner")]
@@ -132,5 +153,7 @@ public class PlayerRespawn : MonoBehaviour
         {
             characterController.enabled = true;
         }
+
+        condition?.SetInBunker(true);
     }
 }
