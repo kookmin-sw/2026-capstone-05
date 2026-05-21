@@ -54,7 +54,7 @@ MonoBehaviour:
   attackRange: 15
   attackHitRadius: 0.5
   attackRate: 0
-  requiredAmmoType: {fileID: 0}
+  requiredAmmoType: {fileID: 11400000, guid: 364c1911f793d7d4991a74cc3962d316, type: 2}
   maxMagazineSize: 0
   reloadTime: 0
   recoilForce: 5
@@ -67,6 +67,13 @@ MonoBehaviour:
       Data3: 1353668018
       Data4: 456764353
     Path: event:/SFX/Item/Shoot
+  dryFireSound:
+    Guid:
+      Data1: 1108426334
+      Data2: 1166641676
+      Data3: -868847486
+      Data4: 2050186330
+    Path: event:/SFX/Item/DryFire
   references:
     version: 2
     RefIds: []

@@ -15,9 +15,11 @@ public class FirearmItemData : WeaponItemData
     [Header("Noise Settings")]
     public NoiseData.NoiseType shootNoiseType = NoiseData.NoiseType.GunShot;
     public NoiseData.NoiseType reloadNoiseType = NoiseData.NoiseType.GunReload;
+    public NoiseData.NoiseType dryFireNoiseType = NoiseData.NoiseType.DryFire;
 
     [Header("Sound Settings")]
     public EventReference shootSound;
+    public EventReference dryFireSound;
 
     private void Reset()
     {
