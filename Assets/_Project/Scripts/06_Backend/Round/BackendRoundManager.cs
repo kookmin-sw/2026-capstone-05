@@ -296,6 +296,7 @@ public class BackendRoundManager : NetworkBehaviour
         
         // 싱글 모드에서는 IsRoundRunning 프로퍼티를 통해 로컬 변수에 할당됨
         IsRoundRunning = true;
+        ResetRoundLoot();
         
         if (_offlineTimerCoroutine != null)
         {
@@ -363,6 +364,7 @@ public class BackendRoundManager : NetworkBehaviour
 
         IsRoundRunning = true;
         RoundTimer = TickTimer.CreateFromSeconds(Runner, roundDurationSeconds);
+        ResetRoundLoot();
 
         PlayerPrefs.SetInt(_hostRoundCountPrefKey, CurrentRoundNumber);
         PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(_activeHostSlot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
@@ -379,6 +381,16 @@ public class BackendRoundManager : NetworkBehaviour
 
         Debug.Log($"[BackendRoundManager] 라운드 시작. round={CurrentRoundNumber}, reason={reason}, duration={roundDurationSeconds}s");
         RuntimeManager.PlayOneShot(roundStartSound);
+    }
+
+    private void ResetRoundLoot()
+    {
+        if (Systems.Loot.LootNetworkSync.Instance == null)
+        {
+            return;
+        }
+
+        Systems.Loot.LootNetworkSync.Instance.ResetRoundLoot();
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]

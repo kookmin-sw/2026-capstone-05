@@ -127,6 +127,19 @@ namespace Systems.Loot
             }
         }
 
+        public LootSaveData CreateInitialLootSnapshot()
+        {
+            if (!HasConfiguration)
+            {
+                return LootSaveManager.CreateEmpty(StorageId, 1, 1);
+            }
+
+            string resolvedStorageId = StorageId;
+            GridInventoryModel model = new GridInventoryModel(Width, Height);
+            lootConfiguration.PopulateModel(model, resolvedStorageId);
+            return LootGridSerializer.ToSaveData(resolvedStorageId, model);
+        }
+
         public bool CanInteract(PlayerController player)
         {
             if (!HasConfiguration)
