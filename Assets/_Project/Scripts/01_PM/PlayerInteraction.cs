@@ -72,18 +72,12 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
     /// </summary>
     private void CheckInteractionFocus()
     {
-        if (cameraTransform == null)
-        {
-            ResolveInteractionCamera();
-        }
-
-        if (cameraTransform == null)
+        if (!PlayerAimRayProvider.TryGetAimRay(player, out Ray ray))
         {
             ClearCurrentInteractable();
             return;
         }
 
-        Ray ray = new Ray(cameraTransform.position, cameraTransform.forward);
         if (Physics.Raycast(ray, out RaycastHit hit, interactionRange, interactableLayers))
         {
             // 콜라이더 자체나 부모 객체에 IInteractable 인터페이스가 있는지 확인

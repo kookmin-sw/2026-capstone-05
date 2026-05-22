@@ -25,16 +25,24 @@ public class ThrowableBehaviour : EquippedItemBehaviour
 
         base.OnAnimationEventTriggered();
 
+        if (!PlayerAimRayProvider.TryGetAimBasis(
+                player,
+                out Ray aimRay,
+                out Vector3 aimRight,
+                out Vector3 aimUp,
+                out Quaternion aimRotation))
+        {
+            return;
+        }
+
         itemInstance.currentStackCount--;
 
-        Transform originTransform = player.CameraTransform != null ? player.CameraTransform : Camera.main.transform;
-
         // TODO: 발사 위치 조정
-        Vector3 spawnPos = originTransform.position + originTransform.forward * 0.5f + originTransform.right * 0.5f;
+        Vector3 spawnPos = aimRay.origin + aimRay.direction * 0.5f + aimRight * 0.5f;
 
         if (data.thrownPrefab != null)
         {
-            GameObject projectile = Instantiate(data.thrownPrefab, spawnPos, originTransform.rotation);
+            GameObject projectile = Instantiate(data.thrownPrefab, spawnPos, aimRotation);
             if (projectile.TryGetComponent(out ThrownItem thrownItem))
             {
                 ItemInstance instanceCopy = new ItemInstance(itemInstance.Data, 1)
@@ -46,7 +54,7 @@ public class ThrowableBehaviour : EquippedItemBehaviour
             }
             if (projectile.TryGetComponent(out Rigidbody rb))
             {
-                Vector3 force = (originTransform.forward * data.throwForce) + (originTransform.up * 2f); // 2f는 upwardForce로 빼면 좋음
+                Vector3 force = (aimRay.direction * data.throwForce) + (aimUp * 2f); // 2f는 upwardForce로 빼면 좋음
                 Vector3 randomTorque = new Vector3(Random.Range(-5f, 5f), Random.Range(-5f, 5f), Random.Range(-5f, 5f));
                 rb.AddForce(force, ForceMode.VelocityChange);
                 rb.AddTorque(randomTorque, ForceMode.VelocityChange);

@@ -208,8 +208,12 @@ public class PlayerEquipment : MonoBehaviour
     /// </summary>
     private void PerformUnarmedHitCheck()
     {
-        Transform originTransform = player.CameraTransform != null ? player.CameraTransform : Camera.main.transform;
-        Vector3 checkCenter = originTransform.position + originTransform.forward * unarmedRange;
+        if (!PlayerAimRayProvider.TryGetAimRay(player, out Ray aimRay))
+        {
+            return;
+        }
+
+        Vector3 checkCenter = aimRay.origin + aimRay.direction * unarmedRange;
 
         Collider[] hitColliders = Physics.OverlapSphere(checkCenter, unarmedHitRadius, hitLayerMask);
         if (hitColliders.Length > 0)
@@ -221,8 +225,8 @@ public class PlayerEquipment : MonoBehaviour
                     DamageInfo damageInfo = new DamageInfo
                     {
                         damageAmount = unarmedDamage,
-                        hitPoint = hit.ClosestPoint(originTransform.position),
-                        hitNormal = (hit.transform.position - originTransform.position).normalized,
+                        hitPoint = hit.ClosestPoint(aimRay.origin),
+                        hitNormal = (hit.transform.position - aimRay.origin).normalized,
                         attacker = player.gameObject
                     };
                     target.TakeDamage(damageInfo);

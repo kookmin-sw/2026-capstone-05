@@ -54,10 +54,8 @@ public class FirearmWeaponBehaviour : EquippedItemBehaviour
         //    Instantiate(data.muzzleFlashPrefab, muzzlePoint.position, muzzlePoint.rotation, muzzlePoint);
         //}
 
-        Transform originTransform = player.CameraTransform != null ? player.CameraTransform : Camera.main.transform;
-        Ray ray = new Ray(originTransform.position, originTransform.forward);
-
-        if (Physics.Raycast(ray, out RaycastHit hit, data.attackRange, player.Equipment.hitLayerMask))
+        if (PlayerAimRayProvider.TryGetAimRay(player, out Ray ray) &&
+            Physics.Raycast(ray, out RaycastHit hit, data.attackRange, player.Equipment.hitLayerMask))
         {
             Debug.Log($"Hit: {hit.collider.name}");
             DamageInfo damageInfo = new DamageInfo
