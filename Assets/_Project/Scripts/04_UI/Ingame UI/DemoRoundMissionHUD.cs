@@ -1,4 +1,5 @@
 using TMPro;
+using Systems.GridInventory;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -7,14 +8,25 @@ public class DemoRoundMissionHUD : MonoBehaviour
 {
     private const string DemoScenePath = "Assets/_Project/Scenes/00_General/SingleDemoScene_StaticMap.unity";
     private const int MissionTargetKills = 3;
-    private const int CanvasSortingOrder = 30;
+    private const int QuickslotCount = 4;
+    private const int CanvasSortingOrder = -1;
     private const float TextRefreshInterval = 0.1f;
     private const float TextOutlineWidth = 0.2f;
-    private const string MissionHintMessage = "힌트: 맵에 배치된 총을 획득해보세요.";
     private const string MissionCompleteMessage = "맵을 탐험하며 계속해서 생존하세요.";
-    private const string MissionCompleteHintMessage = "제한시간 내에 기지로 복귀하세요.";
+    private const string QuestLeaveBunkerMessage = "퀘스트 1: 벙커 밖으로 나가기";
+    private const string QuestAcquireFirearmMessage = "퀘스트 2: 총 획득하기";
+    private const string QuestKillMonstersMessage = "퀘스트 3: 몬스터를 3마리 이상 처치하세요";
+    private const string QuestReturnToBaseMessage = "퀘스트 4: 제한 시간 내에 기지로 복귀해 물품을 보관하세요";
 
     private static DemoRoundMissionHUD instance;
+
+    private enum QuestStep
+    {
+        LeaveBunker,
+        AcquireFirearm,
+        KillMonsters,
+        ReturnToBase
+    }
 
     private CanvasGroup canvasGroup;
     private TextMeshProUGUI timerText;
@@ -22,6 +34,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
     private TextMeshProUGUI hintText;
     private TMP_FontAsset sceneFont;
     private int defeatedMonsterCount;
+    private QuestStep questStep;
     private bool wasRoundRunning;
     private int lastRoundNumber = -1;
     private float nextTextRefreshTime;
@@ -117,7 +130,9 @@ public class DemoRoundMissionHUD : MonoBehaviour
         }
 
         UpdateTimerText(roundManager);
+        UpdateQuestProgress();
         UpdateMissionText();
+        UpdateQuestHintText();
         nextTextRefreshTime = Time.unscaledTime + TextRefreshInterval;
     }
 
@@ -135,7 +150,9 @@ public class DemoRoundMissionHUD : MonoBehaviour
         }
 
         defeatedMonsterCount = Mathf.Min(MissionTargetKills, defeatedMonsterCount + 1);
+        UpdateQuestProgress();
         UpdateMissionText();
+        UpdateQuestHintText();
     }
 
     private static bool IsLocalPlayerAttacker(GameObject attacker)
@@ -203,7 +220,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
         hintRect.pivot = new Vector2(1f, 1f);
         hintRect.anchoredPosition = new Vector2(-34f, -76f);
         hintRect.sizeDelta = new Vector2(720f, 40f);
-        hintText.text = MissionHintMessage;
+        hintText.text = QuestLeaveBunkerMessage;
     }
 
     private TextMeshProUGUI CreateText(string objectName, float fontSize, TextAlignmentOptions alignment)
@@ -255,25 +272,106 @@ public class DemoRoundMissionHUD : MonoBehaviour
         if (defeatedMonsterCount >= MissionTargetKills)
         {
             missionText.text = MissionCompleteMessage;
-            if (hintText != null)
-            {
-                hintText.text = MissionCompleteHintMessage;
-            }
-
             return;
         }
 
         missionText.text = $"미션: 몬스터 3마리 처치하기({defeatedMonsterCount}/{MissionTargetKills})";
-        if (hintText != null)
+    }
+
+    private void UpdateQuestProgress()
+    {
+        if (questStep == QuestStep.LeaveBunker && IsLocalPlayerOutsideBunker())
         {
-            hintText.text = MissionHintMessage;
+            questStep = QuestStep.AcquireFirearm;
         }
+
+        if (questStep == QuestStep.AcquireFirearm && LocalPlayerHasFirearm())
+        {
+            questStep = QuestStep.KillMonsters;
+        }
+
+        if (questStep == QuestStep.KillMonsters && defeatedMonsterCount >= MissionTargetKills)
+        {
+            questStep = QuestStep.ReturnToBase;
+        }
+    }
+
+    private void UpdateQuestHintText()
+    {
+        if (hintText == null)
+        {
+            return;
+        }
+
+        hintText.text = questStep switch
+        {
+            QuestStep.AcquireFirearm => QuestAcquireFirearmMessage,
+            QuestStep.KillMonsters => QuestKillMonstersMessage,
+            QuestStep.ReturnToBase => QuestReturnToBaseMessage,
+            _ => QuestLeaveBunkerMessage
+        };
+    }
+
+    private static bool IsLocalPlayerOutsideBunker()
+    {
+        return LocalPlayerReferenceResolver.TryGetLocalCondition(out PlayerCondition condition)
+            && condition != null
+            && !condition.IsInBunker;
+    }
+
+    private static bool LocalPlayerHasFirearm()
+    {
+        if (QuickslotHasFirearm())
+        {
+            return true;
+        }
+
+        GridInventoryModel model = GridInventory.Instance?.Controller?.Model;
+        if (model == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < model.Items.Length; i++)
+        {
+            if (IsFirearm(model.Get(i)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool QuickslotHasFirearm()
+    {
+        if (QuickslotUIController.Instance == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < QuickslotCount; i++)
+        {
+            if (IsFirearm(QuickslotUIController.Instance.GetItem(i)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsFirearm(ItemInstance item)
+    {
+        return item?.Data is FirearmItemData;
     }
 
     private void ResetMissionProgress()
     {
         defeatedMonsterCount = 0;
+        questStep = QuestStep.LeaveBunker;
         UpdateMissionText();
+        UpdateQuestHintText();
     }
 
     private void SetVisible(bool visible)
