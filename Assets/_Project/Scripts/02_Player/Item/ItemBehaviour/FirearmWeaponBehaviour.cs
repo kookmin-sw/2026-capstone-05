@@ -176,6 +176,8 @@ public sealed class CenterScreenFeedbackUI : MonoBehaviour
         if (messageText == null || canvasGroup == null)
             return;
 
+        ApplySceneFont();
+
         float visibleSeconds = Mathf.Max(FadeOutSeconds, duration);
         messageText.text = message;
         messageText.color = color;
@@ -203,12 +205,8 @@ public sealed class CenterScreenFeedbackUI : MonoBehaviour
         GameObject textObject = new("CenterFeedbackText");
         textObject.transform.SetParent(transform, false);
 
-        TMP_FontAsset sceneFont = ResolveSceneFont();
         messageText = textObject.AddComponent<TextMeshProUGUI>();
-        if (sceneFont != null)
-        {
-            messageText.font = sceneFont;
-        }
+        ApplySceneFont();
 
         messageText.alignment = TextAlignmentOptions.Center;
         messageText.fontSize = 38f;
@@ -241,14 +239,35 @@ public sealed class CenterScreenFeedbackUI : MonoBehaviour
     private static TMP_FontAsset ResolveSceneFont()
     {
         TMP_Text[] sceneTexts = FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        TMP_FontAsset fallback = null;
+
         foreach (TMP_Text sceneText in sceneTexts)
         {
-            if (sceneText != null && sceneText.font != null)
+            if (sceneText == null || sceneText.font == null)
+            {
+                continue;
+            }
+
+            if (fallback == null)
+            {
+                fallback = sceneText.font;
+            }
+
+            if (sceneText.font.name.Contains("NEXON"))
             {
                 return sceneText.font;
             }
         }
 
-        return null;
+        return fallback;
+    }
+
+    private void ApplySceneFont()
+    {
+        TMP_FontAsset sceneFont = ResolveSceneFont();
+        if (messageText != null && sceneFont != null)
+        {
+            messageText.font = sceneFont;
+        }
     }
 }
