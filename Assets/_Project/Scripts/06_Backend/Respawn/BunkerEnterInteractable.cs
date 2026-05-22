@@ -80,6 +80,7 @@ public class BunkerEnterInteractable : NetworkBehaviour, IInteractable
 
         if (!CanPlayerEnterBunker(requestedBy))
         {
+            Debug.LogWarning($"[BunkerEnterInteractable] Enter denied. requestedBy={requestedBy}, gateState={BackendRoundManager.Instance?.GetPlayerBunkerGateStateDebug(requestedBy) ?? "RoundManagerMissing"}");
             return;
         }
 

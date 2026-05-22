@@ -499,6 +499,13 @@ public class BackendRoundManager : NetworkBehaviour
             playerRef = playerObject != null ? playerObject.InputAuthority : PlayerRef.None;
         }
 
+        Debug.Log($"[BackendRoundManager] Quest 3 complete report. localPlayer={(Runner != null ? Runner.LocalPlayer : PlayerRef.None)}, resolved={playerRef}, hasStateAuthority={HasStateAuthority}");
+
+        if (!HasStateAuthority && playerRef != PlayerRef.None)
+        {
+            playersWhoCompletedQuest3.Add(playerRef);
+        }
+
         MarkPlayerQuest3Completed(playerRef);
     }
 
@@ -528,14 +535,16 @@ public class BackendRoundManager : NetworkBehaviour
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    public void RpcRequestMarkPlayerQuest3Completed(PlayerRef playerRef)
+    public void RpcRequestMarkPlayerQuest3Completed(PlayerRef playerRef, RpcInfo rpcInfo = default)
     {
         if (!HasStateAuthority)
         {
             return;
         }
 
-        MarkPlayerQuest3CompletedInternal(playerRef);
+        PlayerRef resolvedPlayerRef = rpcInfo.Source != PlayerRef.None ? rpcInfo.Source : playerRef;
+        Debug.Log($"[BackendRoundManager] Quest 3 complete RPC. source={rpcInfo.Source}, requested={playerRef}, resolved={resolvedPlayerRef}");
+        MarkPlayerQuest3CompletedInternal(resolvedPlayerRef);
     }
 
     private void MarkPlayerQuest3CompletedInternal(PlayerRef playerRef)
@@ -564,6 +573,16 @@ public class BackendRoundManager : NetworkBehaviour
         }
 
         return !playersWhoExitedBunker.Contains(playerRef) || playersWhoCompletedQuest3.Contains(playerRef);
+    }
+
+    public string GetPlayerBunkerGateStateDebug(PlayerRef playerRef)
+    {
+        if (AuthSession.IsOffline)
+        {
+            return $"offlineExited={offlinePlayerExitedBunker}, offlineCompletedQuest3={offlinePlayerCompletedQuest3}";
+        }
+
+        return $"playerRef={playerRef}, exited={playersWhoExitedBunker.Contains(playerRef)}, completedQuest3={playersWhoCompletedQuest3.Contains(playerRef)}";
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
