@@ -20,6 +20,7 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
     private string _lastAppliedEquippedItemId = string.Empty;
     private int _lastAppliedEquippedStackCount = -1;
     private int _lastAppliedUseAnimationCount;
+    private int _lastAppliedConditionResetRevision;
 
     [Networked] private Vector3 NetworkPosition { get; set; }
     [Networked] private Quaternion NetworkRotation { get; set; }
@@ -37,6 +38,7 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
     [Networked] private float NetworkSatiety { get; set; }
     [Networked] private float NetworkColdness { get; set; }
     [Networked] private NetworkBool NetworkConditionInitialized { get; set; }
+    [Networked] private int NetworkConditionResetRevision { get; set; }
 
     public static BackendPlayerNetworkSync LocalInstance { get; private set; }
 
@@ -102,6 +104,7 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
             NetworkIsSprinting = false;
             NetworkIsCrouching = false;
             SyncConditionSnapshot();
+            _lastAppliedConditionResetRevision = NetworkConditionResetRevision;
             ApplyEquippedItemNetworkState(_playerEquipment != null ? _playerEquipment.CurrentItemInstance : null);
 
             // 호스트 본인의 인벤토리 로드 (로컬 기준)
@@ -280,14 +283,31 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         if (_playerCondition == null || !NetworkConditionInitialized)
             return;
 
+        bool shouldApplyFullResetSnapshot = NetworkConditionResetRevision != _lastAppliedConditionResetRevision;
+
         _playerCondition.health.SetValue(NetworkHealth);
         _playerCondition.stamina.SetValue(NetworkStamina);
         _playerCondition.satiety.SetValue(NetworkSatiety);
 
-        if (Object == null || !Object.HasInputAuthority)
+        if (shouldApplyFullResetSnapshot || Object == null || !Object.HasInputAuthority)
         {
             _playerCondition.coldness.SetValue(NetworkColdness);
         }
+
+        if (shouldApplyFullResetSnapshot)
+        {
+            _lastAppliedConditionResetRevision = NetworkConditionResetRevision;
+        }
+    }
+
+    public void PublishConditionResetSnapshot()
+    {
+        if (!HasStateAuthority)
+            return;
+
+        SyncConditionSnapshot();
+        NetworkConditionResetRevision++;
+        _lastAppliedConditionResetRevision = NetworkConditionResetRevision;
     }
 
     private void SyncInputOverrideState()

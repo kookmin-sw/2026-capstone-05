@@ -76,6 +76,7 @@ public class PlayerRespawn : MonoBehaviour
 
         SpawnAtSpawner();
         condition.Revive();
+        networkSync?.PublishConditionResetSnapshot();
 
         controller.currentVelocity = Vector3.zero;
         controller.canAction = true;
