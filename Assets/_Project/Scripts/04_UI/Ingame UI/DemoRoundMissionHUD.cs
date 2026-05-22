@@ -18,7 +18,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
     private const float DemoFadeHoldSeconds = 1.8f;
     private const float DemoFadeOutSeconds = 0.9f;
     private const string ThankYouMessage = "데모버전을 플레이해주셔서 감사합니다!";
-    private const string QuestOpenBunkerMessage = "퀘스트 1. 책상과 상호작용하여 벙커 문을 여세요.";
+    private const string QuestOpenBunkerMessage = "퀘스트 1. 책상과 상호작용 완료 후 벙커 문을 여세요.";
     private const string QuestAcquireFirearmMessage = "퀘스트 2. 몬스터를 처치하기 위해 총과 총알을 획득하세요.";
     private const string QuestReturnToBaseMessage = "퀘스트 4. 제한 시간 내에 탐험을 마치고 기지로 복귀하세요.";
     private const string QuestCompletedMessage = "퀘스트 완료!";
