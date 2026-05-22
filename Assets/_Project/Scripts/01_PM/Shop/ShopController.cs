@@ -517,7 +517,30 @@ namespace Systems.Shop
                     });
                 }
             }
-            
+            inventoryItems.Clear();
+            foreach (var kvp in PlayerItemInventoryQuery.BuildItemCounts())
+            {
+                ItemData itemData = kvp.Key;
+                int totalCount = kvp.Value;
+                if (itemData == null || totalCount <= 0)
+                {
+                    continue;
+                }
+
+                int sellPrice = 10;
+                var shopItem = model.ShopItems.Find(x => x.ItemData == itemData);
+                if (shopItem != null)
+                {
+                    sellPrice = Mathf.Max(1, shopItem.BuyPrice / 2);
+                }
+
+                inventoryItems.Add(new ShopItemEntry {
+                    ItemData = itemData,
+                    BuyPrice = sellPrice,
+                    StockCount = totalCount
+                });
+            }
+
             shopView.RenderCatalog(inventoryItems, isSellMode: true);
         }
 
@@ -788,16 +811,16 @@ namespace Systems.Shop
 
         private void HandleSellItemClicked(ShopItemEntry itemToSell, int quantity)
         {
-            if (global::Systems.GridInventory.GridInventory.Instance != null && global::Systems.GridInventory.GridInventory.Instance.Controller != null)
+            if (itemToSell != null && quantity > 0)
             {
-                bool success = global::Systems.GridInventory.GridInventory.Instance.ConsumeItem(itemToSell.ItemData, quantity);
+                bool success = PlayerItemInventoryQuery.TryConsumeItem(itemToSell.ItemData, quantity);
                 if (success)
                 {
                     if (AuthSession.IsOffline)
                     {
                         // Offline fallback
-                        var invModel = global::Systems.GridInventory.GridInventory.Instance.Controller.Model;
-                        invModel.AddGold(itemToSell.BuyPrice * quantity); 
+                        var invModel = global::Systems.GridInventory.GridInventory.Instance?.Controller?.Model;
+                        invModel?.AddGold(itemToSell.BuyPrice * quantity);
                     }
                     else
                     {

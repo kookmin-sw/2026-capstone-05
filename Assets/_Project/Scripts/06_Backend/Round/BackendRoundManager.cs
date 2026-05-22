@@ -656,6 +656,9 @@ public class BackendRoundManager : NetworkBehaviour
 
     private System.Collections.IEnumerator EndRoundRoutine(string reason)
     {
+        int completedRoundNumber = CurrentRoundNumber;
+        bool shouldPlayDemoThankYouFade = ShouldPlayDemoThankYouFade(completedRoundNumber, reason);
+
         IsRoundRunning = false;
         HasRoundTimerStarted = false;
         isEndingRound = true;
@@ -687,8 +690,11 @@ public class BackendRoundManager : NetworkBehaviour
         PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(_activeHostSlot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         PlayerPrefs.Save();
 
-        PlayRoundEndFade();
-        yield return new WaitForSecondsRealtime(Mathf.Max(0f, roundEndFadeInSeconds));
+        if (shouldPlayDemoThankYouFade)
+        {
+            PlayRoundEndFade();
+            yield return new WaitForSecondsRealtime(Mathf.Max(0f, roundEndFadeInSeconds));
+        }
 
         RespawnAllPlayersAtSpawner();
         ResetRoundEndPlayerConditions();
@@ -710,8 +716,18 @@ public class BackendRoundManager : NetworkBehaviour
         }
 
         Debug.Log($"[BackendRoundManager] 라운드 종료. slot={_activeHostSlot}, round={CurrentRoundNumber}, reason={reason}");
-        yield return new WaitForSecondsRealtime(Mathf.Max(0f, roundEndBlackHoldSeconds + roundEndFadeOutSeconds));
+        if (shouldPlayDemoThankYouFade)
+        {
+            yield return new WaitForSecondsRealtime(Mathf.Max(0f, roundEndBlackHoldSeconds + roundEndFadeOutSeconds));
+        }
+
         isEndingRound = false;
+    }
+
+    private bool ShouldPlayDemoThankYouFade(int completedRoundNumber, string reason)
+    {
+        return completedRoundNumber == 1 &&
+            (reason == "Timeout" || reason == "TimeExpired_Offline");
     }
 
     private void PlayRoundEndFade()

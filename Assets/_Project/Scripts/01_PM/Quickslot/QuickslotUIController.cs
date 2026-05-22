@@ -226,6 +226,12 @@ public class QuickslotUIController : MonoBehaviour
         var itemInstance = model.Get(slotIndex);
         if (evt.button != 0 || itemInstance == null) return;
 
+        if (evt.shiftKey && GlobalDragDropRouter.TryQuickMoveQuickslotItemToInventory(slotIndex))
+        {
+            evt.StopPropagation();
+            return;
+        }
+
         isDragging = true;
         draggingSlotIndex = slotIndex;
         activeQuickslotPointerId = evt.pointerId;

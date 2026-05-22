@@ -162,9 +162,13 @@ namespace Systems.GridInventory {
         void OnPointerDown(PointerDownEvent evt) {
             if (evt.button != 0) return;
 
-            if (evt.shiftKey && OnItemShiftLeftClickRequestedGlobal?.Invoke(this) == true) {
-                evt.StopPropagation();
-                return;
+            if (evt.shiftKey) {
+                bool handled = OnItemShiftLeftClickRequestedGlobal?.Invoke(this) == true ||
+                    GlobalDragDropRouter.TryQuickMoveInventoryItemToQuickslot(this);
+                if (handled) {
+                    evt.StopPropagation();
+                    return;
+                }
             }
             
             isDraggingThis = true;
