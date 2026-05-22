@@ -77,34 +77,12 @@ public class InteractionCursorController : MonoBehaviour
 
     private bool ShouldShowCustomCursor()
     {
-        if (Cursor.lockState != CursorLockMode.Locked)
+        if (PauseMenuManager.Instance != null)
         {
-            return true;
+            return PauseMenuManager.IsAnyUIOpen();
         }
 
-        if (PauseMenuManager.isPaused)
-        {
-            return true;
-        }
-
-        if (global::Systems.GridInventory.GridInventoryView.IsAnyInventoryOpen)
-        {
-            return true;
-        }
-
-        if (global::Systems.Loot.LootController.Instance != null &&
-            global::Systems.Loot.LootController.Instance.IsOpen)
-        {
-            return true;
-        }
-
-        if (global::Systems.Shop.ShopController.Instance != null &&
-            global::Systems.Shop.ShopController.Instance.IsOpen)
-        {
-            return true;
-        }
-
-        return false;
+        return Cursor.lockState != CursorLockMode.Locked;
     }
 
     private void UpdateCursorPosition()

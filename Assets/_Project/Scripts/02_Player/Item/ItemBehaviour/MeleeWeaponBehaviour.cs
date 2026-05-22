@@ -36,8 +36,12 @@ public class MeleeWeaponBehaviour : EquippedItemBehaviour
 
         base.OnAnimationEventTriggered();
 
-        Transform originTransform = player.CameraTransform != null ? player.CameraTransform : Camera.main.transform;
-        Vector3 checkCenter = originTransform.position + originTransform.forward * data.attackRange;
+        if (!PlayerAimRayProvider.TryGetAimRay(player, out Ray aimRay))
+        {
+            return;
+        }
+
+        Vector3 checkCenter = aimRay.origin + aimRay.direction * data.attackRange;
 
         Collider[] hitColliders = Physics.OverlapSphere(checkCenter, data.attackHitRadius, player.Equipment.hitLayerMask);
         if (hitColliders.Length > 0)
