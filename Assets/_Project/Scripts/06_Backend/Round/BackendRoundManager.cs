@@ -7,14 +7,15 @@ using UnityEngine;
 public class BackendRoundManager : NetworkBehaviour
 {
     private const string HostSelectedSlotPrefKey = "HostSaveSlot";
+    private const string DemoThankYouMessage = "데모버전을 플레이해주셔서 감사합니다!";
     public static BackendRoundManager Instance { get; private set; }
     public static event System.Action<NetworkWeatherState> WeatherStateChanged;
 
     [Header("Round")]
-    [SerializeField] private float roundDurationSeconds = 480f;
-    [SerializeField] private float roundEndFadeInSeconds = 0.65f;
-    [SerializeField] private float roundEndBlackHoldSeconds = 0.15f;
-    [SerializeField] private float roundEndFadeOutSeconds = 0.65f;
+    [SerializeField] private float roundDurationSeconds = 300f;
+    [SerializeField] private float roundEndFadeInSeconds = 0.9f;
+    [SerializeField] private float roundEndBlackHoldSeconds = 1.8f;
+    [SerializeField] private float roundEndFadeOutSeconds = 0.9f;
     public float RoundDurationSeconds => roundDurationSeconds;
 
     [Header("Weather")]
@@ -717,7 +718,7 @@ public class BackendRoundManager : NetworkBehaviour
     {
         if (AuthSession.IsOffline)
         {
-            RoundTeleportFade.Play(roundEndFadeInSeconds, roundEndBlackHoldSeconds, roundEndFadeOutSeconds);
+            RoundTeleportFade.Play(roundEndFadeInSeconds, roundEndBlackHoldSeconds, roundEndFadeOutSeconds, DemoThankYouMessage);
             return;
         }
 
@@ -730,7 +731,7 @@ public class BackendRoundManager : NetworkBehaviour
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RpcPlayRoundEndFade(float fadeInSeconds, float holdSeconds, float fadeOutSeconds)
     {
-        RoundTeleportFade.Play(fadeInSeconds, holdSeconds, fadeOutSeconds);
+        RoundTeleportFade.Play(fadeInSeconds, holdSeconds, fadeOutSeconds, DemoThankYouMessage);
     }
 
     private void CloseRoundEndBunkerDoors()
