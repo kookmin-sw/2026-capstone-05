@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using Systems.GridInventory;
 using UnityEngine;
@@ -12,9 +13,16 @@ public class DemoRoundMissionHUD : MonoBehaviour
     private const int CanvasSortingOrder = -1;
     private const float TextRefreshInterval = 0.1f;
     private const float TextOutlineWidth = 0.2f;
+    private const float QuestCompletedFadeDelaySeconds = 5f;
+    private const float DemoFadeInSeconds = 0.9f;
+    private const float DemoFadeHoldSeconds = 1.8f;
+    private const float DemoFadeOutSeconds = 0.9f;
+    private const string ThankYouMessage = "데모버전을 플레이해주셔서 감사합니다!";
     private const string QuestOpenBunkerMessage = "퀘스트 1. 책상과 상호작용하여 벙커 문을 여세요.";
     private const string QuestAcquireFirearmMessage = "퀘스트 2. 몬스터를 처치하기 위해 총과 총알을 획득하세요.";
     private const string QuestReturnToBaseMessage = "퀘스트 4. 제한 시간 내에 탐험을 마치고 기지로 복귀하세요.";
+    private const string QuestCompletedMessage = "퀘스트 완료!";
+    private const string QuestFailedMessage = "퀘스트 실패!";
 
     private static DemoRoundMissionHUD instance;
 
@@ -23,7 +31,9 @@ public class DemoRoundMissionHUD : MonoBehaviour
         LeaveBunker,
         AcquireFirearmAndAmmo,
         KillMonsters,
-        ReturnToBase
+        ReturnToBase,
+        Completed,
+        Failed
     }
 
     private CanvasGroup canvasGroup;
@@ -35,6 +45,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
     private bool wasRoundRunning;
     private int lastRoundNumber = -1;
     private float nextTextRefreshTime;
+    private Coroutine questCompletedRoutine;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
@@ -113,7 +124,12 @@ public class DemoRoundMissionHUD : MonoBehaviour
 
         bool isRoundRunning = roundManager.IsRoundRunning;
         int currentRoundNumber = roundManager.CurrentRoundNumber;
-        if ((isRoundRunning && !wasRoundRunning) || currentRoundNumber != lastRoundNumber)
+        if (wasRoundRunning && !isRoundRunning)
+        {
+            FailQuestIfIncomplete();
+        }
+
+        if (isRoundRunning && (!wasRoundRunning || currentRoundNumber != lastRoundNumber))
         {
             ResetMissionProgress();
         }
@@ -263,6 +279,8 @@ public class DemoRoundMissionHUD : MonoBehaviour
             QuestStep.AcquireFirearmAndAmmo => QuestAcquireFirearmMessage,
             QuestStep.KillMonsters => BuildKillMonsterQuestMessage(),
             QuestStep.ReturnToBase => QuestReturnToBaseMessage,
+            QuestStep.Completed => QuestCompletedMessage,
+            QuestStep.Failed => QuestFailedMessage,
             _ => QuestOpenBunkerMessage
         };
     }
@@ -283,6 +301,11 @@ public class DemoRoundMissionHUD : MonoBehaviour
         {
             questStep = QuestStep.ReturnToBase;
         }
+
+        if (questStep == QuestStep.ReturnToBase && IsLocalPlayerInBunker())
+        {
+            CompleteQuest();
+        }
     }
 
     private string BuildKillMonsterQuestMessage()
@@ -302,6 +325,13 @@ public class DemoRoundMissionHUD : MonoBehaviour
         }
 
         return false;
+    }
+
+    private static bool IsLocalPlayerInBunker()
+    {
+        return LocalPlayerReferenceResolver.TryGetLocalCondition(out PlayerCondition condition) &&
+            condition != null &&
+            condition.IsInBunker;
     }
 
     private static bool LocalPlayerHasFirearmAndAmmo()
@@ -378,9 +408,61 @@ public class DemoRoundMissionHUD : MonoBehaviour
 
     private void ResetMissionProgress()
     {
+        if (questCompletedRoutine != null)
+        {
+            StopCoroutine(questCompletedRoutine);
+            questCompletedRoutine = null;
+        }
+
         defeatedMonsterCount = 0;
         questStep = QuestStep.LeaveBunker;
         UpdateMissionText();
+    }
+
+    private void CompleteQuest()
+    {
+        if (questStep == QuestStep.Completed)
+        {
+            return;
+        }
+
+        questStep = QuestStep.Completed;
+        UpdateMissionText();
+
+        if (questCompletedRoutine == null)
+        {
+            questCompletedRoutine = StartCoroutine(PlayQuestCompletedFadeRoutine());
+        }
+    }
+
+    private void FailQuestIfIncomplete()
+    {
+        if (questStep == QuestStep.Completed)
+        {
+            if (questCompletedRoutine != null)
+            {
+                StopCoroutine(questCompletedRoutine);
+                questCompletedRoutine = null;
+            }
+
+            return;
+        }
+
+        if (questCompletedRoutine != null)
+        {
+            StopCoroutine(questCompletedRoutine);
+            questCompletedRoutine = null;
+        }
+
+        questStep = QuestStep.Failed;
+        UpdateMissionText();
+    }
+
+    private IEnumerator PlayQuestCompletedFadeRoutine()
+    {
+        yield return new WaitForSecondsRealtime(QuestCompletedFadeDelaySeconds);
+        RoundTeleportFade.Play(DemoFadeInSeconds, DemoFadeHoldSeconds, DemoFadeOutSeconds, ThankYouMessage);
+        questCompletedRoutine = null;
     }
 
     private void SetVisible(bool visible)

@@ -1,4 +1,5 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,11 +10,17 @@ public class RoundTeleportFade : MonoBehaviour
     private static RoundTeleportFade instance;
 
     private CanvasGroup canvasGroup;
+    private TextMeshProUGUI messageText;
     private Coroutine fadeRoutine;
 
     public static void Play(float fadeInSeconds, float holdSeconds, float fadeOutSeconds)
     {
-        EnsureInstance().PlayInternal(fadeInSeconds, holdSeconds, fadeOutSeconds);
+        Play(fadeInSeconds, holdSeconds, fadeOutSeconds, string.Empty);
+    }
+
+    public static void Play(float fadeInSeconds, float holdSeconds, float fadeOutSeconds, string message)
+    {
+        EnsureInstance().PlayInternal(fadeInSeconds, holdSeconds, fadeOutSeconds, message);
     }
 
     private static RoundTeleportFade EnsureInstance()
@@ -82,15 +89,55 @@ public class RoundTeleportFade : MonoBehaviour
         rectTransform.anchorMax = Vector2.one;
         rectTransform.offsetMin = Vector2.zero;
         rectTransform.offsetMax = Vector2.zero;
+
+        GameObject textObject = new("FadeMessageText");
+        textObject.transform.SetParent(transform, false);
+
+        messageText = textObject.AddComponent<TextMeshProUGUI>();
+        TMP_FontAsset sceneFont = ResolveSceneFont();
+        if (sceneFont != null)
+        {
+            messageText.font = sceneFont;
+        }
+
+        messageText.alignment = TextAlignmentOptions.Center;
+        messageText.color = Color.white;
+        messageText.fontSize = 42f;
+        messageText.fontStyle = FontStyles.Bold;
+        messageText.fontWeight = FontWeight.Black;
+        messageText.enableWordWrapping = false;
+        messageText.overflowMode = TextOverflowModes.Overflow;
+        messageText.outlineColor = Color.black;
+        messageText.outlineWidth = 0.2f;
+        messageText.raycastTarget = false;
+        messageText.text = string.Empty;
+
+        RectTransform textRect = messageText.rectTransform;
+        textRect.anchorMin = new Vector2(0.5f, 0.5f);
+        textRect.anchorMax = new Vector2(0.5f, 0.5f);
+        textRect.pivot = new Vector2(0.5f, 0.5f);
+        textRect.anchoredPosition = Vector2.zero;
+        textRect.sizeDelta = new Vector2(1200f, 120f);
     }
 
-    private void PlayInternal(float fadeInSeconds, float holdSeconds, float fadeOutSeconds)
+    private void PlayInternal(float fadeInSeconds, float holdSeconds, float fadeOutSeconds, string message)
     {
         CreateUi();
 
         if (fadeRoutine != null)
         {
             StopCoroutine(fadeRoutine);
+        }
+
+        if (messageText != null)
+        {
+            TMP_FontAsset sceneFont = ResolveSceneFont();
+            if (sceneFont != null)
+            {
+                messageText.font = sceneFont;
+            }
+
+            messageText.text = message ?? string.Empty;
         }
 
         fadeRoutine = StartCoroutine(FadeRoutine(
@@ -112,6 +159,11 @@ public class RoundTeleportFade : MonoBehaviour
         yield return FadeTo(0f, fadeOutSeconds);
 
         canvasGroup.blocksRaycasts = false;
+        if (messageText != null)
+        {
+            messageText.text = string.Empty;
+        }
+
         fadeRoutine = null;
     }
 
@@ -135,5 +187,31 @@ public class RoundTeleportFade : MonoBehaviour
         }
 
         canvasGroup.alpha = targetAlpha;
+    }
+
+    private static TMP_FontAsset ResolveSceneFont()
+    {
+        TMP_Text[] texts = FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        TMP_FontAsset fallback = null;
+
+        foreach (TMP_Text text in texts)
+        {
+            if (text == null || text.font == null)
+            {
+                continue;
+            }
+
+            if (fallback == null)
+            {
+                fallback = text.font;
+            }
+
+            if (text.font.name.Contains("NEXON"))
+            {
+                return text.font;
+            }
+        }
+
+        return fallback;
     }
 }
