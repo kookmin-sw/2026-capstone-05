@@ -94,6 +94,7 @@ public class BunkerExitInteractable : NetworkBehaviour, IInteractable
         }
 
         TeleportPlayerObjectToBunkerDoor(playerObject);
+        RpcSyncPlayerBunkerState(requestedBy, false);
     }
 
     private void TeleportPlayerToBunkerDoor(PlayerController player)
@@ -283,6 +284,22 @@ public class BunkerExitInteractable : NetworkBehaviour, IInteractable
     {
         NetworkObject playerNetworkObject = player != null ? player.GetComponent<NetworkObject>() : null;
         return playerNetworkObject != null ? playerNetworkObject.InputAuthority : PlayerRef.None;
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcSyncPlayerBunkerState(PlayerRef playerRef, NetworkBool isInBunker)
+    {
+        if (Runner == null || playerRef == PlayerRef.None)
+        {
+            return;
+        }
+
+        if (!Runner.TryGetPlayerObject(playerRef, out NetworkObject playerObject) || playerObject == null)
+        {
+            return;
+        }
+
+        SetPlayerInBunker(playerObject.GetComponent<PlayerController>(), isInBunker);
     }
 
     private void SetPlayerInBunker(PlayerController playerController, bool value)

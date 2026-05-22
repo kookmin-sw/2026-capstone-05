@@ -84,6 +84,7 @@ public class BunkerEnterInteractable : NetworkBehaviour, IInteractable
         }
 
         TeleportPlayerObjectToSpawner(playerObject);
+        RpcSyncPlayerBunkerState(requestedBy, true);
     }
 
     private void TeleportPlayerToSpawner(PlayerController player)
@@ -199,6 +200,22 @@ public class BunkerEnterInteractable : NetworkBehaviour, IInteractable
     {
         NetworkObject playerNetworkObject = player != null ? player.GetComponent<NetworkObject>() : null;
         return playerNetworkObject != null ? playerNetworkObject.InputAuthority : PlayerRef.None;
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcSyncPlayerBunkerState(PlayerRef playerRef, NetworkBool isInBunker)
+    {
+        if (Runner == null || playerRef == PlayerRef.None)
+        {
+            return;
+        }
+
+        if (!Runner.TryGetPlayerObject(playerRef, out NetworkObject playerObject) || playerObject == null)
+        {
+            return;
+        }
+
+        SetPlayerInBunker(playerObject.GetComponent<PlayerController>(), isInBunker);
     }
 
     private bool IsRoundRunning()
