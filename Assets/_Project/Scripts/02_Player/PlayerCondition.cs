@@ -211,6 +211,26 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
         hasRaisedDeathEvent = false;
     }
 
+    public void ResetToDefaultValues()
+    {
+        EnsureInitialized();
+
+        bool wasDead = !IsAlive;
+        activeEffects.Clear();
+        health.Initialize();
+        stamina.Initialize();
+        satiety.Initialize();
+        coldness.Initialize();
+        staminaRegenTimer = 0f;
+        conditionDamageTimer = 0f;
+        hasRaisedDeathEvent = false;
+
+        if (wasDead)
+        {
+            OnReviveEvent?.Invoke();
+        }
+    }
+
     /// <summary>
     /// 점프, 공격 등 단발성으로 스태미나를 깎을 때 사용
     /// </summary>
