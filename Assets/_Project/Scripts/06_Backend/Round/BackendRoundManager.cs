@@ -10,7 +10,7 @@ public class BackendRoundManager : NetworkBehaviour
     public static event System.Action<NetworkWeatherState> WeatherStateChanged;
 
     [Header("Round")]
-    [SerializeField] private float roundDurationSeconds = 480f;
+    [SerializeField] private float roundDurationSeconds = 300f;
     [SerializeField] private float roundEndFadeInSeconds = 0.65f;
     [SerializeField] private float roundEndBlackHoldSeconds = 0.15f;
     [SerializeField] private float roundEndFadeOutSeconds = 0.65f;
