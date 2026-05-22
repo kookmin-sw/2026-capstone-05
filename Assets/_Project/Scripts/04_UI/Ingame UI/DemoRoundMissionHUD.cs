@@ -10,7 +10,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
     private const int CanvasSortingOrder = 30;
     private const float TextRefreshInterval = 0.1f;
     private const float TextOutlineWidth = 0.2f;
-    private const string MissionHintMessage = "힌트: 맵에 배치된 총을 획득해보세요.";
+    private const string MissionHintMessage = "힌트: 기지 밖으로 나가 총을 획득해보세요.";
     private const string MissionCompleteMessage = "맵을 탐험하며 계속해서 생존하세요.";
     private const string MissionCompleteHintMessage = "제한시간 내에 기지로 복귀하세요.";
 
