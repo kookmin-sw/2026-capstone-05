@@ -114,6 +114,7 @@ public class BunkerEnterInteractable : NetworkBehaviour, IInteractable
         if (playerRespawn != null)
         {
             playerRespawn.SpawnAtSpawner();
+            SetPlayerInBunker(playerObject.GetComponent<PlayerController>(), true);
             ResetPlayerVelocity(playerObject.GetComponent<PlayerController>());
             return;
         }
@@ -131,6 +132,7 @@ public class BunkerEnterInteractable : NetworkBehaviour, IInteractable
 
         Transform spawnPoint = Spawner.Instance.GetSpawnPoint();
         TeleportTransform(playerTransform, playerController, spawnPoint.position, spawnPoint.rotation);
+        SetPlayerInBunker(playerController, true);
     }
 
     private void TeleportTransform(Transform playerTransform, PlayerController playerController, Vector3 position, Quaternion rotation)
@@ -177,6 +179,20 @@ public class BunkerEnterInteractable : NetworkBehaviour, IInteractable
         {
             playerController.currentVelocity = Vector3.zero;
         }
+    }
+
+    private void SetPlayerInBunker(PlayerController playerController, bool value)
+    {
+        PlayerCondition condition = playerController != null
+            ? playerController.Condition
+            : null;
+
+        if (condition == null && playerController != null)
+        {
+            condition = playerController.GetComponent<PlayerCondition>();
+        }
+
+        condition?.SetInBunker(value);
     }
 
     private PlayerRef GetPlayerRef(PlayerController player)

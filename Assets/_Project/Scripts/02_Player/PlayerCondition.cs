@@ -39,6 +39,10 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
     public float indoorColdnessDecreaseRate = 0.4f;
     public float outdoorColdnessIncreaseRate = 0.2f;
 
+    [Header("Bunker State")]
+    [SerializeField] private bool isInBunker = true;
+    public bool IsInBunker => isInBunker;
+
     [Header("VFX Settings")]
     [SerializeField] private GameObject damageVFXPrefab;
 
@@ -278,6 +282,11 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
             coldness.increaseRate = outdoorColdnessIncreaseRate;
             coldness.decreaseRate = 0f;
         }
+    }
+
+    public void SetInBunker(bool value)
+    {
+        isInBunker = value;
     }
 
     private void RaiseDeathEvent()
