@@ -65,9 +65,11 @@ public class BunkerExitInteractable : NetworkBehaviour, IInteractable
             return;
         }
 
-        TeleportPlayerToBunkerDoor(player);
-
-        RuntimeManager.PlayOneShot(exitSound, player.transform.position);
+        if (TeleportPlayerToBunkerDoor(player))
+        {
+            BackendRoundManager.Instance?.RegisterPlayerBunkerExit(PlayerRef.None);
+            RuntimeManager.PlayOneShot(exitSound, player.transform.position);
+        }
     }
 
     public string GetInteractPrompt()
@@ -93,47 +95,50 @@ public class BunkerExitInteractable : NetworkBehaviour, IInteractable
             return;
         }
 
-        TeleportPlayerObjectToBunkerDoor(playerObject);
-        RpcSyncPlayerBunkerState(requestedBy, false);
+        if (TeleportPlayerObjectToBunkerDoor(playerObject))
+        {
+            RpcSyncPlayerBunkerState(requestedBy, false);
+            BackendRoundManager.Instance?.RegisterPlayerBunkerExit(requestedBy);
+        }
     }
 
-    private void TeleportPlayerToBunkerDoor(PlayerController player)
+    private bool TeleportPlayerToBunkerDoor(PlayerController player)
     {
         if (player == null)
         {
-            return;
+            return false;
         }
 
         NetworkObject playerObject = player.GetComponent<NetworkObject>();
         if (playerObject != null)
         {
-            TeleportPlayerObjectToBunkerDoor(playerObject);
-            return;
+            return TeleportPlayerObjectToBunkerDoor(playerObject);
         }
 
-        TeleportTransformToBunkerDoor(player.transform, player);
+        return TeleportTransformToBunkerDoor(player.transform, player);
     }
 
-    private void TeleportPlayerObjectToBunkerDoor(NetworkObject playerObject)
+    private bool TeleportPlayerObjectToBunkerDoor(NetworkObject playerObject)
     {
         if (playerObject == null)
         {
-            return;
+            return false;
         }
 
-        TeleportTransformToBunkerDoor(playerObject.transform, playerObject.GetComponent<PlayerController>());
+        return TeleportTransformToBunkerDoor(playerObject.transform, playerObject.GetComponent<PlayerController>());
     }
 
-    private void TeleportTransformToBunkerDoor(Transform playerTransform, PlayerController playerController)
+    private bool TeleportTransformToBunkerDoor(Transform playerTransform, PlayerController playerController)
     {
         if (playerTransform == null || !TryGetExitPose(out Vector3 position, out Quaternion rotation))
         {
             Debug.LogWarning("[BunkerExitInteractable] Base 아래의 bunker_scene/Bunker_door를 찾을 수 없습니다.");
-            return;
+            return false;
         }
 
         TeleportTransform(playerTransform, playerController, position, rotation);
         SetPlayerInBunker(playerController, false);
+        return true;
     }
 
     private bool TryGetExitPose(out Vector3 position, out Quaternion rotation)

@@ -31,7 +31,7 @@ public class BunkerEnterInteractable : NetworkBehaviour, IInteractable
 
     public bool CanInteract(PlayerController player)
     {
-        if (!enabled || player == null || player.InputHandler == null || !IsRoundRunning())
+        if (!enabled || player == null || player.InputHandler == null || !IsRoundRunning() || !CanPlayerEnterBunker(player))
         {
             return false;
         }
@@ -74,6 +74,11 @@ public class BunkerEnterInteractable : NetworkBehaviour, IInteractable
     public void RpcRequestTeleportToSpawner(PlayerRef requestedBy)
     {
         if (!HasStateAuthority || Runner == null || requestedBy == PlayerRef.None || !IsRoundRunning())
+        {
+            return;
+        }
+
+        if (!CanPlayerEnterBunker(requestedBy))
         {
             return;
         }
@@ -200,6 +205,17 @@ public class BunkerEnterInteractable : NetworkBehaviour, IInteractable
     {
         NetworkObject playerNetworkObject = player != null ? player.GetComponent<NetworkObject>() : null;
         return playerNetworkObject != null ? playerNetworkObject.InputAuthority : PlayerRef.None;
+    }
+
+    private bool CanPlayerEnterBunker(PlayerController player)
+    {
+        return CanPlayerEnterBunker(GetPlayerRef(player));
+    }
+
+    private bool CanPlayerEnterBunker(PlayerRef playerRef)
+    {
+        BackendRoundManager roundManager = BackendRoundManager.Instance;
+        return roundManager != null && roundManager.CanPlayerEnterBunker(playerRef);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]

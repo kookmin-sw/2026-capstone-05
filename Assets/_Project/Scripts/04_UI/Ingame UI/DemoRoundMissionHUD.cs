@@ -35,6 +35,8 @@ public class DemoRoundMissionHUD : MonoBehaviour
     private bool wasRoundRunning;
     private int lastRoundNumber = -1;
     private float nextTextRefreshTime;
+    private bool hasReportedQuest3Completed;
+    private Coroutine questCompletedRoutine;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
@@ -281,6 +283,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
 
         if (questStep == QuestStep.KillMonsters && defeatedMonsterCount >= MissionTargetKills)
         {
+            ReportQuest3Completed();
             questStep = QuestStep.ReturnToBase;
         }
     }
@@ -379,8 +382,66 @@ public class DemoRoundMissionHUD : MonoBehaviour
     private void ResetMissionProgress()
     {
         defeatedMonsterCount = 0;
+        hasReportedQuest3Completed = false;
         questStep = QuestStep.LeaveBunker;
         UpdateMissionText();
+    }
+
+    private void ReportQuest3Completed()
+    {
+        if (hasReportedQuest3Completed)
+        {
+            return;
+        }
+
+        hasReportedQuest3Completed = true;
+        BackendRoundManager.Instance?.MarkLocalPlayerQuest3Completed();
+    }
+
+    private void CompleteQuest()
+    {
+        if (questStep == QuestStep.Completed)
+        {
+            return;
+        }
+
+        questStep = QuestStep.Completed;
+        UpdateMissionText();
+
+        if (questCompletedRoutine == null)
+        {
+            questCompletedRoutine = StartCoroutine(PlayQuestCompletedFadeRoutine());
+        }
+    }
+
+    private void FailQuestIfIncomplete()
+    {
+        if (questStep == QuestStep.Completed)
+        {
+            if (questCompletedRoutine != null)
+            {
+                StopCoroutine(questCompletedRoutine);
+                questCompletedRoutine = null;
+            }
+
+            return;
+        }
+
+        if (questCompletedRoutine != null)
+        {
+            StopCoroutine(questCompletedRoutine);
+            questCompletedRoutine = null;
+        }
+
+        questStep = QuestStep.Failed;
+        UpdateMissionText();
+    }
+
+    private IEnumerator PlayQuestCompletedFadeRoutine()
+    {
+        yield return new WaitForSecondsRealtime(QuestCompletedFadeDelaySeconds);
+        RoundTeleportFade.Play(DemoFadeInSeconds, DemoFadeHoldSeconds, DemoFadeOutSeconds, ThankYouMessage);
+        questCompletedRoutine = null;
     }
 
     private void SetVisible(bool visible)
