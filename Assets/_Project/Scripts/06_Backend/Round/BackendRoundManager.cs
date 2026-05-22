@@ -10,7 +10,7 @@ public class BackendRoundManager : NetworkBehaviour
     public static event System.Action<NetworkWeatherState> WeatherStateChanged;
 
     [Header("Round")]
-    [SerializeField] private float roundDurationSeconds = 300f;
+    [SerializeField] private float roundDurationSeconds = 480f;
     [SerializeField] private float roundEndFadeInSeconds = 0.65f;
     [SerializeField] private float roundEndBlackHoldSeconds = 0.15f;
     [SerializeField] private float roundEndFadeOutSeconds = 0.65f;
@@ -426,6 +426,7 @@ public class BackendRoundManager : NetworkBehaviour
         yield return new WaitForSecondsRealtime(Mathf.Max(0f, roundEndFadeInSeconds));
 
         RespawnAllPlayersAtSpawner();
+        ResetRoundEndPlayerConditions();
         
         if (AuthSession.IsOffline)
         {
@@ -552,6 +553,46 @@ public class BackendRoundManager : NetworkBehaviour
 
         PlayerRespawn playerRespawn = player.GetComponent<PlayerRespawn>();
         playerRespawn?.ApplyRoundEndBunkerPenaltyIfOutside();
+    }
+
+    private void ResetRoundEndPlayerConditions()
+    {
+        if (AuthSession.IsOffline || Runner == null || !Runner.IsRunning)
+        {
+            ResetLocalPlayerConditionToDefaults();
+            return;
+        }
+
+        if (!HasStateAuthority)
+        {
+            return;
+        }
+
+        foreach (PlayerRef playerRef in Runner.ActivePlayers)
+        {
+            if (!Runner.TryGetPlayerObject(playerRef, out NetworkObject playerObject) || playerObject == null)
+            {
+                continue;
+            }
+
+            playerObject.GetComponent<PlayerCondition>()?.ResetToDefaultValues();
+        }
+
+        RpcResetLocalPlayerConditionToDefaults();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcResetLocalPlayerConditionToDefaults()
+    {
+        ResetLocalPlayerConditionToDefaults();
+    }
+
+    private void ResetLocalPlayerConditionToDefaults()
+    {
+        if (LocalPlayerReferenceResolver.TryGetLocalCondition(out PlayerCondition condition) && condition != null)
+        {
+            condition.ResetToDefaultValues();
+        }
     }
 
     public void RequestSetWeatherState(NetworkWeatherState weatherState)

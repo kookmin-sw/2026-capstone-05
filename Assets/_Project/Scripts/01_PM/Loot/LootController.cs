@@ -81,6 +81,8 @@ namespace Systems.Loot
 
             GridItemView.OnItemSplitDroppedGlobal -= HandleItemSplitDroppedGlobal;
             GridItemView.OnItemSplitDroppedGlobal += HandleItemSplitDroppedGlobal;
+            GridItemView.OnItemShiftLeftClickRequestedGlobal -= HandleItemShiftLeftClickRequestedGlobal;
+            GridItemView.OnItemShiftLeftClickRequestedGlobal += HandleItemShiftLeftClickRequestedGlobal;
 
             QuickslotUIController.OnQuickslotSplitRequested -= HandleQuickslotSplitRequestedToLoot;
             QuickslotUIController.OnQuickslotSplitRequested += HandleQuickslotSplitRequestedToLoot;
@@ -89,6 +91,7 @@ namespace Systems.Loot
         private void OnDestroy()
         {
             GridItemView.OnItemSplitDroppedGlobal -= HandleItemSplitDroppedGlobal;
+            GridItemView.OnItemShiftLeftClickRequestedGlobal -= HandleItemShiftLeftClickRequestedGlobal;
 
             QuickslotUIController.OnQuickslotSplitRequested -= HandleQuickslotSplitRequestedToLoot;
         }
@@ -375,6 +378,142 @@ namespace Systems.Loot
                 Destroy(dummyPlayerGridView);
                 dummyPlayerGridView = null;
             }
+        }
+
+        private bool HandleItemShiftLeftClickRequestedGlobal(GridItemView itemView)
+        {
+            if (!IsOpen || isInventoryOnlyMode || itemView == null || itemView.ItemInst == null ||
+                lootInventoryController == null || dummyPlayerInventoryController == null || currentNetworkSync == null)
+            {
+                return false;
+            }
+
+            var item = itemView.ItemInst;
+            var lootModel = lootInventoryController.Model;
+            var playerModel = dummyPlayerInventoryController.Model;
+
+            if (IsStoredInModel(lootModel, item))
+            {
+                TryQuickMoveLootToPlayer(item, lootModel, playerModel);
+                return true;
+            }
+
+            if (IsStoredInModel(playerModel, item))
+            {
+                TryQuickMovePlayerToLoot(item, playerModel, lootModel);
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool TryQuickMovePlayerToLoot(ItemInstance item, GridInventoryModel playerModel, GridInventoryModel lootModel)
+        {
+            if (!TryFindFirstFreePlacement(lootModel, item, out var targetPos))
+            {
+                return false;
+            }
+
+            var sourcePos = playerModel.GetItemAnchorPosition(item);
+            if (sourcePos.x < 0 || sourcePos.y < 0)
+            {
+                return false;
+            }
+
+            bool isOffline = AuthSession.IsOffline;
+            bool shouldPlaceLocally = isOffline || !currentNetworkSync.HasStateAuthority;
+            if (!isOffline && currentNetworkSync.Runner == null)
+            {
+                return false;
+            }
+
+            int quantity = item.currentStackCount;
+
+            if (!playerModel.TryRemove(item))
+            {
+                return false;
+            }
+
+            if (shouldPlaceLocally && !lootModel.PlaceItem(item, targetPos.x, targetPos.y))
+            {
+                playerModel.PlaceItem(item, sourcePos.x, sourcePos.y);
+                return false;
+            }
+
+            if (!isOffline)
+            {
+                currentNetworkSync.Rpc_RequestQuickMove(currentNetworkSync.Runner.LocalPlayer, currentStorageId,
+                    item.Data.itemID, 0, quantity, false);
+            }
+
+            SubmitSnapshot(force: true);
+            return true;
+        }
+
+        private bool TryQuickMoveLootToPlayer(ItemInstance item, GridInventoryModel lootModel, GridInventoryModel playerModel)
+        {
+            if (!TryFindFirstFreePlacement(playerModel, item, out var targetPos))
+            {
+                return false;
+            }
+
+            var sourcePos = lootModel.GetItemAnchorPosition(item);
+            if (sourcePos.x < 0 || sourcePos.y < 0)
+            {
+                return false;
+            }
+
+            int sourceLootIndex = lootModel.GetIndex(sourcePos.x, sourcePos.y);
+            int quantity = item.currentStackCount;
+
+            if (!lootModel.TryRemove(item))
+            {
+                return false;
+            }
+
+            if (!playerModel.PlaceItem(item, targetPos.x, targetPos.y))
+            {
+                lootModel.PlaceItem(item, sourcePos.x, sourcePos.y);
+                return false;
+            }
+
+            RequestLootTake(sourceLootIndex, quantity);
+            SubmitSnapshot(force: true);
+            return true;
+        }
+
+        private static bool IsStoredInModel(GridInventoryModel model, ItemInstance item)
+        {
+            if (model == null || item == null)
+            {
+                return false;
+            }
+
+            var pos = model.GetItemAnchorPosition(item);
+            return pos.x >= 0 && pos.y >= 0;
+        }
+
+        private static bool TryFindFirstFreePlacement(GridInventoryModel model, ItemInstance item, out Vector2Int position)
+        {
+            position = default;
+            if (model == null || item == null)
+            {
+                return false;
+            }
+
+            for (int y = 0; y < model.Height; y++)
+            {
+                for (int x = 0; x < model.Width; x++)
+                {
+                    if (model.CanPlaceItem(item, x, y))
+                    {
+                        position = new Vector2Int(x, y);
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
 

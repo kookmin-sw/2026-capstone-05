@@ -12,18 +12,16 @@ public class DemoRoundMissionHUD : MonoBehaviour
     private const int CanvasSortingOrder = -1;
     private const float TextRefreshInterval = 0.1f;
     private const float TextOutlineWidth = 0.2f;
-    private const string MissionCompleteMessage = "맵을 탐험하며 계속해서 생존하세요.";
-    private const string QuestLeaveBunkerMessage = "퀘스트 1: 벙커 밖으로 나가기";
-    private const string QuestAcquireFirearmMessage = "퀘스트 2: 총 획득하기";
-    private const string QuestKillMonstersMessage = "퀘스트 3: 몬스터를 3마리 이상 처치하세요";
-    private const string QuestReturnToBaseMessage = "퀘스트 4: 제한 시간 내에 기지로 복귀해 물품을 보관하세요";
+    private const string QuestOpenBunkerMessage = "퀘스트 1. 책상과 상호작용하여 벙커 문을 여세요.";
+    private const string QuestAcquireFirearmMessage = "퀘스트 2. 몬스터를 처치하기 위해 총과 총알을 획득하세요.";
+    private const string QuestReturnToBaseMessage = "퀘스트 4. 제한 시간 내에 탐험을 마치고 기지로 복귀하세요.";
 
     private static DemoRoundMissionHUD instance;
 
     private enum QuestStep
     {
         LeaveBunker,
-        AcquireFirearm,
+        AcquireFirearmAndAmmo,
         KillMonsters,
         ReturnToBase
     }
@@ -31,7 +29,6 @@ public class DemoRoundMissionHUD : MonoBehaviour
     private CanvasGroup canvasGroup;
     private TextMeshProUGUI timerText;
     private TextMeshProUGUI missionText;
-    private TextMeshProUGUI hintText;
     private TMP_FontAsset sceneFont;
     private int defeatedMonsterCount;
     private QuestStep questStep;
@@ -132,7 +129,6 @@ public class DemoRoundMissionHUD : MonoBehaviour
         UpdateTimerText(roundManager);
         UpdateQuestProgress();
         UpdateMissionText();
-        UpdateQuestHintText();
         nextTextRefreshTime = Time.unscaledTime + TextRefreshInterval;
     }
 
@@ -144,7 +140,10 @@ public class DemoRoundMissionHUD : MonoBehaviour
             return;
         }
 
-        if (defeatedMonsterCount >= MissionTargetKills || !IsLocalPlayerAttacker(attacker))
+        UpdateQuestProgress();
+        if (questStep != QuestStep.KillMonsters ||
+            defeatedMonsterCount >= MissionTargetKills ||
+            !IsLocalPlayerAttacker(attacker))
         {
             return;
         }
@@ -152,7 +151,6 @@ public class DemoRoundMissionHUD : MonoBehaviour
         defeatedMonsterCount = Mathf.Min(MissionTargetKills, defeatedMonsterCount + 1);
         UpdateQuestProgress();
         UpdateMissionText();
-        UpdateQuestHintText();
     }
 
     private static bool IsLocalPlayerAttacker(GameObject attacker)
@@ -211,16 +209,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
         missionRect.anchorMax = new Vector2(1f, 1f);
         missionRect.pivot = new Vector2(1f, 1f);
         missionRect.anchoredPosition = new Vector2(-34f, -32f);
-        missionRect.sizeDelta = new Vector2(640f, 48f);
-
-        hintText = CreateText("MissionHintText", 22f, TextAlignmentOptions.Right);
-        RectTransform hintRect = hintText.rectTransform;
-        hintRect.anchorMin = new Vector2(1f, 1f);
-        hintRect.anchorMax = new Vector2(1f, 1f);
-        hintRect.pivot = new Vector2(1f, 1f);
-        hintRect.anchoredPosition = new Vector2(-34f, -76f);
-        hintRect.sizeDelta = new Vector2(720f, 40f);
-        hintText.text = QuestLeaveBunkerMessage;
+        missionRect.sizeDelta = new Vector2(960f, 48f);
     }
 
     private TextMeshProUGUI CreateText(string objectName, float fontSize, TextAlignmentOptions alignment)
@@ -269,23 +258,23 @@ public class DemoRoundMissionHUD : MonoBehaviour
 
     private void UpdateMissionText()
     {
-        if (defeatedMonsterCount >= MissionTargetKills)
+        missionText.text = questStep switch
         {
-            missionText.text = MissionCompleteMessage;
-            return;
-        }
-
-        missionText.text = $"미션: 몬스터 3마리 처치하기({defeatedMonsterCount}/{MissionTargetKills})";
+            QuestStep.AcquireFirearmAndAmmo => QuestAcquireFirearmMessage,
+            QuestStep.KillMonsters => BuildKillMonsterQuestMessage(),
+            QuestStep.ReturnToBase => QuestReturnToBaseMessage,
+            _ => QuestOpenBunkerMessage
+        };
     }
 
     private void UpdateQuestProgress()
     {
-        if (questStep == QuestStep.LeaveBunker && IsLocalPlayerOutsideBunker())
+        if (questStep == QuestStep.LeaveBunker && HasAnyPlayerOutsideBunker())
         {
-            questStep = QuestStep.AcquireFirearm;
+            questStep = QuestStep.AcquireFirearmAndAmmo;
         }
 
-        if (questStep == QuestStep.AcquireFirearm && LocalPlayerHasFirearm())
+        if (questStep == QuestStep.AcquireFirearmAndAmmo && LocalPlayerHasFirearmAndAmmo())
         {
             questStep = QuestStep.KillMonsters;
         }
@@ -296,32 +285,28 @@ public class DemoRoundMissionHUD : MonoBehaviour
         }
     }
 
-    private void UpdateQuestHintText()
+    private string BuildKillMonsterQuestMessage()
     {
-        if (hintText == null)
+        return $"퀘스트 3. 제한 시간 내에 몬스터를 처치하세요. ({defeatedMonsterCount}/{MissionTargetKills})";
+    }
+
+    private static bool HasAnyPlayerOutsideBunker()
+    {
+        PlayerCondition[] playerConditions = FindObjectsByType<PlayerCondition>(FindObjectsSortMode.None);
+        foreach (PlayerCondition condition in playerConditions)
         {
-            return;
+            if (condition != null && !condition.IsInBunker)
+            {
+                return true;
+            }
         }
 
-        hintText.text = questStep switch
-        {
-            QuestStep.AcquireFirearm => QuestAcquireFirearmMessage,
-            QuestStep.KillMonsters => QuestKillMonstersMessage,
-            QuestStep.ReturnToBase => QuestReturnToBaseMessage,
-            _ => QuestLeaveBunkerMessage
-        };
+        return false;
     }
 
-    private static bool IsLocalPlayerOutsideBunker()
+    private static bool LocalPlayerHasFirearmAndAmmo()
     {
-        return LocalPlayerReferenceResolver.TryGetLocalCondition(out PlayerCondition condition)
-            && condition != null
-            && !condition.IsInBunker;
-    }
-
-    private static bool LocalPlayerHasFirearm()
-    {
-        if (QuickslotHasFirearm())
+        if (QuickslotHasFirearmWithAmmo())
         {
             return true;
         }
@@ -334,7 +319,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
 
         for (int i = 0; i < model.Items.Length; i++)
         {
-            if (IsFirearm(model.Get(i)))
+            if (HasRequiredAmmo(IsFirearm(model.Get(i))))
             {
                 return true;
             }
@@ -343,7 +328,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
         return false;
     }
 
-    private static bool QuickslotHasFirearm()
+    private static bool QuickslotHasFirearmWithAmmo()
     {
         if (QuickslotUIController.Instance == null)
         {
@@ -352,7 +337,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
 
         for (int i = 0; i < QuickslotCount; i++)
         {
-            if (IsFirearm(QuickslotUIController.Instance.GetItem(i)))
+            if (HasRequiredAmmo(IsFirearm(QuickslotUIController.Instance.GetItem(i))))
             {
                 return true;
             }
@@ -361,9 +346,34 @@ public class DemoRoundMissionHUD : MonoBehaviour
         return false;
     }
 
-    private static bool IsFirearm(ItemInstance item)
+    private static FirearmItemData IsFirearm(ItemInstance item)
     {
-        return item?.Data is FirearmItemData;
+        return item?.Data as FirearmItemData;
+    }
+
+    private static bool HasRequiredAmmo(FirearmItemData firearm)
+    {
+        return firearm != null &&
+            firearm.requiredAmmoType != null &&
+            (QuickslotHasItem(firearm.requiredAmmoType) || GridInventory.Instance?.HasItem(firearm.requiredAmmoType) == true);
+    }
+
+    private static bool QuickslotHasItem(ItemData itemData)
+    {
+        if (itemData == null || QuickslotUIController.Instance == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < QuickslotCount; i++)
+        {
+            if (QuickslotUIController.Instance.GetItem(i)?.Data == itemData)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void ResetMissionProgress()
@@ -371,7 +381,6 @@ public class DemoRoundMissionHUD : MonoBehaviour
         defeatedMonsterCount = 0;
         questStep = QuestStep.LeaveBunker;
         UpdateMissionText();
-        UpdateQuestHintText();
     }
 
     private void SetVisible(bool visible)
