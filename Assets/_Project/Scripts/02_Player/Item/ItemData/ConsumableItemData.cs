@@ -33,7 +33,6 @@ public class ConsumableItemData : ItemData
     //        result.AppendLine();
     //        result.AppendLine();
 
-    //        // TOOD: use icons for stats instead of text
     //        foreach (var effect in effects)
     //        {
     //            string iconTag = GetStatIconTag(effect.targetStat);
@@ -54,14 +53,12 @@ public class ConsumableItemData : ItemData
 
     private string GetStatIconTag(ConditionType type)
     {
-        const string assetName = "StatIcons";
-
         return type switch
         {
-            ConditionType.Health => $"<sprite=\"{assetName}\" name=\"Health\">",
-            ConditionType.Stamina => $"<sprite=\"{assetName}\" name=\"Stamina\">",
-            ConditionType.Satiety => $"<sprite=\"{assetName}\" name=\"Satiety\">",
-            ConditionType.Coldness => $"<sprite=\"{assetName}\" name=\"Coldness\">",
+            ConditionType.Health => $"<sprite name=\"Health\">",
+            ConditionType.Stamina => $"<sprite name=\"Stamina\">",
+            ConditionType.Satiety => $"<sprite name=\"Satiety\">",
+            ConditionType.Coldness => $"<sprite name=\"Coldness\">",
             _ => ""
         };
     }
