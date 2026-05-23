@@ -1,0 +1,299 @@
+/* DemoTutorial.uss */
+
+.dt-shop-container {
+    width: 100%;
+    height: 100%;
+    background-color: transparent; /* Dark brown border (moved to separate background document) */
+    padding: 8px;
+    font-family: "Pixel"; /* Assuming a pixel font is used */
+    font-size: 16px;
+    color: white;
+}
+
+.dt-top-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.dt-title-container {
+    flex-direction: row;
+    align-items: center;
+}
+
+.dt-title-icon {
+    width: 24px;
+    height: 24px;
+    background-color: #ffd700;
+    border-radius: 12px;
+    margin-right: 8px;
+}
+
+.dt-shop-title {
+    font-size: 20px;
+    color: #f5e4c3;
+    -unity-font-style: bold;
+}
+
+.dt-gold-container {
+    background-color: #1c1c1c;
+    border-width: 2px;
+    border-color: #ffffff;
+    border-radius: 4px;
+    padding: 4px 12px;
+}
+
+.dt-gold-text {
+    color: #ffd700;
+    font-size: 18px;
+}
+
+.dt-main-content {
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+/* LEFT PANEL */
+.dt-left-panel {
+    flex-grow: 1;
+    width: 50%;
+    background-color: #e6c89a; /* Light tan inner bg */
+    border-width: 4px;
+    border-color: #8c5b3f; /* Border for the items area */
+    border-radius: 8px;
+    padding: 8px;
+    position: relative;
+    overflow: visible;
+}
+
+.dt-catalog-scroll {
+    flex-grow: 1;
+}
+
+.dt-catalog-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    padding: 12px;
+}
+
+.dt-placement-grid-container {
+    flex-grow: 1;
+    background-color: #000000; /* Black bg for grid */
+    border-width: 2px;
+    border-color: #5b3e31;
+    overflow: visible;
+    /* align-items: center; */
+    /* justify-content: center; */
+}
+
+.dt-placement-grid {
+    /* To be controlled by code, like GridInventoryView */
+}
+
+/* RIGHT PANEL */
+.dt-right-panel {
+    flex-grow: 1;
+    width: 50%;
+    margin-left: 8px;
+    justify-content: flex-end;
+    align-items: center;
+    background-color: transparent; /* Assuming duck is drawn or an image is set */
+}
+
+.dt-npc-container {
+    flex-grow: 1;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+.dt-npc-image {
+    width: 200px;
+    height: 200px;
+    /* Set Duck sprite from code */
+}
+
+.dt-action-buttons {
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-around;
+    background-color: #000000;
+    border-width: 4px;
+    border-color: #d19a4e; /* Brownish border */
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.dt-action-btn {
+    background-color: transparent;
+    border-width: 0;
+    color: #a0a0a0;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.dt-action-btn:hover {
+    color: white;
+}
+
+.dt-action-btn.dt-active {
+    color: #ffd700; /* Gold */
+}
+
+/* ITEM CARD */
+.dt-item-card {
+    width: 250px; /* Fixed card width */
+    height: 250px; /* Fixed card height */
+    background-color: #fff4d2;
+    border-width: 6px;
+    border-color: #b08d6a;
+    border-radius: 8px;
+    margin: 10px; /* Fixed card spacing */
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+}
+
+.dt-item-card:hover {
+    background-color: #ffffff;
+}
+
+.dt-card-shape-preview {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 32px;
+    height: 32px;
+    /* Drawn dynamically or with small cells */
+}
+
+.dt-card-icon {
+    width: 120px; /* Increased icon size */
+    height: 120px;
+    margin-bottom: 12px;
+}
+
+.dt-card-name {
+    color: #000000;
+    font-size: 26px; /* Increased font size */
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.dt-card-price {
+    color: #000000;
+    font-size: 24px; /* Increased font size */
+    -unity-text-align: middle-center;
+}
+
+/* POPUP OVERLAY */
+.dt-popup-overlay {
+    position: absolute;
+    left: 0; right: 0; top: 0; bottom: 0;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.dt-popup-box {
+    width: 260px;
+    background-color: #e6c89a;
+    border-width: 4px;
+    border-color: #8c5b3f;
+    border-radius: 8px;
+}
+
+.dt-popup-header {
+    background-color: #8c5b3f;
+    padding: 4px;
+}
+
+.dt-popup-title {
+    color: white;
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+}
+
+.dt-popup-body {
+    padding: 12px;
+}
+
+.dt-popup-item-info {
+    flex-direction: row;
+    margin-bottom: 8px;
+}
+
+.dt-popup-icon {
+    width: 48px;
+    height: 48px;
+    margin-right: 8px;
+}
+
+.dt-popup-item-text {
+    justify-content: center;
+}
+
+.dt-popup-item-name {
+    color: #000000;
+    font-size: 16px;
+    -unity-font-style: bold;
+}
+
+.dt-popup-item-price {
+    color: #000000;
+    font-size: 14px;
+}
+
+.dt-popup-item-max-quantity {
+    color: #000000;
+    font-size: 12px;
+    width: 100%;
+    margin-bottom: 4px;
+    -unity-text-align: middle-right;
+}
+
+.dt-popup-shape-preview {
+    align-items: center;
+    margin-bottom: 8px;
+    height: 80px;
+    justify-content: center;
+}
+
+.dt-shape-grid {
+    /* Dynamically created small cells */
+}
+
+.dt-popup-desc {
+    color: #000000;
+    font-size: 12px;
+    white-space: normal;
+}
+
+.dt-popup-footer {
+    flex-direction: row;
+    padding: 8px;
+    justify-content: space-around;
+}
+
+.dt-popup-btn {
+    border-width: 2px;
+    border-color: #8c5b3f;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 14px;
+    cursor: pointer;
+    -unity-text-align: middle-center;
+}
+
+.dt-popup-btn-confirm {
+    background-color: #8fb935; /* Greenish */
+    color: white;
+}
+
+.dt-popup-btn-cancel {
+    background-color: #c94c4c; /* Redish */
+    color: white;
+}

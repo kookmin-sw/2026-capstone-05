@@ -61,11 +61,11 @@ public class PlayerRespawn : MonoBehaviour
         controller.canAction = false;
         controller.canLook = false;
         controller.currentVelocity = Vector3.zero;
+        controller.Equipment?.UnequipItem();
 
         if (suppressNextDeathDrop)
         {
             suppressNextDeathDrop = false;
-            controller.Equipment?.UnequipItem();
         }
         else
         {
@@ -76,6 +76,7 @@ public class PlayerRespawn : MonoBehaviour
 
         SpawnAtSpawner();
         condition.Revive();
+        networkSync?.PublishConditionResetSnapshot();
 
         controller.currentVelocity = Vector3.zero;
         controller.canAction = true;
@@ -90,7 +91,6 @@ public class PlayerRespawn : MonoBehaviour
             return;
 
         GlobalDragDropRouter.DropAllPlayerItemsAt(deathPosition);
-        controller.Equipment?.UnequipItem();
     }
 
     private bool ShouldDropLocalInventoryOnDeath()
@@ -105,7 +105,7 @@ public class PlayerRespawn : MonoBehaviour
             return;
         }
 
-        suppressNextDeathDrop = true;
+        suppressNextDeathDrop = false;
         GlobalDragDropRouter.ClearAllPlayerItemsWithoutDrop();
         controller.Equipment?.UnequipItem();
     }
@@ -113,6 +113,8 @@ public class PlayerRespawn : MonoBehaviour
     [ContextMenu("Spawn At Spawner")]
     public void SpawnAtSpawner()
     {
+        suppressNextDeathDrop = false;
+
         if (Spawner.Instance == null)
         {
             Debug.LogWarning("[PlayerRespawn] Spawner.Instance를 찾지 못했습니다.");

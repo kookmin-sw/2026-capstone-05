@@ -14,7 +14,7 @@ public abstract class ItemData : ScriptableObject
     public LocalizedString description;
 
     public string ItemNameString => (itemName != null && !itemName.IsEmpty) ? itemName.GetLocalizedString() : itemID;
-    public virtual string DescriptionString => (description != null && !description.IsEmpty) ? description.GetLocalizedString() : "설명이 없습니다.";
+    public string DescriptionString => (description != null && !description.IsEmpty) ? description.GetLocalizedString() : "설명이 없습니다.";
 
     [Header("Inventory & UI")]
     public Sprite itemIcon;

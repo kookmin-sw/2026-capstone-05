@@ -85,6 +85,55 @@ namespace Systems.GridInventory
             ClearInventoryGridItemsWithoutDrop();
         }
 
+        public static bool TryQuickMoveInventoryItemToQuickslot(GridItemView itemView)
+        {
+            if (!IsInventoryQuickMoveModeOpen() || itemView == null || itemView.ItemInst == null)
+                return false;
+
+            GridInventoryModel inventoryModel = GridInventory.Instance?.Controller?.Model;
+            QuickslotUIController quickslot = QuickslotUIController.Instance;
+            ItemInstance item = itemView.ItemInst;
+            if (inventoryModel == null || quickslot == null || !IsStoredInModel(inventoryModel, item))
+                return false;
+
+            if (TryStackIntoQuickslot(item, inventoryModel, quickslot))
+                return true;
+
+            int targetIndex = FindEmptyQuickslotIndex(quickslot);
+            if (targetIndex < 0)
+                return false;
+
+            var sourcePos = inventoryModel.GetItemAnchorPosition(item);
+            if (sourcePos.x < 0 || sourcePos.y < 0 || !inventoryModel.TryRemove(item))
+                return false;
+
+            item.currentRotation = ItemRotation.Deg0;
+            quickslot.SetItemInSlot(targetIndex, item);
+            return true;
+        }
+
+        public static bool TryQuickMoveQuickslotItemToInventory(int quickslotIndex)
+        {
+            if (!IsInventoryQuickMoveModeOpen())
+                return false;
+
+            QuickslotUIController quickslot = QuickslotUIController.Instance;
+            GridInventoryModel inventoryModel = GridInventory.Instance?.Controller?.Model;
+            ItemInstance item = quickslot != null ? quickslot.GetItem(quickslotIndex) : null;
+            if (quickslot == null || inventoryModel == null || item == null || item.Data == null)
+                return false;
+
+            if (!TryFindFirstFreePlacement(inventoryModel, item, out Vector2Int targetPos))
+                return false;
+
+            quickslot.RemoveItemFromSlot(quickslotIndex);
+            if (inventoryModel.PlaceItem(item, targetPos.x, targetPos.y))
+                return true;
+
+            quickslot.SetItemInSlot(quickslotIndex, item);
+            return false;
+        }
+
         public static void DropItemOnGround(ItemInstance item, Vector3 originPosition)
         {
             if (item == null || item.Data == null)
@@ -195,6 +244,98 @@ namespace Systems.GridInventory
                 return;
 
             model.Clear();
+        }
+
+        private static bool IsLootTransferModeOpen()
+        {
+            var lootController = Systems.Loot.LootController.Instance;
+            return lootController != null && lootController.IsOpen && !lootController.IsInventoryOnlyOpen;
+        }
+
+        private static bool IsInventoryQuickMoveModeOpen()
+        {
+            if (IsLootTransferModeOpen())
+                return false;
+
+            return GridInventoryView.IsAnyInventoryOpen;
+        }
+
+        private static bool IsStoredInModel(GridInventoryModel model, ItemInstance item)
+        {
+            if (model == null || item == null)
+                return false;
+
+            var pos = model.GetItemAnchorPosition(item);
+            return pos.x >= 0 && pos.y >= 0;
+        }
+
+        private static bool TryStackIntoQuickslot(ItemInstance item, GridInventoryModel inventoryModel, QuickslotUIController quickslot)
+        {
+            if (item == null || item.Data == null || item.Data.maxStackSize <= 1)
+                return false;
+
+            for (int i = 0; i < QuickslotCount; i++)
+            {
+                ItemInstance target = quickslot.GetItem(i);
+                if (target == null || target.Data != item.Data || target.currentStackCount >= target.Data.maxStackSize)
+                    continue;
+
+                int moveQuantity = Mathf.Min(item.currentStackCount, target.Data.maxStackSize - target.currentStackCount);
+                if (moveQuantity <= 0)
+                    continue;
+
+                target.currentStackCount += moveQuantity;
+                item.currentStackCount -= moveQuantity;
+                quickslot.RefreshSlotVisual(i);
+
+                if (item.currentStackCount <= 0)
+                {
+                    inventoryModel.TryRemove(item);
+                }
+                else
+                {
+                    inventoryModel.Items.Invoke();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private static int FindEmptyQuickslotIndex(QuickslotUIController quickslot)
+        {
+            if (quickslot == null)
+                return -1;
+
+            for (int i = 0; i < QuickslotCount; i++)
+            {
+                if (quickslot.GetItem(i) == null)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        private static bool TryFindFirstFreePlacement(GridInventoryModel model, ItemInstance item, out Vector2Int position)
+        {
+            position = default;
+            if (model == null || item == null)
+                return false;
+
+            for (int y = 0; y < model.Height; y++)
+            {
+                for (int x = 0; x < model.Width; x++)
+                {
+                    if (model.CanPlaceItem(item, x, y))
+                    {
+                        position = new Vector2Int(x, y);
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         private static void SpawnDroppedItem(ItemInstance item, Vector3 dropPosition)

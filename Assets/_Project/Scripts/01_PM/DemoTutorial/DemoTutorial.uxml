@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="DemoTutorial.uss" />
+    <ui:VisualElement name="shop-root" class="dt-shop-container">
+        
+        <!-- Top Bar -->
+        <ui:VisualElement class="dt-top-bar">
+            <ui:VisualElement class="dt-title-container">
+                <ui:VisualElement class="dt-title-icon" />
+                <ui:Label name="shop-title" text="SDI SHOP - BUY" class="dt-shop-title" />
+            </ui:VisualElement>
+            <ui:VisualElement class="dt-gold-container">
+                <ui:Label name="gold-label" text="Gold: 500G" class="dt-gold-text" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement class="dt-main-content">
+            <!-- Left Panel (Catalog / Grid) -->
+            <ui:VisualElement name="left-panel" class="dt-left-panel">
+                
+                <!-- Catalog List -->
+                <ui:ScrollView name="catalog-scroll" class="dt-catalog-scroll" mode="Vertical">
+                    <ui:VisualElement name="catalog-container" class="dt-catalog-container" />
+                </ui:ScrollView>
+
+                <!-- Placement Grid -->
+                <ui:VisualElement name="placement-grid-container" class="dt-placement-grid-container" style="display: none;">
+                    <ui:VisualElement name="placement-grid" class="dt-placement-grid" />
+                </ui:VisualElement>
+                
+                <!-- Item Details Popup Overlay -->
+                <ui:VisualElement name="item-detail-popup" class="dt-popup-overlay" style="display: none;">
+                    <ui:VisualElement class="dt-popup-box">
+                        <ui:VisualElement class="dt-popup-header">
+                            <ui:Label text="ITEM DETAILS" class="dt-popup-title" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="dt-popup-body">
+                            <ui:VisualElement class="dt-popup-item-info">
+                                <ui:VisualElement name="popup-item-icon" class="dt-popup-icon" />
+                                <ui:VisualElement class="dt-popup-item-text">
+                                    <ui:Label name="popup-item-name" text="STEEL SWORD" class="dt-popup-item-name" />
+                                    <ui:Label name="popup-item-price" text="150 Gold" class="dt-popup-item-price" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            
+                            <ui:VisualElement class="dt-popup-shape-preview">
+                                <ui:VisualElement name="popup-shape-grid" class="dt-shape-grid" />
+                            </ui:VisualElement>
+                            
+                            <ui:Label name="popup-item-max-quantity" text="Max purchase: 1" class="dt-popup-item-max-quantity" />
+                            <ui:Label name="popup-item-desc" text="Item description goes here." class="dt-popup-desc" />
+                            
+                            <!-- Quantity Selector -->
+                            <ui:VisualElement class="dt-quantity-container" style="flex-direction: row; align-items: center; justify-content: center; margin-top: 10px;">
+                                <ui:Button name="btn-quantity-minus" text="-" class="dt-quantity-btn" style="width: 30px; height: 30px; font-size: 20px;" />
+                                <ui:Label name="label-quantity" text="1" class="dt-quantity-label" style="width: 50px; -unity-text-align: middle-center; font-size: 20px; color: white;" />
+                                <ui:Button name="btn-quantity-plus" text="+" class="dt-quantity-btn" style="width: 30px; height: 30px; font-size: 20px;" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="dt-popup-footer">
+                            <ui:Button name="btn-popup-confirm" text="[BUY]\nConfirm" class="dt-popup-btn dt-popup-btn-confirm" />
+                            <ui:Button name="btn-popup-cancel" text="[CANCEL]" class="dt-popup-btn dt-popup-btn-cancel" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Right Panel (NPC, Buttons) -->
+            <ui:VisualElement class="dt-right-panel">
+                <ui:VisualElement class="dt-npc-container">
+                    <!-- Placeholder for Duck Image -->
+                    <ui:VisualElement name="npc-image" class="dt-npc-image" />
+                </ui:VisualElement>
+                
+                <!-- Main Action Buttons -->
+                <ui:VisualElement name="main-action-buttons" class="dt-action-buttons">
+                    <ui:Button name="btn-tab-buy" text="* Buy" class="dt-action-btn dt-active" />
+                    <ui:Button name="btn-tab-sell" text="* Sell" class="dt-action-btn" />
+                </ui:VisualElement>
+
+                <!-- Placement Action Buttons -->
+                <ui:VisualElement name="placement-action-buttons" class="dt-action-buttons" style="display: none;">
+                    <ui:Button name="btn-place" text="* Place" class="dt-action-btn dt-active" />
+                    <ui:Button name="btn-cancel-place" text="* Cancel" class="dt-action-btn" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+
+    <!-- Template for Item Card in Catalog -->
+    <ui:VisualElement name="item-card-template" class="dt-item-card" style="display: none;">
+        <ui:VisualElement name="card-shape-preview" class="dt-card-shape-preview" />
+        <ui:VisualElement name="card-icon" class="dt-card-icon" />
+        <ui:Label name="card-name" text="HP Pot" class="dt-card-name" />
+        <ui:Label name="card-price" text="10G" class="dt-card-price" />
+    </ui:VisualElement>
+</ui:UXML>
