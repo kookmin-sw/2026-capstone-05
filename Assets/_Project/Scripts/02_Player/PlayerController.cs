@@ -118,7 +118,10 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
             defaultCameraPosition = CameraTransform.localPosition;
         }
 
-        StateMachine.Initialize(GroundedState);
+        if (StateMachine.CurrentState == null)
+        {
+            StateMachine.Initialize(GroundedState);
+        }
 
         if (testItem != null)
             Equipment.EquipItem(new ItemInstance(testItem));
@@ -294,6 +297,72 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
         Vector3 point2 = transform.position + Vector3.up * (StandingHeight - radius);
 
         return !Physics.CheckCapsule(point1, point2, radius, obstacleLayer, QueryTriggerInteraction.Ignore);
+    }
+
+    public void ResetMovementStateForRespawn()
+    {
+        EnsureMovementDefaultsInitialized();
+
+        currentVelocity = Vector3.zero;
+        useGravity = true;
+        canAction = true;
+        canLook = true;
+        IsGrounded = Controller == null || Controller.isGrounded;
+        TargetHeight = StandingHeight;
+
+        if (Controller != null)
+        {
+            Controller.height = StandingHeight;
+            Controller.center = defaultCenter;
+        }
+
+        if (CameraTransform != null)
+        {
+            CameraTransform.localPosition = defaultCameraPosition;
+        }
+
+        Animator.Revive();
+        Animator.SetGrounded(true);
+        Animator.SetCrouching(false);
+        Animator.SetSprinting(false);
+        Animator.UpdateMovement(Vector2.zero);
+
+        InputHandler?.ConsumeJump();
+        InputHandler?.ConsumeCrouch();
+        InputHandler?.ConsumeInteract();
+        InputHandler?.ConsumeAction();
+
+        if (StateMachine.CurrentState == null)
+        {
+            StateMachine.Initialize(GroundedState);
+        }
+        else
+        {
+            StateMachine.ChangeState(GroundedState);
+        }
+    }
+
+    private void EnsureMovementDefaultsInitialized()
+    {
+        if (Controller == null)
+        {
+            return;
+        }
+
+        if (StandingHeight > 0f)
+        {
+            return;
+        }
+
+        StandingHeight = Controller.height;
+        CrouchHeight = StandingHeight * CrouchHeightRatio;
+        TargetHeight = StandingHeight;
+        defaultCenter = Controller.center;
+
+        if (CameraTransform != null)
+        {
+            defaultCameraPosition = CameraTransform.localPosition;
+        }
     }
 
     public void ConfigureForNetwork(bool isLocalPlayer)

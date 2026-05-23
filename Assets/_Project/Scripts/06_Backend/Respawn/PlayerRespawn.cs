@@ -78,9 +78,7 @@ public class PlayerRespawn : MonoBehaviour
         condition.Revive();
         networkSync?.PublishConditionResetSnapshot();
 
-        controller.currentVelocity = Vector3.zero;
-        controller.canAction = true;
-        controller.canLook = true;
+        controller.ResetMovementStateForRespawn();
 
         isRespawning = false;
     }
@@ -157,5 +155,6 @@ public class PlayerRespawn : MonoBehaviour
         }
 
         condition?.SetInBunker(true);
+        controller?.ResetMovementStateForRespawn();
     }
 }

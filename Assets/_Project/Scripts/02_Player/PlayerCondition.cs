@@ -53,10 +53,12 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
     [SerializeField] private EventReference deathSound;
 
     private PlayerController controller;
+    private BackendPlayerNetworkSync networkSync;
 
     private void Awake()
     {
         controller = GetComponent<PlayerController>();
+        networkSync = GetComponent<BackendPlayerNetworkSync>();
 
         damageVFXPool = new ObjectPool<GameObject>(
             createFunc: () => Instantiate(damageVFXPrefab, transform),
@@ -155,12 +157,7 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
 
                 if (conditionDamage > 0f)
                 {
-                    health.Subtract(conditionDamage);
-
-                    if (!IsAlive)
-                    {
-                        RaiseDeathEvent();
-                    }
+                    HandleConditionDamage(conditionDamage);
                 }
 
                 conditionDamageTimer = conditionDamageInterval;
@@ -169,7 +166,55 @@ public class PlayerCondition : MonoBehaviour, IDamageable, IPlayerNetworkConfigu
         }
     }
 
+    private void HandleConditionDamage(float amount)
+    {
+        if (ShouldRequestAuthoritativeConditionDamage())
+        {
+            networkSync.RequestConditionDamage(amount, satiety.currentValue, coldness.currentValue);
+            return;
+        }
+
+        if (ShouldApplyConditionDamageLocally())
+        {
+            ApplyConditionDamage(amount);
+        }
+    }
+
+    private bool ShouldRequestAuthoritativeConditionDamage()
+    {
+        return networkSync != null &&
+            networkSync.Object != null &&
+            networkSync.Object.HasInputAuthority &&
+            !networkSync.HasStateAuthority;
+    }
+
+    private bool ShouldApplyConditionDamageLocally()
+    {
+        if (networkSync == null || networkSync.Object == null)
+        {
+            return true;
+        }
+
+        return networkSync.HasStateAuthority && networkSync.Object.HasInputAuthority;
+    }
+
     public bool IsAlive => health.currentValue > 0;
+
+    public void ApplyConditionDamage(float amount)
+    {
+        if (!IsAlive || amount <= 0f)
+        {
+            return;
+        }
+
+        health.Subtract(amount);
+        OnTakeDamageEvent?.Invoke(amount);
+
+        if (!IsAlive)
+        {
+            RaiseDeathEvent();
+        }
+    }
 
     public void TakeDamage(DamageInfo info)
     {

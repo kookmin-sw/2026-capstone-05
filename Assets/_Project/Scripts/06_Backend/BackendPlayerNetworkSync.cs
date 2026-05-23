@@ -297,6 +297,11 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         if (shouldApplyFullResetSnapshot)
         {
             _lastAppliedConditionResetRevision = NetworkConditionResetRevision;
+            if (Object != null && Object.HasInputAuthority)
+            {
+                _inputHandler?.EnableInput();
+                _playerController?.ResetMovementStateForRespawn();
+            }
         }
     }
 
@@ -308,6 +313,41 @@ public class BackendPlayerNetworkSync : NetworkBehaviour
         SyncConditionSnapshot();
         NetworkConditionResetRevision++;
         _lastAppliedConditionResetRevision = NetworkConditionResetRevision;
+    }
+
+    public void RequestConditionDamage(float amount, float satiety, float coldness)
+    {
+        if (amount <= 0f || _playerCondition == null)
+            return;
+
+        if (HasStateAuthority)
+        {
+            ApplyConditionDamageAuthoritative(amount, satiety, coldness);
+            return;
+        }
+
+        if (!IsNetworkReady)
+            return;
+
+        RpcRequestConditionDamage(amount, satiety, coldness);
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcRequestConditionDamage(float amount, float satiety, float coldness)
+    {
+        ApplyConditionDamageAuthoritative(amount, satiety, coldness);
+    }
+
+    private void ApplyConditionDamageAuthoritative(float amount, float satiety, float coldness)
+    {
+        if (!HasStateAuthority || _playerCondition == null || amount <= 0f)
+            return;
+
+        _playerCondition.EnsureInitialized();
+        _playerCondition.satiety.SetValue(satiety);
+        _playerCondition.coldness.SetValue(coldness);
+        _playerCondition.ApplyConditionDamage(amount);
+        SyncConditionSnapshot();
     }
 
     private void SyncInputOverrideState()

@@ -28,10 +28,12 @@ public class BunkerEnterInteractable : NetworkBehaviour, IInteractable
     private readonly string objectNameKey = "Bunker";
     private readonly string interactPromptTable = "InteractPrompts";
     private readonly string interactPromptKey = "EnterBunker";
+    private const string QuestReturnDeniedMessage = "퀘스트 완료 후 복귀 가능합니다";
+    private static readonly Color DeniedFeedbackColor = new(1f, 0.35f, 0.35f);
 
     public bool CanInteract(PlayerController player)
     {
-        if (!enabled || player == null || player.InputHandler == null || !IsRoundRunning() || !CanPlayerEnterBunker(player))
+        if (!enabled || player == null || player.InputHandler == null || !IsRoundRunning())
         {
             return false;
         }
@@ -50,8 +52,12 @@ public class BunkerEnterInteractable : NetworkBehaviour, IInteractable
         if (Runner != null)
         {
             RpcRequestTeleportToSpawner(requester);
+            return;
+        }
 
-            RuntimeManager.PlayOneShot(enterSound, player.transform.position);
+        if (!CanPlayerEnterBunker(player))
+        {
+            ShowReturnDeniedFeedback();
             return;
         }
 
@@ -81,6 +87,7 @@ public class BunkerEnterInteractable : NetworkBehaviour, IInteractable
         if (!CanPlayerEnterBunker(requestedBy))
         {
             Debug.LogWarning($"[BunkerEnterInteractable] Enter denied. requestedBy={requestedBy}, gateState={BackendRoundManager.Instance?.GetPlayerBunkerGateStateDebug(requestedBy) ?? "RoundManagerMissing"}");
+            RpcShowReturnDeniedFeedback(requestedBy);
             return;
         }
 
@@ -91,6 +98,7 @@ public class BunkerEnterInteractable : NetworkBehaviour, IInteractable
 
         TeleportPlayerObjectToSpawner(playerObject);
         RpcSyncPlayerBunkerState(requestedBy, true);
+        RpcPlayEnterSound(requestedBy, playerObject.transform.position);
     }
 
     private void TeleportPlayerToSpawner(PlayerController player)
@@ -202,10 +210,61 @@ public class BunkerEnterInteractable : NetworkBehaviour, IInteractable
         condition?.SetInBunker(value);
     }
 
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcShowReturnDeniedFeedback(PlayerRef deniedPlayer)
+    {
+        if (!IsLocalPlayerRef(deniedPlayer))
+        {
+            return;
+        }
+
+        ShowReturnDeniedFeedback();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcPlayEnterSound(PlayerRef playerRef, Vector3 soundPosition)
+    {
+        if (!IsLocalPlayerRef(playerRef))
+        {
+            return;
+        }
+
+        RuntimeManager.PlayOneShot(enterSound, soundPosition);
+    }
+
+    private void ShowReturnDeniedFeedback()
+    {
+        CenterScreenFeedbackUI.Show(QuestReturnDeniedMessage, DeniedFeedbackColor);
+    }
+
+    private bool IsLocalPlayerRef(PlayerRef playerRef)
+    {
+        if (playerRef == PlayerRef.None)
+        {
+            return false;
+        }
+
+        if (Runner != null && Runner.LocalPlayer == playerRef)
+        {
+            return true;
+        }
+
+        BackendPlayerNetworkSync localSync = BackendPlayerNetworkSync.LocalInstance;
+        return localSync != null &&
+            localSync.Object != null &&
+            localSync.Object.InputAuthority == playerRef;
+    }
+
     private PlayerRef GetPlayerRef(PlayerController player)
     {
         NetworkObject playerNetworkObject = player != null ? player.GetComponent<NetworkObject>() : null;
-        return playerNetworkObject != null ? playerNetworkObject.InputAuthority : PlayerRef.None;
+        PlayerRef playerRef = playerNetworkObject != null ? playerNetworkObject.InputAuthority : PlayerRef.None;
+        if (playerRef == PlayerRef.None && Runner != null)
+        {
+            playerRef = Runner.LocalPlayer;
+        }
+
+        return playerRef;
     }
 
     private bool CanPlayerEnterBunker(PlayerController player)

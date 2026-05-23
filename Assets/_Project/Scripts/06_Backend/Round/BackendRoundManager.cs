@@ -523,14 +523,7 @@ public class BackendRoundManager : NetworkBehaviour
             return;
         }
 
-        PlayerRef playerRef = Runner != null ? Runner.LocalPlayer : PlayerRef.None;
-        if (playerRef == PlayerRef.None &&
-            LocalPlayerReferenceResolver.TryGetLocalPlayer(out PlayerController player) &&
-            player != null)
-        {
-            NetworkObject playerObject = player.GetComponent<NetworkObject>();
-            playerRef = playerObject != null ? playerObject.InputAuthority : PlayerRef.None;
-        }
+        PlayerRef playerRef = ResolveLocalPlayerRef();
 
         Debug.Log($"[BackendRoundManager] Quest 3 complete report. localPlayer={(Runner != null ? Runner.LocalPlayer : PlayerRef.None)}, resolved={playerRef}, hasStateAuthority={HasStateAuthority}");
 
@@ -540,6 +533,36 @@ public class BackendRoundManager : NetworkBehaviour
         }
 
         MarkPlayerQuest3Completed(playerRef);
+    }
+
+    private PlayerRef ResolveLocalPlayerRef()
+    {
+        BackendPlayerNetworkSync localSync = BackendPlayerNetworkSync.LocalInstance;
+        if (localSync != null && localSync.Object != null)
+        {
+            PlayerRef inputAuthority = localSync.Object.InputAuthority;
+            if (inputAuthority != PlayerRef.None)
+            {
+                return inputAuthority;
+            }
+        }
+
+        if (Runner != null && Runner.LocalPlayer != PlayerRef.None)
+        {
+            return Runner.LocalPlayer;
+        }
+
+        if (LocalPlayerReferenceResolver.TryGetLocalPlayer(out PlayerController player) &&
+            player != null)
+        {
+            NetworkObject playerObject = player.GetComponent<NetworkObject>();
+            if (playerObject != null && playerObject.InputAuthority != PlayerRef.None)
+            {
+                return playerObject.InputAuthority;
+            }
+        }
+
+        return PlayerRef.None;
     }
 
     public void MarkPlayerQuest3Completed(PlayerRef playerRef)
