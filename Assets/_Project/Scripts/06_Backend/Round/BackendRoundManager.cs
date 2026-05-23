@@ -125,6 +125,7 @@ public class BackendRoundManager : NetworkBehaviour
     private bool isEndingRound;
     private bool offlinePlayerExitedBunker;
     private bool offlinePlayerCompletedQuest3;
+    private bool localPlayerCompletedQuest3;
     private readonly HashSet<PlayerRef> playersWhoExitedBunker = new();
     private readonly HashSet<PlayerRef> playersWhoCompletedQuest3 = new();
 
@@ -542,6 +543,8 @@ public class BackendRoundManager : NetworkBehaviour
 
     public void MarkLocalPlayerQuest3Completed()
     {
+        localPlayerCompletedQuest3 = true;
+
         if (AuthSession.IsOffline)
         {
             MarkPlayerQuest3Completed(PlayerRef.None);
@@ -656,6 +659,22 @@ public class BackendRoundManager : NetworkBehaviour
         return !playersWhoExitedBunker.Contains(playerRef) || playersWhoCompletedQuest3.Contains(playerRef);
     }
 
+    public bool IsLocalPlayerQuest3Completed()
+    {
+        if (localPlayerCompletedQuest3)
+        {
+            return true;
+        }
+
+        if (AuthSession.IsOffline)
+        {
+            return offlinePlayerCompletedQuest3;
+        }
+
+        PlayerRef playerRef = ResolveLocalPlayerRef();
+        return playerRef != PlayerRef.None && playersWhoCompletedQuest3.Contains(playerRef);
+    }
+
     public string GetPlayerBunkerGateStateDebug(PlayerRef playerRef)
     {
         if (AuthSession.IsOffline)
@@ -703,6 +722,7 @@ public class BackendRoundManager : NetworkBehaviour
     {
         offlinePlayerExitedBunker = false;
         offlinePlayerCompletedQuest3 = false;
+        localPlayerCompletedQuest3 = false;
         playersWhoExitedBunker.Clear();
         playersWhoCompletedQuest3.Clear();
     }

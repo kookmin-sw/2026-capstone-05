@@ -3,6 +3,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class AttentionArrowMotion : MonoBehaviour
 {
+    private const int LegacyReverseDirectionVisibilityModeValue = 3;
+
     public enum MotionAxis
     {
         Vertical,
@@ -11,9 +13,15 @@ public class AttentionArrowMotion : MonoBehaviour
 
     public enum VisibilityMode
     {
-        AlwaysVisible,
-        RoundStartUntilOutsideBunker,
-        OutsideBunkerTimed
+        AlwaysVisible = 0,
+        RoundStartUntilOutsideBunker = 1,
+        VisibleUntilRoundStarts = 2
+    }
+
+    public enum DirectionMode
+    {
+        KeepDirection = 0,
+        ReverseAfterQuest3 = 1
     }
 
     [Header("Motion")]
@@ -26,37 +34,58 @@ public class AttentionArrowMotion : MonoBehaviour
     public float speed = 2f;
     public float startOffset;
 
-    [Header("Round Start")]
-    public bool destroyWhenRoundStarts;
-
     [Header("Visibility")]
     public VisibilityMode visibilityMode = VisibilityMode.AlwaysVisible;
     [Tooltip("Leave empty to toggle this arrow's child renderers.")]
     [SerializeField] private Transform visualRoot;
-    [Min(0f)]
-    [SerializeField] private float outsideBunkerDurationSeconds = 180f;
+
+    [Header("Direction")]
+    [SerializeField] private DirectionMode directionMode = DirectionMode.KeepDirection;
+    [Tooltip("Leave empty to rotate the GameObject that has this script.")]
+    [SerializeField] private Transform rotationRoot;
+    [SerializeField] private Vector3 quest3CompletedRotationOffset = new Vector3(0f, 180f, 0f);
+    [SerializeField, HideInInspector] private bool destroyWhenRoundStarts;
 
     private Vector3 startPosition;
+    private Vector3 startLocalEulerAngles;
     private Renderer[] visualRenderers;
     private bool[] rendererDefaultVisibility;
     private bool wasRoundRunning;
-    private bool outsideBunkerTimerStarted;
-    private float outsideBunkerVisibleUntil;
+    private int observedRoundNumber = -1;
+    private bool isDirectionReversed;
+    private bool hasCachedStartRotation;
     private bool visualsAreVisible = true;
 
     private void Awake()
     {
         startPosition = transform.position;
-        wasRoundRunning = IsRoundRunning();
+        MigrateLegacyDestroyMode();
+        CaptureRoundState();
         CacheVisualRenderers();
+        CacheDirectionRotation(force: true);
         ResetVisibilityState();
     }
 
     private void OnEnable()
     {
         startPosition = transform.position;
-        wasRoundRunning = IsRoundRunning();
+        MigrateLegacyDestroyMode();
+        DemoRoundMissionHUD.Quest4ActiveChanged -= HandleQuest4ActiveChanged;
+        DemoRoundMissionHUD.Quest4ActiveChanged += HandleQuest4ActiveChanged;
+        CaptureRoundState();
+        if (!hasCachedStartRotation)
+        {
+            CacheDirectionRotation(force: true);
+        }
+
+        SetDirectionReversed(false, force: true);
+        ApplyQuest4DirectionState();
         ResetVisibilityState();
+    }
+
+    private void OnDisable()
+    {
+        DemoRoundMissionHUD.Quest4ActiveChanged -= HandleQuest4ActiveChanged;
     }
 
     private void Update()
@@ -66,15 +95,16 @@ public class AttentionArrowMotion : MonoBehaviour
 
         transform.position = startPosition + axis * offset;
 
-        DestroyIfRoundJustStarted();
+        RefreshRoundState();
         UpdateVisibility();
+        UpdateDirection();
     }
 
     private void OnValidate()
     {
         amplitude = Mathf.Max(0f, amplitude);
         speed = Mathf.Max(0f, speed);
-        outsideBunkerDurationSeconds = Mathf.Max(0f, outsideBunkerDurationSeconds);
+        MigrateLegacyDestroyMode();
     }
 
     private Vector3 GetMotionAxis()
@@ -87,23 +117,6 @@ public class AttentionArrowMotion : MonoBehaviour
         return useLocalAxis ? transform.up : Vector3.up;
     }
 
-    private void DestroyIfRoundJustStarted()
-    {
-        if (!destroyWhenRoundStarts)
-        {
-            return;
-        }
-
-        bool isRoundRunning = IsRoundRunning();
-        if (isRoundRunning && !wasRoundRunning)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        wasRoundRunning = isRoundRunning;
-    }
-
     private void ResetVisibilityState()
     {
         if (visualRenderers == null)
@@ -111,8 +124,6 @@ public class AttentionArrowMotion : MonoBehaviour
             CacheVisualRenderers();
         }
 
-        outsideBunkerTimerStarted = false;
-        outsideBunkerVisibleUntil = 0f;
         UpdateVisibility();
     }
 
@@ -121,22 +132,70 @@ public class AttentionArrowMotion : MonoBehaviour
         bool shouldShow = visibilityMode switch
         {
             VisibilityMode.RoundStartUntilOutsideBunker => IsRoundRunning() && !IsLocalPlayerOutsideBunker(),
-            VisibilityMode.OutsideBunkerTimed => ShouldShowOutsideBunkerTimedArrow(),
+            VisibilityMode.VisibleUntilRoundStarts => !IsRoundRunning(),
             _ => true
         };
 
         SetVisualsVisible(shouldShow);
     }
 
-    private bool ShouldShowOutsideBunkerTimedArrow()
+    private void UpdateDirection()
     {
-        if (!outsideBunkerTimerStarted && IsLocalPlayerOutsideBunker())
+        bool shouldReverse = directionMode == DirectionMode.ReverseAfterQuest3 && IsLocalPlayerQuest3Completed();
+        SetDirectionReversed(shouldReverse);
+    }
+
+    private void CaptureRoundState()
+    {
+        BackendRoundManager roundManager = BackendRoundManager.Instance;
+        wasRoundRunning = roundManager != null && roundManager.IsRoundRunning;
+        observedRoundNumber = roundManager != null ? roundManager.CurrentRoundNumber : -1;
+    }
+
+    private void RefreshRoundState()
+    {
+        BackendRoundManager roundManager = BackendRoundManager.Instance;
+        bool isRoundRunning = roundManager != null && roundManager.IsRoundRunning;
+        int roundNumber = roundManager != null ? roundManager.CurrentRoundNumber : -1;
+
+        if (isRoundRunning == wasRoundRunning && roundNumber == observedRoundNumber)
         {
-            outsideBunkerTimerStarted = true;
-            outsideBunkerVisibleUntil = Time.time + outsideBunkerDurationSeconds;
+            return;
         }
 
-        return outsideBunkerTimerStarted && Time.time < outsideBunkerVisibleUntil;
+        wasRoundRunning = isRoundRunning;
+        observedRoundNumber = roundNumber;
+        ResetVisibilityState();
+        UpdateDirection();
+    }
+
+    private void MigrateLegacyDestroyMode()
+    {
+        if ((int)visibilityMode == LegacyReverseDirectionVisibilityModeValue)
+        {
+            directionMode = DirectionMode.ReverseAfterQuest3;
+            visibilityMode = VisibilityMode.AlwaysVisible;
+        }
+
+        if (!destroyWhenRoundStarts)
+        {
+            return;
+        }
+
+        visibilityMode = VisibilityMode.VisibleUntilRoundStarts;
+        destroyWhenRoundStarts = false;
+    }
+
+    private void CacheDirectionRotation(bool force)
+    {
+        if (hasCachedStartRotation && !force)
+        {
+            return;
+        }
+
+        startLocalEulerAngles = DirectionTransform.localEulerAngles;
+        hasCachedStartRotation = true;
+        isDirectionReversed = false;
     }
 
     private void CacheVisualRenderers()
@@ -171,6 +230,41 @@ public class AttentionArrowMotion : MonoBehaviour
         }
     }
 
+    private void SetDirectionReversed(bool reversed, bool force = false)
+    {
+        if (!force && isDirectionReversed == reversed)
+        {
+            return;
+        }
+
+        isDirectionReversed = reversed;
+        DirectionTransform.localEulerAngles = reversed
+            ? startLocalEulerAngles + quest3CompletedRotationOffset
+            : startLocalEulerAngles;
+    }
+
+    private void HandleQuest4ActiveChanged(bool isQuest4Active)
+    {
+        if (directionMode != DirectionMode.ReverseAfterQuest3)
+        {
+            return;
+        }
+
+        SetDirectionReversed(isQuest4Active, force: true);
+    }
+
+    private void ApplyQuest4DirectionState()
+    {
+        if (directionMode != DirectionMode.ReverseAfterQuest3)
+        {
+            return;
+        }
+
+        SetDirectionReversed(IsLocalPlayerQuest3Completed(), force: true);
+    }
+
+    private Transform DirectionTransform => rotationRoot != null ? rotationRoot : transform;
+
     private static bool IsLocalPlayerOutsideBunker()
     {
         return LocalPlayerReferenceResolver.TryGetLocalCondition(out PlayerCondition condition)
@@ -181,5 +275,15 @@ public class AttentionArrowMotion : MonoBehaviour
     private static bool IsRoundRunning()
     {
         return BackendRoundManager.Instance != null && BackendRoundManager.Instance.IsRoundRunning;
+    }
+
+    private static bool IsLocalPlayerQuest3Completed()
+    {
+        if (DemoRoundMissionHUD.IsQuest4ActiveForLocalPlayer)
+        {
+            return true;
+        }
+
+        return BackendRoundManager.Instance != null && BackendRoundManager.Instance.IsLocalPlayerQuest3Completed();
     }
 }
