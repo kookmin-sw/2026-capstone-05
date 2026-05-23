@@ -28,27 +28,14 @@ public class NoiseManager : MonoBehaviour
     
     // Private Fields
     private readonly Dictionary<NoiseData.NoiseType, float> noiseDict = new Dictionary<NoiseData.NoiseType, float>();
-    private static readonly HashSet<INoiseListener> registeredListeners = new HashSet<INoiseListener>();
+    private const int InitialOverlapBufferSize = 64;
+    private const int MaxOverlapBufferSize = 1024;
+
+    private Collider[] overlapBuffer = new Collider[InitialOverlapBufferSize];
     private readonly HashSet<INoiseListener> notifiedListeners = new HashSet<INoiseListener>();
 
     private float maxDecibel;
     public float MaxDecibel => maxDecibel;
-
-    public static void RegisterListener(INoiseListener listener)
-    {
-        if (listener != null)
-        {
-            registeredListeners.Add(listener);
-        }
-    }
-
-    public static void UnregisterListener(INoiseListener listener)
-    {
-        if (listener != null)
-        {
-            registeredListeners.Remove(listener);
-        }
-    }
 
 #if UNITY_EDITOR
     private List<ActiveNoise> activeNoises = new List<ActiveNoise>();
@@ -133,17 +120,16 @@ public class NoiseManager : MonoBehaviour
     {
         notifiedListeners.Clear();
 
-        foreach (INoiseListener listener in registeredListeners)
+        int count = GetOverlapCount(position, radius);
+        for (int i = 0; i < count; i++)
         {
+            INoiseListener listener = overlapBuffer[i].GetComponentInParent<INoiseListener>();
             if (listener == null || !notifiedListeners.Add(listener)) continue;
-            if (!TryGetListenerComponent(listener, out Component listenerComponent)) continue;
 
-            float distance = GetClosestListenerDistance(position, listenerComponent, out Vector3 listenerPosition);
-            if (distance > radius)
-                continue;
+            Vector3 listenerPosition = overlapBuffer[i].bounds.center;
+            bool isObstructed = Physics.Linecast(position, listenerPosition, soundObstacleMask);
 
-            bool isObstructed = soundObstacleMask.value != 0 &&
-                                Physics.Linecast(position, listenerPosition, soundObstacleMask, QueryTriggerInteraction.Ignore);
+            float distance = Vector3.Distance(overlapBuffer[i].ClosestPoint(position), position);
             float noiseIntensity = Mathf.Clamp01(1f - distance / radius);
             if (isObstructed)
             {
@@ -157,51 +143,17 @@ public class NoiseManager : MonoBehaviour
         }
     }
 
-    private static bool TryGetListenerComponent(INoiseListener listener, out Component listenerComponent)
+    private int GetOverlapCount(Vector3 position, float radius)
     {
-        listenerComponent = listener as Component;
-        if (listenerComponent == null)
-            return false;
-
-        if (!listenerComponent.gameObject.activeInHierarchy)
-            return false;
-
-        if (listenerComponent is Behaviour behaviour && !behaviour.isActiveAndEnabled)
-            return false;
-
-        return true;
-    }
-
-    private static float GetClosestListenerDistance(Vector3 sourcePosition, Component listenerComponent, out Vector3 listenerPosition)
-    {
-        Collider[] listenerColliders = listenerComponent.GetComponentsInChildren<Collider>();
-        float closestSqrDistance = float.PositiveInfinity;
-        Vector3 closestPoint = listenerComponent.transform.position;
-        Vector3 closestBoundsCenter = listenerComponent.transform.position;
-
-        foreach (Collider listenerCollider in listenerColliders)
+        int count = Physics.OverlapSphereNonAlloc(position, radius, overlapBuffer);
+        while (count >= overlapBuffer.Length && overlapBuffer.Length < MaxOverlapBufferSize)
         {
-            if (listenerCollider == null || !listenerCollider.enabled || !listenerCollider.gameObject.activeInHierarchy)
-                continue;
-
-            Vector3 point = listenerCollider.ClosestPoint(sourcePosition);
-            float sqrDistance = (point - sourcePosition).sqrMagnitude;
-            if (sqrDistance >= closestSqrDistance)
-                continue;
-
-            closestSqrDistance = sqrDistance;
-            closestPoint = point;
-            closestBoundsCenter = listenerCollider.bounds.center;
+            int nextSize = Mathf.Min(overlapBuffer.Length * 2, MaxOverlapBufferSize);
+            overlapBuffer = new Collider[nextSize];
+            count = Physics.OverlapSphereNonAlloc(position, radius, overlapBuffer);
         }
 
-        if (float.IsPositiveInfinity(closestSqrDistance))
-        {
-            listenerPosition = listenerComponent.transform.position;
-            return Vector3.Distance(sourcePosition, listenerPosition);
-        }
-
-        listenerPosition = closestBoundsCenter;
-        return Vector3.Distance(sourcePosition, closestPoint);
+        return count;
     }
 
 #if UNITY_EDITOR
