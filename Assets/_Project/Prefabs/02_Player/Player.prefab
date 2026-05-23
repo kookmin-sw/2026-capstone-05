@@ -614,6 +614,7 @@ MonoBehaviour:
   coldDamageRate: 1
   indoorColdnessDecreaseRate: 1.5
   outdoorColdnessIncreaseRate: 1
+  isInBunker: 1
   damageVFXPrefab: {fileID: 2738786527308404416, guid: c5173e1e6866d4e468abd600a7a4879d, type: 3}
   damageSound:
     Guid:
@@ -769,7 +770,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 640e5ac7794e2ee4a9f1f491914e843a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerNetworkSetup
-  isLocalPlayerTest: 0
 --- !u!114 &7920691128559841607
 MonoBehaviour:
   m_ObjectHideFlags: 0

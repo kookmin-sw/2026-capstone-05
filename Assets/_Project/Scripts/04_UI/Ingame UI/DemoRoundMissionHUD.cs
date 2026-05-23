@@ -1,4 +1,3 @@
-using System.Collections;
 using TMPro;
 using Systems.GridInventory;
 using UnityEngine;
@@ -13,11 +12,6 @@ public class DemoRoundMissionHUD : MonoBehaviour
     private const int CanvasSortingOrder = -1;
     private const float TextRefreshInterval = 0.1f;
     private const float TextOutlineWidth = 0.2f;
-    private const float QuestCompletedFadeDelaySeconds = 5f;
-    private const float DemoFadeInSeconds = 0.9f;
-    private const float DemoFadeHoldSeconds = 1.8f;
-    private const float DemoFadeOutSeconds = 0.9f;
-    private const string ThankYouMessage = "데모버전을 플레이해주셔서 감사합니다!";
     private const string QuestOpenBunkerMessage = "퀘스트 1. 책상과 상호작용 완료 후 벙커 문을 여세요.";
     private const string QuestAcquireFirearmMessage = "퀘스트 2. 몬스터를 처치하기 위해 총과 총알을 획득하세요.";
     private const string QuestReturnToBaseMessage = "퀘스트 4. 제한 시간 내에 탐험을 마치고 기지로 복귀하세요.";
@@ -45,7 +39,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
     private bool wasRoundRunning;
     private int lastRoundNumber = -1;
     private float nextTextRefreshTime;
-    private Coroutine questCompletedRoutine;
+    private bool hasReportedQuest3Completed;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
@@ -299,6 +293,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
 
         if (questStep == QuestStep.KillMonsters && defeatedMonsterCount >= MissionTargetKills)
         {
+            ReportQuest3Completed();
             questStep = QuestStep.ReturnToBase;
         }
 
@@ -385,38 +380,26 @@ public class DemoRoundMissionHUD : MonoBehaviour
     {
         return firearm != null &&
             firearm.requiredAmmoType != null &&
-            (QuickslotHasItem(firearm.requiredAmmoType) || GridInventory.Instance?.HasItem(firearm.requiredAmmoType) == true);
-    }
-
-    private static bool QuickslotHasItem(ItemData itemData)
-    {
-        if (itemData == null || QuickslotUIController.Instance == null)
-        {
-            return false;
-        }
-
-        for (int i = 0; i < QuickslotCount; i++)
-        {
-            if (QuickslotUIController.Instance.GetItem(i)?.Data == itemData)
-            {
-                return true;
-            }
-        }
-
-        return false;
+            PlayerItemInventoryQuery.HasItem(firearm.requiredAmmoType);
     }
 
     private void ResetMissionProgress()
     {
-        if (questCompletedRoutine != null)
-        {
-            StopCoroutine(questCompletedRoutine);
-            questCompletedRoutine = null;
-        }
-
         defeatedMonsterCount = 0;
+        hasReportedQuest3Completed = false;
         questStep = QuestStep.LeaveBunker;
         UpdateMissionText();
+    }
+
+    private void ReportQuest3Completed()
+    {
+        if (hasReportedQuest3Completed)
+        {
+            return;
+        }
+
+        hasReportedQuest3Completed = true;
+        BackendRoundManager.Instance?.MarkLocalPlayerQuest3Completed();
     }
 
     private void CompleteQuest()
@@ -428,41 +411,17 @@ public class DemoRoundMissionHUD : MonoBehaviour
 
         questStep = QuestStep.Completed;
         UpdateMissionText();
-
-        if (questCompletedRoutine == null)
-        {
-            questCompletedRoutine = StartCoroutine(PlayQuestCompletedFadeRoutine());
-        }
     }
 
     private void FailQuestIfIncomplete()
     {
         if (questStep == QuestStep.Completed)
         {
-            if (questCompletedRoutine != null)
-            {
-                StopCoroutine(questCompletedRoutine);
-                questCompletedRoutine = null;
-            }
-
             return;
-        }
-
-        if (questCompletedRoutine != null)
-        {
-            StopCoroutine(questCompletedRoutine);
-            questCompletedRoutine = null;
         }
 
         questStep = QuestStep.Failed;
         UpdateMissionText();
-    }
-
-    private IEnumerator PlayQuestCompletedFadeRoutine()
-    {
-        yield return new WaitForSecondsRealtime(QuestCompletedFadeDelaySeconds);
-        RoundTeleportFade.Play(DemoFadeInSeconds, DemoFadeHoldSeconds, DemoFadeOutSeconds, ThankYouMessage);
-        questCompletedRoutine = null;
     }
 
     private void SetVisible(bool visible)

@@ -28,8 +28,8 @@ MonoBehaviour:
   lootTable:
   - itemData: {fileID: 11400000, guid: 12540fc858566414394b4256b1b5a5d5, type: 2}
     frequency: 10
-    minQuantity: 1
-    maxQuantity: 1
+    minQuantity: 2
+    maxQuantity: 2
   - itemData: {fileID: 11400000, guid: 63d04096f22aad24b9e1b1a1812f66b4, type: 2}
     frequency: 10
     minQuantity: 1
@@ -42,6 +42,10 @@ MonoBehaviour:
     frequency: 10
     minQuantity: 25
     maxQuantity: 25
+  - itemData: {fileID: 11400000, guid: 1a02a01293dafa24b86d5ceb94e63492, type: 2}
+    frequency: 10
+    minQuantity: 1
+    maxQuantity: 1
   references:
     version: 2
     RefIds: []

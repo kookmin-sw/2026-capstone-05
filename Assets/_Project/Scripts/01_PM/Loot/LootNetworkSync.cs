@@ -660,6 +660,37 @@ namespace Systems.Loot
             BroadcastAllLoots(PlayerRef.None);
         }
 
+        public void ResetRoundLoot()
+        {
+            if (!HasStateAuthority && !AuthSession.IsOffline)
+            {
+                return;
+            }
+
+            EnsureSceneLootModels(false);
+
+            InteractableLoot[] loots = FindObjectsByType<InteractableLoot>(FindObjectsSortMode.None);
+            foreach (InteractableLoot loot in loots)
+            {
+                if (loot == null || !loot.HasConfiguration || loot.IsBaseStorage)
+                {
+                    continue;
+                }
+
+                LootSaveData initialData = loot.CreateInitialLootSnapshot();
+                if (initialData == null || string.IsNullOrWhiteSpace(initialData.lootId))
+                {
+                    continue;
+                }
+
+                GridInventoryModel model = GetOrCreateModel(initialData.lootId, initialData.width, initialData.height);
+                LootGridSerializer.ApplyToModel(initialData, model);
+                dirtyLootIds.Remove(initialData.lootId);
+            }
+
+            BroadcastAllLoots(PlayerRef.None);
+        }
+
         public GridInventoryModel GetOrCreateModel(string lootId, int width = 9, int height = 18)
         {
             string id = NormalizeLootId(lootId);

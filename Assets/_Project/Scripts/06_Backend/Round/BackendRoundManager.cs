@@ -1,5 +1,6 @@
 using FMODUnity;
 using Fusion;
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(NetworkObject))]
@@ -7,6 +8,7 @@ public class BackendRoundManager : NetworkBehaviour
 {
     private const string HostSelectedSlotPrefKey = "HostSaveSlot";
     private const string DemoThankYouMessage = "데모버전을 플레이해주셔서 감사합니다!";
+    private const float RoundVisualElapsedTimerDurationSeconds = 86400f;
     public static BackendRoundManager Instance { get; private set; }
     public static event System.Action<NetworkWeatherState> WeatherStateChanged;
 
@@ -40,6 +42,18 @@ public class BackendRoundManager : NetworkBehaviour
     }
     
     [Networked] public TickTimer RoundTimer { get; private set; }
+    [Networked] private TickTimer RoundVisualElapsedTimer { get; set; }
+    [Networked] private NetworkBool NetworkHasRoundTimerStarted { get; set; }
+    private bool _offlineHasRoundTimerStarted;
+    private bool HasRoundTimerStarted
+    {
+        get => AuthSession.IsOffline ? _offlineHasRoundTimerStarted : NetworkHasRoundTimerStarted;
+        set
+        {
+            if (AuthSession.IsOffline) _offlineHasRoundTimerStarted = value;
+            else NetworkHasRoundTimerStarted = value;
+        }
+    }
     
     [Networked] private int NetworkCurrentRoundNumber { get; set; }
     private int _offlineCurrentRoundNumber;
@@ -106,7 +120,12 @@ public class BackendRoundManager : NetworkBehaviour
     
     private Coroutine _offlineTimerCoroutine;
     private float _offlineTimeRemaining;
+    private float _offlineRoundStartTime;
     private bool isEndingRound;
+    private bool offlinePlayerExitedBunker;
+    private bool offlinePlayerCompletedQuest3;
+    private readonly HashSet<PlayerRef> playersWhoExitedBunker = new();
+    private readonly HashSet<PlayerRef> playersWhoCompletedQuest3 = new();
 
     public NetworkWeatherState CurrentWeatherState 
     {
@@ -125,7 +144,16 @@ public class BackendRoundManager : NetworkBehaviour
     {
         get
         {
-            if (AuthSession.IsOffline) return _offlineTimeRemaining;
+            if (AuthSession.IsOffline)
+            {
+                if (!IsRoundRunning)
+                {
+                    return 0f;
+                }
+
+                return HasRoundTimerStarted ? _offlineTimeRemaining : roundDurationSeconds;
+            }
+
             if (Runner == null || !Runner.IsRunning || Object == null || !Object.IsValid)
             {
                 return 0f;
@@ -136,7 +164,36 @@ public class BackendRoundManager : NetworkBehaviour
                 return 0f;
             }
 
+            if (!HasRoundTimerStarted)
+            {
+                return roundDurationSeconds;
+            }
+
             return RoundTimer.RemainingTime(Runner) ?? 0f;
+        }
+    }
+
+    public float RoundElapsedSinceStartSeconds
+    {
+        get
+        {
+            if (!IsRoundRunning)
+            {
+                return 0f;
+            }
+
+            if (AuthSession.IsOffline)
+            {
+                return Mathf.Max(0f, Time.time - _offlineRoundStartTime);
+            }
+
+            if (Runner == null || !Runner.IsRunning || Object == null || !Object.IsValid)
+            {
+                return 0f;
+            }
+
+            float remaining = RoundVisualElapsedTimer.RemainingTime(Runner) ?? 0f;
+            return Mathf.Clamp(roundDurationSeconds - remaining, 0f, roundDurationSeconds);
         }
     }
 
@@ -153,6 +210,10 @@ public class BackendRoundManager : NetworkBehaviour
             _hostRoundCountPrefKey = RoomLauncher.BuildHostRoundCountPrefKey(_activeHostSlot);
             CurrentRoundNumber = Mathf.Max(1, PlayerPrefs.GetInt(_hostRoundCountPrefKey, 1));
             IsRoundRunning = false;
+            HasRoundTimerStarted = false;
+            _offlineTimeRemaining = roundDurationSeconds;
+            _offlineRoundStartTime = Time.time;
+            ResetRoundGateStateLocal();
             WeatherStateRaw = (int)initialWeatherState;
             BroadcastWeatherState(force: true);
         }
@@ -176,6 +237,9 @@ public class BackendRoundManager : NetworkBehaviour
         CurrentRoundNumber = Mathf.Max(1, PlayerPrefs.GetInt(_hostRoundCountPrefKey, 1));
         IsRoundRunning = false;
         RoundTimer = TickTimer.None;
+        RoundVisualElapsedTimer = TickTimer.None;
+        HasRoundTimerStarted = false;
+        ResetRoundGateStateLocal();
         WeatherStateRaw = (int)initialWeatherState;
         
         if (global::Systems.GridInventory.GridInventory.Instance != null && global::Systems.GridInventory.GridInventory.Instance.Controller != null)
@@ -239,7 +303,7 @@ public class BackendRoundManager : NetworkBehaviour
             return;
         }
 
-        if (IsRoundRunning && RoundTimer.Expired(Runner))
+        if (IsRoundRunning && HasRoundTimerStarted && RoundTimer.Expired(Runner))
         {
             EndRound("Timeout");
         }
@@ -296,13 +360,17 @@ public class BackendRoundManager : NetworkBehaviour
         
         // 싱글 모드에서는 IsRoundRunning 프로퍼티를 통해 로컬 변수에 할당됨
         IsRoundRunning = true;
+        HasRoundTimerStarted = false;
+        _offlineRoundStartTime = Time.time;
+        ResetRoundLoot();
         
         if (_offlineTimerCoroutine != null)
         {
             StopCoroutine(_offlineTimerCoroutine);
+            _offlineTimerCoroutine = null;
         }
         _offlineTimeRemaining = roundDurationSeconds;
-        _offlineTimerCoroutine = StartCoroutine(OfflineTimerRoutine());
+        ResetRoundGateStateLocal();
         
         PlayerPrefs.SetInt(_hostRoundCountPrefKey, CurrentRoundNumber);
         PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(_activeHostSlot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
@@ -332,6 +400,11 @@ public class BackendRoundManager : NetworkBehaviour
         {
             if (IsRoundRunning)
             {
+                if (!HasRoundTimerStarted)
+                {
+                    StartRoundTimer("ForceEndSoon_Offline");
+                }
+
                 _offlineTimeRemaining = 1f;
                 Debug.Log("[BackendRoundManager] 오프라인 라운드 남은 시간을 1초로 단축했습니다. (테스트)");
             }
@@ -349,6 +422,7 @@ public class BackendRoundManager : NetworkBehaviour
     {
         if (HasStateAuthority && IsRoundRunning)
         {
+            HasRoundTimerStarted = true;
             RoundTimer = TickTimer.CreateFromSeconds(Runner, 1f);
             Debug.Log("[BackendRoundManager] 클라이언트 요청으로 라운드 남은 시간을 1초로 단축했습니다. (테스트)");
         }
@@ -362,7 +436,15 @@ public class BackendRoundManager : NetworkBehaviour
         }
 
         IsRoundRunning = true;
-        RoundTimer = TickTimer.CreateFromSeconds(Runner, roundDurationSeconds);
+        HasRoundTimerStarted = false;
+        RoundTimer = TickTimer.None;
+        RoundVisualElapsedTimer = TickTimer.CreateFromSeconds(Runner, roundDurationSeconds);
+        ResetRoundGateStateLocal();
+        if (Runner != null && Runner.IsRunning)
+        {
+            RpcResetRoundGateState();
+        }
+        ResetRoundLoot();
 
         PlayerPrefs.SetInt(_hostRoundCountPrefKey, CurrentRoundNumber);
         PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(_activeHostSlot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
@@ -379,6 +461,266 @@ public class BackendRoundManager : NetworkBehaviour
 
         Debug.Log($"[BackendRoundManager] 라운드 시작. round={CurrentRoundNumber}, reason={reason}, duration={roundDurationSeconds}s");
         RuntimeManager.PlayOneShot(roundStartSound);
+    }
+
+    public void RegisterPlayerBunkerExit(PlayerRef playerRef)
+    {
+        if (AuthSession.IsOffline)
+        {
+            offlinePlayerExitedBunker = true;
+            StartRoundTimer("OfflinePlayerExitedBunker");
+            return;
+        }
+
+        if (playerRef == PlayerRef.None)
+        {
+            return;
+        }
+
+        if (HasStateAuthority)
+        {
+            RegisterPlayerBunkerExitInternal(playerRef);
+            return;
+        }
+
+        if (Runner != null && Object != null && Object.IsValid)
+        {
+            RpcRequestRegisterPlayerBunkerExit(playerRef);
+        }
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RpcRequestRegisterPlayerBunkerExit(PlayerRef playerRef)
+    {
+        if (!HasStateAuthority)
+        {
+            return;
+        }
+
+        RegisterPlayerBunkerExitInternal(playerRef);
+    }
+
+    private void RegisterPlayerBunkerExitInternal(PlayerRef playerRef)
+    {
+        if (playerRef == PlayerRef.None)
+        {
+            return;
+        }
+
+        if (playersWhoExitedBunker.Add(playerRef))
+        {
+            RpcSyncPlayerBunkerGateState(playerRef, true, playersWhoCompletedQuest3.Contains(playerRef));
+        }
+
+        StartRoundTimer($"PlayerExitedBunker:{playerRef}");
+    }
+
+    public void MarkLocalPlayerQuest3Completed()
+    {
+        if (AuthSession.IsOffline)
+        {
+            MarkPlayerQuest3Completed(PlayerRef.None);
+            return;
+        }
+
+        PlayerRef playerRef = ResolveLocalPlayerRef();
+
+        Debug.Log($"[BackendRoundManager] Quest 3 complete report. localPlayer={(Runner != null ? Runner.LocalPlayer : PlayerRef.None)}, resolved={playerRef}, hasStateAuthority={HasStateAuthority}");
+
+        if (!HasStateAuthority && playerRef != PlayerRef.None)
+        {
+            playersWhoCompletedQuest3.Add(playerRef);
+        }
+
+        MarkPlayerQuest3Completed(playerRef);
+    }
+
+    private PlayerRef ResolveLocalPlayerRef()
+    {
+        BackendPlayerNetworkSync localSync = BackendPlayerNetworkSync.LocalInstance;
+        if (localSync != null && localSync.Object != null)
+        {
+            PlayerRef inputAuthority = localSync.Object.InputAuthority;
+            if (inputAuthority != PlayerRef.None)
+            {
+                return inputAuthority;
+            }
+        }
+
+        if (Runner != null && Runner.LocalPlayer != PlayerRef.None)
+        {
+            return Runner.LocalPlayer;
+        }
+
+        if (LocalPlayerReferenceResolver.TryGetLocalPlayer(out PlayerController player) &&
+            player != null)
+        {
+            NetworkObject playerObject = player.GetComponent<NetworkObject>();
+            if (playerObject != null && playerObject.InputAuthority != PlayerRef.None)
+            {
+                return playerObject.InputAuthority;
+            }
+        }
+
+        return PlayerRef.None;
+    }
+
+    public void MarkPlayerQuest3Completed(PlayerRef playerRef)
+    {
+        if (AuthSession.IsOffline)
+        {
+            offlinePlayerCompletedQuest3 = true;
+            return;
+        }
+
+        if (playerRef == PlayerRef.None)
+        {
+            return;
+        }
+
+        if (HasStateAuthority)
+        {
+            MarkPlayerQuest3CompletedInternal(playerRef);
+            return;
+        }
+
+        if (Runner != null && Object != null && Object.IsValid)
+        {
+            RpcRequestMarkPlayerQuest3Completed(playerRef);
+        }
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RpcRequestMarkPlayerQuest3Completed(PlayerRef playerRef, RpcInfo rpcInfo = default)
+    {
+        if (!HasStateAuthority)
+        {
+            return;
+        }
+
+        PlayerRef resolvedPlayerRef = rpcInfo.Source != PlayerRef.None ? rpcInfo.Source : playerRef;
+        Debug.Log($"[BackendRoundManager] Quest 3 complete RPC. source={rpcInfo.Source}, requested={playerRef}, resolved={resolvedPlayerRef}");
+        MarkPlayerQuest3CompletedInternal(resolvedPlayerRef);
+    }
+
+    private void MarkPlayerQuest3CompletedInternal(PlayerRef playerRef)
+    {
+        if (playerRef == PlayerRef.None)
+        {
+            return;
+        }
+
+        if (playersWhoCompletedQuest3.Add(playerRef))
+        {
+            RpcSyncPlayerBunkerGateState(playerRef, playersWhoExitedBunker.Contains(playerRef), true);
+        }
+    }
+
+    public bool CanPlayerEnterBunker(PlayerRef playerRef)
+    {
+        if (AuthSession.IsOffline)
+        {
+            return !offlinePlayerExitedBunker || offlinePlayerCompletedQuest3;
+        }
+
+        if (playerRef == PlayerRef.None)
+        {
+            return false;
+        }
+
+        return !playersWhoExitedBunker.Contains(playerRef) || playersWhoCompletedQuest3.Contains(playerRef);
+    }
+
+    public string GetPlayerBunkerGateStateDebug(PlayerRef playerRef)
+    {
+        if (AuthSession.IsOffline)
+        {
+            return $"offlineExited={offlinePlayerExitedBunker}, offlineCompletedQuest3={offlinePlayerCompletedQuest3}";
+        }
+
+        return $"playerRef={playerRef}, exited={playersWhoExitedBunker.Contains(playerRef)}, completedQuest3={playersWhoCompletedQuest3.Contains(playerRef)}";
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcSyncPlayerBunkerGateState(PlayerRef playerRef, NetworkBool hasExitedBunker, NetworkBool hasCompletedQuest3)
+    {
+        if (playerRef == PlayerRef.None)
+        {
+            return;
+        }
+
+        if (hasExitedBunker)
+        {
+            playersWhoExitedBunker.Add(playerRef);
+        }
+        else
+        {
+            playersWhoExitedBunker.Remove(playerRef);
+        }
+
+        if (hasCompletedQuest3)
+        {
+            playersWhoCompletedQuest3.Add(playerRef);
+        }
+        else
+        {
+            playersWhoCompletedQuest3.Remove(playerRef);
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcResetRoundGateState()
+    {
+        ResetRoundGateStateLocal();
+    }
+
+    private void ResetRoundGateStateLocal()
+    {
+        offlinePlayerExitedBunker = false;
+        offlinePlayerCompletedQuest3 = false;
+        playersWhoExitedBunker.Clear();
+        playersWhoCompletedQuest3.Clear();
+    }
+
+    private void StartRoundTimer(string reason)
+    {
+        if (!IsRoundRunning || HasRoundTimerStarted)
+        {
+            return;
+        }
+
+        HasRoundTimerStarted = true;
+
+        if (AuthSession.IsOffline)
+        {
+            if (_offlineTimerCoroutine != null)
+            {
+                StopCoroutine(_offlineTimerCoroutine);
+            }
+
+            _offlineTimeRemaining = roundDurationSeconds;
+            _offlineTimerCoroutine = StartCoroutine(OfflineTimerRoutine());
+            Debug.Log($"[BackendRoundManager] Offline round timer started. reason={reason}, duration={roundDurationSeconds}s");
+            return;
+        }
+
+        if (Runner == null || !Runner.IsRunning)
+        {
+            return;
+        }
+
+        RoundTimer = TickTimer.CreateFromSeconds(Runner, roundDurationSeconds);
+        Debug.Log($"[BackendRoundManager] Round timer started. reason={reason}, duration={roundDurationSeconds}s");
+    }
+
+    private void ResetRoundLoot()
+    {
+        if (Systems.Loot.LootNetworkSync.Instance == null)
+        {
+            return;
+        }
+
+        Systems.Loot.LootNetworkSync.Instance.ResetRoundLoot();
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -399,12 +741,17 @@ public class BackendRoundManager : NetworkBehaviour
 
     private System.Collections.IEnumerator EndRoundRoutine(string reason)
     {
+        int completedRoundNumber = CurrentRoundNumber;
+        bool shouldPlayDemoThankYouFade = ShouldPlayDemoThankYouFade(completedRoundNumber, reason);
+
         IsRoundRunning = false;
+        HasRoundTimerStarted = false;
         isEndingRound = true;
 
         if (!AuthSession.IsOffline)
         {
             RoundTimer = TickTimer.None;
+            RoundVisualElapsedTimer = TickTimer.None;
         }
         CurrentRoundNumber += 1;
 
@@ -412,6 +759,13 @@ public class BackendRoundManager : NetworkBehaviour
         {
             StopCoroutine(_offlineTimerCoroutine);
             _offlineTimerCoroutine = null;
+        }
+        _offlineTimeRemaining = roundDurationSeconds;
+        _offlineRoundStartTime = Time.time;
+        ResetRoundGateStateLocal();
+        if (!AuthSession.IsOffline && HasStateAuthority && Runner != null && Runner.IsRunning)
+        {
+            RpcResetRoundGateState();
         }
 
         CloseRoundEndBunkerDoors();
@@ -423,8 +777,11 @@ public class BackendRoundManager : NetworkBehaviour
         PlayerPrefs.SetString(RoomLauncher.BuildHostSaveDatePrefKey(_activeHostSlot), System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         PlayerPrefs.Save();
 
-        PlayRoundEndFade();
-        yield return new WaitForSecondsRealtime(Mathf.Max(0f, roundEndFadeInSeconds));
+        if (shouldPlayDemoThankYouFade)
+        {
+            PlayRoundEndFade();
+            yield return new WaitForSecondsRealtime(Mathf.Max(0f, roundEndFadeInSeconds));
+        }
 
         RespawnAllPlayersAtSpawner();
         ResetRoundEndPlayerConditions();
@@ -446,8 +803,18 @@ public class BackendRoundManager : NetworkBehaviour
         }
 
         Debug.Log($"[BackendRoundManager] 라운드 종료. slot={_activeHostSlot}, round={CurrentRoundNumber}, reason={reason}");
-        yield return new WaitForSecondsRealtime(Mathf.Max(0f, roundEndBlackHoldSeconds + roundEndFadeOutSeconds));
+        if (shouldPlayDemoThankYouFade)
+        {
+            yield return new WaitForSecondsRealtime(Mathf.Max(0f, roundEndBlackHoldSeconds + roundEndFadeOutSeconds));
+        }
+
         isEndingRound = false;
+    }
+
+    private bool ShouldPlayDemoThankYouFade(int completedRoundNumber, string reason)
+    {
+        return completedRoundNumber == 1 &&
+            (reason == "Timeout" || reason == "TimeExpired_Offline");
     }
 
     private void PlayRoundEndFade()
@@ -577,6 +944,7 @@ public class BackendRoundManager : NetworkBehaviour
             }
 
             playerObject.GetComponent<PlayerCondition>()?.ResetToDefaultValues();
+            playerObject.GetComponent<BackendPlayerNetworkSync>()?.PublishConditionResetSnapshot();
         }
 
         RpcResetLocalPlayerConditionToDefaults();
