@@ -48,7 +48,7 @@ public sealed class MainMenuAuthController : MonoBehaviour
 
     private void Awake()
     {
-        AuthSession.Clear();
+        bool wasAlreadyLoggedIn = AuthSession.IsLoggedIn;
         AutoBindIfNeeded();
 
         string normalizedApiBaseUrl = NormalizeApiBaseUrl(ResolveApiBaseUrl(authApiBaseUrl, allowRuntimeApiBaseUrlOverride, authApiBaseUrlConfigFileName));
@@ -83,6 +83,11 @@ public sealed class MainMenuAuthController : MonoBehaviour
 
         int onLoginSuccessCount = onLoginSuccess != null ? onLoginSuccess.GetPersistentEventCount() : 0;
         bool hasValidPersistentListener = HasValidPersistentListener(onLoginSuccess);
+        if (wasAlreadyLoggedIn)
+        {
+            Debug.Log($"{LogPrefix} Existing auth session detected. Skipping login screen and restoring post-login menu flow. userId={AuthSession.CurrentUserId}, username={AuthSession.CurrentUsername}");
+            ExecutePostLoginFlow();
+        }
         Debug.Log($"{LogPrefix} 로그인 성공 이벤트 슬롯 수={onLoginSuccessCount}, 유효 리스너={hasValidPersistentListener}, fallbackLoginMenu={loginMenuRoot != null}, fallbackMainMenu={mainMenuRoot != null}");
 
         SetStatus("서버 연결 확인 중...", normalStatusColor);

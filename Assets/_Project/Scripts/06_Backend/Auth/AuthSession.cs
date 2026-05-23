@@ -12,6 +12,12 @@ public static class AuthSession
 
     public static event Action<bool> AuthStateChanged;
 
+    [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetForNewPlayerSession()
+    {
+        Clear();
+    }
+
     public static void SetOfflineMode()
     {
         IsOfflineMode = true;
