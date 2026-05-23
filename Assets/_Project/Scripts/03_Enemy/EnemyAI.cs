@@ -126,6 +126,16 @@ public class EnemyAI : NetworkBehaviour, INoiseListener
         EnsureRuntimeInitialized();
     }
 
+    private void OnEnable()
+    {
+        NoiseManager.RegisterListener(this);
+    }
+
+    private void OnDisable()
+    {
+        NoiseManager.UnregisterListener(this);
+    }
+
     public bool EnsureRuntimeInitialized()
     {
         if (isRuntimeInitialized)

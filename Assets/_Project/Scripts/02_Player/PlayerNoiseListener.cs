@@ -11,6 +11,16 @@ public class PlayerNoiseListener : MonoBehaviour, INoiseListener
 
     public float CurrentDecibel { get; private set; }
 
+    private void OnEnable()
+    {
+        NoiseManager.RegisterListener(this);
+    }
+
+    private void OnDisable()
+    {
+        NoiseManager.UnregisterListener(this);
+    }
+
     private void Update()
     {
         if (CurrentDecibel > 0f)
