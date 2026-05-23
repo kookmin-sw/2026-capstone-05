@@ -159,23 +159,20 @@ namespace Systems.Shop
             btnTabBuy = root.Q<Button>("btn-tab-buy");
             btnTabSell = root.Q<Button>("btn-tab-sell");
 
-            btnTabBuy.clicked += () => 
-            {
-                SetShopModeVisuals(false);
-                OnBuyTabClicked?.Invoke();
-            };
+            btnTabBuy.pickingMode = PickingMode.Position;
+            btnTabSell.pickingMode = PickingMode.Position;
 
-            btnTabSell.clicked += () => 
-            {
-                SetShopModeVisuals(true);
-                OnSellTabClicked?.Invoke();
-            };
+            btnTabBuy.RegisterCallback<PointerDownEvent>(HandleBuyTabPointerDown);
+            btnTabSell.RegisterCallback<PointerDownEvent>(HandleSellTabPointerDown);
 
             // Placement Actions
             mainActionButtons = root.Q<VisualElement>("main-action-buttons");
             placementActionButtons = root.Q<VisualElement>("placement-action-buttons");
             btnPlace = root.Q<Button>("btn-place");
             btnCancelPlace = root.Q<Button>("btn-cancel-place");
+
+            mainActionButtons.pickingMode = PickingMode.Position;
+            mainActionButtons.RegisterCallback<PointerDownEvent>(HandleMainActionButtonsPointerDown);
             
             // To be wired by Controller
         }
@@ -370,6 +367,55 @@ namespace Systems.Shop
                     btnPopupConfirm.SetEnabled(currentQuantity > 0);
                 }
             }
+        }
+
+        private void HandleBuyTabPointerDown(PointerDownEvent evt)
+        {
+            if (evt.button != 0)
+                return;
+
+            SelectBuyTab();
+            evt.StopImmediatePropagation();
+        }
+
+        private void HandleSellTabPointerDown(PointerDownEvent evt)
+        {
+            if (evt.button != 0)
+                return;
+
+            SelectSellTab();
+            evt.StopImmediatePropagation();
+        }
+
+        private void HandleMainActionButtonsPointerDown(PointerDownEvent evt)
+        {
+            if (evt.button != 0 || mainActionButtons == null)
+                return;
+
+            Vector2 pointerPosition = new Vector2(evt.position.x, evt.position.y);
+            Vector2 localPosition = mainActionButtons.WorldToLocal(pointerPosition);
+            float width = mainActionButtons.resolvedStyle.width;
+            if (width <= 0f)
+                width = mainActionButtons.layout.width;
+
+            if (localPosition.x < width * 0.5f)
+                SelectBuyTab();
+            else
+                SelectSellTab();
+
+            evt.StopImmediatePropagation();
+        }
+
+        private void SelectBuyTab()
+        {
+            SetShopModeVisuals(false);
+            OnBuyTabClicked?.Invoke();
+        }
+
+        private void SelectSellTab()
+        {
+            SetShopModeVisuals(true);
+            OnSellTabClicked?.Invoke();
         }
 
         private void SetShopModeVisuals(bool isSellMode)
