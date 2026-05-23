@@ -17,34 +17,34 @@ public class ConsumableItemData : ItemData
     [Header("Sound Settings")]
     public EventReference consumeSound;
 
-    //public override string DescriptionString
-    //{
-    //    get
-    //    {
-    //        string baseDesc = base.DescriptionString;
+    public override string DescriptionString
+    {
+        get
+        {
+            string baseDesc = base.DescriptionString;
 
-    //        if (effects == null || effects.Count == 0)
-    //        {
-    //            return baseDesc;
-    //        }
+            if (effects == null || effects.Count == 0)
+            {
+                return baseDesc;
+            }
 
-    //        StringBuilder result = new StringBuilder(baseDesc);
+            StringBuilder result = new StringBuilder(baseDesc);
 
-    //        result.AppendLine();
-    //        result.AppendLine();
+            result.AppendLine();
+            result.AppendLine();
 
-    //        foreach (var effect in effects)
-    //        {
-    //            string iconTag = GetStatIconTag(effect.targetStat);
-    //            string sign = effect.totalAmount > 0 ? "+" : "";
-    //            string durationText = effect.duration > 0f ? $" ({effect.duration}s)" : "";
+            foreach (var effect in effects)
+            {
+                string iconTag = GetStatIconTag(effect.targetStat);
+                string sign = effect.totalAmount > 0 ? "+" : "";
+                string durationText = effect.duration > 0f ? $" ({effect.duration}s)" : "";
 
-    //            result.AppendLine($"{iconTag} {sign}{effect.totalAmount}{durationText}");
-    //        }
+                result.AppendLine($"{iconTag} {sign}{effect.totalAmount}{durationText}");
+            }
 
-    //        return result.ToString();
-    //    }
-    //}
+            return result.ToString();
+        }
+    }
 
     private void Reset()
     {
