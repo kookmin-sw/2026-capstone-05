@@ -100,10 +100,20 @@ public class Outline : MonoBehaviour {
   }
 
   void OnEnable() {
+    renderers = GetComponentsInChildren<Renderer>();
+
     foreach (var renderer in renderers) {
+      if (renderer == null) {
+        continue;
+      }
 
       // Append outline shaders
-      var materials = renderer.sharedMaterials.ToList();
+      List<Material> materials;
+      try {
+        materials = renderer.sharedMaterials.ToList();
+      } catch (MissingReferenceException) {
+        continue;
+      }
 
       materials.Add(outlineMaskMaterial);
       materials.Add(outlineFillMaterial);
@@ -139,9 +149,17 @@ public class Outline : MonoBehaviour {
 
   void OnDisable() {
     foreach (var renderer in renderers) {
+      if (renderer == null) {
+        continue;
+      }
 
       // Remove outline shaders
-      var materials = renderer.sharedMaterials.ToList();
+      List<Material> materials;
+      try {
+        materials = renderer.sharedMaterials.ToList();
+      } catch (MissingReferenceException) {
+        continue;
+      }
 
       materials.Remove(outlineMaskMaterial);
       materials.Remove(outlineFillMaterial);

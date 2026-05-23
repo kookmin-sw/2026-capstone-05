@@ -54,6 +54,7 @@ public class BackendRoundManager : NetworkBehaviour
             else NetworkHasRoundTimerStarted = value;
         }
     }
+    public bool IsRoundTimerRunning => IsRoundRunning && HasRoundTimerStarted;
     
     [Networked] private int NetworkCurrentRoundNumber { get; set; }
     private int _offlineCurrentRoundNumber;
@@ -193,6 +194,30 @@ public class BackendRoundManager : NetworkBehaviour
             }
 
             float remaining = RoundVisualElapsedTimer.RemainingTime(Runner) ?? 0f;
+            return Mathf.Clamp(roundDurationSeconds - remaining, 0f, roundDurationSeconds);
+        }
+    }
+
+    public float RoundElapsedSinceTimerStartSeconds
+    {
+        get
+        {
+            if (!IsRoundRunning || !HasRoundTimerStarted)
+            {
+                return 0f;
+            }
+
+            if (AuthSession.IsOffline)
+            {
+                return Mathf.Clamp(roundDurationSeconds - _offlineTimeRemaining, 0f, roundDurationSeconds);
+            }
+
+            if (Runner == null || !Runner.IsRunning || Object == null || !Object.IsValid)
+            {
+                return 0f;
+            }
+
+            float remaining = RoundTimer.RemainingTime(Runner) ?? roundDurationSeconds;
             return Mathf.Clamp(roundDurationSeconds - remaining, 0f, roundDurationSeconds);
         }
     }
@@ -699,6 +724,7 @@ public class BackendRoundManager : NetworkBehaviour
             }
 
             _offlineTimeRemaining = roundDurationSeconds;
+            _offlineRoundStartTime = Time.time;
             _offlineTimerCoroutine = StartCoroutine(OfflineTimerRoutine());
             Debug.Log($"[BackendRoundManager] Offline round timer started. reason={reason}, duration={roundDurationSeconds}s");
             return;
