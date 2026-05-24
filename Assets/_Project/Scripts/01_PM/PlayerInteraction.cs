@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Localization.Settings;
 
@@ -14,17 +15,39 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
     [SerializeField] private float interactionRange = 3f;
     [SerializeField] private LayerMask interactableLayers = -1;
     [SerializeField] private float interactionCooldown = 0.3f; // 상호작용 쿨다운 시간
+
+    [Header("Focus Highlight Defaults")]
+    [SerializeField, ColorUsage(false, true)] private Color focusEmissionColor = new Color(1f, 0.58f, 0.18f);
+    [SerializeField, Min(0f)] private float focusBaseIntensity = 0.15f;
+    [SerializeField, Min(0f)] private float focusPulseIntensity = 0.2f;
+    [SerializeField, Min(0f)] private float focusPulseSpeed = 2.5f;
+
+    [Header("Proximity Hint")]
+    [SerializeField] private bool enableProximityHint = true;
+    [SerializeField, Min(0f)] private float proximityHintRange = 5f;
+    [SerializeField, Min(0.1f)] private float proximityGlintInterval = 2.5f;
+    [SerializeField, ColorUsage(false, true)] private Color proximityGlintColor = Color.white;
+    [SerializeField, Min(0f)] private float proximityGlintPeakIntensity = 0.22f;
+    [SerializeField, Min(0.05f)] private float proximityGlintDuration = 0.45f;
+    [SerializeField] private Vector3 proximityGlintDirection = new Vector3(1f, 0.25f, 0.15f);
+    [SerializeField, Min(0.01f)] private float proximityGlintWidth = 0.18f;
+    [SerializeField, Min(0.01f)] private float proximityGlintSoftness = 0.25f;
     
     private float lastInteractionTime = 0f;
     private IInteractable currentInteractable = null;
     private GameObject currentLookObject = null;
+    private GameObject currentHighlightObject = null;
     
     // 외곽선 효과를 위한 변수
     private Outline currentOutline;
+    private InteractableFocusHighlighter currentFocusHighlighter;
     private float holdProgressSeconds;
     private bool holdTriggered;
     private bool networkConfigured;
     private readonly RaycastHit[] interactionHits = new RaycastHit[64];
+    private readonly Collider[] proximityHits = new Collider[32];
+    private readonly List<InteractableFocusHighlighter> proximityScanHighlighters = new List<InteractableFocusHighlighter>(16);
+    private float nextProximityHintScanTime;
 
     private readonly string interactPromptTable = "InteractPrompts";
     private readonly string holdPrefixKey = "HoldPrefix";
@@ -49,10 +72,19 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
         if (networkConfigured && !player.IsLocalPlayer)
         {
             ClearCurrentInteractable();
+            ClearProximityHint();
             return;
         }
 
         CheckInteractionFocus();
+        if (currentLookObject == null)
+        {
+            UpdateProximityHint();
+        }
+        else
+        {
+            ClearProximityHint();
+        }
 
         if (currentInteractable is IHoldInteractable holdInteractable)
         {
@@ -102,6 +134,91 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
         }
     }
 
+    private void UpdateProximityHint()
+    {
+        if (!enableProximityHint || proximityHintRange <= 0f)
+        {
+            return;
+        }
+
+        if (Time.time < nextProximityHintScanTime)
+        {
+            return;
+        }
+
+        nextProximityHintScanTime = Time.time + proximityGlintInterval;
+
+        Vector3 scanCenter = GetPlayerCenter();
+        int hitCount = Physics.OverlapSphereNonAlloc(
+            scanCenter,
+            proximityHintRange,
+            proximityHits,
+            interactableLayers,
+            QueryTriggerInteraction.Collide);
+
+        proximityScanHighlighters.Clear();
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider hitCollider = proximityHits[i];
+            proximityHits[i] = null;
+
+            if (hitCollider == null)
+            {
+                continue;
+            }
+
+            IInteractable interactable = hitCollider.GetComponentInParent<IInteractable>();
+            if (interactable == null || !interactable.CanInteract(player))
+            {
+                continue;
+            }
+
+            GameObject targetObject = (interactable as MonoBehaviour)?.gameObject;
+            if (targetObject == null || targetObject == currentLookObject)
+            {
+                continue;
+            }
+
+            InteractableFocusHighlighter highlighter = GetOrCreateHighlighter(targetObject);
+            if (proximityScanHighlighters.Contains(highlighter))
+            {
+                continue;
+            }
+
+            proximityScanHighlighters.Add(highlighter);
+            highlighter.PlayProximityGlint(
+                proximityGlintColor,
+                proximityGlintPeakIntensity,
+                proximityGlintDuration,
+                proximityGlintDirection,
+                proximityGlintWidth,
+                proximityGlintSoftness);
+        }
+    }
+
+    private void ClearProximityHint()
+    {
+        proximityScanHighlighters.Clear();
+    }
+
+    private InteractableFocusHighlighter GetOrCreateHighlighter(GameObject obj)
+    {
+        InteractableFocusHighlighter highlighter = obj.GetComponentInParent<InteractableFocusHighlighter>();
+        if (highlighter != null)
+        {
+            return highlighter;
+        }
+
+        highlighter = obj.AddComponent<InteractableFocusHighlighter>();
+        highlighter.Configure(
+            focusEmissionColor,
+            focusBaseIntensity,
+            focusPulseIntensity,
+            focusPulseSpeed);
+        return highlighter;
+    }
+
     private void UpdateHoldInteraction(IHoldInteractable holdInteractable)
     {
         if (Time.time - lastInteractionTime < interactionCooldown)
@@ -139,18 +256,25 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
 
     private void SetCurrentInteractable(GameObject obj, IInteractable interactable)
     {
+        ClearProximityHint();
         currentLookObject = obj;
         currentInteractable = interactable;
 
+        currentFocusHighlighter = GetOrCreateHighlighter(obj);
+        currentHighlightObject = currentFocusHighlighter.gameObject;
+
         // 외곽선 활성화
-        currentOutline = obj.GetComponent<Outline>();
+        currentOutline = currentHighlightObject.GetComponent<Outline>();
         if (currentOutline == null)
         {
-            currentOutline = obj.AddComponent<Outline>();
+            currentOutline = currentHighlightObject.AddComponent<Outline>();
             currentOutline.OutlineMode = Outline.Mode.OutlineAll; // 렌더러 위에 항상 외곽선 표시 (가려져 있어도 표시되게 하여 확실히 뜨게 함)
             currentOutline.OutlineColor = Color.white; // 사진과 동일한 흰색
             currentOutline.OutlineWidth = 5f; // 좀 더 명확하게 두께를 설정
         }
+        currentOutline.enabled = false;
+
+        currentFocusHighlighter.ShowFocus();
         currentOutline.enabled = true;
 
         // UI 표시 (임시 이름 사용, 필요 시 IInteractable에 속성 추가해서 사용)
@@ -205,15 +329,22 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
         }
 
         // 2. 오브젝트가 아직 파괴되지 않고 남아있다면 외곽선 꺼줌
-        if (currentLookObject != null && currentOutline != null)
+        if (currentHighlightObject != null && currentOutline != null)
         {
             currentOutline.enabled = false;
         }
 
+        if (currentFocusHighlighter != null)
+        {
+            currentFocusHighlighter.HideFocus();
+        }
+
         // 3. 변수 초기화
         currentLookObject = null;
+        currentHighlightObject = null;
         currentInteractable = null;
         currentOutline = null;
+        currentFocusHighlighter = null;
         holdProgressSeconds = 0f;
         holdTriggered = false;
     }
@@ -237,11 +368,30 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
         }
     }
     
+    private Vector3 GetPlayerCenter()
+    {
+        if (player == null)
+        {
+            return transform.position;
+        }
+
+        CharacterController controller = player.Controller != null
+            ? player.Controller
+            : player.GetComponent<CharacterController>();
+        return controller != null ? controller.bounds.center : player.transform.position;
+    }
+
     private void OnDrawGizmosSelected()
     {
         // 상호작용 범위 시각화
         Gizmos.color = Color.yellow; 
         Gizmos.DrawWireSphere(transform.position, interactionRange);
+
+        if (enableProximityHint)
+        {
+            Gizmos.color = new Color(1f, 0.58f, 0.18f, 0.35f);
+            Gizmos.DrawWireSphere(transform.position, proximityHintRange);
+        }
     }
 
     private void ResolveInteractionCamera()

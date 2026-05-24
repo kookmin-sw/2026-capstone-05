@@ -41,6 +41,11 @@ public class DemoRoundMissionHUD : MonoBehaviour
     private float nextTextRefreshTime;
     private bool hasReportedQuest3Completed;
 
+    public static bool IsQuest4ActiveForLocalPlayer =>
+        instance != null &&
+        (instance.questStep == QuestStep.ReturnToBase || instance.questStep == QuestStep.Completed);
+    public static event System.Action<bool> Quest4ActiveChanged;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
     {
@@ -295,6 +300,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
         {
             ReportQuest3Completed();
             questStep = QuestStep.ReturnToBase;
+            Quest4ActiveChanged?.Invoke(true);
         }
 
         if (questStep == QuestStep.ReturnToBase && IsLocalPlayerInBunker())
@@ -388,6 +394,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
         defeatedMonsterCount = 0;
         hasReportedQuest3Completed = false;
         questStep = QuestStep.LeaveBunker;
+        Quest4ActiveChanged?.Invoke(false);
         UpdateMissionText();
     }
 
@@ -421,6 +428,7 @@ public class DemoRoundMissionHUD : MonoBehaviour
         }
 
         questStep = QuestStep.Failed;
+        Quest4ActiveChanged?.Invoke(false);
         UpdateMissionText();
     }
 

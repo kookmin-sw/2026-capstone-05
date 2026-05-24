@@ -1903,7 +1903,7 @@ PrefabInstance:
       addedObject: {fileID: 8973826604127621211}
     - targetCorrespondingSourceObject: {fileID: -6156598119895643785, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 3863079822922032799}
+      addedObject: {fileID: 6498600197887474854}
     - targetCorrespondingSourceObject: {fileID: 7682558211746646141, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6988654965591842857}
@@ -1912,7 +1912,7 @@ PrefabInstance:
       addedObject: {fileID: 4036408740887504733}
     - targetCorrespondingSourceObject: {fileID: -2326166646191448027, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 2823768570150641530}
+      addedObject: {fileID: 2327417501544298917}
     - targetCorrespondingSourceObject: {fileID: 7472896162209561496, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8830858299817473332}
@@ -2701,11 +2701,11 @@ MonoBehaviour:
   isBaseStorage: 1
   interactionSoundEvent:
     Guid:
-      Data1: 0
-      Data2: 0
-      Data3: 0
-      Data4: 0
-    Path: 
+      Data1: -958768351
+      Data2: 1116826602
+      Data3: 541573803
+      Data4: -1772821525
+    Path: event:/SFX/Player/Container_Interact
   soundOrigin: {fileID: 0}
 --- !u!1 &1227010495511919291 stripped
 GameObject:
@@ -3754,8 +3754,8 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: -2326166646191448027, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
   m_PrefabInstance: {fileID: 7921197659450749143}
   m_PrefabAsset: {fileID: 0}
---- !u!64 &2823768570150641530
-MeshCollider:
+--- !u!65 &2327417501544298917
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -3772,10 +3772,9 @@ MeshCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -7410753467659217448, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
+  serializedVersion: 3
+  m_Size: {x: 0.0062000006, y: 0.02, z: 0.02}
+  m_Center: {x: -0.00009999965, y: 2.9504296e-10, z: 0.01}
 --- !u!1 &3706695555754628453 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6817724938178373042, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
@@ -4290,8 +4289,8 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: -6156598119895643785, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
   m_PrefabInstance: {fileID: 7921197659450749143}
   m_PrefabAsset: {fileID: 0}
---- !u!64 &3863079822922032799
-MeshCollider:
+--- !u!65 &6498600197887474854
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -4308,10 +4307,9 @@ MeshCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 2183482159022875553, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
+  serializedVersion: 3
+  m_Size: {x: 0.0062000006, y: 0.02, z: 0.02}
+  m_Center: {x: -0.00009999965, y: 2.9504296e-10, z: 0.01}
 --- !u!1 &5168168144620731654 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -6173103829372105263, guid: 2074f0c61c2576b44844fc773b718467, type: 3}
@@ -4652,11 +4650,11 @@ MonoBehaviour:
   isBaseStorage: 1
   interactionSoundEvent:
     Guid:
-      Data1: 0
-      Data2: 0
-      Data3: 0
-      Data4: 0
-    Path: 
+      Data1: -958768351
+      Data2: 1116826602
+      Data3: 541573803
+      Data4: -1772821525
+    Path: event:/SFX/Player/Container_Interact
   soundOrigin: {fileID: 0}
 --- !u!1 &5619825634026953527 stripped
 GameObject:

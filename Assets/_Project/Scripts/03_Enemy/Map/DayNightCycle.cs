@@ -22,6 +22,7 @@ public class DayNightCycle : MonoBehaviour
 
     [Header("Round Sync")]
     public bool waitForRoundStart = true;
+    public bool waitForRoundTimerStart = true;
     public bool resetLightingWhenRoundEnds = true;
     public bool syncToRoundTimer = true;
 
@@ -159,7 +160,8 @@ public class DayNightCycle : MonoBehaviour
         if (waitForRoundStart)
         {
             bool roundRunning = IsRoundRunning();
-            if (roundRunning && !isCycleRunning)
+            bool cycleShouldRun = ShouldCycleRun();
+            if (cycleShouldRun && !isCycleRunning)
             {
                 StartCycle();
             }
@@ -168,7 +170,7 @@ public class DayNightCycle : MonoBehaviour
                 StopCycleAtWaitingLighting();
             }
 
-            if (!roundRunning)
+            if (!cycleShouldRun)
             {
                 return;
             }
@@ -237,7 +239,23 @@ public class DayNightCycle : MonoBehaviour
 
     private bool ShouldCycleRun()
     {
-        return playOnStart && (!waitForRoundStart || IsRoundRunning());
+        if (!playOnStart)
+        {
+            return false;
+        }
+
+        if (!waitForRoundStart)
+        {
+            return true;
+        }
+
+        BackendRoundManager roundManager = BackendRoundManager.Instance;
+        if (roundManager == null || !roundManager.IsRoundRunning)
+        {
+            return false;
+        }
+
+        return !waitForRoundTimerStart || roundManager.IsRoundTimerRunning;
     }
 
     private bool IsRoundRunning()
@@ -253,7 +271,9 @@ public class DayNightCycle : MonoBehaviour
             return false;
         }
 
-        float elapsed = roundManager.RoundElapsedSinceStartSeconds;
+        float elapsed = waitForRoundTimerStart
+            ? roundManager.RoundElapsedSinceTimerStartSeconds
+            : roundManager.RoundElapsedSinceStartSeconds;
         if (elapsed <= 0f)
         {
             return false;

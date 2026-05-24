@@ -54,6 +54,7 @@ public class BackendRoundManager : NetworkBehaviour
             else NetworkHasRoundTimerStarted = value;
         }
     }
+    public bool IsRoundTimerRunning => IsRoundRunning && HasRoundTimerStarted;
     
     [Networked] private int NetworkCurrentRoundNumber { get; set; }
     private int _offlineCurrentRoundNumber;
@@ -124,6 +125,7 @@ public class BackendRoundManager : NetworkBehaviour
     private bool isEndingRound;
     private bool offlinePlayerExitedBunker;
     private bool offlinePlayerCompletedQuest3;
+    private bool localPlayerCompletedQuest3;
     private readonly HashSet<PlayerRef> playersWhoExitedBunker = new();
     private readonly HashSet<PlayerRef> playersWhoCompletedQuest3 = new();
 
@@ -193,6 +195,30 @@ public class BackendRoundManager : NetworkBehaviour
             }
 
             float remaining = RoundVisualElapsedTimer.RemainingTime(Runner) ?? 0f;
+            return Mathf.Clamp(roundDurationSeconds - remaining, 0f, roundDurationSeconds);
+        }
+    }
+
+    public float RoundElapsedSinceTimerStartSeconds
+    {
+        get
+        {
+            if (!IsRoundRunning || !HasRoundTimerStarted)
+            {
+                return 0f;
+            }
+
+            if (AuthSession.IsOffline)
+            {
+                return Mathf.Clamp(roundDurationSeconds - _offlineTimeRemaining, 0f, roundDurationSeconds);
+            }
+
+            if (Runner == null || !Runner.IsRunning || Object == null || !Object.IsValid)
+            {
+                return 0f;
+            }
+
+            float remaining = RoundTimer.RemainingTime(Runner) ?? roundDurationSeconds;
             return Mathf.Clamp(roundDurationSeconds - remaining, 0f, roundDurationSeconds);
         }
     }
@@ -517,6 +543,8 @@ public class BackendRoundManager : NetworkBehaviour
 
     public void MarkLocalPlayerQuest3Completed()
     {
+        localPlayerCompletedQuest3 = true;
+
         if (AuthSession.IsOffline)
         {
             MarkPlayerQuest3Completed(PlayerRef.None);
@@ -631,6 +659,22 @@ public class BackendRoundManager : NetworkBehaviour
         return !playersWhoExitedBunker.Contains(playerRef) || playersWhoCompletedQuest3.Contains(playerRef);
     }
 
+    public bool IsLocalPlayerQuest3Completed()
+    {
+        if (localPlayerCompletedQuest3)
+        {
+            return true;
+        }
+
+        if (AuthSession.IsOffline)
+        {
+            return offlinePlayerCompletedQuest3;
+        }
+
+        PlayerRef playerRef = ResolveLocalPlayerRef();
+        return playerRef != PlayerRef.None && playersWhoCompletedQuest3.Contains(playerRef);
+    }
+
     public string GetPlayerBunkerGateStateDebug(PlayerRef playerRef)
     {
         if (AuthSession.IsOffline)
@@ -678,6 +722,7 @@ public class BackendRoundManager : NetworkBehaviour
     {
         offlinePlayerExitedBunker = false;
         offlinePlayerCompletedQuest3 = false;
+        localPlayerCompletedQuest3 = false;
         playersWhoExitedBunker.Clear();
         playersWhoCompletedQuest3.Clear();
     }
@@ -699,6 +744,7 @@ public class BackendRoundManager : NetworkBehaviour
             }
 
             _offlineTimeRemaining = roundDurationSeconds;
+            _offlineRoundStartTime = Time.time;
             _offlineTimerCoroutine = StartCoroutine(OfflineTimerRoutine());
             Debug.Log($"[BackendRoundManager] Offline round timer started. reason={reason}, duration={roundDurationSeconds}s");
             return;

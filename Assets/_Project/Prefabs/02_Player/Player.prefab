@@ -606,7 +606,7 @@ MonoBehaviour:
   coldness:
     maxValue: 100
     startValue: 0
-    increaseRate: 0.2
+    increaseRate: 0.12
     decreaseRate: 0
     currentValue: 0
   conditionDamageInterval: 2
@@ -828,13 +828,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 44a90c7318e3e914ba8e2befb1998c41, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
-  player: {fileID: 1915611918036273558}
+  player: {fileID: 0}
   cameraTransform: {fileID: 0}
   interactionRange: 3
   interactableLayers:
     serializedVersion: 2
     m_Bits: 3776
   interactionCooldown: 0.3
+  focusEmissionColor: {r: 1, g: 0.58, b: 0.18, a: 1}
+  focusBaseIntensity: 0.15
+  focusPulseIntensity: 0.2
+  focusPulseSpeed: 2.5
+  enableProximityHint: 1
+  proximityHintRange: 5
+  proximityGlintInterval: 1.25
+  proximityGlintColor: {r: 1, g: 1, b: 1, a: 1}
+  proximityGlintPeakIntensity: 0.16
+  proximityGlintDuration: 0.3
+  proximityGlintDirection: {x: 1, y: 0.25, z: 0.15}
+  proximityGlintWidth: 0.18
+  proximityGlintSoftness: 0.25
 --- !u!114 &-1790409643959626491
 MonoBehaviour:
   m_ObjectHideFlags: 0
