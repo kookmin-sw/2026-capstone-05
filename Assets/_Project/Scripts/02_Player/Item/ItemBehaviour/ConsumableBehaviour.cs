@@ -7,6 +7,7 @@ public class ConsumableBehaviour : EquippedItemBehaviour
 {
     private Coroutine consumeCoroutine;
     private bool isConsuming = false;
+    private float consumeTimer = 0f;
 
     private EventInstance consumeSoundInstance;
 
@@ -97,12 +98,20 @@ public class ConsumableBehaviour : EquippedItemBehaviour
     private IEnumerator ConsumeRoutine(ConsumableItemData data)
     {
         isConsuming = true;
+        consumeTimer = 0f;
 
         consumeSoundInstance.start();
 
         player.Animator.SetConsuming(true);
 
-        yield return new WaitForSeconds(data.actionCooldown);
+        while (consumeTimer < data.actionCooldown)
+        {
+            consumeTimer += Time.deltaTime;
+            CastingSystem.UpdateCasting(consumeTimer / data.actionCooldown, true);
+            yield return null;
+        }
+
+        CastingSystem.UpdateCasting(1f, false);
 
         consumeSoundInstance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
         consumeSoundInstance.release();
@@ -127,13 +136,9 @@ public class ConsumableBehaviour : EquippedItemBehaviour
             }
             player.Animator.SetConsuming(false);
             isConsuming = false;
-
-            StopConsumeSound();
         }
-        else
-        {
-            StopConsumeSound();
-        }
+        StopConsumeSound();
+        CastingSystem.UpdateCasting(0f, false);
     }
 
     private void StopConsumeSound()
