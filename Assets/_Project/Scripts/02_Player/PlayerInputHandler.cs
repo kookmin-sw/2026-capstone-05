@@ -24,6 +24,8 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
     private bool _useNetworkInputOverride;
     private PlayerInputSnapshot _networkSnapshot;
     private bool _previousNetworkCrouch;
+    private bool _networkConfigured;
+    private bool _isLocalPlayer;
 
     private void Awake()
     {
@@ -54,6 +56,12 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
 
     private void Update()
     {
+        if (ShouldBlockLocalGameplayInput())
+        {
+            ResetAllInputs();
+            return;
+        }
+
         if (_useNetworkInputOverride)
         {
             ApplySnapshotToCurrentState(_networkSnapshot);
@@ -67,7 +75,14 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
 
     private void OnEnable()
     {
-        inputActions.Enable();
+        if (!ShouldBlockLocalGameplayInput())
+        {
+            inputActions.Enable();
+        }
+        else
+        {
+            ResetAllInputs();
+        }
     }
 
     private void OnDisable()
@@ -95,7 +110,7 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
     /// </summary>
     public void SetInputActive(bool isActive)
     {
-        if (isActive)
+        if (isActive && !ShouldBlockLocalGameplayInput())
         {
             inputActions.Enable();
         }
@@ -121,6 +136,28 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
         _previousNetworkCrouch = false;
     }
 
+    public void ClearInputState()
+    {
+        ResetAllInputs();
+    }
+
+    private bool ShouldBlockLocalGameplayInput()
+    {
+        if (!PauseMenuManager.IsAnyUIOpen())
+        {
+            return false;
+        }
+
+        if (_networkConfigured)
+        {
+            return _isLocalPlayer;
+        }
+
+        return LocalPlayerReferenceResolver.TryGetLocalPlayer(out PlayerController localPlayer) &&
+               localPlayer != null &&
+               localPlayer.InputHandler == this;
+    }
+
 
 
     public void SetNetworkInputOverride(bool enabled)
@@ -138,8 +175,14 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
             return;
         }
 
-        if (isActiveAndEnabled && inputActions != null)
+        if (isActiveAndEnabled && inputActions != null && !ShouldBlockLocalGameplayInput())
+        {
             inputActions.Enable();
+        }
+        else
+        {
+            ResetAllInputs();
+        }
     }
 
     public void ApplyNetworkSnapshot(PlayerInputSnapshot snapshot)
@@ -175,6 +218,9 @@ public class PlayerInputHandler : MonoBehaviour, IPlayerNetworkConfigurable
 
     public void ConfigureForNetwork(bool isLocalPlayer)
     {
+        _networkConfigured = true;
+        _isLocalPlayer = isLocalPlayer;
+
         if (isLocalPlayer)
         {
             SetInputActive(true);

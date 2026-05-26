@@ -1504,6 +1504,13 @@ public class RoomLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
         BackendPlayerNetworkInput payload = default;
         PlayerInputHandler inputHandler = GetOrResolveLocalInputHandler(runner);
+        if (PauseMenuManager.IsAnyUIOpen())
+        {
+            inputHandler?.ClearInputState();
+            input.Set(payload);
+            return;
+        }
+
         if (inputHandler != null)
         {
             payload.Move = inputHandler.MoveInput;

@@ -81,6 +81,14 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
             return;
         }
 
+        if (PauseMenuManager.IsAnyUIOpen())
+        {
+            ClearCurrentInteractable();
+            ClearProximityHint();
+            player.InputHandler.ConsumeInteract();
+            return;
+        }
+
         CheckInteractionFocus();
         if (currentLookObject == null)
         {

@@ -52,10 +52,35 @@ public class PlayerCameraHandler : MonoBehaviour, IPlayerNetworkConfigurable
             return;
         }
 
+        if (ShouldBlockLocalCameraEffectsForUI())
+        {
+            targetAmplitude = 0f;
+            targetFrequency = 0f;
+            noiseComponent.AmplitudeGain = 0f;
+            noiseComponent.FrequencyGain = 0f;
+            return;
+        }
+
         UpdateHeadbobTargets();
 
         noiseComponent.AmplitudeGain = Mathf.Lerp(noiseComponent.AmplitudeGain, targetAmplitude, Time.deltaTime * transitionSpeed);
         noiseComponent.FrequencyGain = Mathf.Lerp(noiseComponent.FrequencyGain, targetFrequency, Time.deltaTime * transitionSpeed);
+    }
+
+    private bool ShouldBlockLocalCameraEffectsForUI()
+    {
+        if (!PauseMenuManager.IsAnyUIOpen())
+        {
+            return false;
+        }
+
+        if (player.IsLocalPlayer)
+        {
+            return true;
+        }
+
+        return LocalPlayerReferenceResolver.TryGetLocalPlayer(out PlayerController localPlayer) &&
+               localPlayer == player;
     }
 
     private void UpdateHeadbobTargets()

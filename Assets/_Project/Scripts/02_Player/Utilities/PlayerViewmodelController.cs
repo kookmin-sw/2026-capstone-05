@@ -73,6 +73,11 @@ public class PlayerViewmodelController : MonoBehaviour
     {
         if (inputHandler == null || player == null) return;
 
+        if (ShouldBlockLocalViewmodelForUI())
+        {
+            return;
+        }
+
         // ==========================================
         // 1. Sway
         // ==========================================
@@ -151,5 +156,21 @@ public class PlayerViewmodelController : MonoBehaviour
         // ==========================================
         viewmodelTransform.localPosition = defaultLocalPos + currentSwayPos + currentBobPos + currentRecoilPos;
         viewmodelTransform.localRotation = defaultLocalRot * currentSwayRot * currentRecoilRot;
+    }
+
+    private bool ShouldBlockLocalViewmodelForUI()
+    {
+        if (!PauseMenuManager.IsAnyUIOpen())
+        {
+            return false;
+        }
+
+        if (player.IsLocalPlayer)
+        {
+            return true;
+        }
+
+        return LocalPlayerReferenceResolver.TryGetLocalPlayer(out PlayerController localPlayer) &&
+               localPlayer == player;
     }
 }

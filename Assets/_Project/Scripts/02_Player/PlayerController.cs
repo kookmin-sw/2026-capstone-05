@@ -82,6 +82,7 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
     [Header("Camera Recoil")]
     public float recoilReturnSpeed = 2f; // 반동이 원위치로 돌아오는 속도
     private float currentRecoilOffset = 0f; // 현재 적용된 반동 수치
+    private bool wasGameplayBlockedByUI;
 
     private void Awake()
     {
@@ -182,6 +183,14 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
 
         CheckEnvironmentFlags();
 
+        if (ShouldBlockLocalGameplayForUI())
+        {
+            FreezeLocalGameplayForUI();
+            return;
+        }
+
+        wasGameplayBlockedByUI = false;
+
         if (canLook)
         {
             HandleLook();
@@ -206,6 +215,11 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
 
     private void FixedUpdate()
     {
+        if (ShouldBlockLocalGameplayForUI())
+        {
+            return;
+        }
+
         StateMachine.CurrentState.PhysicsUpdate();
     }
 
@@ -213,6 +227,36 @@ public class PlayerController : MonoBehaviour, IPlayerNetworkConfigurable
     private void CheckEnvironmentFlags()
     {
         IsGrounded = Controller.isGrounded;
+    }
+
+    private bool ShouldBlockLocalGameplayForUI()
+    {
+        if (!PauseMenuManager.IsAnyUIOpen())
+        {
+            return false;
+        }
+
+        if (IsLocalPlayer)
+        {
+            return true;
+        }
+
+        return LocalPlayerReferenceResolver.TryGetLocalPlayer(out PlayerController localPlayer) &&
+               localPlayer == this;
+    }
+
+    private void FreezeLocalGameplayForUI()
+    {
+        currentVelocity = Vector3.zero;
+        InputHandler?.ClearInputState();
+
+        if (!wasGameplayBlockedByUI && Animator != null)
+        {
+            Animator.SetSprinting(false);
+            Animator.UpdateMovement(Vector2.zero);
+        }
+
+        wasGameplayBlockedByUI = true;
     }
 
     private void ApplyGravity()
