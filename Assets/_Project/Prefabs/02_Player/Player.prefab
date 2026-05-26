@@ -830,11 +830,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
   player: {fileID: 0}
   cameraTransform: {fileID: 0}
+  interactionRadius: 0.1
   interactionRange: 3
   interactableLayers:
     serializedVersion: 2
-    m_Bits: 3776
+    m_Bits: 3136
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 704
   interactionCooldown: 0.3
+  minDotProduct: 0.9
   focusEmissionColor: {r: 1, g: 0.58, b: 0.18, a: 1}
   focusBaseIntensity: 0.15
   focusPulseIntensity: 0.2

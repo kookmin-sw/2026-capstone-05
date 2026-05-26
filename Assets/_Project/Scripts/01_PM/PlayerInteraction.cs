@@ -12,9 +12,13 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
     [SerializeField] private Transform cameraTransform;
 
     [Header("Interaction Settings")]
+    [SerializeField] private float interactionRadius = 0.1f;
     [SerializeField] private float interactionRange = 3f;
     [SerializeField] private LayerMask interactableLayers = -1;
+    [SerializeField] private LayerMask obstacleLayers = -1;
     [SerializeField] private float interactionCooldown = 0.3f; // 상호작용 쿨다운 시간
+    [Range(0f, 1f)]
+    [SerializeField] private float minDotProduct = 0.8f;
 
     [Header("Focus Highlight Defaults")]
     [SerializeField, ColorUsage(false, true)] private Color focusEmissionColor = new Color(1f, 0.58f, 0.18f);
@@ -37,7 +41,8 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
     private IInteractable currentInteractable = null;
     private GameObject currentLookObject = null;
     private GameObject currentHighlightObject = null;
-    
+    private readonly RaycastHit[] hitsCache = new RaycastHit[16];
+
     // 외곽선 효과를 위한 변수
     private Outline currentOutline;
     private InteractableFocusHighlighter currentFocusHighlighter;
@@ -110,22 +115,75 @@ public class PlayerInteraction : MonoBehaviour, IPlayerNetworkConfigurable
             return;
         }
 
-        if (Physics.Raycast(ray, out RaycastHit hit, interactionRange, interactableLayers))
+        IInteractable bestInteractable = null;
+        GameObject bestTargetObj = null;
+
+        LayerMask losMask = interactableLayers | obstacleLayers;
+
+        if (Physics.Raycast(ray, out RaycastHit hit, interactionRange, losMask))
         {
-            // 콜라이더 자체나 부모 객체에 IInteractable 인터페이스가 있는지 확인
-            IInteractable interactable = hit.collider.GetComponentInParent<IInteractable>();
+            bestInteractable = hit.collider.GetComponentInParent<IInteractable>();
 
-            if (interactable != null && interactable.CanInteract(player))
+            if (bestInteractable != null && bestInteractable.CanInteract(player))
             {
-                GameObject targetObj = (interactable as MonoBehaviour)?.gameObject ?? hit.collider.gameObject;
-
-                if (currentLookObject != targetObj)
-                {
-                    ClearCurrentInteractable();
-                    SetCurrentInteractable(targetObj, interactable);
-                }
-                return;
+                bestTargetObj = hit.collider.gameObject;
             }
+            else
+            {
+                bestInteractable = null;
+            }
+        }
+
+        if (bestInteractable == null)
+        {
+            int hitCount = Physics.SphereCastNonAlloc(ray, interactionRadius, hitsCache, interactionRange, interactableLayers);
+
+            float maxDotProduct = minDotProduct;
+
+            for (int i = 0; i < hitCount; i++)
+            {
+                Collider targetCollider = hitsCache[i].collider;
+                IInteractable interactable = targetCollider.GetComponentInParent<IInteractable>();
+
+                if (interactable != null && interactable.CanInteract(player))
+                {
+                    Vector3 targetPoint = targetCollider.ClosestPoint(ray.origin);
+                    if (targetPoint == ray.origin)
+                    {
+                        targetPoint = targetCollider.bounds.center;
+                    }
+                    Vector3 dirToItem = (targetPoint - ray.origin);
+                    float distToItem = dirToItem.magnitude;
+
+                    if (Physics.Raycast(ray.origin, dirToItem.normalized, out RaycastHit losHit, distToItem + 0.1f, losMask))
+                    {
+                        IInteractable losInteractable = losHit.collider.GetComponentInParent<IInteractable>();
+
+                        if (losInteractable != null && losInteractable == interactable)
+                        {
+                            float dot = Vector3.Dot(ray.direction, dirToItem.normalized);
+                            if (dot > maxDotProduct)
+                            {
+                                maxDotProduct = dot;
+                                bestInteractable = interactable;
+                                bestTargetObj = targetCollider.gameObject;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (bestInteractable != null)
+        {
+            GameObject finalObj = (bestInteractable as MonoBehaviour)?.gameObject ?? bestTargetObj;
+
+            if (currentLookObject != finalObj)
+            {
+                ClearCurrentInteractable();
+                SetCurrentInteractable(finalObj, bestInteractable);
+            }
+            return;
         }
 
         if (currentLookObject != null)
