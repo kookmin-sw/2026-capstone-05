@@ -440,29 +440,40 @@ public class DemoRoundMissionHUD : MonoBehaviour
         }
     }
 
+    //private static TMP_FontAsset ResolveSceneFont()
+    //{
+    //    TMP_Text[] texts = FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+    //    TMP_FontAsset fallback = null;
+
+    //    foreach (TMP_Text text in texts)
+    //    {
+    //        if (text == null || text.font == null)
+    //        {
+    //            continue;
+    //        }
+
+    //        if (fallback == null)
+    //        {
+    //            fallback = text.font;
+    //        }
+
+    //        if (text.font.name.Contains("NEXON"))
+    //        {
+    //            return text.font;
+    //        }
+    //    }
+
+    //    return fallback;
+    //}
     private static TMP_FontAsset ResolveSceneFont()
     {
-        TMP_Text[] texts = FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        TMP_FontAsset fallback = null;
+        TMP_FontAsset font = Resources.Load<TMP_FontAsset>("Fonts/NEXON Lv2 Gothic OTF Bold SDF");
 
-        foreach (TMP_Text text in texts)
+        if (font == null)
         {
-            if (text == null || text.font == null)
-            {
-                continue;
-            }
-
-            if (fallback == null)
-            {
-                fallback = text.font;
-            }
-
-            if (text.font.name.Contains("NEXON"))
-            {
-                return text.font;
-            }
+            Debug.LogWarning("[DemoRoundMissionHUD] 폰트를 찾을 수 없습니다. 경로를 확인하세요.");
         }
 
-        return fallback;
+        return font;
     }
 }
