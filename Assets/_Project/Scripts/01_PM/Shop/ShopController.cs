@@ -111,7 +111,7 @@ namespace Systems.Shop
         {
             IsOpen = true;
             openTime = Time.time;
-            model.SetShopItems(shopItems);
+            model.SetShopItems(BuildBuyCatalog(shopItems));
             
             shopView.ShowShop();
             shopView.RenderCatalog(model.ShopItems, isSellMode: false);
@@ -126,6 +126,37 @@ namespace Systems.Shop
             MascotEventManager.TriggerGreeting();
             
             PauseMenuManager.UpdateCursorAndInputState();
+        }
+
+        private static List<ShopItemEntry> BuildBuyCatalog(List<ShopItemEntry> shopItems)
+        {
+            List<ShopItemEntry> buyCatalog = new List<ShopItemEntry>();
+            if (shopItems == null)
+            {
+                return buyCatalog;
+            }
+
+            foreach (var shopItem in shopItems)
+            {
+                if (shopItem?.ItemData == null)
+                {
+                    continue;
+                }
+
+                buyCatalog.Add(new ShopItemEntry
+                {
+                    ItemData = shopItem.ItemData,
+                    BuyPrice = Mathf.Max(0, shopItem.ItemData.price * 2),
+                    StockCount = shopItem.StockCount
+                });
+            }
+
+            return buyCatalog;
+        }
+
+        private static int GetItemSellPrice(ItemData itemData)
+        {
+            return itemData != null ? Mathf.Max(0, itemData.price) : 0;
         }
 
         public void CloseShop()
@@ -478,46 +509,6 @@ namespace Systems.Shop
         private void RefreshSellCatalog()
         {
             List<ShopItemEntry> inventoryItems = new List<ShopItemEntry>();
-            if (global::Systems.GridInventory.GridInventory.Instance != null && global::Systems.GridInventory.GridInventory.Instance.Controller != null)
-            {
-                var invModel = global::Systems.GridInventory.GridInventory.Instance.Controller.Model;
-                HashSet<ItemInstance> processed = new HashSet<ItemInstance>();
-                Dictionary<ItemData, int> itemCounts = new Dictionary<ItemData, int>();
-                
-                for (int i = 0; i < invModel.Width * invModel.Height; i++)
-                {
-                    var item = invModel.Get(i);
-                    if (item != null && !processed.Contains(item))
-                    {
-                        processed.Add(item);
-                        if (!itemCounts.ContainsKey(item.Data)) {
-                            itemCounts[item.Data] = 0;
-                        }
-                        itemCounts[item.Data] += item.currentStackCount;
-                    }
-                }
-                
-                foreach (var kvp in itemCounts)
-                {
-                    var itemData = kvp.Key;
-                    int totalCount = kvp.Value;
-                    
-                    // 임시로 구매가의 절반을 판매가로 산정하거나, 기본 10골드로 설정
-                    int sellPrice = 10;
-                    var shopItem = model.ShopItems.Find(x => x.ItemData == itemData);
-                    if (shopItem != null)
-                    {
-                        sellPrice = Mathf.Max(1, shopItem.BuyPrice / 2);
-                    }
-                    
-                    inventoryItems.Add(new ShopItemEntry {
-                        ItemData = itemData,
-                        BuyPrice = sellPrice,
-                        StockCount = totalCount
-                    });
-                }
-            }
-            inventoryItems.Clear();
             foreach (var kvp in PlayerItemInventoryQuery.BuildItemCounts())
             {
                 ItemData itemData = kvp.Key;
@@ -527,16 +518,9 @@ namespace Systems.Shop
                     continue;
                 }
 
-                int sellPrice = 10;
-                var shopItem = model.ShopItems.Find(x => x.ItemData == itemData);
-                if (shopItem != null)
-                {
-                    sellPrice = Mathf.Max(1, shopItem.BuyPrice / 2);
-                }
-
                 inventoryItems.Add(new ShopItemEntry {
                     ItemData = itemData,
-                    BuyPrice = sellPrice,
+                    BuyPrice = GetItemSellPrice(itemData),
                     StockCount = totalCount
                 });
             }

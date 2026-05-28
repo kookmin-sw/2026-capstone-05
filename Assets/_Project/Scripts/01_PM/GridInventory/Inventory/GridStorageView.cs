@@ -43,6 +43,18 @@ namespace Systems.GridInventory {
         private readonly List<int> coloredSlotIndexes = new List<int>();
         private readonly HashSet<int> coloredSlotSet = new HashSet<int>();
 
+        public bool IsHighlightTargetActive =>
+            IsVisibleForHighlight(container) &&
+            IsVisibleForHighlight(itemsContainer) &&
+            Slots != null;
+
+        private static bool IsVisibleForHighlight(VisualElement element) {
+            return element != null &&
+                   element.panel != null &&
+                   element.resolvedStyle.display != DisplayStyle.None &&
+                   element.resolvedStyle.visibility == Visibility.Visible;
+        }
+
         public event Action<GridItemView, Vector2> OnDragUpdate;
         public event Action OnDragEndEvent;
 

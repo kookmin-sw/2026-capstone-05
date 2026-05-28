@@ -19,6 +19,8 @@ namespace Systems.GridInventory {
         readonly HashSet<ItemInstance> currentItemsInModel = new HashSet<ItemInstance>();
         readonly HashSet<ItemInstance> processedItems = new HashSet<ItemInstance>();
         readonly List<ItemInstance> itemsToRemove = new List<ItemInstance>();
+        bool isDisposed;
+        bool eventsSubscribed;
 
         public GridInventoryController(GridStorageView view, GridInventoryModel model, int initWidth, int initHeight) {
             Debug.Assert(view != null, "View is null");
@@ -35,6 +37,7 @@ namespace Systems.GridInventory {
         
         IEnumerator Initialize() {
             yield return view.Initialize(Capacity, width);
+            if (isDisposed) yield break;
 
             view.OnRouteDropRequested += HandleRouteDropRequested;
             if (view is GridInventoryView invView) {
@@ -51,8 +54,32 @@ namespace Systems.GridInventory {
 
             QuickslotUIController.OnQuickslotSplitRequested -= HandleQuickslotSplitRequestedToGrid;
             QuickslotUIController.OnQuickslotSplitRequested += HandleQuickslotSplitRequestedToGrid;
+            eventsSubscribed = true;
 
             RefreshView();
+        }
+
+        public void Dispose()
+        {
+            if (isDisposed) return;
+            isDisposed = true;
+
+            activeControllers.Remove(this);
+            view?.ResetAllSlotColors();
+
+            if (!eventsSubscribed) return;
+
+            view.OnRouteDropRequested -= HandleRouteDropRequested;
+            if (view is GridInventoryView invView) {
+                invView.OnSaveClicked -= HandleSave;
+            }
+            model.OnModelChanged -= HandleModelChanged;
+            view.OnDragUpdate -= HandleDragUpdate;
+            view.OnDragEndEvent -= HandleDragEnd;
+            QuickslotUIController.OnItemDragUpdateGlobal -= HandleQuickslotItemDragUpdate;
+            QuickslotUIController.OnItemDragEndGlobal -= HandleDragEnd;
+            QuickslotUIController.OnQuickslotSplitRequested -= HandleQuickslotSplitRequestedToGrid;
+            eventsSubscribed = false;
         }
 
         void HandleQuickslotItemDropped(ItemInstance item, int sourceQuickslotIndex, Vector2 screenPosition) {
@@ -175,8 +202,7 @@ namespace Systems.GridInventory {
         }
 
         void HandleQuickslotItemDragUpdate(ItemInstance sourceItem, Vector2 screenPosition) {
-            view.ResetAllSlotColors();
-            ShowGridDropHighlight(sourceItem, null, DragSource.Quickslot, screenPosition, null);
+            UpdateAllGridDropHighlights(sourceItem, null, DragSource.Quickslot, screenPosition, null);
         }
 
         void HandleDragUpdate(GridItemView originalGridItemView, Vector2 screenPosition) {
@@ -185,11 +211,14 @@ namespace Systems.GridInventory {
 
             UpdateAllGridDropHighlights(sourceItem, model, view.SourceType, screenPosition, this);
             QuickslotUIController.Instance?.UpdateDropHighlight(sourceItem, view.SourceType, -1, model, screenPosition);
+            ShowQuickslotSwapReturnHighlight(sourceItem, screenPosition);
         }
 
         static void RemoveStaleControllers() {
-            activeControllers.RemoveAll(controller => controller == null || controller.view == null);
+            activeControllers.RemoveAll(controller => controller == null || controller.isDisposed || controller.view == null);
         }
+
+        bool IsHighlightTargetActive => !isDisposed && view != null && view.IsHighlightTargetActive;
 
         static void ResetAllGridDropHighlights() {
             RemoveStaleControllers();
@@ -208,19 +237,60 @@ namespace Systems.GridInventory {
                 controller.view.ResetAllSlotColors();
             }
 
-            foreach (var controller in activeControllers) {
+            var highlightControllers = GetHighlightControllers(sourceController);
+            foreach (var controller in highlightControllers) {
                 controller.ShowGridDropHighlight(sourceItem, sourceModel, source, screenPosition, sourceController);
             }
         }
 
+        static List<GridInventoryController> GetHighlightControllers(GridInventoryController sourceController) {
+            List<GridInventoryController> controllers = new List<GridInventoryController>();
+            foreach (var controller in activeControllers) {
+                if (controller == null || !controller.IsHighlightTargetActive) {
+                    continue;
+                }
+
+                int existingIndex = controllers.FindIndex(existing => ReferenceEquals(existing.model, controller.model));
+                if (existingIndex < 0) {
+                    controllers.Add(controller);
+                    continue;
+                }
+
+                if (ShouldPreferHighlightController(controllers[existingIndex], controller, sourceController)) {
+                    controllers[existingIndex] = controller;
+                }
+            }
+
+            return controllers;
+        }
+
+        static bool ShouldPreferHighlightController(GridInventoryController current, GridInventoryController candidate,
+            GridInventoryController sourceController) {
+            if (candidate == null) return false;
+            if (current == null) return true;
+            if (candidate == sourceController) return true;
+            if (current == sourceController) return false;
+
+            bool lootOpen = Systems.Loot.LootController.Instance != null && Systems.Loot.LootController.Instance.IsOpen;
+            if (lootOpen) {
+                bool currentIsOriginalInventory = current.view is GridInventoryView;
+                bool candidateIsOriginalInventory = candidate.view is GridInventoryView;
+                if (currentIsOriginalInventory != candidateIsOriginalInventory) {
+                    return currentIsOriginalInventory && !candidateIsOriginalInventory;
+                }
+            }
+
+            return false;
+        }
+
         static GridInventoryController FindControllerForModel(GridInventoryModel targetModel, GridInventoryController preferred) {
             if (targetModel == null) return null;
-            if (preferred != null && ReferenceEquals(preferred.model, targetModel) && preferred.view != null) {
+            if (preferred != null && ReferenceEquals(preferred.model, targetModel) && preferred.IsHighlightTargetActive) {
                 return preferred;
             }
 
             RemoveStaleControllers();
-            foreach (var controller in activeControllers) {
+            foreach (var controller in GetHighlightControllers(preferred)) {
                 if (ReferenceEquals(controller.model, targetModel)) {
                     return controller;
                 }
@@ -248,7 +318,7 @@ namespace Systems.GridInventory {
             Color defaultOccupiedColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
             for (int i = 0; i < Capacity; i++) {
                 var item = model.Get(i);
-                if (item != null && item != sourceItem) {
+                if (item != null && item != sourceItem && HasRenderedItemView(item, false)) {
                     view.SetSlotColor(i, defaultOccupiedColor);
                 }
             }
@@ -280,7 +350,14 @@ namespace Systems.GridInventory {
                     isValid = model.CanPlaceItem(sourceItem, aNew.x, aNew.y);
                 } else if (overlappingItems.Count == 1) {
                     var targetItem = GetSingleItem(overlappingItems);
-                    if (sourceItem.Data == targetItem.Data && targetItem.Data.maxStackSize > 1) {
+                    if (!HasRenderedItemView(targetItem, true)) {
+                        targetItem = null;
+                    }
+
+                    if (targetItem == null) {
+                        isValid = model.CanPlaceItem(sourceItem, aNew.x, aNew.y);
+                    }
+                    else if (sourceItem.Data == targetItem.Data && targetItem.Data.maxStackSize > 1) {
                         isValid = targetItem.currentStackCount < targetItem.Data.maxStackSize;
                     } else if (source == DragSource.Quickslot) {
                         swapTargetItem = targetItem;
@@ -319,6 +396,57 @@ namespace Systems.GridInventory {
 
             Color highlightColor = isValid ? new Color(0f, 1f, 0f, 0.3f) : new Color(1f, 0f, 0f, 0.3f);
             HighlightShape(sourceItem, aNew, highlightColor);
+        }
+
+        void ShowQuickslotSwapReturnHighlight(ItemInstance sourceItem, Vector2 screenPosition) {
+            var quickslotController = QuickslotUIController.Instance;
+            if (quickslotController == null || sourceItem == null) return;
+
+            int quickslotIndex = quickslotController.GetSlotIndexAtPosition(screenPosition);
+            if (quickslotIndex < 0) return;
+
+            ItemInstance quickslotItem = quickslotController.GetItem(quickslotIndex);
+            if (quickslotItem == null || quickslotItem.Data == null) return;
+
+            if (quickslotItem.Data == sourceItem.Data && sourceItem.Data.maxStackSize > 1) {
+                return;
+            }
+
+            var sourceOldPos = model.GetItemAnchorPosition(sourceItem);
+            if (sourceOldPos.x == -1 || sourceOldPos.y == -1) return;
+
+            var highlightController = FindControllerForModel(model, this);
+            if (highlightController == null) return;
+
+            bool canPlaceQuickslotItem = model.CanPlaceItem(quickslotItem, sourceOldPos.x, sourceOldPos.y, sourceItem);
+            Color returnColor = canPlaceQuickslotItem
+                ? new Color(1f, 1f, 1f, 0.4f)
+                : new Color(1f, 0f, 0f, 0.25f);
+
+            highlightController.HighlightShape(quickslotItem, new Vector2Int(sourceOldPos.x, sourceOldPos.y), returnColor);
+        }
+
+        bool HasRenderedItemView(ItemInstance item, bool refreshIfMissing) {
+            if (item == null) return false;
+
+            bool HasAttachedView(out GridItemView itemView) {
+                if (!itemViews.TryGetValue(item, out itemView) || itemView == null) {
+                    return false;
+                }
+
+                return itemView.parent != null && itemView.panel != null;
+            }
+
+            if (HasAttachedView(out _)) {
+                return true;
+            }
+
+            if (!refreshIfMissing) {
+                return false;
+            }
+
+            RefreshView();
+            return HasAttachedView(out _);
         }
 
         void HighlightShape(ItemInstance item, Vector2Int anchor, Color color) {
