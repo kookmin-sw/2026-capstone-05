@@ -62,6 +62,8 @@ namespace Systems.GridInventory {
             RegisterCallback<PointerDownEvent>(OnPointerDown);
             RegisterCallback<PointerMoveEvent>(OnPointerMove);
             RegisterCallback<PointerUpEvent>(OnPointerUp);
+            RegisterCallback<PointerEnterEvent>(OnPointerEnter);
+            RegisterCallback<PointerLeaveEvent>(OnPointerLeave);
             
             pickingMode = PickingMode.Position;
             
@@ -158,6 +160,16 @@ namespace Systems.GridInventory {
         }
 
         public static bool IsAnyItemDragging { get; private set; }
+
+        void OnPointerEnter(PointerEnterEvent evt) {
+            if (ItemInst == null || ItemInst.Data == null) return;
+            ItemDescriptionPanelController.Show(ItemInst, this);
+        }
+
+        void OnPointerLeave(PointerLeaveEvent evt) {
+            if (isDraggingThis) return;
+            ItemDescriptionPanelController.Hide(this);
+        }
         
         void OnPointerDown(PointerDownEvent evt) {
             if (evt.button != 0) return;
@@ -166,6 +178,7 @@ namespace Systems.GridInventory {
                 bool handled = OnItemShiftLeftClickRequestedGlobal?.Invoke(this) == true ||
                     GlobalDragDropRouter.TryQuickMoveInventoryItemToQuickslot(this);
                 if (handled) {
+                    ItemDescriptionPanelController.Hide(this);
                     evt.StopPropagation();
                     return;
                 }
@@ -176,6 +189,7 @@ namespace Systems.GridInventory {
             activePointerId = evt.pointerId;
             this.CapturePointer(evt.pointerId);
             
+            ItemDescriptionPanelController.Show(ItemInst, this);
             OnStartDrag?.Invoke(evt.position, this);
             
             evt.StopPropagation();
@@ -186,6 +200,7 @@ namespace Systems.GridInventory {
             if (!isDraggingThis) return;
             isDraggingThis = false;
             IsAnyItemDragging = false;
+            ItemDescriptionPanelController.Hide(this);
             if (activePointerId >= 0) {
                 this.ReleasePointer(activePointerId);
                 activePointerId = -1;
@@ -208,6 +223,7 @@ namespace Systems.GridInventory {
             this.ReleasePointer(evt.pointerId);
             
             onDragEnd?.Invoke(this);
+            ItemDescriptionPanelController.Hide(this);
             evt.StopPropagation();
         }
 

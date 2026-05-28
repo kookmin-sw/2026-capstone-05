@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="ItemDescriptionPanel.uss" />
+    <ui:VisualElement name="item-description-layer" class="item-description-layer" style="display: none; position: absolute; left: 0; right: 0; top: 0; bottom: 0;">
+        <ui:VisualElement name="item-description-box" class="item-description-box">
+            <ui:VisualElement class="item-description-header">
+                <ui:Label text="ITEM DETAILS" class="item-description-title" />
+            </ui:VisualElement>
+            <ui:VisualElement class="item-description-body">
+                <ui:VisualElement class="item-description-info">
+                    <ui:VisualElement name="item-description-icon" class="item-description-icon" />
+                    <ui:VisualElement class="item-description-text">
+                        <ui:Label name="item-description-name" text="ITEM NAME" class="item-description-name" />
+                        <ui:Label name="item-description-price" text="0 Gold" class="item-description-price" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="item-description-shape-preview" class="item-description-shape-preview">
+                    <ui:VisualElement name="item-description-shape-grid" class="item-description-shape-grid" />
+                </ui:VisualElement>
+                <ui:Label name="item-description-quantity" text="Qty : 1" class="item-description-quantity" />
+                <ui:Label name="item-description-desc" text="No description." class="item-description-desc" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -104,6 +104,7 @@ public class QuickslotUIController : MonoBehaviour
 
     private void OnDestroy()
     {
+        ItemDescriptionPanelController.HideImmediate();
         if (Instance == this)
         {
             model?.Dispose();
@@ -111,6 +112,11 @@ public class QuickslotUIController : MonoBehaviour
             OnQuickslotSplitRequested = null;
             OnInitialized = null;
         }
+    }
+
+    private void OnDisable()
+    {
+        ItemDescriptionPanelController.HideImmediate();
     }
 
     /// <summary>
@@ -194,6 +200,8 @@ public class QuickslotUIController : MonoBehaviour
             slotElement.RegisterCallback<PointerDownEvent>(evt => OnPointerDown(evt, slotIndex));
             slotElement.RegisterCallback<PointerMoveEvent>(OnPointerMove);
             slotElement.RegisterCallback<PointerUpEvent>(OnPointerUp);
+            slotElement.RegisterCallback<PointerEnterEvent>(evt => OnPointerEnter(evt, slotIndex));
+            slotElement.RegisterCallback<PointerLeaveEvent>(evt => OnPointerLeave(evt, slotIndex));
         }
 
         // 고스트 아이콘 생성
@@ -221,6 +229,29 @@ public class QuickslotUIController : MonoBehaviour
     /// <summary>Emitted after cancelling quickslot drag (right-click quantity split).</summary>
     public static event Action<ItemInstance, int, Vector2> OnQuickslotSplitRequested;
 
+    private void OnPointerEnter(PointerEnterEvent evt, int slotIndex)
+    {
+        if (slotIndex < 0 || slotIndex >= slotViews.Count) return;
+
+        var itemInstance = model.Get(slotIndex);
+        if (itemInstance == null || itemInstance.Data == null)
+        {
+            ItemDescriptionPanelController.Hide(slotViews[slotIndex].Root);
+            return;
+        }
+
+        ItemDescriptionPanelController.Show(itemInstance, slotViews[slotIndex].Root);
+    }
+
+    private void OnPointerLeave(PointerLeaveEvent evt, int slotIndex)
+    {
+        if (isDragging && draggingSlotIndex == slotIndex) return;
+        if (slotIndex >= 0 && slotIndex < slotViews.Count)
+        {
+            ItemDescriptionPanelController.Hide(slotViews[slotIndex].Root);
+        }
+    }
+
     private void OnPointerDown(PointerDownEvent evt, int slotIndex)
     {
         var itemInstance = model.Get(slotIndex);
@@ -228,6 +259,7 @@ public class QuickslotUIController : MonoBehaviour
 
         if (evt.shiftKey && GlobalDragDropRouter.TryQuickMoveQuickslotItemToInventory(slotIndex))
         {
+            ItemDescriptionPanelController.Hide(slotViews[slotIndex].Root);
             evt.StopPropagation();
             return;
         }
@@ -240,6 +272,7 @@ public class QuickslotUIController : MonoBehaviour
 
         var slotElement = slotViews[slotIndex].Root;
         slotElement.CapturePointer(evt.pointerId);
+        ItemDescriptionPanelController.Show(itemInstance, slotElement);
 
         GridInventoryDragHelper.GetGhostSizeAndPivot(itemInstance, out float baseW, out float baseH, out float baseAnchorXRatio, out float baseAnchorYRatio);
 
@@ -384,6 +417,10 @@ public class QuickslotUIController : MonoBehaviour
 
         ResetDropHighlights();
         OnItemDragEndGlobal?.Invoke();
+        if (draggingSlotIndex >= 0 && draggingSlotIndex < slotViews.Count)
+        {
+            ItemDescriptionPanelController.Hide(slotViews[draggingSlotIndex].Root);
+        }
 
         if (draggingSlotIndex >= 0 && draggingSlotIndex < MaxSlots)
         {
@@ -427,6 +464,10 @@ public class QuickslotUIController : MonoBehaviour
 
         ResetDropHighlights();
         OnItemDragEndGlobal?.Invoke();
+        if (idx >= 0 && idx < slotViews.Count)
+        {
+            ItemDescriptionPanelController.Hide(slotViews[idx].Root);
+        }
 
         if (item != null && item.currentStackCount > 1)
             OnQuickslotSplitRequested?.Invoke(item, idx, pos);
@@ -673,6 +714,7 @@ public class QuickslotUIController : MonoBehaviour
         {
             if (view.Item != null || view.IconSprite != null)
             {
+                ItemDescriptionPanelController.Hide(view.Root);
                 view.Item = null;
                 view.IconSprite = null;
                 view.StackCount = -1;
