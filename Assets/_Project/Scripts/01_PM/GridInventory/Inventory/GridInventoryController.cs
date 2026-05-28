@@ -240,6 +240,11 @@ namespace Systems.GridInventory {
             var aNew = new Vector2Int(targetCoords.x, targetCoords.y);
             var positions = sourceItem.Data.gridShape.GetRotatedPositions(sourceItem.currentRotation);
 
+            if (IsSelfDropOnOriginalShape(sourceItem, sourceModel, model, aNew))
+            {
+                return;
+            }
+
             Color defaultOccupiedColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
             for (int i = 0; i < Capacity; i++) {
                 var item = model.Get(i);
@@ -632,6 +637,12 @@ namespace Systems.GridInventory {
             var targetCoords = model.GetCoordinates(targetSlot.Index);
             var draggedNew = new Vector2Int(targetCoords.x, targetCoords.y);
 
+            if (IsSelfDropOnOriginalShape(item, sourceModel, model, draggedNew))
+            {
+                GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
+                return;
+            }
+
             overlappingItems.Clear();
             var positions = item.Data.gridShape.GetRotatedPositions(item.currentRotation);
             bool outOfBounds = false;
@@ -897,6 +908,52 @@ namespace Systems.GridInventory {
         static Vector2Int GetRelativeSwapPosition(Vector2Int draggedOld, Vector2Int draggedNew, Vector2Int targetOld) {
             var delta = draggedNew - draggedOld;
             return targetOld - delta;
+        }
+
+        static bool IsSelfDropOnOriginalShape(ItemInstance item, GridInventoryModel sourceModel,
+            GridInventoryModel targetModel, Vector2Int targetAnchor) {
+            if (item == null || item.Data == null || item.Data.gridShape == null) return false;
+            if (sourceModel == null || targetModel == null || !ReferenceEquals(sourceModel, targetModel)) return false;
+
+            var sourceOld = sourceModel.GetItemAnchorPosition(item);
+            if (sourceOld.x == -1 || sourceOld.y == -1) return false;
+
+            ItemRotation originalRotation = item.currentRotation;
+            var draggedView = GridStorageView.CurrentDraggedItemView;
+            if (draggedView != null && draggedView.ItemInst == item) {
+                originalRotation = draggedView.OriginalRotation;
+            }
+
+            if (item.currentRotation != originalRotation) return false;
+
+            var oldAnchor = new Vector2Int(sourceOld.x, sourceOld.y);
+            var originalPositions = item.Data.gridShape.GetRotatedPositions(originalRotation);
+            bool targetAnchorIsOriginalCell = false;
+            foreach (var pos in originalPositions) {
+                if (targetAnchor == oldAnchor + pos) {
+                    targetAnchorIsOriginalCell = true;
+                    break;
+                }
+            }
+
+            if (!targetAnchorIsOriginalCell) return false;
+
+            var targetPositions = item.Data.gridShape.GetRotatedPositions(item.currentRotation);
+            foreach (var pos in targetPositions) {
+                int checkX = targetAnchor.x + pos.x;
+                int checkY = targetAnchor.y + pos.y;
+
+                if (checkX < 0 || checkY < 0 || checkX >= targetModel.Width || checkY >= targetModel.Height) {
+                    return false;
+                }
+
+                var foundItem = targetModel.Get(checkX, checkY);
+                if (foundItem != null && foundItem != item) {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         static bool ItemShapesOverlap(ItemInstance first, Vector2Int firstAnchor, ItemInstance second, Vector2Int secondAnchor) {

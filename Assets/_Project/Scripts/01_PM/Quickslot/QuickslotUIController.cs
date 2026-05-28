@@ -601,6 +601,7 @@ public class QuickslotUIController : MonoBehaviour
 
         int targetQuickslotIndex = GetSlotIndexAtPosition(screenPosition);
         if (targetQuickslotIndex < 0) return;
+        if (source == DragSource.Quickslot && sourceIndex == targetQuickslotIndex) return;
 
         bool isValid = CanDropOnQuickslot(item, source, sourceIndex, targetQuickslotIndex, sourceModel);
         Color color = isValid ? new Color(0f, 1f, 0f, 0.3f) : new Color(1f, 0f, 0f, 0.3f);
@@ -626,7 +627,7 @@ public class QuickslotUIController : MonoBehaviour
         var targetItem = model.Get(targetQuickslotIndex);
         if (source == DragSource.Quickslot)
         {
-            if (sourceIndex == targetQuickslotIndex) return true;
+            if (sourceIndex == targetQuickslotIndex) return false;
             if (targetItem == null) return true;
             if (targetItem.Data == item.Data && item.Data.maxStackSize > 1)
             {
