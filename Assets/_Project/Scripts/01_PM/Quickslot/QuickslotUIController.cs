@@ -320,6 +320,12 @@ public class QuickslotUIController : MonoBehaviour
 
         if (source == DragSource.Quickslot)
         {
+            if (targetItem != null && !HasRenderedQuickslotItem(targetQuickslotIndex, targetItem))
+            {
+                item.currentRotation = originalDragRotation;
+                return;
+            }
+
             if (sourceIndex != targetQuickslotIndex)
             {
                 model.MergeOrSwap(sourceIndex, targetQuickslotIndex);
@@ -332,6 +338,12 @@ public class QuickslotUIController : MonoBehaviour
         }
         else if (sourceModel != null) // From Grid (Inventory/Loot)
         {
+            if (targetItem != null && !HasRenderedQuickslotItem(targetQuickslotIndex, targetItem))
+            {
+                GlobalDragDropRouter.RevertDrop(item, source, sourceIndex, sourceModel);
+                return;
+            }
+
             if (targetItem != null && targetItem.Data == item.Data && item.Data.maxStackSize > 1)
             {
                 // Stack
@@ -629,6 +641,7 @@ public class QuickslotUIController : MonoBehaviour
         {
             if (sourceIndex == targetQuickslotIndex) return false;
             if (targetItem == null) return true;
+            if (!HasRenderedQuickslotItem(targetQuickslotIndex, targetItem)) return false;
             if (targetItem.Data == item.Data && item.Data.maxStackSize > 1)
             {
                 return targetItem.currentStackCount < targetItem.Data.maxStackSize;
@@ -639,6 +652,7 @@ public class QuickslotUIController : MonoBehaviour
 
         if (sourceModel == null) return false;
         if (targetItem == null) return true;
+        if (!HasRenderedQuickslotItem(targetQuickslotIndex, targetItem)) return false;
 
         if (targetItem.Data == item.Data && item.Data.maxStackSize > 1)
         {
@@ -649,6 +663,32 @@ public class QuickslotUIController : MonoBehaviour
         if (sourceOldPos.x == -1 || sourceOldPos.y == -1) return false;
 
         return sourceModel.CanPlaceItem(targetItem, sourceOldPos.x, sourceOldPos.y, item);
+    }
+
+    private bool HasRenderedQuickslotItem(int index, ItemInstance expectedItem)
+    {
+        if (!uiReady || expectedItem == null || index < 0 || index >= slotViews.Count)
+        {
+            return false;
+        }
+
+        var view = slotViews[index];
+        bool IsAttachedAndCurrent()
+        {
+            return view != null &&
+                   view.Root != null &&
+                   view.Root.parent != null &&
+                   view.Root.panel != null &&
+                   view.Item == expectedItem;
+        }
+
+        if (IsAttachedAndCurrent())
+        {
+            return true;
+        }
+
+        RefreshSlotVisual(index);
+        return IsAttachedAndCurrent();
     }
 
     public void SetItemInSlot(int index, ItemInstance item)

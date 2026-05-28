@@ -268,7 +268,9 @@ namespace Systems.Loot
 
             if (dummyLootGridView != null)
             {
+                lootInventoryController?.Dispose();
                 Destroy(dummyLootGridView);
+                dummyLootGridView = null;
             }
             lootInventoryController = null;
             currentLootSource = null;
@@ -366,6 +368,7 @@ namespace Systems.Loot
         {
             if (dummyPlayerInventoryController != null)
             {
+                dummyPlayerInventoryController.Dispose();
                 dummyPlayerInventoryController = null;
             }
             if (dummyPlayerGridView != null)
