@@ -80,6 +80,7 @@ namespace Systems.GridInventory {
 
         void OnDisable() {
             ResetDragState();
+            ItemDescriptionPanelController.HideImmediate();
         }
 
         public StyleSheet GridStyleSheet => styleSheet;
@@ -101,6 +102,7 @@ namespace Systems.GridInventory {
 
         public void RemoveItem(GridItemView itemView) {
             if (itemView != null && itemsContainer.Contains(itemView)) {
+                ItemDescriptionPanelController.Hide(itemView);
                 itemView.OnStartDrag -= OnPointerDown;
                 itemView.SetDragCallbacks(null, null);
                 itemsContainer.Remove(itemView);
@@ -231,6 +233,7 @@ namespace Systems.GridInventory {
             if (!isDragging || draggedItem == null) return;
 
             var item = draggedItem;
+            ItemDescriptionPanelController.Hide(item);
             item.CancelDragState();
             ResetDragState();
             item.style.visibility = Visibility.Visible;
@@ -242,6 +245,7 @@ namespace Systems.GridInventory {
 
             var item = draggedItem;
             var pos = currentPointerPos;
+            ItemDescriptionPanelController.Hide(item);
             item.CancelDragState();
             item.style.visibility = Visibility.Visible;
             if (ghostIcon != null) ghostIcon.style.visibility = Visibility.Hidden;
@@ -252,6 +256,9 @@ namespace Systems.GridInventory {
         }
 
         protected void ResetDragState() {
+            if (draggedItem != null) {
+                ItemDescriptionPanelController.Hide(draggedItem);
+            }
             isDragging = false;
             draggedItem = null;
             CurrentDraggedItemView = null;
