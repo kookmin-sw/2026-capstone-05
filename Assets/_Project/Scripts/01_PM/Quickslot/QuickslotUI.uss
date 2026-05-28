@@ -1,7 +1,7 @@
 :root {
 }
 
-/* 1920x1080 픽셀 기준 고정 캔버스 */
+/* Fixed 1920x1080 canvas. */
 .main-container {
     width: 1920px;
     height: 1080px;
@@ -10,19 +10,19 @@
     top: 0px;
 }
 
-/* 중앙 퀵슬롯 패널 */
+/* Bottom-center quickslot panel. */
 .bottom-center-panel {
     position: absolute;
-    left: 770px; /* 정중앙 근처 픽셀수동 지정 */
-    top: 990px;
-    width: 400px;
-    height: 70px;
+    left: 813px;
+    top: 984px;
+    width: 294px;
+    height: 76px;
     flex-direction: row;
 }
 
 .quickslot {
-    width: 60px;
-    height: 60px;
+    width: 66px;
+    height: 66px;
     margin-right: 10px;
     background-color: rgba(10, 15, 25, 0.8);
     border-width: 2px;
@@ -35,11 +35,9 @@
     position: absolute;
     top: 5px;
     right: 5px;
-    font-size: 12px;
+    font-size: 13px;
     color: white;
     background-color: rgba(0, 0, 0, 0.8);
     padding: 2px 4px;
     -unity-font-style: bold;
 }
-
-

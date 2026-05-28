@@ -12,37 +12,36 @@
 
 .item-description-box {
     width: 520px;
-    background-color: #e6c89a;
-    border-width: 4px;
-    border-color: #8c5b3f;
-    border-radius: 8px;
+    min-height: 232px;
+    background-color: transparent;
+    background-image: url("project://database/Assets/_Project/Assets/04_UI/UI/iteminfo_frame.png?fileID=21300000&guid=21391bbb8a8d1b44cabac7fd0476611e&type=3#iteminfo_frame");
+    border-width: 0;
+    padding: 0;
 }
 
 .item-description-header {
-    background-color: #8c5b3f;
-    padding: 6px;
-}
-
-.item-description-title {
-    color: white;
-    -unity-text-align: middle-center;
-    -unity-font-style: bold;
-    font-size: 16px;
+    display: none;
+    background-color: transparent;
+    height: 0;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    margin-bottom: 0;
 }
 
 .item-description-body {
-    padding: 12px;
+    padding: 24px 34px 18px 34px;
 }
 
 .item-description-info {
     flex-direction: row;
-    margin-bottom: 8px;
+    margin-bottom: 2px;
 }
 
 .item-description-icon {
-    width: 56px;
-    height: 56px;
-    margin-right: 10px;
+    width: 64px;
+    height: 64px;
+    margin-right: 14px;
     background-size: contain;
 }
 
@@ -52,21 +51,22 @@
 }
 
 .item-description-name {
-    color: #000000;
-    font-size: 18px;
+    color: #ffffff;
+    font-size: 22px;
     -unity-font-style: bold;
+    margin-bottom: 4px;
 }
 
 .item-description-price {
-    color: #000000;
-    font-size: 14px;
+    color: #d9e2ef;
+    font-size: 16px;
 }
 
 .item-description-shape-preview {
     align-items: center;
     justify-content: center;
-    height: 76px;
-    margin-bottom: 8px;
+    height: 50px;
+    margin-bottom: 2px;
 }
 
 .item-description-shape-grid {
@@ -77,21 +77,26 @@
     position: absolute;
     width: 14px;
     height: 14px;
-    background-color: #fff4d2;
+    background-color: rgba(8, 13, 22, 0.65);
     border-width: 1px;
-    border-color: #8c5b3f;
+    border-color: rgba(120, 136, 158, 0.45);
+}
+
+.item-description-shape-cell--occupied {
+    background-color: rgba(230, 240, 255, 0.85);
+    border-color: rgba(255, 255, 255, 0.75);
 }
 
 .item-description-quantity {
-    color: #000000;
-    font-size: 13px;
+    color: #d9e2ef;
+    font-size: 15px;
     width: 100%;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     -unity-text-align: middle-right;
 }
 
 .item-description-desc {
-    color: #000000;
-    font-size: 13px;
+    color: #ffffff;
+    font-size: 15px;
     white-space: normal;
 }

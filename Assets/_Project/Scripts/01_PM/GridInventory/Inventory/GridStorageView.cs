@@ -233,7 +233,7 @@ namespace Systems.GridInventory {
             if (!isDragging || draggedItem == null) return;
 
             var item = draggedItem;
-            ItemDescriptionPanelController.Hide(item);
+            ItemDescriptionPanelController.EndDragLock(item);
             item.CancelDragState();
             ResetDragState();
             item.style.visibility = Visibility.Visible;
@@ -245,7 +245,7 @@ namespace Systems.GridInventory {
 
             var item = draggedItem;
             var pos = currentPointerPos;
-            ItemDescriptionPanelController.Hide(item);
+            ItemDescriptionPanelController.EndDragLock(item);
             item.CancelDragState();
             item.style.visibility = Visibility.Visible;
             if (ghostIcon != null) ghostIcon.style.visibility = Visibility.Hidden;
@@ -257,7 +257,7 @@ namespace Systems.GridInventory {
 
         protected void ResetDragState() {
             if (draggedItem != null) {
-                ItemDescriptionPanelController.Hide(draggedItem);
+                ItemDescriptionPanelController.EndDragLock(draggedItem);
             }
             isDragging = false;
             draggedItem = null;

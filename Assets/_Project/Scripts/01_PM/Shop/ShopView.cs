@@ -22,6 +22,9 @@ namespace Systems.Shop
         private VisualElement root;
         private Label shopTitle;
         private Label goldLabel;
+        private VisualElement leftPanel;
+        private float catalogLeftPanelWidth = -1f;
+        private float catalogLeftPanelHeight = -1f;
         private VisualElement catalogContainer;
         private ScrollView catalogScroll;
         private VisualElement placementGridContainer;
@@ -96,6 +99,7 @@ namespace Systems.Shop
 
             shopTitle = root.Q<Label>("shop-title");
             goldLabel = root.Q<Label>("gold-label");
+            leftPanel = root.Q<VisualElement>("left-panel");
             catalogContainer = root.Q<VisualElement>("catalog-container");
             catalogScroll = root.Q<ScrollView>("catalog-scroll");
             placementGridContainer = root.Q<VisualElement>("placement-grid-container");
@@ -173,6 +177,8 @@ namespace Systems.Shop
 
             mainActionButtons.pickingMode = PickingMode.Position;
             mainActionButtons.RegisterCallback<PointerDownEvent>(HandleMainActionButtonsPointerDown);
+            mainActionButtons.style.display = DisplayStyle.None;
+            placementActionButtons.style.display = DisplayStyle.None;
             
             // To be wired by Controller
         }
@@ -467,14 +473,32 @@ namespace Systems.Shop
         
         public void SwitchToPlacementMode()
         {
+            CacheCatalogLeftPanelSize();
+
             catalogScroll.style.display = DisplayStyle.None;
             placementGridContainer.style.display = DisplayStyle.Flex;
             
-            // Flex-grow를 유지해서 placement-grid-container가 빈 공간을 다 채우게 설정
+            // Reuse the visible buy catalog panel size for placement mode.
+            if (leftPanel != null)
+            {
+                leftPanel.style.flexGrow = 0;
+                if (catalogLeftPanelWidth > 0f)
+                {
+                    leftPanel.style.width = catalogLeftPanelWidth;
+                }
+
+                if (catalogLeftPanelHeight > 0f)
+                {
+                    leftPanel.style.height = catalogLeftPanelHeight;
+                }
+            }
+
             placementGridContainer.style.flexGrow = 1;
+            placementGridContainer.style.width = new StyleLength(new Length(100f, LengthUnit.Percent));
+            placementGridContainer.style.height = new StyleLength(new Length(100f, LengthUnit.Percent));
             
             mainActionButtons.style.display = DisplayStyle.None;
-            placementActionButtons.style.display = DisplayStyle.Flex;
+            placementActionButtons.style.display = DisplayStyle.None;
             FixedAspectRatioManager.RequestRefresh();
             
             SetDialogue("* \"Find a good spot in your bag! Just click where you want to put it.\"");
@@ -484,10 +508,47 @@ namespace Systems.Shop
         {
             catalogScroll.style.display = DisplayStyle.Flex;
             placementGridContainer.style.display = DisplayStyle.None;
+
+            if (leftPanel != null)
+            {
+                leftPanel.style.flexGrow = 1;
+                leftPanel.style.width = new StyleLength(new Length(50f, LengthUnit.Percent));
+                leftPanel.style.height = new StyleLength(StyleKeyword.Auto);
+            }
             
-            mainActionButtons.style.display = DisplayStyle.Flex;
+            mainActionButtons.style.display = DisplayStyle.None;
             placementActionButtons.style.display = DisplayStyle.None;
             FixedAspectRatioManager.RequestRefresh();
+        }
+
+        private void CacheCatalogLeftPanelSize()
+        {
+            if (leftPanel == null)
+            {
+                return;
+            }
+
+            float width = leftPanel.resolvedStyle.width;
+            if (float.IsNaN(width) || width <= 0f)
+            {
+                width = leftPanel.layout.width;
+            }
+
+            float height = leftPanel.resolvedStyle.height;
+            if (float.IsNaN(height) || height <= 0f)
+            {
+                height = leftPanel.layout.height;
+            }
+
+            if (width > 0f)
+            {
+                catalogLeftPanelWidth = width;
+            }
+
+            if (height > 0f)
+            {
+                catalogLeftPanelHeight = height;
+            }
         }
         
         public Button GetCancelPlaceButton() => btnCancelPlace;
