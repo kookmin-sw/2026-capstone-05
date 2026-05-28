@@ -1097,6 +1097,12 @@ namespace Systems.Loot
             var draggedNew = new Vector2Int(targetCoords.x, targetCoords.y);
             var draggedOld = new Vector2Int(sourceOld.x, sourceOld.y);
 
+            if (IsSelfDropOnOriginalShape(item, originalRotation, lootModel, draggedOld, draggedNew))
+            {
+                Systems.GridInventory.GlobalDragDropRouter.RevertDrop(item, Systems.GridInventory.DragSource.Loot, -1, lootModel);
+                return;
+            }
+
             if (baseTargetItem != null && baseTargetItem.Data == item.Data && item.Data.maxStackSize > 1)
             {
                 int spaceLeft = item.Data.maxStackSize - baseTargetItem.currentStackCount;
@@ -1207,6 +1213,48 @@ namespace Systems.Loot
         {
             var delta = draggedNew - draggedOld;
             return targetOld - delta;
+        }
+
+        private static bool IsSelfDropOnOriginalShape(ItemInstance item, ItemRotation originalRotation,
+            GridInventoryModel targetModel,
+            Vector2Int oldAnchor, Vector2Int targetAnchor)
+        {
+            if (item == null || item.Data == null || item.Data.gridShape == null) return false;
+            if (targetModel == null) return false;
+            if (item.currentRotation != originalRotation) return false;
+
+            var originalPositions = item.Data.gridShape.GetRotatedPositions(originalRotation);
+            bool targetAnchorIsOriginalCell = false;
+            foreach (var pos in originalPositions)
+            {
+                if (targetAnchor == oldAnchor + pos)
+                {
+                    targetAnchorIsOriginalCell = true;
+                    break;
+                }
+            }
+
+            if (!targetAnchorIsOriginalCell) return false;
+
+            var targetPositions = item.Data.gridShape.GetRotatedPositions(item.currentRotation);
+            foreach (var pos in targetPositions)
+            {
+                int checkX = targetAnchor.x + pos.x;
+                int checkY = targetAnchor.y + pos.y;
+
+                if (checkX < 0 || checkY < 0 || checkX >= targetModel.Width || checkY >= targetModel.Height)
+                {
+                    return false;
+                }
+
+                var foundItem = targetModel.Get(checkX, checkY);
+                if (foundItem != null && foundItem != item)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static bool ItemShapesOverlap(ItemInstance first, Vector2Int firstAnchor, ItemInstance second, Vector2Int secondAnchor)
