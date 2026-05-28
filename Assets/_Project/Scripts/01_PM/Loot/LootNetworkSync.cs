@@ -276,7 +276,11 @@ namespace Systems.Loot
 
             if (overlappingItems.Count == 0) {
                 // Free space
-                model.PlaceItem(sourceItem, tx, ty);
+                if (!model.PlaceItem(sourceItem, tx, ty)) {
+                    sourceItem.currentRotation = oldRot;
+                    model.PlaceItem(sourceItem, sx, sy);
+                    return;
+                }
                 MarkLootDirty(lootId.ToString());
                 return;
             }
@@ -325,9 +329,19 @@ namespace Systems.Loot
             }
 
             if (!overlapEachOther && canPlaceA && canPlaceB) {
-                model.TryRemove(targetItem);
-                model.PlaceItem(sourceItem, tx, ty);
-                model.PlaceItem(targetItem, bNew.x, bNew.y);
+                bool removedTarget = model.TryRemove(targetItem);
+                bool placedSource = removedTarget && model.PlaceItem(sourceItem, tx, ty);
+                bool placedTarget = placedSource && model.PlaceItem(targetItem, bNew.x, bNew.y);
+
+                if (!removedTarget || !placedSource || !placedTarget) {
+                    if (placedSource) model.TryRemove(sourceItem);
+                    if (placedTarget) model.TryRemove(targetItem);
+                    sourceItem.currentRotation = oldRot;
+                    model.PlaceItem(sourceItem, sx, sy);
+                    if (removedTarget) model.PlaceItem(targetItem, bOld.x, bOld.y);
+                    return;
+                }
+
                 MarkLootDirty(lootId.ToString());
             } else {
                 sourceItem.currentRotation = oldRot;
@@ -349,11 +363,29 @@ namespace Systems.Loot
             var anchor = model.GetItemAnchorPosition(item);
             if (anchor.x != sx || anchor.y != sy) return;
 
+            ItemData swapItemDef = ItemDataRegistry.Find(swapItemId.ToString());
+            ItemInstance swapItem = null;
+            if (swapItemDef != null)
+            {
+                swapItem = new ItemInstance(swapItemDef, swapQuantity);
+                if (!model.CanPlaceItem(swapItem, sx, sy, item))
+                {
+                    return;
+                }
+            }
+
+            int originalStack = item.currentStackCount;
+            bool removedItem = false;
+
             // 1. 상자에서 아이템 제거 (Take)
             int actualTakeQty = Mathf.Min(takeQuantity, item.currentStackCount);
             if (actualTakeQty == item.currentStackCount)
             {
-                model.TryRemove(item);
+                removedItem = model.TryRemove(item);
+                if (!removedItem)
+                {
+                    return;
+                }
             }
             else
             {
@@ -362,11 +394,19 @@ namespace Systems.Loot
             }
 
             // 2. 상자에 스왑된 아이템 배치 (Put)
-            ItemData swapItemDef = ItemDataRegistry.Find(swapItemId.ToString());
-            if (swapItemDef != null)
+            if (swapItem != null && !model.PlaceItem(swapItem, sx, sy))
             {
-                ItemInstance swapItem = new ItemInstance(swapItemDef, swapQuantity);
-                model.PlaceItem(swapItem, sx, sy);
+                if (removedItem)
+                {
+                    model.PlaceItem(item, sx, sy);
+                }
+                else
+                {
+                    item.currentStackCount = originalStack;
+                    model.Items.Invoke();
+                }
+
+                return;
             }
 
             MarkLootDirty(lootId.ToString());
@@ -383,17 +423,36 @@ namespace Systems.Loot
             GridInventoryModel model = GetOrCreateModel(lootId.ToString());
             (int tx, int ty) = model.GetCoordinates(targetLootSlotIndex);
 
+            ItemInstance newItem = new ItemInstance(putItemDef, putQuantity);
+            newItem.currentRotation = (ItemRotation)putRotation;
             var existingItem = model.Get(tx, ty);
+            var existingAnchor = existingItem != null ? model.GetItemAnchorPosition(existingItem) : (x: -1, y: -1);
+            ItemRotation existingRotation = existingItem != null ? existingItem.currentRotation : ItemRotation.Deg0;
+
+            if (!model.CanPlaceItem(newItem, tx, ty, existingItem))
+            {
+                return;
+            }
             if (existingItem != null)
             {
                 // 1. 상자에서 기존 아이템 제거 (스왑되어 플레이어에게 감)
-                model.TryRemove(existingItem);
+                if (!model.TryRemove(existingItem))
+                {
+                    return;
+                }
             }
 
             // 2. 상자에 새 아이템 배치 (Put)
-            ItemInstance newItem = new ItemInstance(putItemDef, putQuantity);
-            newItem.currentRotation = (ItemRotation)putRotation;
-            model.PlaceItem(newItem, tx, ty);
+            if (!model.PlaceItem(newItem, tx, ty))
+            {
+                if (existingItem != null && existingAnchor.x != -1 && existingAnchor.y != -1)
+                {
+                    existingItem.currentRotation = existingRotation;
+                    model.PlaceItem(existingItem, existingAnchor.x, existingAnchor.y);
+                }
+
+                return;
+            }
             
             MarkLootDirty(lootId.ToString());
         }
@@ -451,6 +510,8 @@ namespace Systems.Loot
             // 클라이언트가 이미 검증을 마치고 보낸 통보이므로, 서버는 해당 위치에 그대로 적용합니다.
             // 만약 이미 아이템이 있다면 스택 병합이거나 1:1 스왑일 수 있습니다.
             var existingItem = model.Get(tx, ty);
+            var existingAnchor = existingItem != null ? model.GetItemAnchorPosition(existingItem) : (x: -1, y: -1);
+            ItemRotation existingRotation = existingItem != null ? existingItem.currentRotation : ItemRotation.Deg0;
             
             if (existingItem != null && existingItem.Data == itemDef && itemDef.maxStackSize > 1)
             {
@@ -470,14 +531,30 @@ namespace Systems.Loot
             else if (existingItem == null)
             {
                 // 빈 자리 배치 통보 수락
-                model.PlaceItem(newItem, tx, ty);
+                if (!model.CanPlaceItem(newItem, tx, ty) || !model.PlaceItem(newItem, tx, ty))
+                {
+                    return;
+                }
                 MarkLootDirty(lootId.ToString());
             }
             else
             {
                 // 1:1 스왑 통보 수락
-                model.TryRemove(existingItem);
-                model.PlaceItem(newItem, tx, ty);
+                if (!model.CanPlaceItem(newItem, tx, ty, existingItem) || !model.TryRemove(existingItem))
+                {
+                    return;
+                }
+
+                if (!model.PlaceItem(newItem, tx, ty))
+                {
+                    if (existingAnchor.x != -1 && existingAnchor.y != -1)
+                    {
+                        existingItem.currentRotation = existingRotation;
+                        model.PlaceItem(existingItem, existingAnchor.x, existingAnchor.y);
+                    }
+
+                    return;
+                }
                 MarkLootDirty(lootId.ToString());
             }
         }
