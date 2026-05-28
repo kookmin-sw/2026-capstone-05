@@ -163,11 +163,12 @@ namespace Systems.GridInventory {
 
         void OnPointerEnter(PointerEnterEvent evt) {
             if (ItemInst == null || ItemInst.Data == null) return;
+            if (IsAnyItemDragging && !isDraggingThis) return;
             ItemDescriptionPanelController.Show(ItemInst, this);
         }
 
         void OnPointerLeave(PointerLeaveEvent evt) {
-            if (isDraggingThis) return;
+            if (IsAnyItemDragging) return;
             ItemDescriptionPanelController.Hide(this);
         }
         
@@ -189,7 +190,7 @@ namespace Systems.GridInventory {
             activePointerId = evt.pointerId;
             this.CapturePointer(evt.pointerId);
             
-            ItemDescriptionPanelController.Show(ItemInst, this);
+            ItemDescriptionPanelController.BeginDragLock(ItemInst, this);
             OnStartDrag?.Invoke(evt.position, this);
             
             evt.StopPropagation();
@@ -200,7 +201,7 @@ namespace Systems.GridInventory {
             if (!isDraggingThis) return;
             isDraggingThis = false;
             IsAnyItemDragging = false;
-            ItemDescriptionPanelController.Hide(this);
+            ItemDescriptionPanelController.EndDragLock(this);
             if (activePointerId >= 0) {
                 this.ReleasePointer(activePointerId);
                 activePointerId = -1;
@@ -223,7 +224,7 @@ namespace Systems.GridInventory {
             this.ReleasePointer(evt.pointerId);
             
             onDragEnd?.Invoke(this);
-            ItemDescriptionPanelController.Hide(this);
+            ItemDescriptionPanelController.EndDragLock(this);
             evt.StopPropagation();
         }
 

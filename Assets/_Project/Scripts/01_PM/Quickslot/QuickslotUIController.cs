@@ -272,7 +272,7 @@ public class QuickslotUIController : MonoBehaviour
 
         var slotElement = slotViews[slotIndex].Root;
         slotElement.CapturePointer(evt.pointerId);
-        ItemDescriptionPanelController.Show(itemInstance, slotElement);
+        ItemDescriptionPanelController.BeginDragLock(itemInstance, slotElement);
 
         GridInventoryDragHelper.GetGhostSizeAndPivot(itemInstance, out float baseW, out float baseH, out float baseAnchorXRatio, out float baseAnchorYRatio);
 
@@ -419,7 +419,7 @@ public class QuickslotUIController : MonoBehaviour
         OnItemDragEndGlobal?.Invoke();
         if (draggingSlotIndex >= 0 && draggingSlotIndex < slotViews.Count)
         {
-            ItemDescriptionPanelController.Hide(slotViews[draggingSlotIndex].Root);
+            ItemDescriptionPanelController.EndDragLock(slotViews[draggingSlotIndex].Root);
         }
 
         if (draggingSlotIndex >= 0 && draggingSlotIndex < MaxSlots)
@@ -466,7 +466,7 @@ public class QuickslotUIController : MonoBehaviour
         OnItemDragEndGlobal?.Invoke();
         if (idx >= 0 && idx < slotViews.Count)
         {
-            ItemDescriptionPanelController.Hide(slotViews[idx].Root);
+            ItemDescriptionPanelController.EndDragLock(slotViews[idx].Root);
         }
 
         if (item != null && item.currentStackCount > 1)

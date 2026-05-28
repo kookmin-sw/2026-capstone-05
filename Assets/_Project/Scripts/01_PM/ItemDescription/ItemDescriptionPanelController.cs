@@ -8,6 +8,7 @@ public sealed class ItemDescriptionPanelController : MonoBehaviour
     private const string UssPath = "UI/ItemDescriptionPanel";
     private const float ShapeCellSize = 14f;
     private const float ShapeCellGap = 2f;
+    private const int ShapePreviewGridSize = 4;
     private const float BottomPadding = 150f;
 
     [SerializeField] private UIDocument document;
@@ -17,6 +18,7 @@ public sealed class ItemDescriptionPanelController : MonoBehaviour
     private static StyleSheet panelStyleSheet;
     private static VisualElement currentRoot;
     private static VisualElement currentOwner;
+    private static VisualElement dragLockOwner;
     private static bool usingSceneDocumentPanel;
     private static VisualElement layer;
     private static VisualElement icon;
@@ -72,6 +74,11 @@ public sealed class ItemDescriptionPanelController : MonoBehaviour
 
     public static void Show(ItemInstance item, VisualElement owner)
     {
+        if (dragLockOwner != null && owner != dragLockOwner)
+        {
+            return;
+        }
+
         if (item == null || item.Data == null || owner == null)
         {
             Hide(owner);
@@ -93,8 +100,39 @@ public sealed class ItemDescriptionPanelController : MonoBehaviour
         layer.BringToFront();
     }
 
+    public static void BeginDragLock(ItemInstance item, VisualElement owner)
+    {
+        if (item == null || item.Data == null || owner == null)
+        {
+            Hide(owner);
+            return;
+        }
+
+        dragLockOwner = owner;
+        Show(item, owner);
+    }
+
+    public static void EndDragLock(VisualElement owner, bool hide = true)
+    {
+        if (dragLockOwner != null && owner != null && owner != dragLockOwner)
+        {
+            return;
+        }
+
+        dragLockOwner = null;
+        if (hide)
+        {
+            Hide(owner);
+        }
+    }
+
     public static void Hide(VisualElement owner)
     {
+        if (dragLockOwner != null && owner != dragLockOwner)
+        {
+            return;
+        }
+
         if (owner != null && currentOwner != null && owner != currentOwner)
         {
             return;
@@ -111,6 +149,7 @@ public sealed class ItemDescriptionPanelController : MonoBehaviour
         }
 
         currentOwner = null;
+        dragLockOwner = null;
     }
 
     private static bool TryEnsureActivePanel()
@@ -344,21 +383,40 @@ public sealed class ItemDescriptionPanelController : MonoBehaviour
             if (pos.y > maxY) maxY = pos.y;
         }
 
-        int width = maxX - minX + 1;
-        int height = maxY - minY + 1;
         float stride = ShapeCellSize + ShapeCellGap;
 
-        shapeGrid.style.width = width * stride - ShapeCellGap;
-        shapeGrid.style.height = height * stride - ShapeCellGap;
+        shapeGrid.style.width = ShapePreviewGridSize * stride - ShapeCellGap;
+        shapeGrid.style.height = ShapePreviewGridSize * stride - ShapeCellGap;
 
+        HashSet<Vector2Int> occupiedCells = new HashSet<Vector2Int>();
         foreach (Vector2Int pos in positions)
         {
-            VisualElement cell = new VisualElement();
-            cell.AddToClassList("item-description-shape-cell");
-            cell.pickingMode = PickingMode.Ignore;
-            cell.style.left = (pos.x - minX) * stride;
-            cell.style.top = (pos.y - minY) * stride;
-            shapeGrid.Add(cell);
+            Vector2Int normalized = new Vector2Int(pos.x - minX, pos.y - minY);
+            if (normalized.x >= 0 &&
+                normalized.y >= 0 &&
+                normalized.x < ShapePreviewGridSize &&
+                normalized.y < ShapePreviewGridSize)
+            {
+                occupiedCells.Add(normalized);
+            }
+        }
+
+        for (int y = 0; y < ShapePreviewGridSize; y++)
+        {
+            for (int x = 0; x < ShapePreviewGridSize; x++)
+            {
+                VisualElement cell = new VisualElement();
+                cell.AddToClassList("item-description-shape-cell");
+                if (occupiedCells.Contains(new Vector2Int(x, y)))
+                {
+                    cell.AddToClassList("item-description-shape-cell--occupied");
+                }
+
+                cell.pickingMode = PickingMode.Ignore;
+                cell.style.left = x * stride;
+                cell.style.top = y * stride;
+                shapeGrid.Add(cell);
+            }
         }
     }
 }
